@@ -368,7 +368,7 @@ namespace MDPro3.Duel.YGOSharp
             if (render)
                 return isPre ? Language.GetPrereleaseConfig() : Language.GetCardConfig();
 
-            return Language.GetConfig();
+            return Language.GetDataConfig();
         }
 
         private static bool TryGetRushMaximumAttackValue(string line, string language, out string maximumAttack)
@@ -604,7 +604,7 @@ namespace MDPro3.Duel.YGOSharp
                 ? render ? GetRushDescriptionForRender() : GetRushDescriptionForDisplay()
                 : Desc;
             var lines = description.Replace("\r", "").Split('\n');
-            var language = render ? Language.GetCardConfig() : Language.GetConfig();
+            var language = render ? Language.GetCardConfig() : Language.GetDataConfig();
 
             // Chinese Japanese Korean
             int beforePendulum = 1;

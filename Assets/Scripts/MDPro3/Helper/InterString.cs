@@ -15,6 +15,7 @@ namespace MDPro3
         private const string PATH_CONF_FILE = "/translation.conf";
 
         private static readonly Dictionary<string, string> translations = new();
+        private static readonly Dictionary<string, string> englishTranslations = new();
         private static Dictionary<string, string> translationsForRender = new();
         private static Dictionary<string, string> translationsForPrerelease = new();
 
@@ -27,11 +28,19 @@ namespace MDPro3
             translations.Clear();
             translationsForRender.Clear();
             translationsForPrerelease.Clear();
+            englishTranslations.Clear();
+
+            var englishPath = Program.PATH_LOCALES + Language.English + PATH_CONF_FILE;
+            if (File.Exists(englishPath))
+                InitializeContent(File.ReadAllText(englishPath), englishTranslations);
 
             path = Program.PATH_LOCALES + Language.GetConfig() + PATH_CONF_FILE;
             if (!File.Exists(path))
                 File.Create(path).Close();
             InitializeContent(File.ReadAllText(path), 0);
+            // Keep the new locale selectable while another interface language
+            // is active, without changing the existing translation files.
+            translations[Language.Vietnamese] = "Tiếng Việt";
 
             if (Language.GetCardConfig() == Language.GetConfig())
             {
@@ -69,7 +78,11 @@ namespace MDPro3
 
         private static void InitializeContent(string text, int type)
         {
-            var dic = GetTranslations(type);
+            InitializeContent(text, GetTranslations(type));
+        }
+
+        private static void InitializeContent(string text, Dictionary<string, string> dic)
+        {
             var lines = text.Replace("\r", string.Empty).Split('\n');
             for (var i = 0; i < lines.Length; i++)
             {
@@ -87,21 +100,28 @@ namespace MDPro3
             if (targetTranslations.TryGetValue(original, out returnValue))
                 return returnValue.Replace(CONFIG_LINE_BREAK, Program.STRING_LINE_BREAK).Replace(STRING_EMPTY, string.Empty);
 
+            returnValue = original;
+            if (Language.GetConfig() == Language.Vietnamese
+                && englishTranslations.TryGetValue(original, out var english))
+                returnValue = english;
+
             if (original != string.Empty)
             {
                 UnityEngine.Debug.Log($"Undefined translation {targetTranslations.Count}: {original}");
 
                 try
                 {
-                    File.AppendAllText(GetSavePath(type), original + SEPARATOR + original + Program.STRING_LINE_BREAK);
+                    var savePath = GetSavePath(type);
+                    if (!string.IsNullOrEmpty(savePath))
+                        File.AppendAllText(savePath, original + SEPARATOR + returnValue + Program.STRING_LINE_BREAK);
                 }
                 catch
                 {
                     Program.noAccess = true;
                 }
 
-                targetTranslations.Add(original, original);
-                return original.Replace(CONFIG_LINE_BREAK, Program.STRING_LINE_BREAK).Replace(STRING_EMPTY, string.Empty);
+                targetTranslations.Add(original, returnValue);
+                return returnValue.Replace(CONFIG_LINE_BREAK, Program.STRING_LINE_BREAK).Replace(STRING_EMPTY, string.Empty);
             }
             return original;
         }

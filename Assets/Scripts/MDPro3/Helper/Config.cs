@@ -14,6 +14,7 @@ namespace MDPro3
         public const string EMPTY_STRING = "@ui";
         public const string STRING_YES = "1";
         public const string STRING_NO = "0";
+        private const string VIETNAMESE_UI_INITIALIZED = "VietnameseUiInitialized";
 
         public static uint ClientVersion = 0x1362;
 
@@ -25,28 +26,10 @@ namespace MDPro3
             Config.path = path;
             if (!File.Exists(path))
             {
+                var directory = Path.GetDirectoryName(path);
+                if (!string.IsNullOrEmpty(directory))
+                    Directory.CreateDirectory(directory);
                 File.Create(path).Close();
-                if (Application.systemLanguage == SystemLanguage.ChineseSimplified)
-                    Language.SetConfig(Language.SimplifiedChinese);
-                else if (Application.systemLanguage == SystemLanguage.ChineseTraditional)
-                    Language.SetConfig(Language.TraditionalChinese);
-                else if (Application.systemLanguage == SystemLanguage.Spanish)
-                    Language.SetConfig(Language.Spanish);
-                else if (Application.systemLanguage == SystemLanguage.Japanese)
-                    Language.SetConfig(Language.Japanese);
-                else if (Application.systemLanguage == SystemLanguage.Korean)
-                    Language.SetConfig(Language.Korean);
-                else if (Application.systemLanguage == SystemLanguage.French)
-                    Language.SetConfig(Language.French);
-                else if (Application.systemLanguage == SystemLanguage.German)
-                    Language.SetConfig(Language.German);
-                else if (Application.systemLanguage == SystemLanguage.Italian)
-                    Language.SetConfig(Language.Italian);
-                else if (Application.systemLanguage == SystemLanguage.Portuguese)
-                    Language.SetConfig(Language.Portuguese);
-                else
-                    Set(Language.ConfigName, Language.English);
-                Save();
             }
             var txtString = File.ReadAllText(path);
             var lines = txtString.Replace("\r", "").Split('\n');
@@ -63,6 +46,17 @@ namespace MDPro3
                     };
                     translations.Add(s);
                 }
+            }
+
+            // Apply this edition's defaults once, including to an existing
+            // upstream config. Later language choices remain untouched.
+            if (!GetBool(VIETNAMESE_UI_INITIALIZED, false))
+            {
+                Language.SetConfig(Language.Vietnamese);
+                Language.SetCardConfig(Language.English);
+                Language.SetPrereleaseConfig(Language.English);
+                SetBool(VIETNAMESE_UI_INITIALIZED, true);
+                Save();
             }
         }
 

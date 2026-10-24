@@ -109,19 +109,8 @@ namespace MDPro3.Servant
         private IEnumerator CheckUpdateAsync()
         {
             yield return new WaitForSeconds(3);
-            using var www = UnityWebRequest.Get(Settings.Data.MDPro3VersionUrl);
-            www.SetRequestHeader("Cache-Control", "max-age=0, no-cache, no-store");
-            www.SetRequestHeader("Pragma", "no-cache");
-            yield return www.SendWebRequest();
-            if (www.result == UnityWebRequest.Result.Success)
-            {
-                var result = www.downloadHandler.text;
-                var lines = result.Replace("\r", "").Split('\n');
-                if (Application.version != lines[0])
-                    MessageManager.Cast(InterString.Get("检测到新版本[[?]]。", lines[0]));
-            }
-            else
-                MessageManager.Cast(InterString.Get("检查更新失败！"));
+            // Updates for this customized client are published in Card-Game.
+            // The upstream client version does not describe this fork's changes.
 
             var filePath = Path.Combine(Program.PATH_EXPANSIONS, Path.GetFileName(Settings.Data.PrereleasePackUrl));
             if (!File.Exists(filePath))

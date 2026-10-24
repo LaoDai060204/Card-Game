@@ -177,7 +177,7 @@ namespace MDPro3
 
         public static string GetPrereleasePackUrl()
         {
-            return Language.GetConfig() switch
+            return Language.GetDataConfig() switch
             {
                 Language.German => Data.PrereleasePackUrl_DE,
                 Language.English => Data.PrereleasePackUrl_EN,
@@ -194,7 +194,7 @@ namespace MDPro3
 
         public static string GetPrereleasePackVersionUrl()
         {
-            return Language.GetConfig() switch
+            return Language.GetDataConfig() switch
             {
                 Language.German => Data.PrereleasePackVersionUrl_DE,
                 Language.English => Data.PrereleasePackVersionUrl_EN,

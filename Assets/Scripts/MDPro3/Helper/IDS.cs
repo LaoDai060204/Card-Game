@@ -15,6 +15,7 @@ namespace MDPro3
 
         private static void LoadIDS(string language)
         {
+            language = Utility.Language.GetDataLanguage(language);
             if (cachedIdsDics.TryGetValue(language, out var cachedDic))
             {
                 idsSysText = cachedDic;

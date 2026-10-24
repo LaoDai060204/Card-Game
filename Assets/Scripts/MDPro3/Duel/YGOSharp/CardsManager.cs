@@ -64,7 +64,7 @@ namespace MDPro3.Duel.YGOSharp
             var preCards = _cards;
             var preRenderCards = _cardsForRender;
 
-            var language = Language.GetConfig();
+            var language = Language.GetDataConfig();
             var cardLanguage = Language.GetCardConfig();
 
             _cards = new();

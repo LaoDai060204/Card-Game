@@ -42,7 +42,7 @@ namespace MDPro3.Duel
         {
             var condition = OcgCore.condition;
             var chara = Config.Get(condition + "Character0", defaultCharacter);
-            var language = Utility.Language.GetConfig();
+            var language = Utility.Language.GetDataConfig();
 
             if (language != loadedLanguage || heroString != chara)
             {

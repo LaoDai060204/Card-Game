@@ -8,6 +8,7 @@ namespace MDPro3.Utility
         public const string PrereleaseName = "PrereleaseLanguage";
 
         public const string English = "en-US";
+        public const string Vietnamese = "vi-VN";
         public const string Spanish = "es-ES";
         public const string French = "fr-FR";
         public const string German = "de-DE";
@@ -22,7 +23,7 @@ namespace MDPro3.Utility
 
         public static string GetConfig()
         {
-            return Config.Get(ConfigName, SimplifiedChinese);
+            return Config.Get(ConfigName, Vietnamese);
         }
 
         public static void SetConfig(string language)
@@ -32,22 +33,34 @@ namespace MDPro3.Utility
 
         public static string GetCardConfig()
         {
-            return Config.Get(CardConfigName, SimplifiedChinese);
+            return GetDataLanguage(Config.Get(CardConfigName, English));
         }
 
         public static void SetCardConfig(string language)
         {
-            Config.Set(CardConfigName, language);
+            Config.Set(CardConfigName, GetDataLanguage(language));
         }
 
         public static string GetPrereleaseConfig()
         {
-            return Config.Get(PrereleaseName, SimplifiedChinese);
+            return GetDataLanguage(Config.Get(PrereleaseName, English));
         }
 
         public static void SetPrereleaseConfig(string language)
         {
-            Config.Set(PrereleaseName, language);
+            Config.Set(PrereleaseName, GetDataLanguage(language));
+        }
+
+        // Vietnamese localizes the interface; card databases, item names and
+        // character subtitles currently use the existing English resources.
+        public static string GetDataLanguage(string language)
+        {
+            return language == Vietnamese ? English : language;
+        }
+
+        public static string GetDataConfig()
+        {
+            return GetDataLanguage(GetConfig());
         }
 
         public static bool NeedBlankToAddWord()
@@ -76,6 +89,7 @@ namespace MDPro3.Utility
         public static bool UseLatin(string language)
         {
             if (language == English
+                || language == Vietnamese
                 || language == Spanish
                 || language == Portuguese
                 || language == French
@@ -139,6 +153,7 @@ namespace MDPro3.Utility
 
         public static string GetMasterDuelLanguage(string language)
         {
+            language = GetDataLanguage(language);
             if (language == Portuguese)
                 return MasterDuelPortuguese;
             return language;

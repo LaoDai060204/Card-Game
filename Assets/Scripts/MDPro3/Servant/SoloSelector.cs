@@ -256,7 +256,7 @@ namespace MDPro3.Servant
                     var path = args[i][7..];
                     if (!File.Exists(WINDBOT_DIALOG_PATH + path + ".json"))
                     {
-                        var config = Language.GetConfig();
+                        var config = Language.GetDataConfig();
                         if (config == "en-US")//WindBot use en-US as default;
                             config = "default";
                         args[i] = "Dialog=" + config;

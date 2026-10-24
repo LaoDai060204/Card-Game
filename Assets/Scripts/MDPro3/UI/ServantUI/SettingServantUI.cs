@@ -1450,7 +1450,8 @@ namespace MDPro3.UI.ServantUI
             };
             DirectoryInfo[] infos = new DirectoryInfo(Program.PATH_LOCALES).GetDirectories();
             foreach (DirectoryInfo info in infos)
-                if (!incorrectlyAddedFolder.Contains(info.Name))
+                if (!incorrectlyAddedFolder.Contains(info.Name)
+                    && File.Exists(Path.Combine(info.FullName, "cards.cdb")))
                     selections.Add(InterString.Get(info.Name));
             UIManager.ShowPopupSelection(selections, ChangeCardLanguage);
         }
@@ -2390,7 +2391,8 @@ namespace MDPro3.UI.ServantUI
 
         public void OnAboutGame()
         {
-            var address = Language.UseChinese() ? "AboutGame" : "AboutGame_en";
+            var address = Language.GetConfig() == Language.Vietnamese ? "AboutGame_vi"
+                : Language.UseChinese() ? "AboutGame" : "AboutGame_en";
             var handle = Addressables.LoadAssetAsync<TextAsset>(address);
             handle.Completed += (result) =>
             {
@@ -2407,7 +2409,8 @@ namespace MDPro3.UI.ServantUI
         }
         public void OnAboutVersion()
         {
-            var address = Language.UseChinese() ? "AboutVersion" : "AboutVersion_en";
+            var address = Language.GetConfig() == Language.Vietnamese ? "AboutVersion_vi"
+                : Language.UseChinese() ? "AboutVersion" : "AboutVersion_en";
             var handle = Addressables.LoadAssetAsync<TextAsset>(address);
             handle.Completed += (result) =>
             {
@@ -2421,7 +2424,8 @@ namespace MDPro3.UI.ServantUI
         }
         public void OnAboutUpdate()
         {
-            var address = Language.UseChinese() ? "AboutUpdate" : "AboutUpdate_en";
+            var address = Language.GetConfig() == Language.Vietnamese ? "AboutUpdate_vi"
+                : Language.UseChinese() ? "AboutUpdate" : "AboutUpdate_en";
             var handle = Addressables.LoadAssetAsync<TextAsset>(address);
             handle.Completed += (result) =>
             {
@@ -2438,7 +2442,8 @@ namespace MDPro3.UI.ServantUI
         }
         public void OnUpdateContent()
         {
-            var handle = Addressables.LoadAssetAsync<TextAsset>("UpdateContent");
+            var address = Language.GetConfig() == Language.Vietnamese ? "UpdateContent_vi" : "UpdateContent";
+            var handle = Addressables.LoadAssetAsync<TextAsset>(address);
             handle.Completed += (result) =>
             {
                 var selections = new List<string>()

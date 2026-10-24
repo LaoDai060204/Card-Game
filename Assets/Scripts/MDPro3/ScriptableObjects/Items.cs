@@ -148,7 +148,7 @@ namespace MDPro3
 
                 initialized = true;
             }
-            var currentLanguage = Language.GetConfig();
+            var currentLanguage = Language.GetDataConfig();
             if (language != currentLanguage)
             {
                 language = currentLanguage;

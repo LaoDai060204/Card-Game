@@ -1,0 +1,33 @@
+PHIÊN BẢN LAODAI CARD GAME
+
+Đây là bản tùy biến tiếng Việt do LaoDai060204 duy trì. Mã phiên bản ứng dụng kế thừa từ mã nền MDPro3; các thay đổi riêng của bản tùy biến được theo dõi bằng commit trong kho GitHub.
+
+<link="https://github.com/LaoDai060204/Card-Game/commits/main"><#0080F8><u>Lịch sử cập nhật bản tùy biến</u></color></link>
+
+QUY ƯỚC CÁC GÓI MDPRO3 GỐC
+
+Các thông tin dưới đây mô tả gói phát hành MDPro3 gốc, không phải bộ cài riêng của LaoDai Card Game.
+
+Số phiên bản có ba phần và kết thúc bằng 0 là gói đầy đủ, có thể cài trực tiếp.
+Ví dụ: [1.1.0], [1.2.0].
+
+Số phiên bản có ba phần và không kết thúc bằng 0 là gói cập nhật.
+Ví dụ: [1.1.1] cần [1.1.0]; [1.2.2] cần [1.2.1].
+
+Số phiên bản có bốn phần và kết thúc bằng 0 là gói cập nhật tăng dần để lên phiên bản ba phần tương ứng.
+Ví dụ: [1.1.0.0] cần [1.0.9]. Gói này cập nhật từ [1.0.9] lên [1.1.0] mà không cần tải lại toàn bộ gói đầy đủ [1.1.0].
+Ví dụ: [1.1.1.0] cần [1.1.0]. Theo cách đóng gói Android của dự án gốc, [*.*.1] là gói ảnh lá bài cho [*.*.0], còn [*.*.1.0] chỉ cập nhật số phiên bản.
+
+Số phiên bản có bốn phần và không kết thúc bằng 0 không có thay đổi tệp, có thể bỏ qua các số trung gian.
+Ví dụ: [1.0.1.5] cần [1.0.1]; không cần cài lần lượt [1.0.1.1] đến [1.0.1.4]. Khi cài [1.0.2], chỉ cần nền [1.0.1].
+
+Thứ tự cài gói gốc:
+- Bắt đầu từ phiên bản ba phần cao nhất kết thúc bằng 0, chẳng hạn [1.2.0].
+- Cài tiếp [1.2.1], [1.2.2] và các bản kế tiếp theo thứ tự.
+- Nếu bản cao nhất là [1.2.2] và có thêm [1.2.2.1], [1.2.2.2], [1.2.2.3], cài bản bốn phần cao nhất tương ứng.
+
+Nếu đã có [1.0.9], có thể dùng [1.1.0.0] thay vì tải lại gói đầy đủ [1.1.0]. Với gói Android gốc, người dùng không cần phần ảnh còn thiếu có thể chọn bản [*.*.1.0] tương ứng.
+
+Khi cập nhật LaoDai Card Game, hãy dùng kho riêng của bản tùy biến và sao lưu trước khi thay đổi. Chép các gói MDPro3 gốc vào dự án có thể ghi đè những phần đã tùy biến.
+
+_END_

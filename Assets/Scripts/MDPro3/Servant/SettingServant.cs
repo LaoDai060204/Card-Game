@@ -187,7 +187,7 @@ namespace MDPro3.Servant
         {
             var url = Settings.GetPrereleasePackUrl();
             var filePath = Path.Combine(Program.PATH_EXPANSIONS, Path.GetFileName(url));
-            if (!File.Exists(filePath) || Language.GetConfig() != Language.GetPrereleaseConfig())
+            if (!File.Exists(filePath) || Language.GetDataConfig() != Language.GetPrereleaseConfig())
             {
                 Config.Set("Prerelease", Config.STRING_NO);
                 Config.Save();

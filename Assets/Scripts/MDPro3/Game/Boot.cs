@@ -74,14 +74,15 @@ namespace MDPro3
             {
                 Directory.CreateDirectory(Program.PATH_DATA);
                 Config.Initialize(Program.PATH_CONFIG);
+                InterString.Initialize();
                 return true;
             }
             else
             {
                 Config.Initialize(Program.PATH_CONFIG);
+                InterString.Initialize();
                 if(Config.Get("Version", "Version") == "Version")
                     return true;
-                InterString.Initialize();
                 return false;
             }
         }

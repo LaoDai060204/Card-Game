@@ -91,11 +91,19 @@ namespace MDPro3
             //TO DELETE
             foreach (var text in go.GetComponentsInChildren<Text>(true))
                 if (text.name.StartsWith(TRANSLATE_PREFIX))
+                {
                     text.text = InterString.Get(text.text.Replace(Program.STRING_LINE_BREAK, InterString.CONFIG_LINE_BREAK).Replace("\n", InterString.CONFIG_LINE_BREAK));
+                    if (Language.GetConfig() == Language.Vietnamese)
+                        text.font = Program.instance.ui_.cnFont;
+                }
             foreach (var tmp in go.GetComponentsInChildren<TextMeshProUGUI>(true))
             {
                 if (tmp.name.StartsWith(TRANSLATE_PREFIX))
+                {
                     tmp.text = InterString.Get(tmp.text.Replace(Program.STRING_LINE_BREAK, InterString.CONFIG_LINE_BREAK).Replace("\n", InterString.CONFIG_LINE_BREAK));
+                    if (Language.GetConfig() == Language.Vietnamese)
+                        tmp.font = Program.instance.ui_.tmpFont;
+                }
                 if (tmp.name.EndsWith("Menu"))
                 {
                     UIManager instance = Program.instance.ui_;
@@ -135,10 +143,14 @@ namespace MDPro3
                     if(t.TryGetComponent<Text>(out var text))
                     {
                         text.text = InterString.Get(text.text);
+                        if (Language.GetConfig() == Language.Vietnamese)
+                            text.font = instance.cnFont;
                     }
                     else if(t.TryGetComponent<TextMeshProUGUI>(out var tmp))
                     {
                         tmp.text = InterString.Get(tmp.text);
+                        if (Language.GetConfig() == Language.Vietnamese)
+                            tmp.font = instance.tmpFont;
 
                         if (tmp.name.EndsWith("Menu"))
                         {
