@@ -1,0 +1,166 @@
+0 Shader Base
+ 1 string m_Name = ""
+ 0 SerializedShader m_ParsedForm
+  0 SerializedProperties m_PropInfo
+   0 vector m_Props
+    1 Array Array (0 items)
+     0 int size = 0
+  0 vector m_SubShaders
+   1 Array Array (1 items)
+    0 int size = 1
+    [0]
+     0 SerializedSubShader data
+      0 vector m_Passes
+       1 Array Array (0 items)
+        0 int size = 0
+      0 SerializedTagMap m_Tags
+       0 map tags
+        0 Array Array (2 items)
+         0 int size = 2
+         [0]
+          0 pair data
+           1 string first = "RenderPipeline"
+           1 string second = "UniversalPipeline"
+         [1]
+          0 pair data
+           1 string first = "RenderType"
+           1 string second = "Opaque"
+      0 int m_LOD = 100
+  0 vector m_KeywordNames
+   1 Array Array (7 items)
+    0 int size = 7
+    [0]
+     1 string data = "STEREO_INSTANCING_ON"
+    [1]
+     1 string data = "UNITY_SINGLE_PASS_STEREO"
+    [2]
+     1 string data = "STEREO_MULTIVIEW_ON"
+    [3]
+     1 string data = "STEREO_CUBEMAP_RENDER_ON"
+    [4]
+     1 string data = "_DBUFFER_MRT1"
+    [5]
+     1 string data = "_DBUFFER_MRT2"
+    [6]
+     1 string data = "_DBUFFER_MRT3"
+  0 vector m_KeywordFlags
+   1 Array Array (7 items)
+    0 int size = 7
+    [0]
+     0 UInt8 data = 0
+    [1]
+     0 UInt8 data = 0
+    [2]
+     0 UInt8 data = 0
+    [3]
+     0 UInt8 data = 0
+    [4]
+     0 UInt8 data = 0
+    [5]
+     0 UInt8 data = 0
+    [6]
+     0 UInt8 data = 0
+  1 string m_Name = "Hidden/Universal Render Pipeline/DBufferClear"
+  1 string m_CustomEditorName = ""
+  1 string m_FallbackName = ""
+  0 vector m_Dependencies
+   1 Array Array (0 items)
+    0 int size = 0
+  0 vector m_CustomEditorForRenderPipelines
+   1 Array Array (0 items)
+    0 int size = 0
+  1 bool m_DisableNoSubshadersMessage = false
+ 0 vector platforms
+  1 Array Array (2 items)
+   0 int size = 2
+   [0]
+    0 unsigned int data = 9
+   [1]
+    0 unsigned int data = 18
+ 0 vector offsets
+  1 Array Array (2 items)
+   0 int size = 2
+   [0]
+    0 vector data
+     1 Array Array (1 items)
+      0 int size = 1
+      [0]
+       0 unsigned int data = 0
+   [1]
+    0 vector data
+     1 Array Array (1 items)
+      0 int size = 1
+      [0]
+       0 unsigned int data = 5
+ 0 vector compressedLengths
+  1 Array Array (2 items)
+   0 int size = 2
+   [0]
+    0 vector data
+     1 Array Array (1 items)
+      0 int size = 1
+      [0]
+       0 unsigned int data = 5
+   [1]
+    0 vector data
+     1 Array Array (1 items)
+      0 int size = 1
+      [0]
+       0 unsigned int data = 5
+ 0 vector decompressedLengths
+  1 Array Array (2 items)
+   0 int size = 2
+   [0]
+    0 vector data
+     1 Array Array (1 items)
+      0 int size = 1
+      [0]
+       0 unsigned int data = 4
+   [1]
+    0 vector data
+     1 Array Array (1 items)
+      0 int size = 1
+      [0]
+       0 unsigned int data = 4
+ 0 vector compressedBlob
+  1 Array Array (10 items)
+   0 int size = 10
+   [0]
+    0 UInt8 data = 64
+   [1]
+    0 UInt8 data = 0
+   [2]
+    0 UInt8 data = 0
+   [3]
+    0 UInt8 data = 0
+   [4]
+    0 UInt8 data = 0
+   [5]
+    0 UInt8 data = 64
+   [6]
+    0 UInt8 data = 0
+   [7]
+    0 UInt8 data = 0
+   [8]
+    0 UInt8 data = 0
+   [9]
+    0 UInt8 data = 0
+ 0 vector stageCounts
+  1 Array Array (2 items)
+   0 int size = 2
+   [0]
+    0 unsigned int data = 1
+   [1]
+    0 unsigned int data = 1
+ 0 vector m_Dependencies
+  1 Array Array (0 items)
+   0 int size = 0
+ 0 map m_NonModifiableTextures
+  0 Array Array (0 items)
+   0 int size = 0
+ 1 bool m_ShaderIsBaked = true
+ 0 GUID m_AssetGUID
+  0 unsigned int data[0] = 3683476751
+  0 unsigned int data[1] = 1156039074
+  0 unsigned int data[2] = 1142499230
+  0 unsigned int data[3] = 1496349771

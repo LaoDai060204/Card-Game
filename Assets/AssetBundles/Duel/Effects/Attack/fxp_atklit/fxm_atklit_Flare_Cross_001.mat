@@ -1,0 +1,85 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: fxm_atklit_Flare_Cross_001
+  m_Shader: {fileID: 4800000, guid: c61290db05224cd4d9e21b2ef9e007db, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: 3000
+  stringTagMap: {}
+  disabledShaderPasses:
+  - MOTIONVECTORS
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - unity_Lightmaps:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_LightmapsInd:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_ShadowMasks:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _Alpha: 1
+    - _Alpha_pow: 2.75
+    - _Base_Size: 1.16
+    - _Edge_Sharp: 1
+    - _Glow_Intensity: 1
+    - _Glow_Sharpness: 0.412
+    - _Glow_Sharpness_Blur: 0.506
+    - _Main_Glow: 0.012
+    - _Main_Shape: 0.051
+    - _Main_Star_Blur: 1.72
+    - _Main_Star_Scale: 0.069
+    - _QueueControl: 0
+    - _QueueOffset: 0
+    - _Sharpness: 0
+    - _Sharpness_Blur: 0.4
+    - _Soft_Particle: 1
+    - _Soft_Particle_Far: 5
+    - _Soft_Particle_Near: 0
+    - _Sub: 0
+    - _Sub_Angle: 45
+    - _Sub_Glow: 0
+    - _Sub_Rotate: 45
+    - _Sub_Scale: 0
+    - _Sub_Shape: 0.1
+    - _Sub_Sharpness: 0
+    - _Sub_Sharpness_Blur: 1
+    - _Sub_Star: 0
+    - _Sub_Star_Blur: 3
+    - _Sub_Star_Scale: 0.001
+    - _Third: 0
+    - _Third_Angle: 60
+    - _Third_Scale: 0
+    - _Third_Shape: 0.1
+    - _Third_Sharpness: 0
+    - _Third_Sharpness_Blur: 1
+    - _Third_Star_Blur: 1
+    - _Third_Star_Glow: 0.02
+    - _Third_Star_Rotate: 60
+    - _Third_Star_Scale: 0.2
+    - _truth_Emissive_on: 1
+    m_Colors:
+    - _Emissive: {r: 0.7490196, g: 0.7490196, b: 0.7490196, a: 0}
+    - _truth_Emissive: {r: 0.8490566, g: 0.6512706, b: 0.26032397, a: 0}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 0

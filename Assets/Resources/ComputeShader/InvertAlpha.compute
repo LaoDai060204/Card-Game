@@ -1,0 +1,19 @@
+#pragma kernel CSMain
+
+RWTexture2D<float4> Result;
+Texture2D<float4> SourceTex;
+
+[numthreads(8, 8, 1)]
+void CSMain(uint3 id : SV_DispatchThreadID)
+{
+    uint width, height;
+    Result.GetDimensions(width, height);
+    
+    if (id.x >= width || id.y >= height)
+        return;
+    
+    float4 color = SourceTex[id.xy];
+    // 反转alpha值，保持RGB不变
+    color.a = 1.0 - color.a;
+    Result[id.xy] = color;
+}

@@ -1,0 +1,94 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: fxm_bg_godray_001
+  m_Shader: {fileID: 4800000, guid: 2b1d2b2040a627048b93a96f57f0cbe2, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 0
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: 3000
+  stringTagMap: {}
+  disabledShaderPasses:
+  - MOTIONVECTORS
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _MASK_Texture:
+        m_Texture: {fileID: 2800000, guid: 19906250033c2d54d8e3486e47b3686d, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Main_Texture:
+        m_Texture: {fileID: 2800000, guid: 8f5be623dc85d6046a7f0904f81ec72f, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_Lightmaps:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_LightmapsInd:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_ShadowMasks:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _ADD_Gradient_Noise: 0
+    - _ADD_Noise_Switch: 1
+    - _ADD_Simple_Noise: 1
+    - _ADD_Voronoi: 0
+    - _Animation_Alpha: 1
+    - _Camera_Offset: 0
+    - _Edge1: -0.01
+    - _Edge2: 1.2
+    - _Emissive_truth_on: 1
+    - _Gradient_Noise: 0
+    - _MAIN_Noise_Amount: 6
+    - _MASK_Add_Noise_Amount: 8
+    - _MASK_Add_Noise_Scroll_X: 0
+    - _MASK_Add_Noise_Scroll_Y: 0
+    - _MASK_Add_Noise_Thickness_black: 1
+    - _MASK_Add_Noise_Thickness_white: 0
+    - _MASK_Add_Noise_Tile_X: 0.1
+    - _MASK_Add_Noise_Tile_Y: 8
+    - _MASK_Smoothstep_Switch: 0
+    - _MASK_Texture_Rotation: 90
+    - _Main_Edge1: 0
+    - _Main_Edge2: 1
+    - _Main_Noise_Scroll_X: -0.001
+    - _Main_Noise_Scroll_Y: 0
+    - _Main_Smoothstep_Switch: 0
+    - _Main_Thickness_black: 1
+    - _Main_Thickness_white: 0
+    - _Main_Tile_X: 0.1
+    - _Main_Tile_Y: 1
+    - _Offset_X: 0
+    - _Offset_Y: 0
+    - _QueueControl: 0
+    - _QueueOffset: 0
+    - _Simple_Noise: 0
+    - _Soft_Particle: 1
+    - _Soft_Particle_Far: 5
+    - _Soft_Particle_Near: 0
+    - _Textur_Switch: 0
+    - _Voronoi: 1
+    m_Colors:
+    - _Emissive: {r: 1.5019042, g: 1.7122109, b: 1.3972286, a: 0}
+    - _Emissive_truth: {r: 2.4807737, g: 3.474936, b: 1.9505538, a: 0}
+    - _Main_Texture_Channel_Select: {r: 1, g: 0, b: 0, a: 0}
+    - _Mask_Channel_Select: {r: 1, g: 0, b: 0, a: 0}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 0

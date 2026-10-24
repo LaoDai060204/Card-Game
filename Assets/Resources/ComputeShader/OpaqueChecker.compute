@@ -1,0 +1,22 @@
+#pragma kernel CSMain
+
+RWStructuredBuffer<int> _Result;
+Texture2D<float4> _MainTex;
+uint _Width; // 改为 uint
+uint _Height; // 改为 uint
+int _AlphaThreshold;
+
+[numthreads(8, 8, 1)]
+void CSMain(uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= _Width || id.y >= _Height)
+        return;
+
+    float4 color = _MainTex[id.xy];
+    int alpha = (int) (color.a * 255.0f + 0.5f);
+    if (alpha < _AlphaThreshold)
+    {
+        int original;
+        InterlockedExchange(_Result[0], 1, original);
+    }
+}

@@ -1,0 +1,23 @@
+Three-part version numbers ending in 0 are full packages and can be installed directly.
+e.g. [1.1.0]  [1.2.0]
+
+Three-part version numbers not ending in 0 are update packages.
+e.g. [1.1.1] requires [1.1.0]
+e.g. [1.2.2] requires [1.2.1]
+
+Four-part version numbers ending in 0 are incremental updates for the matching three-part version.
+e.g. [1.1.0.0] requires [1.0.9]. Since [1.1.0] is a full package, users on [1.0.9] do not need to install the large full package again. [1.1.0.0] is the incremental update that brings [1.0.9] to [1.1.0].
+e.g. [1.1.1.0] requires [1.1.0]. Because a single Android APK cannot exceed 2 GB, version [*.*.1] is the card art package for [*.*.0], and [*.*.1.0] is only used to update the version number.
+
+Four-part version numbers not ending in 0 contain no file changes and can be skipped.
+e.g. [1.0.1.5] requires [1.0.1]. Versions [1.0.1.1] through [1.0.1.4] are not required. When installing [1.0.2], you only need [1.0.1].
+
+Summary:
+- Start from the highest three-part version ending in 0, such as 1.2.0.
+- Then apply 1.2.1, 1.2.2, and so on.
+- If 1.2.2 is the highest three-part version and 1.2.2.1, 1.2.2.2, 1.2.2.3 exist, install the highest four-part version as well.
+
+If you already have version 1.0.9 installed, you do not need the large 1.1.0 full package. Install 1.1.0.0 instead.
+For Android users, version [*.*.1] is the card art package for [*.*.0]. If you do not need missing card art, you can install the corresponding [*.*.1.0] version directly.
+
+_END_

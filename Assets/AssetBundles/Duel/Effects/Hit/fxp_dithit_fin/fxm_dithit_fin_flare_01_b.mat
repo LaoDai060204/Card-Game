@@ -1,0 +1,70 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: fxm_dithit_fin_flare_01_b
+  m_Shader: {fileID: 4800000, guid: d25065a0c691b7049ac21e398e848f6f, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords:
+  - _EMISSION
+  m_LightmapFlags: 2
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: 3000
+  stringTagMap: {}
+  disabledShaderPasses:
+  - MOTIONVECTORS
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _MASK_Texture:
+        m_Texture: {fileID: 2800000, guid: b801f7f1bfd4c65488b1049be3055f08, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Main_Texture:
+        m_Texture: {fileID: 2800000, guid: b801f7f1bfd4c65488b1049be3055f08, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_Lightmaps:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_LightmapsInd:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_ShadowMasks:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _Camera_Offset: 0
+    - _MASK_Smoothstep: 0
+    - _MASK_Smoothstep_Blur: 1
+    - _MASK_Texture_Rotation: 0
+    - _MASK_Texture_Tiling_X: 1
+    - _MASK_Texture_Tiling_Y: 1
+    - _Main_Smoothstep: 0.235
+    - _Main_Smoothstep_Blur: 1
+    - _Main_Texture_Rotation: 0
+    - _Main_Texture_Tiling_X: 1
+    - _Main_Texture_Tiling_Y: 1
+    - _QueueControl: 0
+    - _QueueOffset: 0
+    m_Colors:
+    - _Color_01: {r: 4.759381, g: 0, b: 0, a: 0}
+    - _Color_02: {r: 6.3541465, g: 1.8882605, b: 1.8882605, a: 0}
+    - _Emissive: {r: 2.9960785, g: 2.9960785, b: 2.9960785, a: 0}
+    - _MASK_Texture_Channel: {r: 1, g: 0, b: 0, a: 0}
+    - _Main_Texture_Channel: {r: 1, g: 0, b: 0, a: 0}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 0

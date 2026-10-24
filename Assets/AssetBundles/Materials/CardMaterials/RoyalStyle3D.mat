@@ -1,0 +1,194 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: RoyalStyle3D
+  m_Shader: {fileID: 4800000, guid: 27b79ee02cb2507438f330137782cf42, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: 3000
+  stringTagMap: {}
+  disabledShaderPasses:
+  - MOTIONVECTORS
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _AttributeTex:
+        m_Texture: {fileID: 2800000, guid: 1e44a49148661234193ff74f70da44d4, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _CardExtensionMask:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _CardExtensionNormal:
+        m_Texture: {fileID: 2800000, guid: b1f5e0c180fe7aa43b26d5b588940eab, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _CardMask:
+        m_Texture: {fileID: 2800000, guid: d85dfb059355dce48b6cd677047f2b81, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _FrameMask:
+        m_Texture: {fileID: 2800000, guid: 067b10328108b7d45827fb33f6134466, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _HighlightNormal:
+        m_Texture: {fileID: 2800000, guid: a885df8d14949ac4d8f2a9280ea4a8d0, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _HighlightTex:
+        m_Texture: {fileID: 2800000, guid: b709041a17a0dfa44a2a7a46b32426dd, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _HoloTex:
+        m_Texture: {fileID: 2800000, guid: 54e4fc99b03a29347ae85df16a6af2bf, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Kira02_01:
+        m_Texture: {fileID: 2800000, guid: b1661655758a8a246923f03567093b9e, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _KiraColorTexture:
+        m_Texture: {fileID: 2800000, guid: 5c363db696962dc43a0067d467c0f2f5, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _KiraMask:
+        m_Texture: {fileID: 2800000, guid: f67522af775aebb4bafcfc0fb0ccb8bc, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _KiraNormal01_02:
+        m_Texture: {fileID: 2800000, guid: 5e8658364381f1940b2c6a4057d503ea, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _LevelRankNormal:
+        m_Texture: {fileID: 2800000, guid: 80da963a41fbc9343a837cca50126968, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _LoadingTex:
+        m_Texture: {fileID: 2800000, guid: d0a85fb87789a624b84e98d941aad31b, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MainNormal:
+        m_Texture: {fileID: 2800000, guid: b552f9fd55ddc7443bfe07c7dbc13b1f, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MonsterNameTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Texture2DAsset_90c6e35ef4304f289c279037152a03b7_Out_0_Texture2D:
+        m_Texture: {fileID: 2800000, guid: 90c6e35ef4304f289c279037152a03b7, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_Lightmaps:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_LightmapsInd:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_ShadowMasks:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _AttributeTile: 1
+    - _BaseLightIntensity_Base_Dir: 0.15
+    - _BaseLightIntensity_Base_Fake: 0.682
+    - _BaseLightIntensity_CardName: 0.295
+    - _BaseLightIntensity_Frame: 0.55
+    - _BaseLightIntensity_LevelIcon: 0.655
+    - _BevelSmooth: 1.38
+    - _BevelStrength: 4
+    - _BevelThreshold: 0.38
+    - _BevelWidth: 0.2
+    - _CardDistortion01: 1
+    - _CardDistortion02: 1
+    - _ColorMask: 15
+    - _CubemapContrast: 1
+    - _CubemapPower: 2
+    - _DirectionalLightAmp: 0.88
+    - _EnhanceColorThreshold: 2
+    - _FakeBlend: 1
+    - _FakeLightIntensity: 0.79
+    - _FrameMetal: 0.1
+    - _HighlightAmp: 3
+    - _HighlightRotation: -30
+    - _HighlightScrollOffset: 0
+    - _HoloBrightness: 1
+    - _HoloBrightness02: 1.2
+    - _HoloShift01: 2.18
+    - _HoloShift02: 1
+    - _IllustBright: 0.8
+    - _IlluustRanbowPower: 1
+    - _Kira01_01Tile: 0.5
+    - _Kira01_02Power: -2.19
+    - _Kira01_02Tile: 2
+    - _Kira02_01Power: -4
+    - _Kira02_01Tile: 1
+    - _Kira02_02Power: 0.49
+    - _Kira2_02Tile: 1
+    - _KiraMetal01: -0.33
+    - _KiraMetal02: 3
+    - _KiraNormal01_01Power: 0.86
+    - _LevelRankNormalPower: 0.5
+    - _LevelRankValue: 0
+    - _LoadingBlend: 0
+    - _MainNormalPower: 0.84
+    - _MainTexMetal: 1
+    - _Monochrome: 0
+    - _MonsterNameNormalPower: 3
+    - _MonsterNameTextBold: 0
+    - _QueueControl: 1
+    - _QueueOffset: 1
+    - _RanbowPower: 0
+    - _ScrollSpeed: 1.5
+    - _Smoothness: 0.5
+    - _SpecularNormalPowerInLevelIcon: 0.373
+    - _Stencil: 0
+    - _StencilComp: 8
+    - _StencilOp: 0
+    - _StencilReadMask: 255
+    - _StencilWriteMask: 255
+    - _TotalNormalStrength: 0.878
+    - _UIMaskSoftnessX: 1
+    - _UIMaskSoftnessY: 1
+    - _ZWrite: 1
+    - _isFade: 0
+    m_Colors:
+    - _AddColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+    - _AmbientColor: {r: 0.06, g: 0.06, b: 0.06, a: 1}
+    - _AttributeSize_Pos: {r: 10.64, g: 14.87, b: -4.048, a: -6.2}
+    - _ClipRect: {r: 0, g: 0, b: 0, a: 0}
+    - _Color: {r: 1, g: 0.9385045, b: 0.7232704, a: 1}
+    - _CubemapColor: {r: 0.8980392, g: 0.8666667, b: 0.3254902, a: 0}
+    - _FakeLightColor: {r: 0, g: 0, b: 0, a: 0}
+    - _FakeLightDirection: {r: -0.75, g: -0.75, b: -1, a: 0}
+    - _FakeNormalDirection: {r: 0.75, g: -0.75, b: 0, a: 0}
+    - _FakeViewDirection: {r: 0.75, g: 0.75, b: 0, a: 0}
+    - _KiraColor01: {r: 0.21186084, g: 0.15500766, b: 0.5188679, a: 0}
+    - _KiraColor02: {r: 0.4063017, g: 0.38901743, b: 0.5849056, a: 0}
+    - _Offset: {r: 0, g: -5, b: 0, a: 0}
+    - _SpecularColor: {r: 0.16037738, g: 0.16037738, b: 0.16037738, a: 1}
+    - _Tiling: {r: 1, g: 6, b: 0, a: 0}
+    - _TintColor: {r: 1, g: 1, b: 1, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 0

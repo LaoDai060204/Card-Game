@@ -1,0 +1,41 @@
+#pragma kernel CSMain
+
+RWTexture2D<float4> Result;
+Texture2D<float4> Source;
+uint SourceWidth;
+uint SourceHeight;
+uint DestWidth;
+uint DestHeight;
+
+[numthreads(8, 8, 1)]
+void CSMain(uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= DestWidth || id.y >= DestHeight)
+        return;
+    
+    // 计算目标像素对应源纹理的浮点坐标
+    float u = (id.x + 0.5f) / DestWidth;
+    float v = (id.y + 0.5f) / DestHeight;
+    float origX = u * SourceWidth - 0.5f;
+    float origY = v * SourceHeight - 0.5f;
+    
+    // 双线性插值
+    int x0 = (int) floor(origX);
+    int y0 = (int) floor(origY);
+    int x1 = min(x0 + 1, SourceWidth - 1);
+    int y1 = min(y0 + 1, SourceHeight - 1);
+    
+    float fx = origX - x0;
+    float fy = origY - y0;
+    
+    float4 c00 = Source[int2(x0, y0)];
+    float4 c10 = Source[int2(x1, y0)];
+    float4 c01 = Source[int2(x0, y1)];
+    float4 c11 = Source[int2(x1, y1)];
+    
+    float4 c0 = lerp(c00, c10, fx);
+    float4 c1 = lerp(c01, c11, fx);
+    float4 color = lerp(c0, c1, fy);
+    
+    Result[id.xy] = color;
+}

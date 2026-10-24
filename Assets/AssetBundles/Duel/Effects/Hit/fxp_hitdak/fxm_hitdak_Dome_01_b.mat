@@ -1,0 +1,63 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: fxm_hitdak_Dome_01_b
+  m_Shader: {fileID: 4800000, guid: 89d55690a14f32840ba3b1bc32f1ddbd, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: 3000
+  stringTagMap: {}
+  disabledShaderPasses:
+  - MOTIONVECTORS
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _Sub_Texture:
+        m_Texture: {fileID: 2800000, guid: 75280842614f5e6438ade3e2b9a21a60, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Texture:
+        m_Texture: {fileID: 2800000, guid: 75280842614f5e6438ade3e2b9a21a60, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_Lightmaps:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_LightmapsInd:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_ShadowMasks:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _Direction: 90
+    - _QueueControl: 0
+    - _QueueOffset: 0
+    - _Scroll_Speed: 0.3
+    - _Soft_Particle: 1
+    - _Soft_Particle_Far: 5
+    - _Soft_Particle_Near: 0
+    - _Step_Alpha_Blur: 1
+    - _Sub_Scroll_Speed: 1
+    m_Colors:
+    - _Color_01: {r: 0.11273098, g: 0, b: 1, a: 0}
+    - _Color_02: {r: 0.11494085, g: 0, b: 0.4245283, a: 0}
+    - _Sub_Color: {r: 0.8386233, g: 0.18620966, b: 1.3612566, a: 0}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 0

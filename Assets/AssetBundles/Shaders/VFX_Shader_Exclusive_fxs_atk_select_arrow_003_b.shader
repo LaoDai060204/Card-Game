@@ -1,0 +1,58 @@
+Shader "VFX_Shader/Exclusive/fxs_atk_select_arrow_003_b" {
+	Properties {
+		[ToggleUI] _Rollover ("Rollover", Float) = 0
+		[HDR] _Selected_Color_01 ("Selected Color 01", Vector) = (0,0.2828427,1.059274,0)
+		[HDR] _Selected_Color_02 ("Selected Color 02", Vector) = (0.6637754,1.528214,1.655534,1)
+		[HDR] _Default_Color_01 ("Default Color 01", Vector) = (0.2783019,0.6047384,1,0)
+		[HDR] _Default_Color_2 ("Default Color 02", Vector) = (0.3066038,0.952507,1,1)
+		[NoScaleOffset] _Texture2DAsset_b6d1fd99174c608f800b61fcd5471719_Out_0_Texture2D ("Texture2D", 2D) = "white" {}
+		[NoScaleOffset] _Texture2DAsset_866488b0fc8d338ca1244df079d54189_Out_0_Texture2D ("Texture2D", 2D) = "white" {}
+		[NoScaleOffset] _Texture2DAsset_7258d16c8bba4ee4a9ec0071720a13ad_Out_0_Texture2D ("Texture2D", 2D) = "white" {}
+		[HideInInspector] _QueueOffset ("_QueueOffset", Float) = 0
+		[HideInInspector] _QueueControl ("_QueueControl", Float) = -1
+		[HideInInspector] [NoScaleOffset] unity_Lightmaps ("unity_Lightmaps", 2DArray) = "" {}
+		[HideInInspector] [NoScaleOffset] unity_LightmapsInd ("unity_LightmapsInd", 2DArray) = "" {}
+		[HideInInspector] [NoScaleOffset] unity_ShadowMasks ("unity_ShadowMasks", 2DArray) = "" {}
+	}
+	//DummyShaderTextExporter
+	SubShader{
+		Tags { "RenderType" = "Opaque" }
+		LOD 200
+
+		Pass
+		{
+			HLSLPROGRAM
+			#pragma vertex vert
+			#pragma fragment frag
+
+			float4x4 unity_ObjectToWorld;
+			float4x4 unity_MatrixVP;
+
+			struct Vertex_Stage_Input
+			{
+				float4 pos : POSITION;
+			};
+
+			struct Vertex_Stage_Output
+			{
+				float4 pos : SV_POSITION;
+			};
+
+			Vertex_Stage_Output vert(Vertex_Stage_Input input)
+			{
+				Vertex_Stage_Output output;
+				output.pos = mul(unity_MatrixVP, mul(unity_ObjectToWorld, input.pos));
+				return output;
+			}
+
+			float4 frag(Vertex_Stage_Output input) : SV_TARGET
+			{
+				return float4(1.0, 1.0, 1.0, 1.0); // RGBA
+			}
+
+			ENDHLSL
+		}
+	}
+	Fallback "Hidden/Shader Graph/FallbackError"
+	//CustomEditor "UnityEditor.ShaderGraph.GenericShaderGraphMaterialGUI"
+}

@@ -1,0 +1,70 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: fxm_hitwtr_wave
+  m_Shader: {fileID: 4800000, guid: f674d65035912d14dbf074a0e79b5e68, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: 3000
+  stringTagMap: {}
+  disabledShaderPasses:
+  - MOTIONVECTORS
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _MASK:
+        m_Texture: {fileID: 2800000, guid: 71bf6e291626cdc45b600d9f255d5e94, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Texture:
+        m_Texture: {fileID: 2800000, guid: 9ac617b1141dfab4b933a40ed2bb7bd9, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_Lightmaps:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_LightmapsInd:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_ShadowMasks:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _Alpha_Smoothstep_Blur: 0.2
+    - _Color_Rate: 1
+    - _MASK_Rotation: 180
+    - _MASK_Smoothstep: 0
+    - _MASK_Smoothstep_Blur: 0.599
+    - _QueueControl: 0
+    - _QueueOffset: 0
+    - _Rotation: 0
+    - _Scroll_X: 0
+    - _Scroll_Y: 0.3
+    - _Texture_Smoothstep: 0.087
+    - _Texture_Smoothstep_Blur: 0.734
+    - _Tiling_X: 4
+    - _Tiling_Y: 0.3
+    - _use_Smoothstep: 1
+    m_Colors:
+    - _Color_01: {r: 0.4669811, g: 0.8411395, b: 1, a: 0}
+    - _Color_02: {r: 0.36320752, g: 0.8565157, b: 1, a: 0}
+    - _MASK_Cgannel_Selection: {r: 1, g: 0, b: 0, a: 0}
+    - _Texture_Cgannel_Selection: {r: 0, g: 1, b: 0, a: 0}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 0

@@ -1,0 +1,67 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: MT_Grave_002_01_far
+  m_Shader: {fileID: 4800000, guid: 324a1aa40b13d4844bbb7fcc1da9eb81, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: 3000
+  stringTagMap: {}
+  disabledShaderPasses:
+  - MOTIONVECTORS
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _Texture2D:
+        m_Texture: {fileID: 2800000, guid: b560fd39bb94c8648bf4ea2b89697278, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Texture2DLight:
+        m_Texture: {fileID: 2800000, guid: 79555d37038c90e4591e6cb4fd52da5d, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_Lightmaps:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_LightmapsInd:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_ShadowMasks:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _ExcludeCardExist: 0
+    - _ExcludeMouseOver: 0
+    - _ExcludePressButton: 0
+    - _GraveCardExist: 0
+    - _GraveMouseOver: 0
+    - _GravePressButton: 0
+    - _IntensityExcludeCardExist: 0.4
+    - _IntensityExcludeMouseOver: 0.1
+    - _IntensityGraveCardExist: 0.4
+    - _IntensityGraveMouseOver: 0.1
+    - _QueueControl: 0
+    - _QueueOffset: 0
+    m_Colors:
+    - _BaseColorExclude: {r: 0.8851676, g: 0, b: 1, a: 0}
+    - _BaseColorGrave: {r: 0, g: 0.1580373, b: 0.9528302, a: 0}
+    - _HighlightExclude: {r: 0.9494373, g: 0.2877358, b: 1, a: 0}
+    - _HighlightGrave: {r: 0, g: 0.4411116, b: 1, a: 0}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 0

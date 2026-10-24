@@ -1,0 +1,68 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: fxm_grave_godray_001_k
+  m_Shader: {fileID: 4800000, guid: a782b1473fc6ba245b3c8f920999fe2d, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: 3000
+  stringTagMap: {}
+  disabledShaderPasses:
+  - MOTIONVECTORS
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _MASK:
+        m_Texture: {fileID: 2800000, guid: 975e4c925bcc09046a3b3e7dff6c6436, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Texture:
+        m_Texture: {fileID: 2800000, guid: aa78dcd0e2bc9114fbf7354324c08338, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_Lightmaps:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_LightmapsInd:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_ShadowMasks:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _ADD_MASK_Switch: 1
+    - _ADD_Noise_Switch: 0
+    - _Direction: -90
+    - _MASK_Rotate: 0
+    - _QueueControl: 0
+    - _QueueOffset: 0
+    - _Soft_Particle: 1
+    - _Soft_Particle_Far: 1
+    - _Soft_Particle_Near: 0
+    - _Texture_Clamp_Switch: 1
+    - _add_noise_Amount: 3
+    - _add_noise_Opacity: 1
+    - _add_noise_Speed: 0
+    - _add_noise_Tiling_X: 1
+    - _add_noise_Tiling_Y: 1
+    m_Colors:
+    - _Color: {r: 0.23584908, g: 0.18794224, b: 0.05896227, a: 1}
+    - _Texture_Select_channel: {r: 1, g: 0, b: 0, a: 0}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 0

@@ -1,0 +1,69 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: fxm_hitfie_Blue_imp_002
+  m_Shader: {fileID: 4800000, guid: 2de613156957c9945a4f1be1531aa506, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: 3000
+  stringTagMap: {}
+  disabledShaderPasses:
+  - MOTIONVECTORS
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _Shape_Texture:
+        m_Texture: {fileID: 2800000, guid: eab1bd947232e974fbfbd42ca41b676d, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Texture:
+        m_Texture: {fileID: 2800000, guid: 75280842614f5e6438ade3e2b9a21a60, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_Lightmaps:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_LightmapsInd:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_ShadowMasks:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _Color_Style: 1
+    - _Color_Style_Rotale: -90
+    - _QueueControl: 0
+    - _QueueOffset: 0
+    - _Shape_Add_Noise_Size: 30
+    - _Shape_Rotation: 180
+    - _Soft_Particle: 0
+    - _Soft_Particle_Far: 0
+    - _Soft_Particle_Near: 0
+    - _Texture_Strength: 0.5
+    - _truth: 1
+    m_Colors:
+    - _Color01: {r: 0.078431375, g: 0.37254903, b: 0.7490196, a: 0}
+    - _Color02: {r: 0, g: 0.2084213, b: 1.9904234, a: 0}
+    - _Emissive: {r: 0, g: 1.9333951, b: 3.2111173, a: 0}
+    - _Shape_Channel_Select: {r: 0, g: 1, b: 0, a: 0}
+    - _Texture_Channel_Select: {r: 1, g: 0, b: 0, a: 0}
+    - _Texture_Tilling: {r: 1, g: 1, b: 0, a: 0}
+    - _truth_Emissive: {r: 0, g: 4.441775, b: 7.37721, a: 0}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 0

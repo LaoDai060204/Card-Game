@@ -1,0 +1,75 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: MtEfReleaseExcludeTrail01
+  m_Shader: {fileID: 4800000, guid: 3d0f4bec925707340906e0a993c6b0e5, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: 3000
+  stringTagMap: {}
+  disabledShaderPasses:
+  - MOTIONVECTORS
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - unity_Lightmaps:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_LightmapsInd:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_ShadowMasks:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _Alpha: 0.05
+    - _AlphaClip: 0
+    - _AlphaToMask: 0
+    - _Alphapow: 0.17
+    - _Animator_Alpha: 1
+    - _BaseBlur: 0.4
+    - _Blend: 2
+    - _Camera_Offset: 0
+    - _CastShadows: 0
+    - _Cull: 0
+    - _DstBlend: 1
+    - _Emission_truth_on: 1
+    - _MainTex: 0
+    - _QueueControl: 0
+    - _QueueOffset: 0
+    - _RING_Blur: 3.35
+    - _RING_ON: 0
+    - _RING_Radial: 0
+    - _Radial_Scale: 1
+    - _Soft_Particle: 0
+    - _Soft_Particle_Far: 0
+    - _Soft_Particle_Near: 0
+    - _SrcBlend: 5
+    - _Step: 0
+    - _Step_Minus: 0
+    - _Step_Slider: 0.5
+    - _Surface: 1
+    - _ZTest: 4
+    - _ZWrite: 0
+    - _ZWriteControl: 0
+    m_Colors:
+    - _Emission: {r: 1, g: 1, b: 1, a: 1}
+    - _Emission_truth: {r: 1.4980391, g: 1.4980391, b: 1.4980391, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 0

@@ -1,0 +1,59 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: add_Thunder01
+  m_Shader: {fileID: 4800000, guid: ce6e8489fbfba784fa5e5e30559d25b9, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords:
+  - ETC1_EXTERNAL_ALPHA
+  - _ZTEST_LEQUAL
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: 3000
+  stringTagMap: {}
+  disabledShaderPasses:
+  - MOTIONVECTORS
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _SampleTexture2DLOD_9a59031fc66f2b80a0a85527aaa30271_Texture_1_Texture2D:
+        m_Texture: {fileID: 2800000, guid: 04c97459d48f8b14b89e6d52b51cb6bf, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_Lightmaps:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_LightmapsInd:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_ShadowMasks:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _ColorSlider: 1.5
+    - _Height: 0.5
+    - _QueueControl: 0
+    - _QueueOffset: 0
+    - _Reverse: 1
+    - _truth: 1
+    m_Colors:
+    - _ColorMain: {r: 0.1772202, g: 1.247836, b: 2.603774, a: 1}
+    - _ColorSub: {r: 0.7117426, g: 1.720795, b: 1.65773, a: 1}
+    - _truth_ColorMain: {r: 0, g: 1.6608379, b: 8.458687, a: 1}
+    - _truth_ColorSub: {r: 0.48506832, g: 3.546016, b: 3.546016, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 0

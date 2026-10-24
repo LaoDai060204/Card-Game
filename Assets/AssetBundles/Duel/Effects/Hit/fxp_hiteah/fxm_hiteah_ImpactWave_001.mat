@@ -1,0 +1,67 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: fxm_hiteah_ImpactWave_001
+  m_Shader: {fileID: 4800000, guid: 8699561445b0a774e97c1392e5adf877, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: 3000
+  stringTagMap: {}
+  disabledShaderPasses:
+  - MOTIONVECTORS
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - Texture2D_bfe6c9ea9c4c4ce4956e0d2e3f551883:
+        m_Texture: {fileID: 2800000, guid: 8f5be623dc85d6046a7f0904f81ec72f, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_Lightmaps:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_LightmapsInd:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_ShadowMasks:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _Color_Direction: 180
+    - _Color_Direction_Strength: 1
+    - _Main_Noise_Tilling_X: 3
+    - _Main_Noise_Tilling_Y: 0.1
+    - _QueueControl: 0
+    - _QueueOffset: 0
+    - _Soft_Particle: 0
+    - _Soft_Particle_Far: 0
+    - _Soft_Particle_Near: 0
+    - _Sub_Gradient_Strength: 2
+    - _Sub_Noise_Tilling_X: 2
+    - _Sub_Noise_Tilling_Y: 0.74
+    - _truth: 1
+    m_Colors:
+    - _Color_01: {r: 1, g: 0.6786062, b: 0.15566039, a: 0}
+    - _Color_02: {r: 0.78431374, g: 0.61960787, b: 0.34901962, a: 0}
+    - _Main_Noise: {r: 0, g: 0, b: 1, a: 0}
+    - _Sub_Color: {r: 1, g: 0, b: 0, a: 0}
+    - _Sub_Noise: {r: 1, g: 1, b: 1, a: 0}
+    - _truth_Color_01: {r: 0.8679245, g: 0.39671808, b: 0.05322181, a: 0}
+    - _truth_Color_02: {r: 0.6320754, g: 0.34633708, b: 0.07453719, a: 0}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 0

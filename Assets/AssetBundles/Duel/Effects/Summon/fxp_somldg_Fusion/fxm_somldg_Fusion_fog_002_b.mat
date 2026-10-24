@@ -1,0 +1,70 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: fxm_somldg_Fusion_fog_002_b
+  m_Shader: {fileID: 4800000, guid: cf04def8daf07664ba169e0f3fa47228, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: 3000
+  stringTagMap: {}
+  disabledShaderPasses:
+  - MOTIONVECTORS
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - unity_Lightmaps:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_LightmapsInd:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_ShadowMasks:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _ALL_MASK_Size: 1
+    - _ALL_MASK_Step: 0.5
+    - _Color_Noise_Amount: 3
+    - _Color_Noise_Scroll_X: 0
+    - _Color_Noise_Scroll_Y: 0.3
+    - _Color_Step: 0.514
+    - _Color_Value: 0
+    - _Distortion_Noise_Amount: 3
+    - _Distortion_Rotate: 0
+    - _Distortion_Scale: 0.2
+    - _Distortion_Scroll_X: 0
+    - _Distortion_Scroll_Y: 0
+    - _MASK_Level: 0.16
+    - _MASK_Level_Step: 0
+    - _QueueControl: 0
+    - _QueueOffset: 0
+    - _Soft_Particle: 1
+    - _Soft_Particle_Far: 0.1
+    - _Soft_Particle_Near: 0
+    - _UV_Rotate: 0
+    - _Voronoi_Amount: 1
+    - _Voronoi_Speed: 0
+    - _truth: 1
+    m_Colors:
+    - _Color_01: {r: 0.003921569, g: 0, b: 0.49019608, a: 0}
+    - _Color_02: {r: 0, g: 0.019607844, b: 1, a: 0}
+    - _truth_Color_01: {r: 0, g: 0, b: 0.20784314, a: 0}
+    - _truth_Color_02: {r: 0.003921569, g: 0, b: 1, a: 0}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 0
