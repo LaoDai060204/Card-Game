@@ -1,4 +1,4 @@
-using MDPro3;
+using CardGame;
 using UnityEngine.Playables;
 
 namespace YgomSystem.Timeline

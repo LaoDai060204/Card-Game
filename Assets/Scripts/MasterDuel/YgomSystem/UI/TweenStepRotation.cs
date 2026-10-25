@@ -14,7 +14,7 @@ namespace YgomSystem.UI
 
 		protected override void OnSetValue(float par)
 		{
-            // 按 step 步进旋转：目标角度 = from + step * n，n 由 par 决定
+            // Rotate in steps: target angle = from + step * n, with n determined by par.
             Vector3 target = Vector3.Lerp(from, to, par);
 
             Vector3 snapped = target;
@@ -25,7 +25,7 @@ namespace YgomSystem.UI
             if (step.z > 0f)
                 snapped.z = from.z + Mathf.Round((target.z - from.z) / step.z) * step.z;
 
-            // 支持绕 origin 轴心旋转（本地坐标）
+            // Support rotation around the origin pivot in local coordinates.
             if (origin != Vector3.zero)
             {
                 Vector3 pos = transform.localPosition - origin;

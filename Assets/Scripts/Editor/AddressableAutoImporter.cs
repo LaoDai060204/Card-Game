@@ -1,4 +1,4 @@
-using MDPro3;
+using CardGame;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
@@ -108,7 +108,7 @@ public class AddressableAutoImporter : AssetPostprocessor
         return true;
     }
 
-    [MenuItem("Tools/MDPro3/Sync Duel Links Characters")]
+    [MenuItem("Tools/CardGame/Sync Duel Links Characters")]
     public static void SyncDuelLinksCharacters()
     {
         var settings = AddressableAssetSettingsDefaultObject.Settings;

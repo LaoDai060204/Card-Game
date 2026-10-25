@@ -1,6 +1,6 @@
 # Nguồn gốc và thành phần bên thứ ba
 
-**LaoDai Card Game** là bản tùy biến và Việt hóa do **LaoDai060204** duy trì, phát triển từ [MDPro3 của Sherry Chaos](https://code.moenext.com/sherry_chaos/MDPro3) và các cộng tác viên. Mã nền được nhập tại commit `e177cd8d53092ae9249e37b38d3cef0040e41095`.
+**Card Game** là bản tùy biến và Việt hóa do **LaoDai060204** duy trì, phát triển từ [MDPro3 của Sherry Chaos](https://code.moenext.com/sherry_chaos/MDPro3) và các cộng tác viên. Mã nền được nhập tại commit `e177cd8d53092ae9249e37b38d3cef0040e41095`.
 
 ## Mã và dữ liệu nền
 

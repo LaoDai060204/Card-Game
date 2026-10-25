@@ -7,25 +7,25 @@ public class ScriptReferenceReplacerEditor : EditorWindow
     private ScriptReplacementConfig replacementConfig;
     private Vector2 scrollPosition;
 
-    [MenuItem("Assets/替换脚本引用", false, 102)]
+    [MenuItem("Assets/Replace Script References", false, 102)]
     private static void ReplaceScriptReferences()
     {
-        // 首先显示确认弹窗
+        // Show a confirmation dialog first.
         bool userConfirmed = EditorUtility.DisplayDialog(
-            "危险操作确认", // 标题
-            $"你确定要进行【替换脚本引用】' 吗？此操作不可逆！\n\n建议提前备份项目。", // 消息
-            "继续", // 确定按钮
-            "取消" // 取消按钮
+            "Confirm Destructive Operation", // Title
+            $"Replace script references? This operation cannot be undone!\n\nBack up the project before continuing.", // Message
+            "Continue", // Confirm button
+            "Cancel" // Cancel button
         );
 
-        // 如果用户点击了“取消”，则终止操作
+        // Stop if the user selects Cancel.
         if (!userConfirmed)
         {
-            Debug.Log("用户取消了操作。");
+            Debug.Log("The operation was canceled.");
             return;
         }
 
-        // 尝试查找现有的配置
+        // Try to find an existing configuration.
         string[] configGUIDs = AssetDatabase.FindAssets("t:ScriptReplacementConfig");
         ScriptReplacementConfig config = null;
         if (configGUIDs.Length > 0)
@@ -40,12 +40,12 @@ public class ScriptReferenceReplacerEditor : EditorWindow
             return;
         }
 
-        // 处理资产
+        // Process assets.
         var assetPath = AssetDatabase.GetAssetPath(Selection.activeObject);
         ProcessAsset(assetPath, config);
     }
 
-    [MenuItem("Assets/替换脚本引用", true)]
+    [MenuItem("Assets/Replace Script References", true)]
     private static bool ValidateReplaceStringsInAsset()
     {
         return Selection.activeObject != null &&
@@ -54,19 +54,19 @@ public class ScriptReferenceReplacerEditor : EditorWindow
 
     private static void ProcessAsset(string assetPath, ScriptReplacementConfig config)
     {
-        // 读取资产的文本内容
+        // Read the asset as text.
         string assetContent = File.ReadAllText(assetPath);
         bool modified = false;
 
-        // 遍历所有需要替换的配置
+        // Process each configured replacement.
         foreach (var pair in config.replacementPairs)
         {
-            // 构造旧的m_Script行内容
+            // Build the old m_Script line.
             string oldScriptLine = $"m_Script: {{fileID: {pair.oldFileId}, guid: {pair.oldGuid}, type: 3}}";
-            // 构造新的m_Script行内容
+            // Build the new m_Script line.
             string newScriptLine = $"m_Script: {{fileID: {pair.newFileId}, guid: {pair.newGuid}, type: 3}}";
 
-            // 检查并替换
+            // Find and replace matching text.
             if (assetContent.Contains(oldScriptLine))
             {
                 assetContent = assetContent.Replace(oldScriptLine, newScriptLine);
@@ -75,7 +75,7 @@ public class ScriptReferenceReplacerEditor : EditorWindow
             }
         }
 
-        // 如果内容被修改，写回文件并重新导入资产
+        // Write the modified content and reimport the asset.
         if (modified)
         {
             File.WriteAllText(assetPath, assetContent);
@@ -88,7 +88,7 @@ public class ScriptReferenceReplacerEditor : EditorWindow
         }
     }
 
-    // 提供一个编辑器窗口以便于操作和查看配置（可选）
+    // Optional editor window for viewing and editing the configuration.
     [MenuItem("Tools/Script Reference Replacer")]
     public static void ShowWindow()
     {
@@ -100,7 +100,7 @@ public class ScriptReferenceReplacerEditor : EditorWindow
         GUILayout.Label("Script Reference Replacer Tool", EditorStyles.boldLabel);
         EditorGUILayout.Space();
 
-        // 允许拖拽赋值
+        // Allow drag-and-drop assignment.
         replacementConfig = (ScriptReplacementConfig)EditorGUILayout.ObjectField("Replacement Config", replacementConfig, typeof(ScriptReplacementConfig), false);
 
         if (replacementConfig == null)

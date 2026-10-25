@@ -1,4 +1,4 @@
-﻿using YGOSharp.OCGWrapper;
+using YGOSharp.OCGWrapper;
 using YGOSharp.OCGWrapper.Enums;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,68 +13,68 @@ namespace WindBot.Game.AI.Decks
     {
         public class CardId
         {
-            public const int Benkei = 19510093;//弁庆
-            public const int Wagon = 34496660;//大八
-            public const int Soulpiercer = 90361010;//岩融
-            public const int Wakaushi = 82112494;//牛若
-            public const int  Scales = 78391364;//天秤
-            public const int Booster = 56727340;//地铠
-            public const int Motorbike = 83334932;//摩托
-            public const int Soulhorns = 14624296;//双角
-            public const int Soulpeacemaker = 95500396;//仲裁
+            public const int Benkei = 19510093;// Superheavy Samurai Monk Big Benkei
+            public const int Wagon = 34496660;// Superheavy Samurai Wagon
+            public const int Soulpiercer = 90361010;// Superheavy Samurai Soulpiercer
+            public const int Wakaushi = 82112494;// Superheavy Samurai Prodigy Wakaushi
+            public const int  Scales = 78391364;// Superheavy Samurai Scales
+            public const int Booster = 56727340;// Superheavy Samurai Soulgaia Booster
+            public const int Motorbike = 83334932;// Superheavy Samurai Motorbike
+            public const int Soulhorns = 14624296;// Superheavy Samurai Soulhorns
+            public const int Soulpeacemaker = 95500396;// Superheavy Samurai Soulpeacemaker
 
-            public const int Regulus = 10604644;//轩辕十四
+            public const int Regulus = 10604644;// Therion "King" Regulus
 
-            public const int MaxxG = 23434538;//增殖的G
-            public const int JoyousSpring = 14558127;//灰流丽
-            public const int PsyFrameDriver = 49036338;//PSY骨架驱动者
-            public const int PsyFramegearGamma = 38814750;//PSY骨架装备·γ
-            public const int EffectVeiler = 97268402;//效果遮蒙者
-            public const int HauntedMansion = 73642296;//屋敷童
-            public const int SnowRabbit = 59438930;//幽鬼兔
-            public const int LockBird = 94145021;//小丑与锁鸟
+            public const int MaxxG = 23434538;// Maxx "C"
+            public const int JoyousSpring = 14558127;// Ash Blossom & Joyous Spring
+            public const int PsyFrameDriver = 49036338;// PSY-Frame Driver
+            public const int PsyFramegearGamma = 38814750;// PSY-Framegear Gamma
+            public const int EffectVeiler = 97268402;// Effect Veiler
+            public const int HauntedMansion = 73642296;// Ghost Belle & Haunted Mansion
+            public const int SnowRabbit = 59438930;// Ghost Ogre & Snow Rabbit
+            public const int LockBird = 94145021;// Droll & Lock Bird
 
             //extra
-            public const int Masurawo = 64193046;//益荒男
-            public const int Fleur = 84815190;//鲜花女男爵
-            public const int ASStardustDragon = 30983281;//加速同调星尘龙
-            public const int StardustDragon = 30983281;//星尘龙
-            public const int SavageDragon = 27548199;//狞猛龙
-            public const int Sarutobi = 76471944;//猿飞
-            public const int PSYFramelordOmega = 74586817;//PSY骨架王·Ω
-            public const int GearGigant = 28912357;//齿轮齿巨人
-            public const int Unicorn = 38342335;//独角兽
-            public const int Elf = 27381364;//卫星闪灵·淘气精灵
-            public const int Genius = 22423493;//路径灵
-            public const int IP = 65741786;//I：P伪装舞会莱娜
-            public const int Scarecrow = 33918636;//案山子
+            public const int Masurawo = 64193046;// Superheavy Samurai Brave Masurawo
+            public const int Fleur = 84815190;// Baronne de Fleur
+            public const int ASStardustDragon = 30983281;// Accel Synchro Stardust Dragon
+            public const int StardustDragon = 30983281;// Accel Synchro Stardust Dragon
+            public const int SavageDragon = 27548199;// Borreload Savage Dragon
+            public const int Sarutobi = 76471944;// Superheavy Samurai Ninja Sarutobi
+            public const int PSYFramelordOmega = 74586817;// PSY-Framelord Omega
+            public const int GearGigant = 28912357;// Gear Gigant X
+            public const int Unicorn = 38342335;// Knightmare Unicorn
+            public const int Elf = 27381364;// Spright Elf
+            public const int Genius = 22423493;// Qliphort Genius
+            public const int IP = 65741786;// I:P Masquerena
+            public const int Scarecrow = 33918636;// Superheavy Samurai Scarecrow
 
         }
 
         private bool normal_summon = false;
         private bool p_summoned = false;
         private bool p_summoning = false;
-        private bool activate_Motorbike = false;//摩托
-        private bool activate_Wakaushi = false;//神童
-        private bool activate_Scales = false;//天秤
-        private bool activate_Wagon = false;//大巴
-        private bool activate_Booster = false;//地铠
-        private bool activate_Soulpeacemaker = false;//仲裁
-        private bool  activate_Benkei = false;//弁庆
-        private bool  need_Gear = false;//齿轮齿巨人
-        //案山子
+        private bool activate_Motorbike = false;// Motorbike
+        private bool activate_Wakaushi = false;// Wakaushi
+        private bool activate_Scales = false;// Scales
+        private bool activate_Wagon = false;// Wagon
+        private bool activate_Booster = false;// Booster
+        private bool activate_Soulpeacemaker = false;// Soulpeacemaker
+        private bool  activate_Benkei = false;// Benkei
+        private bool  need_Gear = false;// Gear
+        // Scarecrow
         private bool activate_Scarecrow=false;
         private bool summon_Scarecrow=false;
         private bool summon_Scarecrow2=true;
-        private bool activate_Sarutobi = false;//猿飞
-        private bool activate_Genius = false;//路径灵
-        //淘气精灵
+        private bool activate_Sarutobi = false;// Sarutobi
+        private bool activate_Genius = false;// Genius
+        // Spright Elf
         private bool activate_Elf = false;
         private bool summon_Elf = false;
-        //手坑
-        private bool activate_MaxxG = false;//增殖的G
+        // Hand traps
+        private bool activate_MaxxG = false;// Maxx G
         private bool activate_PSY = false;//PSY
-        private bool activate_LockBird = false;//小丑与锁鸟
+        private bool activate_LockBird = false;// Lock Bird
         private bool to_deck = false;
 
         public SuperheavySamuraiExecutor(GameAI ai, Duel duel)

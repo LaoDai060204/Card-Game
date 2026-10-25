@@ -42,15 +42,15 @@ Shader "Hidden/ImageMerger"
             fixed4 frag (v2f i) : SV_Target
             {
                 fixed4 bg = tex2D(_MainTex, i.uv);
-                // 判断当前 uv 是否在 overlay 矩形区域内
+                // Check whether the current UV is inside the overlay rectangle
                 if (i.uv.x >= _OverlayUVRect.x && i.uv.x <= _OverlayUVRect.x + _OverlayUVRect.z &&
                     i.uv.y >= _OverlayUVRect.y && i.uv.y <= _OverlayUVRect.y + _OverlayUVRect.w)
                 {
                     float2 overlayUV = (i.uv - _OverlayUVRect.xy) / _OverlayUVRect.zw;
                     fixed4 overlay = tex2D(_OverlayTex, overlayUV);
         
-                    // 如果 Face 该点的 alpha 不为 0，输出 Face 颜色；否则输出 Body 颜色
-                    if (overlay.a > 0.0)   // 大于 0 即视为不透明
+                    // Use the face color when its alpha is nonzero; otherwise use the body color
+                    if (overlay.a > 0.0)   // Treat positive alpha as opaque
                         return overlay;
                     else
                         return bg;

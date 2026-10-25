@@ -9,29 +9,29 @@ public class PlayableDirectorCleaner : EditorWindow
     private static GameObject targetPrefab;
     private static string originalPrefabPath;
 
-    [MenuItem("Assets/清理PlayableDirector引用", false, 105)]
+    [MenuItem("Assets/Clean PlayableDirector References", false, 105)]
     private static void CleanPlayableDirectorReferences()
     {
-        // 获取选中的Prefab
+        // Get the selected prefab.
         targetPrefab = Selection.activeGameObject;
         if (targetPrefab == null)
         {
-            EditorUtility.DisplayDialog("错误", "请选择一个Prefab资产", "确定");
+            EditorUtility.DisplayDialog("Error", "Select a prefab asset.", "OK");
             return;
         }
 
         originalPrefabPath = AssetDatabase.GetAssetPath(targetPrefab);
         if (string.IsNullOrEmpty(originalPrefabPath))
         {
-            EditorUtility.DisplayDialog("错误", "选中的对象不是Prefab资产", "确定");
+            EditorUtility.DisplayDialog("Error", "The selected object is not a prefab asset.", "OK");
             return;
         }
 
-        // 显示保存选项窗口
+        // Show the save options window.
         ShowSaveOptionWindow();
     }
 
-    [MenuItem("Assets/清理PlayableDirector引用", true)]
+    [MenuItem("Assets/Clean PlayableDirector References", true)]
     private static bool Validate()
     {
         return Selection.activeObject != null &&
@@ -40,15 +40,15 @@ public class PlayableDirectorCleaner : EditorWindow
 
     private static void ShowSaveOptionWindow()
     {
-        if (EditorUtility.DisplayDialog("清理选项",
-            "请选择保存方式", "写入源文件", "新建文件保存"))
+        if (EditorUtility.DisplayDialog("Cleanup Options",
+            "Choose how to save the result", "Overwrite Original", "Save as New File"))
         {
-            // 写入源文件
+            // Overwrite Original
             CleanAndSavePrefab(originalPrefabPath);
         }
         else
         {
-            // 新建文件保存
+            // Save as New File
             string newPath = GetNewPrefabPath(originalPrefabPath);
             CleanAndSavePrefab(newPath);
         }
@@ -63,22 +63,22 @@ public class PlayableDirectorCleaner : EditorWindow
         string newFileName = fileName + "_Cleaned";
         string newPath = Path.Combine(directory, newFileName + extension);
 
-        // 确保路径唯一
+        // Ensure the path is unique.
         return AssetDatabase.GenerateUniqueAssetPath(newPath);
     }
 
     private static void CleanAndSavePrefab(string savePath)
     {
-        Debug.Log($"[PlayableDirector清理] 开始清理: {originalPrefabPath}");
+        Debug.Log($"[PlayableDirector Cleanup] Starting cleanup: {originalPrefabPath}");
 
-        // 加载Prefab实例进行编辑
+        // Load the prefab contents for editing.
         GameObject prefabInstance = PrefabUtility.LoadPrefabContents(originalPrefabPath);
 
         bool cleaned = false;
         int directorsCleaned = 0;
         PlayableDirector[] directors = prefabInstance.GetComponentsInChildren<PlayableDirector>(true);
 
-        Debug.Log($"[PlayableDirector清理] 找到 {directors.Length} 个PlayableDirector组件");
+        Debug.Log($"[PlayableDirector Cleanup] Found {directors.Length} PlayableDirector components");
 
         foreach (PlayableDirector director in directors)
         {
@@ -86,33 +86,33 @@ public class PlayableDirectorCleaner : EditorWindow
             {
                 cleaned = true;
                 directorsCleaned++;
-                Debug.Log($"[PlayableDirector清理] 已清理Director: {director.gameObject.name}", director);
+                Debug.Log($"[PlayableDirector Cleanup] Cleaned Director: {director.gameObject.name}", director);
             }
         }
 
         if (cleaned)
         {
-            // 保存Prefab
+            // Save the prefab
             PrefabUtility.SaveAsPrefabAsset(prefabInstance, savePath, out bool success);
 
             if (success)
             {
-                Debug.Log($"[PlayableDirector清理] 成功清理并保存到: {savePath}\n清理了 {directorsCleaned} 个Director的无效引用");
-                EditorUtility.DisplayDialog("成功", $"PlayableDirector引用已清理并保存到: {savePath}\n清理了 {directorsCleaned} 个Director的无效引用", "确定");
+                Debug.Log($"[PlayableDirector Cleanup] Cleaned and saved to: {savePath}\nRemoved invalid references from {directorsCleaned} Directors");
+                EditorUtility.DisplayDialog("Success", $"PlayableDirector references cleaned and saved to: {savePath}\nRemoved invalid references from {directorsCleaned} Directors", "OK");
             }
             else
             {
-                Debug.LogError("[PlayableDirector清理] 保存Prefab失败");
-                EditorUtility.DisplayDialog("错误", "保存Prefab失败", "确定");
+                Debug.LogError("[PlayableDirector Cleanup] Failed to save the prefab");
+                EditorUtility.DisplayDialog("Error", "Failed to save the prefab", "OK");
             }
         }
         else
         {
-            Debug.Log("[PlayableDirector清理] 未找到需要清理的PlayableDirector引用");
-            EditorUtility.DisplayDialog("信息", "未找到需要清理的PlayableDirector引用", "确定");
+            Debug.Log("[PlayableDirector Cleanup] No PlayableDirector references require cleanup");
+            EditorUtility.DisplayDialog("Information", "No PlayableDirector references require cleanup", "OK");
         }
 
-        // 卸载Prefab实例
+        // Unload the prefab contents.
         PrefabUtility.UnloadPrefabContents(prefabInstance);
     }
 
@@ -121,19 +121,19 @@ public class PlayableDirectorCleaner : EditorWindow
         bool modified = false;
         SerializedObject so = new SerializedObject(director);
 
-        // 获取TimelineAsset引用
+        // Get the TimelineAsset reference.
         PlayableAsset timelineAsset = director.playableAsset;
         SerializedProperty playableAssetProp = so.FindProperty("m_PlayableAsset");
 
         if (timelineAsset == null)
         {
-            Debug.LogWarning($"[PlayableDirector清理] Director {director.gameObject.name} 没有设置TimelineAsset，将清空所有绑定", director);
+            Debug.LogWarning($"[PlayableDirector Cleanup] Director {director.gameObject.name} has no TimelineAsset; all bindings will be cleared", director);
 
-            // 清理所有绑定和暴露引用
+            // Clean all bindings and exposed references.
             SerializedProperty sceneBindingsProp2 = so.FindProperty("m_SceneBindings");
             if (sceneBindingsProp2 != null && sceneBindingsProp2.isArray && sceneBindingsProp2.arraySize > 0)
             {
-                Debug.Log($"[PlayableDirector清理] 清空 {sceneBindingsProp2.arraySize} 个场景绑定");
+                Debug.Log($"[PlayableDirector Cleanup] Clear {sceneBindingsProp2.arraySize} scene bindings");
                 sceneBindingsProp2.ClearArray();
                 modified = true;
             }
@@ -144,7 +144,7 @@ public class PlayableDirectorCleaner : EditorWindow
                 SerializedProperty referencesProp = exposedReferencesProp2.FindPropertyRelative("m_References");
                 if (referencesProp != null && referencesProp.isArray && referencesProp.arraySize > 0)
                 {
-                    Debug.Log($"[PlayableDirector清理] 清空 {referencesProp.arraySize} 个暴露引用");
+                    Debug.Log($"[PlayableDirector Cleanup] Clear {referencesProp.arraySize} exposed references");
                     referencesProp.ClearArray();
                     modified = true;
                 }
@@ -158,9 +158,9 @@ public class PlayableDirectorCleaner : EditorWindow
             return modified;
         }
 
-        Debug.Log($"[PlayableDirector清理] 处理Director: {director.gameObject.name}, Timeline: {timelineAsset.name}");
+        Debug.Log($"[PlayableDirector Cleanup] Processing Director: {director.gameObject.name}, Timeline: {timelineAsset.name}");
 
-        // 获取当前TimelineAsset的所有轨道绑定信息
+        // Get all track bindings in the current TimelineAsset.
         Dictionary<Object, bool> validBindings = new Dictionary<Object, bool>();
         SerializedObject timelineSo = new SerializedObject(timelineAsset);
         SerializedProperty tracksProp = timelineSo.FindProperty("m_Tracks");
@@ -178,9 +178,9 @@ public class PlayableDirectorCleaner : EditorWindow
             }
         }
 
-        Debug.Log($"[PlayableDirector清理] Timeline {timelineAsset.name} 包含 {validBindings.Count} 个有效轨道");
+        Debug.Log($"[PlayableDirector Cleanup] Timeline {timelineAsset.name} contains {validBindings.Count} valid tracks");
 
-        // 清理m_SceneBindings
+        // Clean m_SceneBindings.
         SerializedProperty sceneBindingsProp = so.FindProperty("m_SceneBindings");
         if (sceneBindingsProp != null && sceneBindingsProp.isArray)
         {
@@ -195,7 +195,7 @@ public class PlayableDirectorCleaner : EditorWindow
 
                 if (keyObject == null)
                 {
-                    Debug.Log($"[PlayableDirector清理: {i}");
+                    Debug.Log($"[PlayableDirector Cleanup: {i}");
                     sceneBindingsProp.DeleteArrayElementAtIndex(i);
                     modified = true;
                 }
@@ -203,11 +203,11 @@ public class PlayableDirectorCleaner : EditorWindow
 
             if (modified)
             {
-                Debug.Log($"[PlayableDirector清理] 场景绑定清理: {initialCount} → {sceneBindingsProp.arraySize}");
+                Debug.Log($"[PlayableDirector Cleanup] Scene binding cleanup: {initialCount} → {sceneBindingsProp.arraySize}");
             }
         }
 
-        // 清理m_ExposedReferences
+        // Clean m_ExposedReferences.
         SerializedProperty exposedReferencesProp = so.FindProperty("m_ExposedReferences");
         if (exposedReferencesProp != null)
         {
@@ -221,13 +221,13 @@ public class PlayableDirectorCleaner : EditorWindow
                 {
                     SerializedProperty referenceProp = referencesProp.GetArrayElementAtIndex(i);
 
-                    // 检查两种序列化格式：
+                    // Check both serialized formats:
                     // 1. - fileID: {fileID: 0}
                     // 2. - 903425b99fe89ab4ea3d8f4394881b4a: {fileID: 0}
 
                     bool shouldRemove = false;
 
-                    // 检查第一种格式：直接检查fileID属性
+                    // First format: inspect the fileID property directly.
                     SerializedProperty fileIDProp = referenceProp.FindPropertyRelative("fileID");
                     if (fileIDProp != null)
                     {
@@ -239,7 +239,7 @@ public class PlayableDirectorCleaner : EditorWindow
                     }
                     else
                     {
-                        // 检查第二种格式：遍历所有子属性
+                        // Second format: inspect all child properties.
                         var iterator = referenceProp.Copy();
                         var endProperty = referenceProp.GetEndProperty();
 
@@ -280,7 +280,7 @@ public class PlayableDirectorCleaner : EditorWindow
 
                 if (removedCount > 0)
                 {
-                    Debug.Log($"[PlayableDirector清理] 移除 {removedCount} 个空暴露引用");
+                    Debug.Log($"[PlayableDirector Cleanup] Remove {removedCount} empty exposed references");
                 }
             }
         }
@@ -288,11 +288,11 @@ public class PlayableDirectorCleaner : EditorWindow
         if (modified)
         {
             so.ApplyModifiedProperties();
-            Debug.Log($"[PlayableDirector清理] Director {director.gameObject.name} 引用清理完成", director);
+            Debug.Log($"[PlayableDirector Cleanup] Director {director.gameObject.name} reference cleanup complete", director);
         }
         else
         {
-            Debug.Log($"[PlayableDirector清理] Director {director.gameObject.name} 无需清理", director);
+            Debug.Log($"[PlayableDirector Cleanup] Director {director.gameObject.name} requires no cleanup", director);
         }
 
         return modified;

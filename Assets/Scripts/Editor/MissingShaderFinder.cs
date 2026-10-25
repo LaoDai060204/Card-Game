@@ -7,37 +7,37 @@ public class MissingShaderFinder : EditorWindow
 {
     private List<Material> _materialsWithMissingShader = new List<Material>();
 
-    [MenuItem("Tools/检查丢失Shader的材质")]
+    [MenuItem("Tools/Find Materials with Missing Shaders")]
     public static void ShowWindow()
     {
-        GetWindow<MissingShaderFinder>("丢失Shader的材质列表");
+        GetWindow<MissingShaderFinder>("Materials with Missing Shaders");
     }
 
     void OnGUI()
     {
-        if (GUILayout.Button("扫描项目", GUILayout.Height(40)))
+        if (GUILayout.Button("Scan Project", GUILayout.Height(40)))
         {
             FindMaterialsWithMissingShader();
         }
 
-        GUILayout.Label($"发现 {_materialsWithMissingShader.Count} 个材质丢失Shader:");
+        GUILayout.Label($"Found {_materialsWithMissingShader.Count} materials have missing shaders:");
         scrollPos = EditorGUILayout.BeginScrollView(scrollPos);
 
         foreach (Material mat in _materialsWithMissingShader)
         {
             EditorGUILayout.BeginHorizontal();
-            // 显示材质名称和路径
+            // Display material names and paths.
             EditorGUILayout.ObjectField(mat, typeof(Material), false);
 
-            // 定位按钮
-            if (GUILayout.Button("定位", GUILayout.Width(60)))
+            // Locate button
+            if (GUILayout.Button("Locate", GUILayout.Width(60)))
             {
                 Selection.activeObject = mat;
                 EditorGUIUtility.PingObject(mat);
             }
 
-            // 修复按钮
-            if (GUILayout.Button("修复(Standard)", GUILayout.Width(80)))
+            // Fix button
+            if (GUILayout.Button("Fix (Standard)", GUILayout.Width(80)))
             {
                 FixShader(mat, Shader.Find("Standard"));
             }
@@ -71,7 +71,7 @@ public class MissingShaderFinder : EditorWindow
             Undo.RecordObject(mat, "Fix Missing Shader");
             mat.shader = replacementShader;
             EditorUtility.SetDirty(mat);
-            Debug.Log($"已修复材质: {mat.name}", mat);
+            Debug.Log($"Fixed material: {mat.name}", mat);
         }
     }
 }

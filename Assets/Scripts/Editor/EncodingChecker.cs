@@ -10,39 +10,39 @@ public class EncodingChecker : EditorWindow
     private List<string> nonUTF8Files = new List<string>();
     private Vector2 scrollPos;
 
-    [MenuItem("Tools/编码检测/检查非UTF-8脚本")]
-    private static void ShowWindow() => GetWindow<EncodingChecker>("脚本编码检测器");
+    [MenuItem("Tools/Encoding Check/Find Non-UTF-8 Scripts")]
+    private static void ShowWindow() => GetWindow<EncodingChecker>("Script Encoding Checker");
 
     private void OnGUI()
     {
-        if (GUILayout.Button("扫描.cs文件（排除Packages）", GUILayout.Height(30)))
+        if (GUILayout.Button("Scan .cs Files (Exclude Packages)", GUILayout.Height(30)))
             ScanScripts();
 
         if (nonUTF8Files.Count > 0)
         {
             GUILayout.Space(10);
-            GUILayout.Label($"发现 {nonUTF8Files.Count} 个非UTF-8文件：");
+            GUILayout.Label($"Found {nonUTF8Files.Count} non-UTF-8 files:");
             scrollPos = EditorGUILayout.BeginScrollView(scrollPos);
             foreach (var file in nonUTF8Files)
             {
                 EditorGUILayout.BeginHorizontal();
                 EditorGUILayout.LabelField(file);
-                if (GUILayout.Button("用VS打开", GUILayout.Width(80)))
+                if (GUILayout.Button("Open in VS", GUILayout.Width(80)))
                     OpenInVS(file);
                 EditorGUILayout.EndHorizontal();
             }
             EditorGUILayout.EndScrollView();
 
-            if (GUILayout.Button("一键转换为UTF-8 without BOM", GUILayout.Height(30)))
+            if (GUILayout.Button("Convert All to UTF-8 without BOM", GUILayout.Height(30)))
                 ConvertAllToUTF8();
         }
         else
         {
-            GUILayout.Label("✅ 所有脚本均为UTF-8 without BOM格式");
+            GUILayout.Label("✅ All scripts use UTF-8 without BOM");
         }
     }
 
-    // 扫描并排除Packages目录
+    // Scan while excluding the Packages directory.
     private void ScanScripts()
     {
         nonUTF8Files.Clear();
@@ -54,7 +54,7 @@ public class EncodingChecker : EditorWindow
             string guid = allScripts[i];
             string path = AssetDatabase.GUIDToAssetPath(guid);
 
-            // 排除Packages目录
+            // Exclude the Packages directory.
             if (path.StartsWith("Packages/") || path.EndsWith(".dll"))
                 continue;
 
@@ -71,8 +71,8 @@ public class EncodingChecker : EditorWindow
                 continue;
 
             if (EditorUtility.DisplayCancelableProgressBar(
-                "扫描中...",
-                $"检测: {Path.GetFileName(path)} ({i + 1}/{total})",
+                "Scanning...",
+                $"Checking: {Path.GetFileName(path)} ({i + 1}/{total})",
                 (float)i / total))
                 break;
 
@@ -82,37 +82,37 @@ public class EncodingChecker : EditorWindow
         EditorUtility.ClearProgressBar();
     }
 
-    // 检测UTF-8 without BOM
+    // Detect UTF-8 without BOM.
     private bool IsUTF8WithoutBOM(string path)
     {
         try
         {
             byte[] bytes = File.ReadAllBytes(path);
 
-            // 排除带BOM的文件
+            // Reject files that contain a BOM.
             if (bytes.Length >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF)
                 return false;
 
-            // 验证是否为合法UTF-8
+            // Check whether the byte sequence is valid UTF-8.
             return IsValidUTF8(bytes);
         }
         catch { return false; }
     }
 
-    // UTF-8字节流验证算法
+    // UTF-8 byte-sequence validation.
     private bool IsValidUTF8(byte[] bytes)
     {
         int i = 0;
         while (i < bytes.Length)
         {
-            if ((bytes[i] & 0x80) == 0x00) i++; // 单字节
-            else if ((bytes[i] & 0xE0) == 0xC0) // 双字节
+            if ((bytes[i] & 0x80) == 0x00) i++; // One-byte sequence
+            else if ((bytes[i] & 0xE0) == 0xC0) // Two-byte sequence
             {
                 if (i + 1 >= bytes.Length || (bytes[i + 1] & 0xC0) != 0x80)
                     return false;
                 i += 2;
             }
-            else if ((bytes[i] & 0xF0) == 0xE0) // 三字节
+            else if ((bytes[i] & 0xF0) == 0xE0) // Three-byte sequence
             {
                 if (i + 2 >= bytes.Length ||
                     (bytes[i + 1] & 0xC0) != 0x80 ||
@@ -120,7 +120,7 @@ public class EncodingChecker : EditorWindow
                     return false;
                 i += 3;
             }
-            else if ((bytes[i] & 0xF8) == 0xF0) // 四字节
+            else if ((bytes[i] & 0xF8) == 0xF0) // Four-byte sequence
             {
                 if (i + 3 >= bytes.Length ||
                     (bytes[i + 1] & 0xC0) != 0x80 ||
@@ -134,31 +134,31 @@ public class EncodingChecker : EditorWindow
         return true;
     }
 
-    // 用VS打开文件（支持VS Code）
+    // Open a file in Visual Studio or VS Code.
     private void OpenInVS(string filePath)
     {
         string fullPath = Path.GetFullPath(filePath);
 
-        // 优先尝试Visual Studio
+        // Try Visual Studio first.
         if (File.Exists(@"C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\devenv.exe"))
             Process.Start("devenv.exe", $"/Edit \"{fullPath}\"");
-        // 备用方案：用VS Code打开
+        // Fall back to VS Code.
         else
             Process.Start("code", $"\"{fullPath}\"");
     }
 
-    // 安全转换编码（保留原内容）
+    // Convert encoding while preserving the content.
     private void ConvertAllToUTF8()
     {
         foreach (string path in nonUTF8Files)
         {
-            // 使用系统编码读取（兼容中文）
+            // Read using the system encoding to support legacy text.
             string content = File.ReadAllText(path, Encoding.Default);
-            // 写入为无BOM的UTF-8
+            // Write UTF-8 without a BOM.
             File.WriteAllText(path, content, new UTF8Encoding(false));
         }
         AssetDatabase.Refresh();
-        UnityEngine.Debug.Log($"已转换 {nonUTF8Files.Count} 个文件");
+        UnityEngine.Debug.Log($"Converted {nonUTF8Files.Count} files");
         nonUTF8Files.Clear();
     }
 }

@@ -18,7 +18,7 @@ namespace Willow.UI
 		{
 			Main_SDF = 0,
 			Title_SDF = 1,
-			未使用 = 2,
+			Unused = 2,
 			Number_SDF = 3,
 			Chat_SDF = 4,
 			Summon_SDF = 5

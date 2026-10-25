@@ -1,4 +1,4 @@
-﻿using YGOSharp.OCGWrapper;
+using YGOSharp.OCGWrapper;
 using YGOSharp.OCGWrapper.Enums;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,40 +18,40 @@ namespace WindBot.Game.AI.Decks
         }
         public class CardId
         {
-            public const int Artifact_Lancea = 34267821;//古遗物-圣枪
-            public const int Dimension_Shifter = 91800273; //大宇宙人
-            public const int MaxxG = 23434538; //增殖的G
-            public const int Mulcharmy_Fuwalos = 42141493; //欢聚友伴·茸茸长尾山雀
-            public const int Infinite_Impermanence = 10045474; //无限泡影
-            public const int Dominus_Impulse = 40366667; //灵王的波动
-            public const int AshBlossom = 14558127; //灰流丽
-            public const int CalledbytheGrave = 24224830; //墓穴的指名
-            public const int Gold_Sarcophagus = 75500286; //封印之黄金柜
-            public const int Wizard_Ignister = 3723262; //男巫@火灵天星
-            public const int Backup_Ignister = 30118811; //备份员@火灵天星
-            public const int Maliss_Chessy_Cat = 96676583; //码丽丝<兵卒>柴郡猫
-            public const int Maliss_White_Rabbit = 69272449; //码丽丝<兵卒>白兔
-            public const int Maliss_Dormouse = 32061192; //码丽丝<兵卒>睡鼠
-            public const int Maliss_March_Hare = 20938824; //码丽丝<兵卒>三月兔
-            public const int Maliss_in_the_Mirror = 93453053; //码丽丝镜中奇像
-            public const int Maliss_in_Underground = 68337209; //码丽丝梦游地下界
-            public const int Maliss_GWC_06 = 20726052; //码丽丝<代码>GWC-06
-            public const int Maliss_TB_11 = 57111661; //码丽丝<代码>TB-11
-            public const int Maliss_MTP_07 = 94722358; //码丽丝<代码>MTP-07
+            public const int Artifact_Lancea = 34267821;// Artifact Lancea
+            public const int Dimension_Shifter = 91800273; // Dimension Shifter
+            public const int MaxxG = 23434538; // Maxx "C"
+            public const int Mulcharmy_Fuwalos = 42141493; // Mulcharmy Fuwalos
+            public const int Infinite_Impermanence = 10045474; // Infinite Impermanence
+            public const int Dominus_Impulse = 40366667; // Dominus Impulse
+            public const int AshBlossom = 14558127; // Ash Blossom & Joyous Spring
+            public const int CalledbytheGrave = 24224830; // Called by the Grave
+            public const int Gold_Sarcophagus = 75500286; // Gold Sarcophagus
+            public const int Wizard_Ignister = 3723262; // Wizard @Ignister
+            public const int Backup_Ignister = 30118811; // Backup @Ignister
+            public const int Maliss_Chessy_Cat = 96676583; // Maliss <P> Chessy Cat
+            public const int Maliss_White_Rabbit = 69272449; // Maliss <P> White Rabbit
+            public const int Maliss_Dormouse = 32061192; // Maliss <P> Dormouse
+            public const int Maliss_March_Hare = 20938824; // Maliss <P> March Hare
+            public const int Maliss_in_the_Mirror = 93453053; // Maliss in the Mirror
+            public const int Maliss_in_Underground = 68337209; // Maliss in Underground
+            public const int Maliss_GWC_06 = 20726052; // Maliss <C> GWC-06
+            public const int Maliss_TB_11 = 57111661; // Maliss <C> TB-11
+            public const int Maliss_MTP_07 = 94722358; // Maliss <C> MTP-07
 
             public const int Mereologic_Aggregator = 9940036;
             public const int Cyberse_Desavewurm = 92422871;
-            public const int Allied_Code_Talker_Ignister = 39138610; //协心代码语者@火灵天星
-            public const int Firewall_Dragon = 64211118; //防火龙·暗流体-新电磁泄密风
-            public const int Accesscode_Talker = 86066372; //访问码语者
-            public const int Maliss_Hearts_Crypter = 21848500; //码丽丝<王后>红心加密
-            public const int Maliss_Red_Ransom = 68059897; //码丽丝<王后>红棋勒索
-            public const int Maliss_White_Binder = 95454996; //码丽丝<王后>白棋捆绑
-            public const int Transcode_Talker = 46947713; //转码语者
-            public const int Splash_Mage = 59859086; //飞溅闪屏法师
-            public const int Haggard_Lizardose = 9763474; //盛悴之致命毒蜥
-            public const int Cyberse_Wicckid = 52698008; //电子界小男巫
-            public const int Link_Decoder = 30342076; //连接解码员
+            public const int Allied_Code_Talker_Ignister = 39138610; // Allied Code Talker @Ignister
+            public const int Firewall_Dragon = 64211118; // Firewall Dragon Darkfluid - Neo Tempest Terahertz
+            public const int Accesscode_Talker = 86066372; // Accesscode Talker
+            public const int Maliss_Hearts_Crypter = 21848500; // Maliss <Q> Hearts Crypter
+            public const int Maliss_Red_Ransom = 68059897; // Maliss <Q> Red Ransom
+            public const int Maliss_White_Binder = 95454996; // Maliss <Q> White Binder
+            public const int Transcode_Talker = 46947713; // Transcode Talker
+            public const int Splash_Mage = 59859086; // Splash Mage
+            public const int Haggard_Lizardose = 9763474; // Haggard Lizardose
+            public const int Cyberse_Wicckid = 52698008; // Cyberse Wicckid
+            public const int Link_Decoder = 30342076; // Link Decoder
         }
 
         public CardCount Count = new CardCount();

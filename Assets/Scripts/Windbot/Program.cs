@@ -6,7 +6,7 @@ using WindBot.Game;
 using WindBot.Game.AI;
 using YGOSharp.OCGWrapper;
 using System.Collections.Specialized;
-using MDPro3.IO;
+using CardGame.IO;
 
 namespace WindBot
 {
@@ -56,7 +56,7 @@ namespace WindBot
             //if (!File.Exists(absolutePath))
             //    // In case windbot is placed in a folder under ygopro2 folder
             //    absolutePath = Path.GetFullPath("../cdb/" + databasePath);
-            absolutePath = Path.GetFullPath("Data/locales/" + MDPro3.Utility.Language.GetConfig() + "/" + databasePath);
+            absolutePath = Path.GetFullPath("Data/locales/" + CardGame.Utility.Language.GetDataConfig() + "/" + databasePath);
             if (!File.Exists(absolutePath))
             {
                 Logger.WriteErrorLine("Can't find cards database file.");
@@ -69,7 +69,7 @@ namespace WindBot
             var zipCdbs = ResourceManager.GetAllCdbInZipPaths();
             if (zipCdbs != null)
                 paths.AddRange(zipCdbs);
-            foreach (var cdb in Directory.GetFiles(MDPro3.Program.PATH_EXPANSIONS, "*.cdb"))
+            foreach (var cdb in Directory.GetFiles(CardGame.Program.PATH_EXPANSIONS, "*.cdb"))
                 paths.Add(cdb);
             NamedCardsManager.InitForMulti(paths);
         }

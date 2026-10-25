@@ -1,7 +1,7 @@
 using DG.Tweening;
-using MDPro3;
-using MDPro3.Servant;
-using MDPro3.UI.ServantUI;
+using CardGame;
+using CardGame.Servant;
+using CardGame.UI.ServantUI;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;

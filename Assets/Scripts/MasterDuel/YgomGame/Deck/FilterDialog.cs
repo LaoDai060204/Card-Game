@@ -144,49 +144,50 @@ namespace YgomGame.Deck
 
 		private const string Label_Frame_Trap = "\ufffd";
 
-		private const string Label_Attr_Light = "光";
+		// Preserve legacy labels used by imported assets; Unicode escapes keep their runtime values.
+		private const string Label_Attr_Light = "\u5149";
 
-		private const string Label_Attr_Dark = "闇";
+		private const string Label_Attr_Dark = "\u95c7";
 
-		private const string Label_Attr_Water = "水";
+		private const string Label_Attr_Water = "\u6c34";
 
-		private const string Label_Attr_Fire = "炎";
+		private const string Label_Attr_Fire = "\u708e";
 
-		private const string Label_Attr_Earth = "地";
+		private const string Label_Attr_Earth = "\u5730";
 
-		private const string Label_Attr_Wind = "風";
+		private const string Label_Attr_Wind = "\u98a8";
 
-		private const string Label_Attr_Divine = "神";
+		private const string Label_Attr_Divine = "\u795e";
 
-		private const string Label_Tribe_SpellCaster = "魔\ufffd";
+		private const string Label_Tribe_SpellCaster = "\u9b54\ufffd";
 
 		private const string Label_Tribe_Dragon = "ド\ufffd";
 
 		private const string Label_Tribe_Zombie = "アン";
 
-		private const string Label_Tribe_Warrior = "戦";
+		private const string Label_Tribe_Warrior = "\u6226";
 
-		private const string Label_Tribe_BeastWarrior = "獣\ufffd";
+		private const string Label_Tribe_BeastWarrior = "\u7363\ufffd";
 
 		private const string Label_Tribe_Beast = "\ufffd";
 
-		private const string Label_Tribe_WingedBeast = "鳥";
+		private const string Label_Tribe_WingedBeast = "\u9ce5";
 
-		private const string Label_Tribe_Machine = "機";
+		private const string Label_Tribe_Machine = "\u6a5f";
 
-		private const string Label_Tribe_Fiend = "悪";
+		private const string Label_Tribe_Fiend = "\u60aa";
 
-		private const string Label_Tribe_Fairy = "天";
+		private const string Label_Tribe_Fairy = "\u5929";
 
-		private const string Label_Tribe_Insect = "昆";
+		private const string Label_Tribe_Insect = "\u6606";
 
-		private const string Label_Tribe_Dinosaur = "恐";
+		private const string Label_Tribe_Dinosaur = "\u6050";
 
-		private const string Label_Tribe_Reptile = "爬\ufffd";
+		private const string Label_Tribe_Reptile = "\u722c\ufffd";
 
 		private const string Label_Tribe_Fish = "\ufffd";
 
-		private const string Label_Tribe_SeaSerpent = "海";
+		private const string Label_Tribe_SeaSerpent = "\u6d77";
 
 		private const string Label_Tribe_Aqua = "\ufffd";
 
@@ -194,17 +195,17 @@ namespace YgomGame.Deck
 
 		private const string Label_Tribe_Thunder = "\ufffd";
 
-		private const string Label_Tribe_Rock = "岩";
+		private const string Label_Tribe_Rock = "\u5ca9";
 
-		private const string Label_Tribe_Plant = "植";
+		private const string Label_Tribe_Plant = "\u690d";
 
 		private const string Label_Tribe_Psychic = "サイ";
 
-		private const string Label_Tribe_Wyrm = "幻";
+		private const string Label_Tribe_Wyrm = "\u5e7b";
 
 		private const string Label_Tribe_Cyberse = "サイ";
 
-		private const string Label_Tribe_DivineBeast = "幻\ufffd";
+		private const string Label_Tribe_DivineBeast = "\u5e7b\ufffd";
 
 		private const string Label_Lvl0 = "0";
 
@@ -234,21 +235,21 @@ namespace YgomGame.Deck
 
 		private const string Label_Lvl13 = "13";
 
-		private const string Label_Spell_Normal = "通\ufffd";
+		private const string Label_Spell_Normal = "\u901a\ufffd";
 
 		private const string Label_Spell_Field = "フィ\ufffd";
 
-		private const string Label_Spell_Equip = "装\ufffd";
+		private const string Label_Spell_Equip = "\u88c5\ufffd";
 
-		private const string Label_Spell_Continuous = "永\ufffd";
+		private const string Label_Spell_Continuous = "\u6c38\ufffd";
 
-		private const string Label_Spell_QuickPlay = "速\ufffd";
+		private const string Label_Spell_QuickPlay = "\u901f\ufffd";
 
-		private const string Label_Spell_Ritual = "儀\ufffd";
+		private const string Label_Spell_Ritual = "\u5100\ufffd";
 
-		private const string Label_Trap_Normal = "通";
+		private const string Label_Trap_Normal = "\u901a";
 
-		private const string Label_Trap_Continuous = "永";
+		private const string Label_Trap_Continuous = "\u6c38";
 
 		private const string Label_Trap_Counter = "カウ";
 
@@ -266,17 +267,17 @@ namespace YgomGame.Deck
 
 		private const string Label_Style_Royal = "Royal";
 
-		private const string Label_Limit_0 = "禁\ufffd";
+		private const string Label_Limit_0 = "\u7981\ufffd";
 
-		private const string Label_Limit_1 = "制\ufffd";
+		private const string Label_Limit_1 = "\u5236\ufffd";
 
-		private const string Label_Limit_2 = "準制";
+		private const string Label_Limit_2 = "\u6e96\u5236";
 
-		private const string Label_Limit_3 = "無制";
+		private const string Label_Limit_3 = "\u7121\u5236";
 
-		private const string Label_Cutin_Exist = "有\ufffd";
+		private const string Label_Cutin_Exist = "\u6709\ufffd";
 
-		private const string Label_Cutin_NotExist = "無\ufffd";
+		private const string Label_Cutin_NotExist = "\u7121\ufffd";
 
 		private const string Label_Ability_Toon = "トゥ\ufffd";
 
@@ -290,7 +291,7 @@ namespace YgomGame.Deck
 
 		private const string Label_Ability_Reverse = "リバ\ufffd";
 
-		private const string Label_Ability_SpSummon = "特殊\ufffd";
+		private const string Label_Ability_SpSummon = "\u7279\u6b8a\ufffd";
 
 		private SearchFilter.Setting m_setting;
 

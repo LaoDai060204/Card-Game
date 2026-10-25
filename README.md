@@ -1,10 +1,10 @@
-# LaoDai Card Game
+# Card Game
 
 Bản tùy biến tiếng Việt do **LaoDai060204** duy trì, phát triển từ [MDPro3 của Sherry Chaos](https://code.moenext.com/sherry_chaos/MDPro3). Dự án mô phỏng đấu bài Yu-Gi-Oh! bằng Unity, có chơi với máy, tạo phòng LAN, kết nối máy chủ và tích hợp MyCard.
 
 Giao diện có ngôn ngữ **Tiếng Việt**. Tên lá bài và mô tả hiệu ứng dùng dữ liệu tiếng Anh khi chưa có cơ sở dữ liệu tiếng Việt. Tên nhân vật, bộ bài, dịch vụ và tác giả có thể giữ nguyên tên riêng.
 
-Khi mở bản này lần đầu, giao diện tự chuyển sang tiếng Việt một lần; các lựa chọn ngôn ngữ bạn đổi sau đó được giữ lại. Bảng tin MyCard tiếng Trung được ẩn khi chọn tiếng Việt vì nguồn tin này chưa có bản dịch tiếng Việt. Lời thoại AI và tên vật phẩm dùng dữ liệu tiếng Anh hiện có.
+Khi mở bản này lần đầu, giao diện tự chuyển sang tiếng Việt một lần; các lựa chọn ngôn ngữ bạn đổi sau đó được giữ lại. Bảng tin MyCard lấy nguồn tiếng Anh cho mọi ngôn ngữ giao diện; nếu nguồn tiếng Anh trống, bảng tin được ẩn. Lời thoại AI và tên vật phẩm dùng dữ liệu tiếng Anh hiện có.
 
 ## Mở dự án trên Windows
 
@@ -65,6 +65,12 @@ Mã nền được nhập từ nhánh `master` của [MDPro3](https://code.moene
 | `Sound` | Gói MyCard chính thức `mdpro3-sound`, phiên bản `ea4ad1eb`; liên kết kho được README gốc nêu trả về 404 khi nhập dữ liệu |
 
 Các tài nguyên Master Duel, Cross Duel và Duel Links cùng tên gọi Yu-Gi-Oh! thuộc các chủ sở hữu tương ứng. Xem [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) và mục **Giới thiệu trò chơi** để biết thêm về các tác giả, cộng tác viên và thông báo đi kèm.
+
+## Cấu trúc mã và đổi tên
+
+Mã ứng dụng nằm trong `Assets/Scripts/CardGame`, dùng namespace `CardGame`. Tên hiển thị lấy từ **Edit → Project Settings → Player → Product Name**, hiện là **Card Game**. Liên kết UnityEvent trong prefab/scene và GUID của script đã được giữ đồng bộ khi đổi thư mục.
+
+Khóa giao diện trong mã C# dùng tiếng Anh. Các gói ngôn ngữ, gồm tiếng Việt, vẫn được giữ; bảng `Data/locales/legacy-ui-keys.json` ánh xạ khóa cũ từ prefab và dữ liệu đã phát hành. Các chuỗi so khớp dữ liệu tiếng Trung được giữ nguyên giá trị runtime bằng Unicode escape. URL nguồn, mã giao thức máy chủ, tên shader đã dùng trong assetbundle và thông tin ghi công được giữ tương thích.
 
 ## Công cụ phát triển
 

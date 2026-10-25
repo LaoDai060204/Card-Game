@@ -14,17 +14,18 @@ namespace YgomGame.Deck
 
 		private const string LABEL_RT_SORTBUTTONAREA = "SortButtonsArea";
 
-		private const string Label_Obtained = "入";
+		// Preserve imported asset lookup labels while keeping source text in English.
+		private const string Label_Obtained = "\u5165";
 
-		private const string Label_Inventroy = "所\ufffd";
+		private const string Label_Inventroy = "\u6240\ufffd";
 
 		private const string Label_Rarity = "レ\ufffd";
 
 		private const string Label_Stars = "レベル\ufffd";
 
-		private const string Label_Atk = "攻\ufffd";
+		private const string Label_Atk = "\u653b\ufffd";
 
-		private const string Label_Def = "守\ufffd";
+		private const string Label_Def = "\u5b88\ufffd";
 
 		private SorterToggle template;
 

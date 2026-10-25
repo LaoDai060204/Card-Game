@@ -13,7 +13,7 @@ void CSMain(uint3 id : SV_DispatchThreadID)
         return;
     
     float4 color = SourceTex[id.xy];
-    // 反转alpha值，保持RGB不变
+    // Invert alpha while preserving RGB
     color.a = 1.0 - color.a;
     Result[id.xy] = color;
 }

@@ -1,5 +1,5 @@
-using MDPro3;
-using MDPro3.Duel.YGOSharp;
+using CardGame;
+using CardGame.Duel.YGOSharp;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Playables;

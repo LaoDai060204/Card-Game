@@ -1,4 +1,4 @@
-using MDPro3.UI;
+using CardGame.UI;
 using UnityEditor;
 using UnityEditor.UI;
 using UnityEngine;
@@ -23,7 +23,7 @@ public class ClampedContentSizeFitterEditor : ContentSizeFitterEditor
         EditorGUILayout.PropertyField(m_MaxWidth, new GUIContent("Max Width"));
         serializedObject.ApplyModifiedProperties();
 
-        base.OnInspectorGUI(); // 绘制原生设置
+        base.OnInspectorGUI(); // Draw the built-in inspector settings.
 
     }
 }
