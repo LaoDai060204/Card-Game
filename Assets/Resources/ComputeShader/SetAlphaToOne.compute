@@ -13,7 +13,7 @@ void CSMain(uint3 id : SV_DispatchThreadID)
         return;
     
     float4 color = SourceTex[id.xy];
-    // Force alpha to 1 (opaque), preserving RGB
+    // 强制 Alpha 为 1（不透明），RGB 完全保留
     color.a = 1.0;
     Result[id.xy] = color;
 }

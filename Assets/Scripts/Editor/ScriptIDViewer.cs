@@ -73,7 +73,7 @@ public class ScriptIDViewer : EditorWindow
         _guid = EditorGUILayout.TextField("guid", _guid);
         if (GUILayout.Button("find"))
         {
-            _result = "Not found: ";
+            _result = "未找到";
             var path = AssetDatabase.GUIDToAssetPath(_guid);
             var assets = AssetDatabase.LoadAllAssetsAtPath(path);
             string guid;

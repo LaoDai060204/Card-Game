@@ -7,37 +7,37 @@ public class MissingShaderFinder : EditorWindow
 {
     private List<Material> _materialsWithMissingShader = new List<Material>();
 
-    [MenuItem("Tools/Find Materials with Missing Shaders")]
+    [MenuItem("Tools/检查丢失Shader的材质")]
     public static void ShowWindow()
     {
-        GetWindow<MissingShaderFinder>("Materials with Missing Shaders");
+        GetWindow<MissingShaderFinder>("丢失Shader的材质列表");
     }
 
     void OnGUI()
     {
-        if (GUILayout.Button("Scan Project", GUILayout.Height(40)))
+        if (GUILayout.Button("扫描项目", GUILayout.Height(40)))
         {
             FindMaterialsWithMissingShader();
         }
 
-        GUILayout.Label($"Found {_materialsWithMissingShader.Count} materials have missing shaders:");
+        GUILayout.Label($"发现 {_materialsWithMissingShader.Count} 个材质丢失Shader:");
         scrollPos = EditorGUILayout.BeginScrollView(scrollPos);
 
         foreach (Material mat in _materialsWithMissingShader)
         {
             EditorGUILayout.BeginHorizontal();
-            // Display material names and paths.
+            // 显示材质名称和路径
             EditorGUILayout.ObjectField(mat, typeof(Material), false);
 
-            // Locate button
-            if (GUILayout.Button("Locate", GUILayout.Width(60)))
+            // 定位按钮
+            if (GUILayout.Button("定位", GUILayout.Width(60)))
             {
                 Selection.activeObject = mat;
                 EditorGUIUtility.PingObject(mat);
             }
 
-            // Fix button
-            if (GUILayout.Button("Fix (Standard)", GUILayout.Width(80)))
+            // 修复按钮
+            if (GUILayout.Button("修复(Standard)", GUILayout.Width(80)))
             {
                 FixShader(mat, Shader.Find("Standard"));
             }
@@ -71,7 +71,7 @@ public class MissingShaderFinder : EditorWindow
             Undo.RecordObject(mat, "Fix Missing Shader");
             mat.shader = replacementShader;
             EditorUtility.SetDirty(mat);
-            Debug.Log($"Fixed material: {mat.name}", mat);
+            Debug.Log($"已修复材质: {mat.name}", mat);
         }
     }
 }

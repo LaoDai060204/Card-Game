@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using Ara;
-using CardGame;
+using MDPro3;
 using UnityEngine;
 using UnityEngine.Playables;
 

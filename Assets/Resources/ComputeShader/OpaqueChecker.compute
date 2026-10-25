@@ -2,8 +2,8 @@
 
 RWStructuredBuffer<int> _Result;
 Texture2D<float4> _MainTex;
-uint _Width; // Use an unsigned integer
-uint _Height; // Use an unsigned integer
+uint _Width; // 改为 uint
+uint _Height; // 改为 uint
 int _AlphaThreshold;
 
 [numthreads(8, 8, 1)]

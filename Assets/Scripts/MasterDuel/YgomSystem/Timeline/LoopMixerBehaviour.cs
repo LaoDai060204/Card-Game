@@ -1,5 +1,5 @@
 using AssetStudio;
-using CardGame.Duel;
+using MDPro3.Duel;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;

@@ -14,7 +14,7 @@ public class MeshRendererSortingEditor : Editor
         sortingLayerID = serializedObject.FindProperty("m_SortingLayerID");
         sortingOrder = serializedObject.FindProperty("m_SortingOrder");
 
-        // Cache method information to avoid repeated lookups.
+        // 缓存方法信息，避免重复查找
         if (sortingLayerFieldMethod == null)
         {
             sortingLayerFieldMethod = typeof(EditorGUILayout).GetMethod(
@@ -36,7 +36,7 @@ public class MeshRendererSortingEditor : Editor
 
         if (sortingLayerFieldMethod != null)
         {
-            // Invoke the internal method through reflection.
+            // 通过反射调用内部方法
             sortingLayerFieldMethod.Invoke(
                 null,
                 new object[] { new GUIContent("Sorting Layer"), sortingLayerID, EditorStyles.popup }
@@ -44,7 +44,7 @@ public class MeshRendererSortingEditor : Editor
         }
         else
         {
-            // Fall back to an integer field if reflection fails.
+            // 备用方案：如果反射失败，降级为显示一个整数字段
             EditorGUILayout.PropertyField(sortingLayerID, new GUIContent("Sorting Layer ID"));
         }
 

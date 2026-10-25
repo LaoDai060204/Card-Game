@@ -5,7 +5,7 @@ Shader "MDPro3/RenderIllust"
         [PerRendererData] _MainTex ("Sprite Texture", 2D) = "white" {}
         _Color ("Tint", Color) = (1,1,1,1)
 
-        // --- Required UI compatibility properties (set automatically)---
+        // --- 以下为 UI 兼容性必备属性（无需手动设置）---
         _StencilComp ("Stencil Comparison", Float) = 8
         _Stencil ("Stencil ID", Float) = 0
         _StencilOp ("Stencil Operation", Float) = 0
@@ -94,18 +94,18 @@ Shader "MDPro3/RenderIllust"
 
             fixed4 frag(v2f IN) : SV_Target
             {
-                // Sample the main texture and apply the tint
+                // 采样主纹理，并叠加 Tint 颜色
                 half4 color = (tex2D(_MainTex, IN.texcoord) + _TextureSampleAdd) * IN.color;
 
-                // Force opacity, ignoring the original alpha
+                // ★ 核心：强制设为不透明，完全无视原始 Alpha
                 color.a = 1.0;
 
-                // Support rectangular UI clipping, which affects alpha
+                // 支持 Mask 组件的矩形裁剪（裁剪会影响 Alpha）
                 #ifdef UNITY_UI_CLIP_RECT
                 color.a *= UnityGet2DClipping(IN.worldPosition.xy, _ClipRect);
                 #endif
 
-                // Support alpha clipping for UI masks
+                // 支持 Mask 组件的 Alpha Clip
                 #ifdef UNITY_UI_ALPHACLIP
                 clip(color.a - 0.001);
                 #endif

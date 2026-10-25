@@ -169,7 +169,7 @@ public class AssetBundleRobber : MonoBehaviour
         }
         if (!noSave)
         {
-            Debug.Log("Preloged:" + files.Count);
+            Debug.Log("Preloged：" + files.Count);
         }
         else
         {
@@ -393,7 +393,7 @@ public class AssetBundleRobber : MonoBehaviour
                                 File.Copy(GetFullPath(depen), targetFolder + "/" + depen, true);
                         }
                         else
-                            Debug.Log("Not found: " + file.path + "dependency: " + depen + ": " + GetFullPath(depen));
+                            Debug.Log("未找到" + file.path + "的依赖：" + depen + ": " + GetFullPath(depen));
                     }
                 }
             }
@@ -427,7 +427,7 @@ public class AssetBundleRobber : MonoBehaviour
                     if (File.Exists(GetFullPath(depen)))
                         File.Copy(GetFullPath(depen), targetFolder + "/" + depen, true);
                     else
-                        Debug.Log("Not found: " + file.path + "dependency: " + depen);
+                        Debug.Log("未找到" + file.path + "的依赖：" + depen);
                 }
             }
             else if (type == AssetType.Background)
@@ -449,7 +449,7 @@ public class AssetBundleRobber : MonoBehaviour
                     if (File.Exists(GetFullPath(depen)))
                         File.Copy(GetFullPath(depen), targetFolder + "/" + depen, true);
                     else
-                        Debug.LogError("Not found: " + file.path + "dependency: " + depen);
+                        Debug.LogError("未找到" + file.path + "的依赖：" + depen);
                 }
             }
             else if (type == AssetType.Card)
@@ -475,7 +475,7 @@ public class AssetBundleRobber : MonoBehaviour
                             File.Copy(GetFullPath(depen), targetFolder + "/" + depen, true);
                     }
                     else
-                        Debug.LogError($"Not found:  {file.path} dependency: {depen}");
+                        Debug.LogError($"未找到 {file.path} 的依赖：{depen}");
                 }
             }
             else if (type == AssetType.MonsterCutin)
@@ -500,7 +500,7 @@ public class AssetBundleRobber : MonoBehaviour
                             File.Copy(GetFullPath(depen), targetFolder + "/" + depen, true);
                     }
                     else
-                        Debug.LogError($"Not found:  {file.path} dependency: {depen}");
+                        Debug.LogError($"未找到 {file.path} 的依赖：{depen}");
                 }
             }
             else if (type == AssetType.SpecialWin)
@@ -511,7 +511,7 @@ public class AssetBundleRobber : MonoBehaviour
                 if (!Directory.Exists(pathStore + "SpecialWin"))
                     Directory.CreateDirectory(pathStore + "SpecialWin");
                 string subDir = Regex.Split(file.name, "/")[8];
-                if (subDir.Contains(EXTENSION_PREFAB))//4027 Exodia
+                if (subDir.Contains(EXTENSION_PREFAB))//4027 艾克佐迪亚
                 {
                     subDir = subDir.Replace(EXTENSION_PREFAB, string.Empty).Replace("summonspecialwin", string.Empty);
                 }
@@ -531,7 +531,7 @@ public class AssetBundleRobber : MonoBehaviour
                             File.Copy(GetFullPath(depen), targetFolder + "/" + depen, true);
                     }
                     else
-                        Debug.LogError($"Not found:  {file.path} dependency: {depen}");
+                        Debug.LogError($"未找到 {file.path} 的依赖：{depen}");
                 }
             }
             else if (type == AssetType.BGM)
@@ -1145,7 +1145,7 @@ public class AssetBundleRobber : MonoBehaviour
 
     private string GetYdkID(string mdID)
     {
-        return CardGame.Cid2Ydk.GetYDK(int.Parse(mdID)).ToString();
+        return MDPro3.Cid2Ydk.GetYDK(int.Parse(mdID)).ToString();
     }
 
     private string GetFullPath(string path)

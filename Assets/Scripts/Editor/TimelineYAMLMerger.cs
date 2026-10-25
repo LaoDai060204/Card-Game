@@ -10,18 +10,18 @@ public class TimelineYAMLMerger
     private class FileIDMapper
     {
         private Dictionary<string, Dictionary<long, long>> _fileToOldNewIDMap = new Dictionary<string, Dictionary<long, long>>();
-        private long _nextAvailableID = 1140000000000000000; // Use a starting value consistent with Unity IDs.
+        private long _nextAvailableID = 1140000000000000000; // 使用更符合Unity风格的起始值
 
         public long GetNewID(string assetPath, long oldID)
         {
-            // Get or create the ID map for this asset path.
+            // 获取或创建该资产路径的ID映射字典
             if (!_fileToOldNewIDMap.TryGetValue(assetPath, out var idMap))
             {
                 idMap = new Dictionary<long, long>();
                 _fileToOldNewIDMap[assetPath] = idMap;
             }
 
-            // Get or generate the replacement for this old ID.
+            // 获取或生成该旧ID对应的新ID
             if (!idMap.TryGetValue(oldID, out var newID))
             {
                 newID = _nextAvailableID++;
@@ -30,52 +30,52 @@ public class TimelineYAMLMerger
             return newID;
         }
 
-        // Check whether an ID in this asset was already processed.
+        // 检查是否已经处理过某个资产的某个ID
         public bool HasMappingFor(string assetPath, long oldID)
         {
             return _fileToOldNewIDMap.TryGetValue(assetPath, out var idMap) && idMap.ContainsKey(oldID);
         }
 
-        // Get all processed asset paths.
+        // 获取所有处理过的资产路径
         public IEnumerable<string> GetAllProcessedAssetPaths() => _fileToOldNewIDMap.Keys;
 
-        // Find the new ID corresponding to an old ID.
+        // 根据旧ID获取新ID
         public long GetNewIDFromOld(string assetPath, long oldID)
         {
             if (_fileToOldNewIDMap.TryGetValue(assetPath, out var idMap) && idMap.TryGetValue(oldID, out var newID))
             {
                 return newID;
             }
-            return oldID; // Return the original value if no mapping exists.
+            return oldID; // 如果找不到映射，返回原值
         }
     }
 
-    [MenuItem("Assets/Merge Timeline and All Dependencies (YAML)", false, 104)]
+    [MenuItem("Assets/合并Timeline及其所有依赖 (YAML)", false, 104)]
     private static void MergeTimelineAndDependencies()
     {
         string assetPath = AssetDatabase.GetAssetPath(Selection.activeObject);
 
-        // Get the original filename without its extension.
+        // 获取原文件名（不含扩展名）
         string originalFileName = Path.GetFileNameWithoutExtension(assetPath);
 
-        // Get all dependencies, including indirect and repeated ones.
+        // 获取所有依赖，包括间接和重复的依赖
         string[] allDependencies = AssetDatabase.GetDependencies(assetPath, true);
 
-        // Initialize the ID mapper.
+        // 初始化ID映射器
         FileIDMapper idMapper = new FileIDMapper();
 
-        // Read the main file's YAML header.
+        // 读取主文件的YAML头
         string mainFileHeader = ExtractYamlHeader(assetPath);
 
-        // Store all YAML content to merge.
+        // 用于存储所有需要合并的YAML内容
         List<string> allYamlBlocks = new List<string>();
-        // Track processed assets to avoid duplicates, such as shared materials.
+        // 用于记录已经处理过的资产，避免重复（例如多个资产依赖同一个材质）
         HashSet<string> processedAssets = new HashSet<string>();
 
-        // Record the main asset's fileID for updating m_Name later.
+        // 记录主资产的fileID，用于后续修改m_Name
         long mainAssetNewFileID = -1;
 
-        // Phase 1: Collect fileID mappings for all assets.
+        // 第一阶段：收集所有资产的fileID映射
         CollectFileIDMappings(assetPath, idMapper, processedAssets);
         foreach (var dependencyPath in allDependencies)
         {
@@ -84,9 +84,9 @@ public class TimelineYAMLMerger
             CollectFileIDMappings(dependencyPath, idMapper, processedAssets);
         }
 
-        processedAssets.Clear(); // Clear the processed set for phase 2.
+        processedAssets.Clear(); // 清空，为第二阶段做准备
 
-        // Phase 2: Process all asset content.
+        // 第二阶段：处理所有资产内容
         ProcessAsset(assetPath, idMapper, allYamlBlocks, processedAssets, true, originalFileName, ref mainAssetNewFileID);
         foreach (var dependencyPath in allDependencies)
         {
@@ -95,22 +95,22 @@ public class TimelineYAMLMerger
             ProcessAsset(dependencyPath, idMapper, allYamlBlocks, processedAssets, false, originalFileName, ref mainAssetNewFileID);
         }
 
-        // 3. Combine the YAML blocks and prepend the main file's header.
+        // 3. 将所有YAML块合并为一个字符串，加上主文件的头
         string combinedYaml = mainFileHeader + string.Join("\n", allYamlBlocks);
 
-        // 4. Write the new file.
+        // 4. 写入新文件
         string originalDirectory = Path.GetDirectoryName(assetPath);
         string originalExtension = Path.GetExtension(assetPath);
         string newFileName = $"{originalFileName}_merged{originalExtension}";
         string newFilePath = Path.Combine(originalDirectory, newFileName);
 
-        // Ensure the filename is unique.
+        // 确保文件名不重复
         newFilePath = AssetDatabase.GenerateUniqueAssetPath(newFilePath);
 
-        // Get the new filename without its extension.
+        // 获取新文件名（不含扩展名）
         string newFileNameWithoutExt = Path.GetFileNameWithoutExtension(newFilePath);
 
-        // Update the main asset's m_Name to match the new filename.
+        // 更新主资产的m_Name以匹配新文件名
         if (mainAssetNewFileID != -1)
         {
             combinedYaml = UpdateMainAssetName(combinedYaml, mainAssetNewFileID, newFileNameWithoutExt);
@@ -120,23 +120,23 @@ public class TimelineYAMLMerger
 
         File.WriteAllText(newFilePath, combinedYaml);
 
-        // 5. Refresh the asset database and select the new file.
+        // 5. 刷新数据库并选中新文件
         AssetDatabase.Refresh();
         EditorUtility.FocusProjectWindow();
         var newAsset = AssetDatabase.LoadAssetAtPath<Object>(newFilePath);
         Selection.activeObject = newAsset;
 
-        Debug.Log($"Merge complete. New file saved to: {newFilePath}");
+        Debug.Log($"合并完成！新文件已保存至: {newFilePath}");
     }
 
-    [MenuItem("Assets/Merge Timeline and All Dependencies (YAML)", true)]
+    [MenuItem("Assets/合并Timeline及其所有依赖 (YAML)", true)]
     private static bool ValidateReplaceStringsInAsset()
     {
         return Selection.activeObject != null &&
                !AssetDatabase.IsValidFolder(AssetDatabase.GetAssetPath(Selection.activeObject));
     }
 
-    // Phase 1: Collect fileID mappings for all assets.
+    // 第一阶段：收集所有资产的fileID映射
     private static void CollectFileIDMappings(string assetPath, FileIDMapper idMapper, HashSet<string> processedAssets)
     {
         if (processedAssets.Contains(assetPath)) return;
@@ -144,19 +144,19 @@ public class TimelineYAMLMerger
         string fullPath = Path.GetFullPath(assetPath);
         string[] yamlLines = File.ReadAllLines(fullPath);
 
-        // Match a YAML document header and fileID, for example:--- !u!114 &11400000
+        // 正则表达式匹配YAML文档开头和fileID行，例如：--- !u!114 &11400000
         Regex headerRegex = new Regex(@"^--- !u!([0-9]+) &([0-9]+)$");
 
         foreach (var line in yamlLines)
         {
-            // Check for the start of a YAML document.
+            // 检查是否是YAML文档的开始
             if (line.StartsWith("---"))
             {
-                // Extract the old fileID and type from the document header.
+                // 尝试从文档头中提取旧的fileID和类型
                 Match headerMatch = headerRegex.Match(line);
                 if (headerMatch.Success && long.TryParse(headerMatch.Groups[2].Value, out long oldID))
                 {
-                    // Generate new IDs now and apply them during phase 2.
+                    // 预先生成新ID，但不立即使用（在第二阶段使用）
                     idMapper.GetNewID(assetPath, oldID);
                 }
             }
@@ -165,7 +165,7 @@ public class TimelineYAMLMerger
         processedAssets.Add(assetPath);
     }
 
-    // Extract the YAML header before the first --- line.
+    // 提取YAML文件头（---之前的行）
     private static string ExtractYamlHeader(string assetPath)
     {
         string[] lines = File.ReadAllLines(assetPath);
@@ -182,13 +182,13 @@ public class TimelineYAMLMerger
         return header.ToString();
     }
 
-    // Update the main asset's m_Name to match the new filename.
+    // 更新主资产的m_Name以匹配新文件名
     private static string UpdateMainAssetName(string yamlContent, long mainAssetFileID, string newName)
     {
-        // Build the pattern for the main asset's fileID line.
+        // 构建主资产的fileID行模式
         string mainAssetHeaderPattern = $"--- !u!114 &{mainAssetFileID}";
 
-        // Split the YAML content into lines.
+        // 分割YAML内容为行
         string[] lines = yamlContent.Split('\n');
         bool isInsideMainAsset = false;
         bool nameUpdated = false;
@@ -197,7 +197,7 @@ public class TimelineYAMLMerger
 
         foreach (string line in lines)
         {
-            // Check whether the main asset block begins here.
+            // 检查是否进入主资产块
             if (line.StartsWith(mainAssetHeaderPattern))
             {
                 isInsideMainAsset = true;
@@ -205,7 +205,7 @@ public class TimelineYAMLMerger
                 continue;
             }
 
-            // Check whether the main asset block ends and the next asset begins.
+            // 检查是否离开主资产块（进入下一个资产块）
             if (isInsideMainAsset && line.StartsWith("--- !u!"))
             {
                 isInsideMainAsset = false;
@@ -213,10 +213,10 @@ public class TimelineYAMLMerger
                 continue;
             }
 
-            // Update an m_Name line found inside the main asset block.
+            // 如果在主资产块内且找到m_Name行，则更新它
             if (isInsideMainAsset && !nameUpdated && line.TrimStart().StartsWith("m_Name:"))
             {
-                // Preserve indentation and replace only the name.
+                // 保留缩进，只更新名称
                 int indentLength = line.IndexOf("m_Name:");
                 string indent = new string(' ', indentLength);
                 result.AppendLine($"{indent}m_Name: {newName}");
@@ -240,33 +240,33 @@ public class TimelineYAMLMerger
 
         List<string> currentBlock = new List<string>();
         bool isInsideAsset = false;
-        bool skipHeader = !isMainAsset; // Skip the YAML header for non-main assets.
+        bool skipHeader = !isMainAsset; // 非主资产跳过YAML头
 
-        // Track the original fileID of the current YAML document.
+        // 用于记录当前正在处理的YAML文档的原始fileID
         long currentOldFileID = -1;
         long currentNewFileID = -1;
 
-        // Match a YAML document header and fileID, for example:--- !u!114 &11400000
+        // 正则表达式匹配YAML文档开头和fileID行，例如：--- !u!114 &11400000
         Regex headerRegex = new Regex(@"^--- !u!([0-9]+) &([0-9]+)$");
-        // Match a simple reference:{fileID: 12345678}
+        // 正则表达式匹配简单引用：{fileID: 12345678}
         Regex simpleRefRegex = new Regex(@"{fileID:\s*([0-9]+)\s*}");
-        // Match a reference containing an external GUID:{fileID: 7400000, guid: aa54d0da6b3cc424dbdb7130447a5662, type: 2}
+        // 正则表达式匹配复杂引用：{fileID: 7400000, guid: aa54d0da6b3cc424dbdb7130447a5662, type: 2}
         Regex complexRefRegex = new Regex(@"{fileID:\s*([0-9]+)\s*,\s*guid:\s*([0-9a-fA-F]+)\s*,\s*type:\s*([0-9]+)\s*}");
-        // Match m_Script lines.
+        // 正则表达式匹配m_Script行
         Regex mScriptRegex = new Regex(@"m_Script:\s*{fileID:\s*([0-9]+)\s*(,\s*guid:\s*[0-9a-fA-F]+\s*,\s*type:\s*[0-9]+\s*)?}");
 
         foreach (var line in yamlLines)
         {
-            // Skip the YAML header for non-main assets.
+            // 跳过非主资产的YAML头
             if (skipHeader && !line.StartsWith("---"))
                 continue;
 
-            skipHeader = false; // Stop skipping the header after the first --- line.
+            skipHeader = false; // 遇到第一个---后就不再跳过头
 
-            // Check for the start of a YAML document.
+            // 检查是否是YAML文档的开始
             if (line.StartsWith("---"))
             {
-                // Process and save the current block before starting a new document.
+                // 如果遇到一个新的文档开头，且当前已经有一个正在处理的块，则先处理并保存前一个块
                 if (isInsideAsset && currentBlock.Count > 0)
                 {
                     string processedBlock = ProcessYamlBlock(currentBlock, assetPath, idMapper, simpleRefRegex, complexRefRegex, mScriptRegex);
@@ -274,21 +274,21 @@ public class TimelineYAMLMerger
                     currentBlock.Clear();
                 }
 
-                // Start a new YAML document block.
+                // 开始一个新的YAML文档块
                 isInsideAsset = true;
 
-                // Extract the old fileID and type from the document header.
+                // 尝试从文档头中提取旧的fileID和类型
                 Match headerMatch = headerRegex.Match(line);
                 if (headerMatch.Success && long.TryParse(headerMatch.Groups[2].Value, out long oldID))
                 {
                     currentOldFileID = oldID;
-                    // Get the mapped replacement ID.
+                    // 获取映射的新ID
                     currentNewFileID = idMapper.GetNewIDFromOld(assetPath, currentOldFileID);
-                    // Preserve the !u! type and replace only the fileID after &.
+                    // 保留!u!部分，只替换&后面的fileID
                     string newLine = $"--- !u!{headerMatch.Groups[1].Value} &{currentNewFileID}";
                     currentBlock.Add(newLine);
 
-                    // Record the new fileID for the main asset.
+                    // 如果是主资产，记录其新fileID
                     if (isMainAsset && mainAssetNewFileID == -1)
                     {
                         mainAssetNewFileID = currentNewFileID;
@@ -296,68 +296,68 @@ public class TimelineYAMLMerger
                 }
                 else
                 {
-                    // Keep the original line if no fileID matches.
+                    // 如果没有匹配到fileID，直接添加原行
                     currentBlock.Add(line);
-                    currentOldFileID = -1; // Invalid or missing fileID
+                    currentOldFileID = -1; // 无效或没有fileID
                     currentNewFileID = -1;
                 }
             }
             else if (isInsideAsset)
             {
-                // Process lines inside the document.
+                // 处理文档内部的行
                 if (!string.IsNullOrEmpty(line) && currentOldFileID != -1)
                 {
                     string processedLine = line;
 
-                    // Leave m_Script lines unchanged.
+                    // 检查是否是m_Script行，如果是则跳过处理
                     if (mScriptRegex.IsMatch(processedLine))
                     {
                         currentBlock.Add(processedLine);
                         continue;
                     }
 
-                    // 1. Process references to external files.
+                    // 1. 处理复杂引用（外部文件引用）
                     processedLine = complexRefRegex.Replace(processedLine, match =>
                     {
                         if (long.TryParse(match.Groups[1].Value, out long referencedOldID))
                         {
                             string guid = match.Groups[2].Value;
 
-                            // Find the asset path for this GUID.
+                            // 查找GUID对应的资产路径
                             string refAssetPath = AssetDatabase.GUIDToAssetPath(guid);
                             if (!string.IsNullOrEmpty(refAssetPath) && refAssetPath != assetPath)
                             {
-                                // Get the replacement ID for this external reference.
+                                // 这是一个外部引用，我们需要获取它的新ID
                                 long referencedNewID = idMapper.GetNewIDFromOld(refAssetPath, referencedOldID);
                                 return $"{{fileID: {referencedNewID}}}";
                             }
                             else if (!string.IsNullOrEmpty(refAssetPath) && refAssetPath == assetPath)
                             {
-                                // This reference points into the same file.
+                                // 这是对同一文件的引用
                                 long referencedNewID = idMapper.GetNewIDFromOld(assetPath, referencedOldID);
                                 return $"{{fileID: {referencedNewID}}}";
                             }
                         }
-                        return match.Value; // Keep the original value if parsing fails or no replacement is needed.
+                        return match.Value; // 如果解析失败或无需替换，返回原值
                     });
 
-                    // 2. Process references within the same file.
+                    // 2. 处理简单引用（同一文件内的引用）
                     processedLine = simpleRefRegex.Replace(processedLine, match =>
                     {
                         if (long.TryParse(match.Groups[1].Value, out long referencedOldID))
                         {
-                            // Skip fileID: 0, which represents a null reference.
+                            // 跳过fileID: 0（空引用）
                             if (referencedOldID == 0)
                                 return match.Value;
 
-                            // Check whether the reference is in the same file.
+                            // 检查是否在同一文件中
                             long referencedNewID = idMapper.GetNewIDFromOld(assetPath, referencedOldID);
                             if (referencedNewID != referencedOldID)
                             {
                                 return $"{{fileID: {referencedNewID}}}";
                             }
                         }
-                        return match.Value; // Keep the original value if parsing fails or no replacement is needed.
+                        return match.Value; // 如果解析失败或无需替换，返回原值
                     });
 
                     currentBlock.Add(processedLine);
@@ -369,7 +369,7 @@ public class TimelineYAMLMerger
             }
         }
 
-        // Process the last block at the end of the file.
+        // 处理文件末尾的最后一个块
         if (isInsideAsset && currentBlock.Count > 0)
         {
             string processedBlock = ProcessYamlBlock(currentBlock, assetPath, idMapper, simpleRefRegex, complexRefRegex, mScriptRegex);
@@ -381,8 +381,8 @@ public class TimelineYAMLMerger
 
     private static string ProcessYamlBlock(List<string> yamlBlock, string assetPath, FileIDMapper idMapper, Regex simpleRefRegex, Regex complexRefRegex, Regex mScriptRegex)
     {
-        // ProcessAsset now performs most of this work line by line.
-        // Normalize formatting and ensure the block ends with a newline.
+        // 这个函数现在已经在ProcessAsset中逐行处理时完成了大部分工作
+        // 这里主要起一个兜底和格式化的作用，确保块以换行符结束
         return string.Join("\n", yamlBlock);
     }
 

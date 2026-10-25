@@ -78,7 +78,7 @@ public class DuelLinksRobber : MonoBehaviour
 
         if (!noSave)
         {
-            Debug.Log("Preloged:" + files.Count);
+            Debug.Log("Preloged：" + files.Count);
         }
         else
         {

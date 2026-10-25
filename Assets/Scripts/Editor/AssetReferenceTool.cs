@@ -22,14 +22,14 @@ public class AssetReferenceTool
         ".lighting", ".terrainlayer", ".signal", ".mixer"
     };
 
-    // -------------------- Menu: Merge duplicate assets by filename --------------------
-    [MenuItem("Assets/Merge Duplicate Assets", true)]
+    // -------------------- 菜单：合并重复资产（基于文件名） --------------------
+    [MenuItem("Assets/合并重复资产", true)]
     static bool ValidateMergeDuplicate()
     {
         return Selection.objects.Length > 1;
     }
 
-    [MenuItem("Assets/Merge Duplicate Assets")]
+    [MenuItem("Assets/合并重复资产")]
     static void MergeDuplicate()
     {
         _isProcessing = true;
@@ -46,7 +46,7 @@ public class AssetReferenceTool
 
         if (assetPaths.Count < 2)
         {
-            EditorUtility.DisplayDialog("Error", "Select at least two asset files, not folders.", "OK");
+            EditorUtility.DisplayDialog("错误", "请至少选择两个资产文件（非文件夹）。", "确定");
             return;
         }
 
@@ -64,25 +64,25 @@ public class AssetReferenceTool
                 deletePaths.Add(path);
             else
             {
-                EditorUtility.DisplayDialog("Error",
-                    $"File \"{name}\" does not match the expected naming format.\nAll files must share the base name \"{baseName}\"; duplicates must use the naming pattern \"BaseName_Number\".",
-                    "OK");
+                EditorUtility.DisplayDialog("错误",
+                    $"文件 \"{name}\" 不符合预期格式。\n期望所有文件共享基础名 \"{baseName}\"，且副本命名格式为 \"基础名_数字\"。",
+                    "确定");
                 return;
             }
         }
 
         if (keepCandidates.Count != 1 || deletePaths.Count == 0)
         {
-            EditorUtility.DisplayDialog("Error", "No unique original file or duplicate copies were found.", "OK");
+            EditorUtility.DisplayDialog("错误", "未找到唯一基础文件或没有重复副本。", "确定");
             return;
         }
 
         string keepPath = keepCandidates[0];
         string keepName = Path.GetFileName(keepPath);
         string deleteNames = string.Join("\n", deletePaths.Select(Path.GetFileName));
-        if (!EditorUtility.DisplayDialog("Confirm Merge",
-            $"The following duplicates will be deleted and their references redirected to the retained file:\n\nKeep:{keepName}\n\nDelete:\n{deleteNames}\n\nThis operation cannot be undone!",
-            "Confirm", "Cancel"))
+        if (!EditorUtility.DisplayDialog("确认合并",
+            $"将删除以下重复文件，并将所有引用指向保留文件：\n\n保留：{keepName}\n\n待删除：\n{deleteNames}\n\n此操作不可撤销！",
+            "确认", "取消"))
             return;
 
         string keepGuid = AssetDatabase.AssetPathToGUID(keepPath);
@@ -92,7 +92,7 @@ public class AssetReferenceTool
         foreach (var path in deletePaths) AssetDatabase.DeleteAsset(path);
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
-        EditorUtility.DisplayDialog("Done", "Duplicate assets merged successfully.", "OK");
+        EditorUtility.DisplayDialog("完成", "重复资产合并完成。", "确定");
     }
 
     static bool IsNumberedVariant(string baseName, string name)
@@ -102,8 +102,8 @@ public class AssetReferenceTool
         return Regex.IsMatch(suffix, @"^\d+$");
     }
 
-    // -------------------- Menu: Replace an asset GUID --------------------
-    [MenuItem("Assets/Replace Asset GUID", true)]
+    // -------------------- 菜单：替换单个资产的 GUID --------------------
+    [MenuItem("Assets/替换资产GUID", true)]
     static bool ValidateReplaceGUID()
     {
         if (Selection.objects.Length != 1) return false;
@@ -111,7 +111,7 @@ public class AssetReferenceTool
         return !string.IsNullOrEmpty(path) && !AssetDatabase.IsValidFolder(path);
     }
 
-    [MenuItem("Assets/Replace Asset GUID")]
+    [MenuItem("Assets/替换资产GUID")]
     static void ShowReplaceGUIDWindow()
     {
         string path = AssetDatabase.GetAssetPath(Selection.activeObject);
@@ -119,8 +119,8 @@ public class AssetReferenceTool
         ReplaceGUIDWindow.OpenWindow(path, guid);
     }
 
-    // -------------------- Menu: View asset references --------------------
-    [MenuItem("Assets/View Asset References", true)]
+    // -------------------- 菜单：查看资产引用 --------------------
+    [MenuItem("Assets/查看资产引用", true)]
     static bool ValidateShowReferences()
     {
         if (Selection.objects.Length != 1) return false;
@@ -128,15 +128,15 @@ public class AssetReferenceTool
         return !string.IsNullOrEmpty(path) && !AssetDatabase.IsValidFolder(path);
     }
 
-    [MenuItem("Assets/View Asset References")]
+    [MenuItem("Assets/查看资产引用")]
     static void ShowReferencesWindow()
     {
         string path = AssetDatabase.GetAssetPath(Selection.activeObject);
         ReferenceViewerWindow.OpenWindow(path);
     }
 
-    // -------------------- Menu: View asset dependents --------------------
-    [MenuItem("Assets/View Asset Dependents", true)]
+    // -------------------- 菜单：查看资产被引用 --------------------
+    [MenuItem("Assets/查看资产被引用", true)]
     static bool ValidateShowDependents()
     {
         if (Selection.objects.Length != 1) return false;
@@ -144,25 +144,25 @@ public class AssetReferenceTool
         return !string.IsNullOrEmpty(path) && !AssetDatabase.IsValidFolder(path);
     }
 
-    [MenuItem("Assets/View Asset Dependents")]
+    [MenuItem("Assets/查看资产被引用")]
     static void ShowDependentsWindow()
     {
         string path = AssetDatabase.GetAssetPath(Selection.activeObject);
         DependentsViewerWindow.OpenWindow(path);
     }
 
-    // -------------------- Menu: Find an asset by GUID --------------------
-    [MenuItem("Assets/Find Asset by GUID", true)]
+    // -------------------- 菜单：通过 GUID 查找资产 --------------------
+    [MenuItem("Assets/通过GUID查找资产", true)]
     static bool ValidateFindByGuid() { return true; }
 
-    [MenuItem("Assets/Find Asset by GUID")]
+    [MenuItem("Assets/通过GUID查找资产")]
     static void ShowFindByGuidWindow()
     {
         FindAssetByGuidWindow.OpenWindow();
     }
 
-    // -------------------- Menu: Merge duplicate assets in a folder --------------------
-    [MenuItem("Assets/Merge Duplicate Assets in Folder", true)]
+    // -------------------- 菜单：合并文件夹内的重复资产（增强版） --------------------
+    [MenuItem("Assets/合并文件夹内的重复资产", true)]
     static bool ValidateMergeFolderDuplicates()
     {
         if (Selection.objects.Length != 1) return false;
@@ -170,13 +170,13 @@ public class AssetReferenceTool
         return AssetDatabase.IsValidFolder(path);
     }
 
-    [MenuItem("Assets/Merge Duplicate Assets in Folder")]
+    [MenuItem("Assets/合并文件夹内的重复资产")]
     static void MergeFolderDuplicates()
     {
         string folderPath = AssetDatabase.GetAssetPath(Selection.activeObject);
         if (string.IsNullOrEmpty(folderPath) || !AssetDatabase.IsValidFolder(folderPath))
         {
-            EditorUtility.DisplayDialog("Error", "Select a valid folder.", "OK");
+            EditorUtility.DisplayDialog("错误", "请选择一个有效的文件夹。", "确定");
             return;
         }
 
@@ -193,11 +193,11 @@ public class AssetReferenceTool
 
         if (allPaths.Length == 0)
         {
-            EditorUtility.DisplayDialog("Information", "The selected folder and its subfolders contain no asset files.", "OK");
+            EditorUtility.DisplayDialog("提示", "所选文件夹及其子文件夹内没有资产文件。", "确定");
             return;
         }
 
-        // Phase 1: Match main object names.
+        // 第一阶段：主对象名称匹配
         var mainNameGroups = new Dictionary<string, List<string>>();
         foreach (string path in allPaths)
         {
@@ -229,7 +229,7 @@ public class AssetReferenceTool
             }
         }
 
-        // Phase 2: Match content hashes.
+        // 第二阶段：内容哈希匹配
         var remainingPaths = allPaths.Where(p => !processedPaths.Contains(p)).ToList();
         if (remainingPaths.Count > 1)
         {
@@ -263,21 +263,21 @@ public class AssetReferenceTool
 
         if (mergeGroups.Count == 0)
         {
-            EditorUtility.DisplayDialog("Information", "No duplicate assets were found to merge.", "OK");
+            EditorUtility.DisplayDialog("提示", "未找到任何可合并的重复资产。", "确定");
             return;
         }
 
-        var sb = new StringBuilder("The following duplicate groups will be merged:\n\n");
+        var sb = new StringBuilder("检测到以下重复组，将自动合并：\n\n");
         foreach (var group in mergeGroups)
         {
-            sb.AppendLine($"Keep: {Path.GetFileName(group.Key)}");
+            sb.AppendLine($"保留: {Path.GetFileName(group.Key)}");
             foreach (var dup in group.Value)
-                sb.AppendLine($"  Delete: {Path.GetFileName(dup)}");
+                sb.AppendLine($"  删除: {Path.GetFileName(dup)}");
             sb.AppendLine();
         }
-        sb.Append("This operation replaces all references and deletes duplicate files. It cannot be undone!");
+        sb.Append("此操作将替换所有引用并删除重复文件，不可撤销！");
 
-        if (!EditorUtility.DisplayDialog("Confirm Merge", sb.ToString(), "Merge All", "Cancel"))
+        if (!EditorUtility.DisplayDialog("确认合并", sb.ToString(), "全部合并", "取消"))
             return;
 
         EnsureCacheReady();
@@ -297,7 +297,7 @@ public class AssetReferenceTool
 
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
-        EditorUtility.DisplayDialog("Done", "Duplicate assets in the folder have been merged.", "OK");
+        EditorUtility.DisplayDialog("完成", "文件夹内的重复资产已合并完成。", "确定");
     }
 
     private static string GetFileMD5(string filePath)
@@ -317,8 +317,8 @@ public class AssetReferenceTool
         }
     }
 
-    // -------------------- Menu: Change prefab Sprite references to type 3 --------------------
-    [MenuItem("Assets/Change Sprite Reference Type to 3", true)]
+    // -------------------- 菜单：Prefab中Sprite引用type改为3（简化版） --------------------
+    [MenuItem("Assets/将Sprite引用类型改为3", true)]
     static bool ValidateFixSpriteRefType()
     {
         if (Selection.objects.Length != 1) return false;
@@ -326,19 +326,19 @@ public class AssetReferenceTool
         return !string.IsNullOrEmpty(path) && Path.GetExtension(path).ToLower() == ".prefab";
     }
 
-    [MenuItem("Assets/Change Sprite Reference Type to 3")]
+    [MenuItem("Assets/将Sprite引用类型改为3")]
     static void FixSpriteRefType()
     {
         string path = AssetDatabase.GetAssetPath(Selection.activeObject);
         if (string.IsNullOrEmpty(path) || !File.Exists(path))
         {
-            EditorUtility.DisplayDialog("Error", "No valid prefab file was found.", "OK");
+            EditorUtility.DisplayDialog("错误", "未找到有效的预制体文件。", "确定");
             return;
         }
 
-        if (!EditorUtility.DisplayDialog("Confirm Changes",
-            $"In prefab \"{Path.GetFileName(path)}\" all m_Sprite references will change from type: 2 to type: 3.\n\nThis affects asset loading. Back up the asset first.",
-            "Continue", "Cancel"))
+        if (!EditorUtility.DisplayDialog("确认修改",
+            $"将把预制体 \"{Path.GetFileName(path)}\" 中所有 m_Sprite 引用的 type: 2 改为 type: 3。\n\n此操作会影响资源加载方式，建议先备份。",
+            "继续", "取消"))
             return;
 
         string[] lines = File.ReadAllLines(path);
@@ -357,16 +357,16 @@ public class AssetReferenceTool
 
         if (!modified)
         {
-            EditorUtility.DisplayDialog("Information", "No m_Sprite references with type: 2 were found; no changes are needed.", "OK");
+            EditorUtility.DisplayDialog("提示", "未找到任何 m_Sprite 行中包含 type: 2 的引用，无需修改。", "确定");
             return;
         }
 
         File.WriteAllLines(path, lines);
         AssetDatabase.ImportAsset(path);
-        EditorUtility.DisplayDialog("Done", "Sprite references in the prefab now use type: 3.", "OK");
+        EditorUtility.DisplayDialog("完成", "预制体中的 Sprite 引用类型已修改为 type: 3。", "确定");
     }
 
-    // -------------------- Replace GUID window --------------------
+    // -------------------- 替换 GUID 窗口 --------------------
     internal class ReplaceGUIDWindow : EditorWindow
     {
         private string assetPath, currentGuid, newGuidInput = "";
@@ -374,7 +374,7 @@ public class AssetReferenceTool
 
         public static void OpenWindow(string path, string guid)
         {
-            var window = GetWindow<ReplaceGUIDWindow>(true, "Replace Asset GUID");
+            var window = GetWindow<ReplaceGUIDWindow>(true, "替换资产 GUID");
             window.assetPath = path;
             window.currentGuid = guid;
             window.newGuidInput = "";
@@ -388,25 +388,25 @@ public class AssetReferenceTool
         {
             EditorGUILayout.Space(10);
 
-            EditorGUILayout.LabelField("Asset path:");
+            EditorGUILayout.LabelField("资产路径:");
             EditorGUILayout.ObjectField(assetObject, typeof(Object), false);
 
             EditorGUILayout.Space(5);
 
-            EditorGUILayout.LabelField("Current GUID:");
+            EditorGUILayout.LabelField("当前 GUID:");
             EditorGUILayout.SelectableLabel(currentGuid, EditorStyles.textField, GUILayout.Height(18));
 
             EditorGUILayout.Space(5);
 
-            EditorGUILayout.LabelField("New GUID:");
+            EditorGUILayout.LabelField("新 GUID:");
             newGuidInput = EditorGUILayout.TextField(newGuidInput);
 
             EditorGUILayout.Space(15);
             EditorGUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
 
-            if (GUILayout.Button("Replace", GUILayout.Width(100))) Replace();
-            if (GUILayout.Button("Cancel", GUILayout.Width(100))) Close();
+            if (GUILayout.Button("替换", GUILayout.Width(100))) Replace();
+            if (GUILayout.Button("取消", GUILayout.Width(100))) Close();
             EditorGUILayout.EndHorizontal();
         }
 
@@ -415,22 +415,22 @@ public class AssetReferenceTool
             string newGuid = newGuidInput.Trim();
             if (!Regex.IsMatch(newGuid, @"^[a-fA-F0-9]{32}$"))
             {
-                EditorUtility.DisplayDialog("Invalid Format", "A GUID must contain 32 hexadecimal characters.", "OK");
+                EditorUtility.DisplayDialog("格式错误", "GUID 必须为 32 位十六进制字符串。", "确定");
                 return;
             }
             if (newGuid == currentGuid)
             {
-                EditorUtility.DisplayDialog("No Change", "The new GUID matches the current GUID.", "OK");
+                EditorUtility.DisplayDialog("无变化", "新 GUID 与当前 GUID 相同。", "确定");
                 return;
             }
             string existPath = AssetDatabase.GUIDToAssetPath(newGuid);
             if (!string.IsNullOrEmpty(existPath) && existPath != assetPath)
             {
-                EditorUtility.DisplayDialog("Conflict", $"This GUID is already in use:\n{existPath}", "OK");
+                EditorUtility.DisplayDialog("冲突", $"GUID 已被占用:\n{existPath}", "确定");
                 return;
             }
 
-            if (!EditorUtility.DisplayDialog("Confirm Replacement", $"Change the GUID from {currentGuid} to {newGuid}?", "Confirm", "Cancel"))
+            if (!EditorUtility.DisplayDialog("确认替换", $"将 GUID 从 {currentGuid} 改为 {newGuid}？", "确认", "取消"))
                 return;
 
             _isProcessing = true;
@@ -448,14 +448,14 @@ public class AssetReferenceTool
                 AssetDatabase.ImportAsset(assetPath);
                 AssetDatabase.SaveAssets();
                 AssetDatabase.Refresh();
-                EditorUtility.DisplayDialog("Done", "Asset GUID replaced successfully.", "OK");
+                EditorUtility.DisplayDialog("完成", "资产 GUID 替换完成。", "确定");
             }
             finally { _isProcessing = false; }
             Close();
         }
     }
 
-    // -------------------- Asset reference viewer window --------------------
+    // -------------------- 查看资产引用窗口 --------------------
     internal class ReferenceViewerWindow : EditorWindow
     {
         private string assetPath;
@@ -466,7 +466,7 @@ public class AssetReferenceTool
 
         public static void OpenWindow(string path)
         {
-            var window = GetWindow<ReferenceViewerWindow>(true, "Asset References");
+            var window = GetWindow<ReferenceViewerWindow>(true, "资产引用列表");
             window.assetPath = path;
             window.LoadRefs();
             window.minSize = new Vector2(450, 300);
@@ -493,13 +493,13 @@ public class AssetReferenceTool
         void OnGUI()
         {
             EditorGUILayout.Space(10);
-            EditorGUILayout.LabelField("Asset:", assetPath);
-            EditorGUILayout.LabelField("Reference count:", referencedObjects.Count.ToString());
+            EditorGUILayout.LabelField("资产:", assetPath);
+            EditorGUILayout.LabelField("引用数量:", referencedObjects.Count.ToString());
             EditorGUILayout.Space(5);
 
             if (referencedObjects.Count == 0)
             {
-                EditorGUILayout.HelpBox("This asset does not reference any non-script assets.", MessageType.Info);
+                EditorGUILayout.HelpBox("没有引用任何非脚本资产。", MessageType.Info);
                 return;
             }
 
@@ -512,7 +512,7 @@ public class AssetReferenceTool
         }
     }
 
-    // -------------------- Asset dependent viewer window --------------------
+    // -------------------- 查看资产被引用窗口 --------------------
     internal class DependentsViewerWindow : EditorWindow
     {
         private string assetPath;
@@ -522,7 +522,7 @@ public class AssetReferenceTool
 
         public static void OpenWindow(string path)
         {
-            var window = GetWindow<DependentsViewerWindow>(true, "Asset Dependents");
+            var window = GetWindow<DependentsViewerWindow>(true, "资产被引用列表");
             window.assetPath = path;
             window.LoadDependents();
             window.minSize = new Vector2(450, 300);
@@ -555,13 +555,13 @@ public class AssetReferenceTool
         void OnGUI()
         {
             EditorGUILayout.Space(10);
-            EditorGUILayout.LabelField("Asset:", assetPath);
-            EditorGUILayout.LabelField("Dependent count:", dependentObjects.Count.ToString());
+            EditorGUILayout.LabelField("资产:", assetPath);
+            EditorGUILayout.LabelField("被引用数量:", dependentObjects.Count.ToString());
             EditorGUILayout.Space(5);
 
             if (dependentObjects.Count == 0)
             {
-                EditorGUILayout.HelpBox("No non-script assets reference this asset.", MessageType.Info);
+                EditorGUILayout.HelpBox("该资产未被任何非脚本资产引用。", MessageType.Info);
                 return;
             }
 
@@ -574,7 +574,7 @@ public class AssetReferenceTool
         }
     }
 
-    // -------------------- Find asset by GUID window --------------------
+    // -------------------- 通过 GUID 查找资产窗口 --------------------
     internal class FindAssetByGuidWindow : EditorWindow
     {
         private string searchGuid = "";
@@ -582,7 +582,7 @@ public class AssetReferenceTool
 
         public static void OpenWindow()
         {
-            var window = GetWindow<FindAssetByGuidWindow>(true, "Find Asset by GUID");
+            var window = GetWindow<FindAssetByGuidWindow>(true, "通过 GUID 查找资产");
             window.minSize = new Vector2(400, 150);
             window.Show();
         }
@@ -590,9 +590,9 @@ public class AssetReferenceTool
         void OnGUI()
         {
             EditorGUILayout.Space(10);
-            searchGuid = EditorGUILayout.TextField("Enter GUID:", searchGuid);
+            searchGuid = EditorGUILayout.TextField("输入 GUID:", searchGuid);
 
-            if (GUILayout.Button("Find", GUILayout.Width(100)))
+            if (GUILayout.Button("查找", GUILayout.Width(100)))
             {
                 FindAsset();
             }
@@ -600,11 +600,11 @@ public class AssetReferenceTool
             EditorGUILayout.Space(10);
             if (foundAsset != null)
             {
-                EditorGUILayout.ObjectField("Found asset:", foundAsset, typeof(Object), false);
+                EditorGUILayout.ObjectField("找到的资产:", foundAsset, typeof(Object), false);
             }
             else if (!string.IsNullOrEmpty(searchGuid))
             {
-                EditorGUILayout.HelpBox("No matching asset was found.", MessageType.Warning);
+                EditorGUILayout.HelpBox("未找到对应的资产。", MessageType.Warning);
             }
         }
 
@@ -614,7 +614,7 @@ public class AssetReferenceTool
             string guid = searchGuid.Trim();
             if (guid.Length != 32 || !Regex.IsMatch(guid, @"^[a-fA-F0-9]{32}$"))
             {
-                EditorUtility.DisplayDialog("Error", "Invalid GUID format.", "OK");
+                EditorUtility.DisplayDialog("错误", "GUID 格式无效。", "确定");
                 return;
             }
 
@@ -636,7 +636,7 @@ public class AssetReferenceTool
         }
     }
 
-    // ---- Shared reference cache ----
+    // ---- 共用引用缓存系统 ----
     private static Dictionary<string, HashSet<string>> _guidRefMap;
     private static readonly object _lock = new object();
 
@@ -681,7 +681,7 @@ public class AssetReferenceTool
             if (Directory.Exists(path)) continue;
             if (i % 100 == 0)
             {
-                if (EditorUtility.DisplayCancelableProgressBar("Build Reference Cache", Path.GetFileName(path), (float)i / files.Length))
+                if (EditorUtility.DisplayCancelableProgressBar("建立引用缓存", Path.GetFileName(path), (float)i / files.Length))
                 {
                     EditorUtility.ClearProgressBar();
                     _guidRefMap = null;
@@ -712,7 +712,7 @@ public class AssetReferenceTool
     internal static void ReplaceGUIDReferences(List<string> oldGuids, string newGuid)
     {
         EnsureCacheReady();
-        if (_guidRefMap == null) { Debug.LogError("Failed to build the reference cache."); return; }
+        if (_guidRefMap == null) { Debug.LogError("引用缓存构建失败。"); return; }
 
         var filesToModify = new HashSet<string>();
         lock (_lock)
@@ -766,7 +766,7 @@ public class AssetReferenceTool
                     }
                 }
                 if (++index % 20 == 0)
-                    EditorUtility.DisplayProgressBar("Replace References", Path.GetFileName(fp), (float)index / total);
+                    EditorUtility.DisplayProgressBar("替换引用", Path.GetFileName(fp), (float)index / total);
             }
         }
         finally
@@ -782,7 +782,7 @@ public class AssetReferenceTool
     }
 }
 
-// Global asset change listener
+// 全局监听
 internal class DuplicateAssetCacheInvalidator : AssetPostprocessor
 {
     static void OnPostprocessAllAssets(string[] imported, string[] deleted, string[] moved, string[] movedFrom)

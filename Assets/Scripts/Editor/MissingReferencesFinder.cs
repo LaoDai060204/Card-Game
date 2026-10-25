@@ -13,38 +13,38 @@ public class MissingReferencesFinder : EditorWindow
     private bool includePrefabs = true;
     private bool includeScriptableObjects = true;
 
-    [MenuItem("Tools/Missing Reference Finder")]
+    [MenuItem("Tools/缺失引用查找器")]
     public static void ShowWindow()
     {
-        GetWindow<MissingReferencesFinder>("Missing Reference Finder");
+        GetWindow<MissingReferencesFinder>("缺失引用查找器");
     }
 
     private void OnGUI()
     {
-        GUILayout.Label("Missing Reference Finder", EditorStyles.boldLabel);
+        GUILayout.Label("缺失引用查找器", EditorStyles.boldLabel);
         GUILayout.Space(10);
 
-        // Configuration options
-        includeScenes = EditorGUILayout.Toggle("Include Scenes", includeScenes);
-        includePrefabs = EditorGUILayout.Toggle("Include Prefabs", includePrefabs);
-        includeScriptableObjects = EditorGUILayout.Toggle("Include ScriptableObjects", includeScriptableObjects);
+        // 配置选项
+        includeScenes = EditorGUILayout.Toggle("包含场景", includeScenes);
+        includePrefabs = EditorGUILayout.Toggle("包含Prefabs", includePrefabs);
+        includeScriptableObjects = EditorGUILayout.Toggle("包含ScriptableObjects", includeScriptableObjects);
 
         GUILayout.Space(10);
 
-        if (GUILayout.Button("Scan Entire Project", GUILayout.Height(30)))
+        if (GUILayout.Button("扫描整个项目", GUILayout.Height(30)))
         {
             ScanEntireProject();
         }
 
-        if (GUILayout.Button("Scan Selected Assets", GUILayout.Height(30)))
+        if (GUILayout.Button("扫描选中资源", GUILayout.Height(30)))
         {
             ScanSelectedAssets();
         }
 
         GUILayout.Space(10);
 
-        // Display results.
-        GUILayout.Label($"Found {missingReferences.Count} missing references");
+        // 显示结果
+        GUILayout.Label($"找到 {missingReferences.Count} 个缺失引用");
 
         if (missingReferences.Count > 0)
         {
@@ -55,17 +55,17 @@ public class MissingReferencesFinder : EditorWindow
                 EditorGUILayout.BeginVertical("box");
 
                 EditorGUILayout.BeginHorizontal();
-                EditorGUILayout.LabelField($"Asset: {missingRef.assetPath}", EditorStyles.boldLabel);
-                if (GUILayout.Button("Locate", GUILayout.Width(60)))
+                EditorGUILayout.LabelField($"资源: {missingRef.assetPath}", EditorStyles.boldLabel);
+                if (GUILayout.Button("定位", GUILayout.Width(60)))
                 {
                     Selection.activeObject = AssetDatabase.LoadMainAssetAtPath(missingRef.assetPath);
                     EditorGUIUtility.PingObject(Selection.activeObject);
                 }
                 EditorGUILayout.EndHorizontal();
 
-                EditorGUILayout.LabelField($"Component: {missingRef.componentType}");
-                EditorGUILayout.LabelField($"Property: {missingRef.propertyName}");
-                EditorGUILayout.LabelField($"Hierarchy path: {missingRef.gameObjectPath}");
+                EditorGUILayout.LabelField($"组件: {missingRef.componentType}");
+                EditorGUILayout.LabelField($"属性: {missingRef.propertyName}");
+                EditorGUILayout.LabelField($"节点路径: {missingRef.gameObjectPath}");
 
                 EditorGUILayout.EndVertical();
                 GUILayout.Space(5);
@@ -82,7 +82,7 @@ public class MissingReferencesFinder : EditorWindow
 
         try
         {
-            // Scan Prefabs
+            // 扫描Prefabs
             if (includePrefabs)
             {
                 string[] prefabPaths = AssetDatabase.GetAllAssetPaths()
@@ -94,13 +94,13 @@ public class MissingReferencesFinder : EditorWindow
 
                 foreach (string path in prefabPaths)
                 {
-                    EditorUtility.DisplayProgressBar("Scan Prefabs", path, (float)totalScanned / prefabPaths.Length);
+                    EditorUtility.DisplayProgressBar("扫描Prefabs", path, (float)totalScanned / prefabPaths.Length);
                     ScanAssetAtPath(path);
                     totalScanned++;
                 }
             }
 
-            // Scan Scenes
+            // 扫描场景
             if (includeScenes)
             {
                 string[] scenePaths = AssetDatabase.GetAllAssetPaths()
@@ -109,13 +109,13 @@ public class MissingReferencesFinder : EditorWindow
 
                 foreach (string path in scenePaths)
                 {
-                    EditorUtility.DisplayProgressBar("Scan Scenes", path, (float)totalScanned / (totalScanned + scenePaths.Length));
+                    EditorUtility.DisplayProgressBar("扫描场景", path, (float)totalScanned / (totalScanned + scenePaths.Length));
                     ScanAssetAtPath(path);
                     totalScanned++;
                 }
             }
 
-            // Scan ScriptableObjects
+            // 扫描ScriptableObjects
             if (includeScriptableObjects)
             {
                 string[] soPaths = AssetDatabase.GetAllAssetPaths()
@@ -127,7 +127,7 @@ public class MissingReferencesFinder : EditorWindow
 
                 foreach (string path in soPaths)
                 {
-                    EditorUtility.DisplayProgressBar("Scan ScriptableObjects", path, (float)totalScanned / (totalScanned + soPaths.Length));
+                    EditorUtility.DisplayProgressBar("扫描ScriptableObjects", path, (float)totalScanned / (totalScanned + soPaths.Length));
                     ScanScriptableObjectAtPath(path);
                     totalScanned++;
                 }
@@ -138,7 +138,7 @@ public class MissingReferencesFinder : EditorWindow
             EditorUtility.ClearProgressBar();
         }
 
-        Debug.Log($"Scan complete. Missing references found: {missingReferences.Count} missing references");
+        Debug.Log($"扫描完成！找到 {missingReferences.Count} 个缺失引用");
     }
 
     private void ScanSelectedAssets()
@@ -148,7 +148,7 @@ public class MissingReferencesFinder : EditorWindow
 
         if (selectedObjects.Length == 0)
         {
-            Debug.LogWarning("Select assets to scan first.");
+            Debug.LogWarning("请先选择要扫描的资源");
             return;
         }
 
@@ -161,7 +161,7 @@ public class MissingReferencesFinder : EditorWindow
             }
         }
 
-        Debug.Log($"Scan complete. Missing references found: {missingReferences.Count} missing references");
+        Debug.Log($"扫描完成！找到 {missingReferences.Count} 个缺失引用");
     }
 
     private void ScanAssetAtPath(string assetPath)
@@ -169,14 +169,14 @@ public class MissingReferencesFinder : EditorWindow
         GameObject asset = AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
         if (asset == null) return;
 
-        // Check GameObjects in the prefab or scene.
+        // 检查Prefab或场景中的GameObject
         Component[] components = asset.GetComponentsInChildren<Component>(true);
 
         foreach (var component in components)
         {
             if (component == null)
             {
-                // Missing components, such as deleted scripts.
+                // 缺失的组件（如被删除的脚本）
                 missingReferences.Add(new MissingReference
                 {
                     assetPath = assetPath,
@@ -225,7 +225,7 @@ public class MissingReferencesFinder : EditorWindow
         SerializedObject serializedObject = new SerializedObject(component);
         var property = serializedObject.GetIterator();
 
-        // Use reflection to inspect object references more accurately.
+        // 使用反射获取更准确的对象引用信息[4](@ref)
         var objRefValueMethod = typeof(SerializedProperty).GetProperty("objectReferenceStringValue",
             BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
 
@@ -240,7 +240,7 @@ public class MissingReferencesFinder : EditorWindow
                         .Invoke(property, new object[0]);
                 }
 
-                // Check whether the reference is missing.
+                // 检查是否为缺失引用[1,4](@ref)
                 if (property.objectReferenceValue == null &&
                     (property.objectReferenceInstanceIDValue != 0 ||
                      (objectReferenceStringValue != null && objectReferenceStringValue.StartsWith("Missing"))))
@@ -271,14 +271,14 @@ public class MissingReferencesFinder : EditorWindow
         return string.Join("/", path);
     }
 
-    [MenuItem("Assets/Find Missing References", false, 20)]
+    [MenuItem("Assets/查找缺失引用", false, 20)]
     private static void FindMissingReferencesInSelection()
     {
         var window = GetWindow<MissingReferencesFinder>();
         window.ScanSelectedAssets();
     }
 
-    [MenuItem("CONTEXT/Component/Check Missing References")]
+    [MenuItem("CONTEXT/Component/检查缺失引用")]
     private static void FindMissingReferencesInComponent(MenuCommand command)
     {
         Component component = command.context as Component;
@@ -302,7 +302,7 @@ public class MissingReferencesFinder : EditorWindow
         CheckComponentForMissingReferences(component, assetPath,
             component.transform.root ?? component.transform);
 
-        Debug.Log($"Check complete. Missing references found: {missingReferences.Count} missing references");
+        Debug.Log($"检查完成！找到 {missingReferences.Count} 个缺失引用");
     }
 }
 

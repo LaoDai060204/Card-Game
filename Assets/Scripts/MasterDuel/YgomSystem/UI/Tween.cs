@@ -174,7 +174,7 @@ namespace YgomSystem.UI
             crntTime = time;
             float t = duration > 0 ? crntTime / duration : 1f;
 
-            // Apply the playback style.
+            // 处理播放风格
             switch (style)
             {
                 case Style.Once:
@@ -193,7 +193,7 @@ namespace YgomSystem.UI
 
             OnSetValue(GetEasing(t));
 
-            // Completion: one PingPong round trip takes twice the duration.
+            // 完成判定：PingPong 单次往返需要 2 倍时长
             bool isComplete = style == Style.PingPong
                 ? crntTime >= duration * 2f
                 : crntTime >= duration;
@@ -212,7 +212,7 @@ namespace YgomSystem.UI
                     case Style.Loop:
                         ResetWithTimeDelta();
                         break;
-                    // Loop, PingPong, and Sync styles continue running without completing.
+                    // Loop(PingPong)/Sync 系列持续运行，不做完成处理
                 }
             }
         }

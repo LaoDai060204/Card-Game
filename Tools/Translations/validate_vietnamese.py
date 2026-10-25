@@ -42,10 +42,9 @@ def csv_vietnamese():
     with path.open(encoding="utf-8-sig", newline="") as stream:
         rows = list(csv.reader(stream))
     column = rows[0].index("vi-VN")
-    key_column = rows[0].index("key")
     lines = []
     for number, row in enumerate(rows[1:], 2):
-        key = row[key_column] if row else ""
+        key = row[0] if row else ""
         if not key or key.startswith("#"):
             lines.append(key)
             continue
@@ -79,30 +78,14 @@ def validate():
     english = read_ui(LOCALES / "en-US/translation.conf")
     vietnamese = read_ui(VI / "translation.conf")
     require(english.keys() <= vietnamese.keys(), "Vietnamese is missing English UI keys")
-    aliases = json.loads((LOCALES / "legacy-ui-keys.json").read_text(encoding="utf-8"))
-    require(len(aliases.values()) == len(set(aliases.values())),
-            "Legacy UI aliases merge distinct keys; keep context-specific English keys")
-    require(set(aliases.values()) <= english.keys(), "Legacy aliases point to missing English keys")
-    require(set(aliases.values()) <= vietnamese.keys(), "Legacy aliases point to missing Vietnamese keys")
-    require(all(not HAN.search(key) for key in english), "English locale has legacy Chinese source keys")
-    require(all(HAN.search(key) and not HAN.search(value) for key, value in aliases.items()),
-            "Legacy alias table must map old Chinese keys to English source keys")
-    # Similar English labels have different meanings in game controls and card
-    # filters. Keep their IDs distinct even when an English display value repeats.
-    for left, right in [("Monster Type", "Type"), ("ATK", "Attack"),
-                        ("Toggle On", "On"), ("Toggle Off", "Off")]:
-        require(left != right and left in english and right in english
-                and left in vietnamese and right in vietnamese,
-                f"Context-specific UI keys were merged or removed: {left}, {right}")
     for key, value in vietnamese.items():
-        require(not HAN.search(key), f"Vietnamese locale has a legacy Chinese source key: {key}")
         require(value == unicodedata.normalize("NFC", value), f"Non-NFC Vietnamese: {key}")
         require(not HAN.search(value), f"Untranslated Chinese UI value: {key}")
         if key in english:
             expected = Counter(TOKENS.findall(english[key]))
             # The upstream English exit dialog dropped a line break present in
             # the source key. Vietnamese intentionally restores that line break.
-            if key == "Are you sure you want to exit the game?":
+            if key == "即将退出应用程序，@n是否确认？":
                 expected["@n"] = 1
             require(Counter(TOKENS.findall(value)) == expected,
                     f"UI placeholders/tags changed: {key}")
@@ -117,12 +100,11 @@ def validate():
     require(csv_values == vietnamese, "CSV and vi-VN/translation.conf differ; run --write")
 
     literal_count = 0
-    for path in (ROOT / "Assets/Scripts/CardGame").rglob("*.cs"):
+    for path in (ROOT / "Assets/Scripts/MDPro3").rglob("*.cs"):
         content = path.read_text(encoding="utf-8-sig")
         for match in re.finditer(r'InterString\.Get\(\s*"((?:[^"\\]|\\.)*)"', content):
             key = json.loads('"' + match.group(1) + '"')
-            require(not HAN.search(key), f"Runtime UI still uses a legacy Chinese key: {path}: {key}")
-            if key in english:
+            if HAN.search(key):
                 require(key in vietnamese, f"Missing runtime UI translation: {path}: {key}")
                 literal_count += 1
 
