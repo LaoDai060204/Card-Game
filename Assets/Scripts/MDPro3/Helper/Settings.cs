@@ -209,6 +209,38 @@ namespace MDPro3
             };
         }
 
+        public static bool IsRetiredPrereleaseUrl(string url)
+        {
+            if (!Uri.TryCreate(url, UriKind.Absolute, out var uri)
+                || (uri.Scheme != Uri.UriSchemeHttps && uri.Scheme != Uri.UriSchemeHttp))
+                return false;
+
+            if (!string.Equals(uri.Host, "github.com", StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(uri.Host, "raw.githubusercontent.com", StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            var parts = uri.AbsolutePath.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+            return parts.Length >= 2
+                && string.Equals(parts[0], "ElderLich", StringComparison.OrdinalIgnoreCase)
+                && string.Equals(parts[1], "TransSuperpre", StringComparison.OrdinalIgnoreCase);
+        }
+
+        public static bool TryReadPrereleaseVersion(string response, out string version)
+        {
+            version = string.Empty;
+            if (string.IsNullOrWhiteSpace(response))
+                return false;
+
+            using var reader = new StringReader(response);
+            var firstLine = reader.ReadLine()?.Trim();
+            if (string.IsNullOrEmpty(firstLine) || firstLine.Length > 128
+                || firstLine.IndexOf('<') >= 0 || firstLine.IndexOf('>') >= 0)
+                return false;
+
+            version = firstLine;
+            return true;
+        }
+
         private static void SaveSettings(SettingData data)
         {
             var json = JsonConvert.SerializeObject(data, Formatting.Indented);

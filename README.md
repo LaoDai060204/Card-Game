@@ -28,10 +28,26 @@ Các thư mục tài nguyên Windows đã được bổ sung vào kho:
 - `Platforms/StandaloneWindows64`
 - `Picture/Art`, `Picture/Closeup`, `Picture/DIY`
 - `Sound`
+- `Puzzle` và `Data/cards_Lite.json`
 
 Giữ các thư mục này cùng cấp với `Assets`, `Data`, `Packages`, `ProjectSettings`. Windows Editor đọc chúng từ thư mục gốc dự án. Các nền tảng Android, Linux, macOS, iOS và Switch chưa được bổ sung tài nguyên trong bản này.
 
 Để xuất ứng dụng Windows với cấu hình IL2CPP hiện tại, cài thêm **Windows Build Support (IL2CPP)** cho đúng bản Unity và bộ công cụ C++ cùng Windows SDK của Visual Studio. Kho này không kèm một bản `.exe` đã được kiểm thử.
+
+## Màn chơi Puzzle
+
+Thư mục `Puzzle` có **104 tệp màn chơi gốc**, được kiểm tra với commit `3a7423e6b389c413cc64b157dc213ab67b2ae551` của [mdpro3-other](https://code.moenext.com/mycard/mdpro3-other):
+
+- 55 tệp ở thư mục gốc, gồm các thử thách WCS.
+- 40 tệp trong `CardEffect`, 6 trong `FinalAttack`, 3 trong `SpecialWin`.
+
+Đặt `Puzzle` cùng cấp với `Assets`, mở scene **Boot**, Play rồi vào mục **Puzzle / Thử thách giải thế cờ**. Không đặt các tệp này trong `Assets` hoặc `StreamingAssets`.
+
+Trong bộ dữ liệu đi kèm, 99 màn có đủ các ID thẻ được tham chiếu trực tiếp. **5 màn WCS cũ cần 6 ID thẻ phiên bản cũ chưa được cung cấp**; game sẽ báo ID thiếu khi mở các màn đó. Tệp gốc được giữ nguyên, không đổi sang ID của lá bài có hiệu ứng khác. Nếu bạn bổ sung gói mở rộng tương thích, việc kiểm tra sẽ dùng dữ liệu thẻ đang được game nạp.
+
+Chi tiết nguồn, các màn thiếu phụ thuộc và các kiểm tra có thể chạy lại nằm trong [Tools/RuntimeData](Tools/RuntimeData/README.md). Kiểm tra ID và cú pháp Lua không chứng minh tất cả màn đã chơi hoặc giải thành công trong Unity.
+
+`Data/cards_Lite.json` chứa ánh xạ CID/YDK gọn, đã gộp `cards_Alt.json`. File này giúp bản clone mới mở vật phẩm/đồng hành mà không cần tự tải `cards.json`. Bộ nạp có xử lý tệp thiếu, tệp hỏng và lỗi ghi cache.
 
 ## Chơi với người khác
 
@@ -77,6 +93,8 @@ python Tools/Translations/validate_vietnamese.py --write
 Chạy cùng lệnh không có `--write` để chỉ kiểm tra. Công cụ kiểm tra khóa dịch giao diện, placeholder, ID thông báo trận đấu, cấu hình AI và liên kết Addressables của phần giới thiệu. Đây là kiểm tra dữ liệu; vẫn cần mở Unity để kiểm tra hiển thị và chạy game.
 
 Tệp cấu hình URP đã bỏ riêng mục `UniversalRenderPipelineEditorAssets` không có trong bản Editor 6000.0.24f1. Các thay đổi khác bạn tự thực hiện trên Windows chỉ có trong kho sau khi được commit/push hoặc chuyển sang môi trường này.
+
+Registry OpenUPM dùng `https://package.openupm.com`. Các lượt tải tùy chọn có giới hạn thời gian và thông báo URL lỗi đã loại bỏ thông tin đăng nhập/query. Nguồn dịch thẻ phát hành trước `ElderLich/TransSuperpre` hiện đã ngừng cung cấp gói tải; game giữ nguyên thẻ đã cài và bỏ qua kiểm tra nguồn đó. URL tùy chỉnh vẫn được giữ lại, và việc xác minh chứng chỉ HTTPS vẫn được bật.
 
 - `Tools/Translations`: bảng và công cụ xuất dữ liệu dịch giao diện.
 - `Tools/DumpShaders`: dữ liệu phục vụ thay thế shader khi đóng gói tài nguyên.

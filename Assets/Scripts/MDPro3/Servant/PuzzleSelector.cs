@@ -1,6 +1,10 @@
 using MDPro3.UI;
 using MDPro3.UI.ServantUI;
+using MDPro3.Duel.YGOSharp;
+using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Text.RegularExpressions;
 using UnityEngine;
 
 namespace MDPro3.Servant
@@ -77,12 +81,47 @@ namespace MDPro3.Servant
 
         public void StartPuzzle(string puzzle)
         {
+            var path = puzzle + Program.EXPANSION_LUA;
+            try
+            {
+                var missing = FindMissingPuzzleCardIds(File.ReadAllText(path),
+                    id => CardsManager.GetCardRaw(id) != null);
+                if (missing.Count > 0)
+                {
+                    MessageManager.Cast(InterString.Get("残局缺少以下卡片数据：[?]", string.Join(", ", missing)));
+                    Debug.LogWarning($"Puzzle {path} requires missing card data: {string.Join(", ", missing)}");
+                    return;
+                }
+            }
+            catch (Exception exception) when (exception is IOException || exception is UnauthorizedAccessException)
+            {
+                MessageManager.Cast(InterString.Get("启动残局<#FF0000>[?]</color>失败。", Path.GetFileName(puzzle)));
+                Debug.LogWarning($"Unable to read Puzzle {path}: {exception.Message}");
+                return;
+            }
+
             Config.Set("LastPlayPuzzle", puzzle);
             Config.Save();
 
             percy?.Dispose();
             percy = new PercyOCG();
             percy.StartPuzzle(puzzle + Program.EXPANSION_LUA);
+        }
+
+        internal static List<int> FindMissingPuzzleCardIds(string text, Predicate<int> hasCard)
+        {
+            if (hasCard == null)
+                throw new ArgumentNullException(nameof(hasCard));
+            var missing = new HashSet<int>();
+            // Recognize literal setup calls, including local card = Debug.AddCard(...).
+            // Anchoring excludes line comments and unrelated card IDs in solution text.
+            const string pattern = @"(?m)^[\t ]*(?:(?:local[\t ]+)?[A-Za-z_]\w*[\t ]*=[\t ]*)?Debug\.AddCard\s*\(\s*(\d+)\s*,";
+            foreach (Match match in Regex.Matches(text ?? string.Empty, pattern))
+                if (int.TryParse(match.Groups[1].Value, out int id) && id > 0 && !hasCard(id))
+                    missing.Add(id);
+            var result = new List<int>(missing);
+            result.Sort();
+            return result;
         }
 
         public void SelectLastPuzzleItem()

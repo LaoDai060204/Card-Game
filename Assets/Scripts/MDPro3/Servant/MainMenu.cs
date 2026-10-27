@@ -112,29 +112,48 @@ namespace MDPro3.Servant
             // Updates for this customized client are published in Card-Game.
             // The upstream client version does not describe this fork's changes.
 
-            var filePath = Path.Combine(Program.PATH_EXPANSIONS, Path.GetFileName(Settings.Data.PrereleasePackUrl));
+            var packUrl = Settings.GetPrereleasePackUrl();
+            var versionUrl = Settings.GetPrereleasePackVersionUrl();
+            if (Settings.IsRetiredPrereleaseUrl(packUrl) || Settings.IsRetiredPrereleaseUrl(versionUrl))
+            {
+                Debug.LogWarning("The configured TransSuperpre download source has been retired. Keeping the installed cards; configure an available source before updating prerelease cards.");
+                yield break;
+            }
+
+            var filePath = Path.Combine(Program.PATH_EXPANSIONS, Path.GetFileName(packUrl));
             if (!File.Exists(filePath))
             {
                 Config.Set("Prerelease", "0");
                 Config.Save();
             }
 
-            using var www2 = UnityWebRequest.Get(Settings.GetPrereleasePackVersionUrl());
+            using var www2 = UnityWebRequest.Get(versionUrl);
+            www2.timeout = 10;
             yield return www2.SendWebRequest();
-            if (www2.result == UnityWebRequest.Result.Success)
+            if (www2.result != UnityWebRequest.Result.Success)
             {
-                var result = www2.downloadHandler.text;
-                var lines = result.Replace("\r", "").Split('\n');
-                if (Config.Get("Prerelease", "0") != lines[0])
-                    MessageManager.Cast(InterString.Get("检测到新版先行卡，请至 [游戏设置]-[扩展卡包]-[更新先行卡] 处进行更新。"));
+                OnlineService.LogRequestFailure(www2, "prerelease version");
+                yield break;
             }
+
+            if (!Settings.TryReadPrereleaseVersion(www2.downloadHandler.text, out var version))
+            {
+                Debug.LogWarning($"Invalid prerelease version response from {OnlineService.GetRequestDisplayUrl(versionUrl)}; keeping installed cards.");
+                yield break;
+            }
+            if (Config.Get("Prerelease", "0") != version)
+                MessageManager.Cast(InterString.Get("检测到新版先行卡，请至 [游戏设置]-[扩展卡包]-[更新先行卡] 处进行更新。"));
         }
 
         private IEnumerator LoadMyCardNewsAsync()
         {
-            while(OnlineService.myCardNews == null)
+            var deadline = Time.realtimeSinceStartup + 60f;
+            while (OnlineService.myCardNews == null && !OnlineService.MyCardNewsInitialized
+                && Time.realtimeSinceStartup < deadline)
                 yield return null;
             var news = OnlineService.myCardNews;
+            if (news == null)
+                yield break;
             GetUI<MainMenuUI>().News.news = news;
             GetUI<MainMenuUI>().News.LoadNews();
         }

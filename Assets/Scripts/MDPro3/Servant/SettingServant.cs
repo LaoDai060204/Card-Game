@@ -178,6 +178,12 @@ namespace MDPro3.Servant
         {
             if (!checkingPrereleaseUpdate)
             {
+                if (Settings.IsRetiredPrereleaseUrl(Settings.GetPrereleasePackUrl()))
+                {
+                    Debug.LogWarning("The configured TransSuperpre package source has been retired. Keeping installed cards; configure an available package URL before updating.");
+                    MessageManager.Cast(pHints.CheckFailure);
+                    return;
+                }
                 checkingPrereleaseUpdate = true;
                 StartCoroutine(UpdatePrereleaseChunkedCoroutine());
             }
@@ -202,11 +208,12 @@ namespace MDPro3.Servant
             try
             {
                 using var headRequest = UnityWebRequest.Head(url);
+                headRequest.timeout = 15;
                 yield return headRequest.SendWebRequest();
 
                 if (headRequest.result != UnityWebRequest.Result.Success)
                 {
-                    Debug.LogError($"HEAD request failed: {headRequest.error}");
+                    OnlineService.LogRequestFailure(headRequest, "prerelease package HEAD");
                     MessageManager.Cast(pHints.CheckFailure);
                     yield break;
                 }
@@ -232,6 +239,7 @@ namespace MDPro3.Servant
 
                 bool supportsRange = false;
                 using var probeRequest = UnityWebRequest.Get(url);
+                probeRequest.timeout = 15;
                 probeRequest.SetRequestHeader("Range", "bytes=0-0");
                 yield return probeRequest.SendWebRequest();
 

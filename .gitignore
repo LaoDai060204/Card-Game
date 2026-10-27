@@ -70,5 +70,13 @@ Data/lflist_merged.conf
 Data/idChangelog.jsonp
 Data/cards.json
 Data/FileGroups.json
-Data/cards_Lite.json
+# Keep the compact CID mapping and official Puzzle files available after cloning.
+!Data/cards_Lite.json
+!/Puzzle/
+!/Puzzle/**
 /.workbuddy
+
+# Source projects for standalone regression tests; generated test builds stay local.
+!Tools/Tests/**/*.csproj
+Tools/Tests/**/bin/
+Tools/Tests/**/obj/

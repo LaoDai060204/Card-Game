@@ -89,13 +89,13 @@ namespace MDPro3.Net
             try
             {
                 // Cached news remains available when HTTPS or the CDN is unavailable.
-                ParseMyCardNews();
+                var validCache = ParseMyCardNews();
                 var eTag = await GetETagAsync(URL_MYCARD_APPS);
                 if (!string.IsNullOrEmpty(eTag))
                 {
                     var configTag = Config.Get(GetLocalETagKey(URL_MYCARD_APPS), Config.EMPTY_STRING);
                     if (!string.Equals(eTag, configTag, StringComparison.Ordinal)
-                        || !File.Exists(PATH_MYCARD_APPS))
+                        || !validCache)
                     {
                         Program.Debug("Update MyCard Apps.");
                         await DownloadMyCardApps(eTag);
@@ -150,15 +150,18 @@ namespace MDPro3.Net
             }
         }
 
-        private static void ParseMyCardNews()
+        private static bool ParseMyCardNews()
         {
             if (!File.Exists(PATH_MYCARD_APPS))
-                return;
+                return false;
 
             try
             {
                 if (TryParseMyCardNews(File.ReadAllText(PATH_MYCARD_APPS), out var parsedNews))
+                {
                     myCardNews = parsedNews;
+                    return true;
+                }
                 else
                     Debug.LogWarning("Cached MyCard apps data is invalid; optional news will be refreshed when available.");
             }
@@ -166,6 +169,7 @@ namespace MDPro3.Net
             {
                 Debug.LogWarning($"Unable to read cached MyCard news ({exception.GetType().Name}).");
             }
+            return false;
         }
 
         private static bool TryParseMyCardNews(string json, out MyCardNews parsedNews)
