@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using MDPro3.Duel.YGOSharp;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Percy;
 using System;
 using System.Collections.Generic;
@@ -80,23 +81,37 @@ namespace MDPro3.Net
         private const string URL_MYCARD_APPS = "https://cdntx.moecube.com/apps.json";
         private const string PATH_MYCARD_APPS = Program.PATH_DATA + "mycard_apps.json";
         public static MyCardNews myCardNews;
+        public static bool MyCardNewsInitialized { get; private set; }
 
         private static async UniTask InitializeMyCardAppsAsync()
         {
-            var eTag = await GetETagAsync(URL_MYCARD_APPS);
-            if (!string.IsNullOrEmpty(eTag))
+            MyCardNewsInitialized = false;
+            try
             {
-                var configTag = Config.Get(GetLocalETagKey(URL_MYCARD_APPS), Config.EMPTY_STRING);
-                if (!string.Equals(eTag, configTag, StringComparison.Ordinal))
+                // Cached news remains available when HTTPS or the CDN is unavailable.
+                ParseMyCardNews();
+                var eTag = await GetETagAsync(URL_MYCARD_APPS);
+                if (!string.IsNullOrEmpty(eTag))
                 {
-                    Program.Debug("Update MyCard Apps.");
-                    await DownloadMyCardApps(eTag);
+                    var configTag = Config.Get(GetLocalETagKey(URL_MYCARD_APPS), Config.EMPTY_STRING);
+                    if (!string.Equals(eTag, configTag, StringComparison.Ordinal)
+                        || !File.Exists(PATH_MYCARD_APPS))
+                    {
+                        Program.Debug("Update MyCard Apps.");
+                        await DownloadMyCardApps(eTag);
+                    }
+                    else
+                        Program.Debug("MyCard Apps do not need update.");
                 }
-                else
-                    Program.Debug("MyCard Apps do not need update.");
             }
-
-            ParseMyCardNews();
+            catch (Exception exception)
+            {
+                Debug.LogWarning($"Unable to refresh optional MyCard news ({exception.GetType().Name}); continuing with cached data.");
+            }
+            finally
+            {
+                MyCardNewsInitialized = true;
+            }
         }
 
         private static async UniTask DownloadMyCardApps(string ETag)
@@ -110,18 +125,29 @@ namespace MDPro3.Net
             }
             catch
             {
+                LogRequestFailure(request, "MyCard apps download");
                 Program.Debug("下载MyCard apps.json失败。");
                 return;
             }
 
             if (request.result == UnityWebRequest.Result.Success)
             {
-                File.WriteAllText(PATH_MYCARD_APPS, request.downloadHandler.text);
+                var json = request.downloadHandler.text;
+                if (!TryParseMyCardNews(json, out var parsedNews))
+                {
+                    Debug.LogWarning($"Invalid MyCard apps response from {GetRequestDisplayUrl(request.url)}; keeping cached data.");
+                    return;
+                }
+                File.WriteAllText(PATH_MYCARD_APPS, json);
+                myCardNews = parsedNews;
                 Config.Set(GetLocalETagKey(URL_MYCARD_APPS), ETag);
                 Config.Save();
             }
             else
+            {
+                LogRequestFailure(request, "MyCard apps download");
                 Program.Debug("下载MyCard apps.json失败。");
+            }
         }
 
         private static void ParseMyCardNews()
@@ -129,15 +155,44 @@ namespace MDPro3.Net
             if (!File.Exists(PATH_MYCARD_APPS))
                 return;
 
-            var json = File.ReadAllText(PATH_MYCARD_APPS);
-            json = json.Replace("\"news\":[]", "\"news\":{}");
-            var apps = JsonConvert.DeserializeObject<MyCardApp[]>(json);
-            foreach (var app in apps)
-                if (app.id == "ygopro")
+            try
+            {
+                if (TryParseMyCardNews(File.ReadAllText(PATH_MYCARD_APPS), out var parsedNews))
+                    myCardNews = parsedNews;
+                else
+                    Debug.LogWarning("Cached MyCard apps data is invalid; optional news will be refreshed when available.");
+            }
+            catch (Exception exception) when (exception is IOException || exception is UnauthorizedAccessException)
+            {
+                Debug.LogWarning($"Unable to read cached MyCard news ({exception.GetType().Name}).");
+            }
+        }
+
+        private static bool TryParseMyCardNews(string json, out MyCardNews parsedNews)
+        {
+            parsedNews = null;
+            try
+            {
+                var apps = JArray.Parse(json);
+                foreach (var token in apps)
                 {
-                    myCardNews = app.news;
-                    return;
+                    if (!(token is JObject app) || !string.Equals((string)app["id"], "ygopro", StringComparison.Ordinal))
+                        continue;
+                    var news = app["news"];
+                    // The public feed represents absent news as either null or [].
+                    if (news == null || news.Type == JTokenType.Null || (news is JArray empty && empty.Count == 0))
+                        return true;
+                    if (!(news is JObject))
+                        return false;
+                    parsedNews = news.ToObject<MyCardNews>();
+                    return true;
                 }
+            }
+            catch (Exception exception) when (exception is JsonException || exception is ArgumentException)
+            {
+                return false;
+            }
+            return false;
         }
 
         #endregion
@@ -429,22 +484,36 @@ namespace MDPro3.Net
             }
             catch
             {
+                LogRequestFailure(headRequest, "HEAD");
                 return null;
             }
 
             if(headRequest.result != UnityWebRequest.Result.Success)
             {
-                Program.Debug($"HEAD({url})请求失败：{headRequest.error}");
+                LogRequestFailure(headRequest, "HEAD");
                 return null;
             }
 
             var onlineETag = headRequest.GetResponseHeader("ETag")?.Trim();
             if (string.IsNullOrEmpty(onlineETag))
             {
-                Program.Debug($"未找到ETag({url})，服务器可能未启用缓存");
+                Program.Debug($"未找到ETag({GetRequestDisplayUrl(url)})，服务器可能未启用缓存");
                 return null;
             }
             return onlineETag;
+        }
+
+        public static string GetRequestDisplayUrl(string url)
+        {
+            if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
+                return "(invalid URL)";
+            // Keep the host and path needed for TLS diagnosis, but never log credentials or query tokens.
+            return uri.GetComponents(UriComponents.SchemeAndServer | UriComponents.Path, UriFormat.UriEscaped);
+        }
+
+        public static void LogRequestFailure(UnityWebRequest request, string operation)
+        {
+            Debug.LogWarning($"Optional online request failed ({operation}): {GetRequestDisplayUrl(request.url)} | HTTP {request.responseCode} | {request.error}");
         }
 
         #endregion

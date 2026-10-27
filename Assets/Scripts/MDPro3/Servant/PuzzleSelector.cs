@@ -1,5 +1,6 @@
 using MDPro3.UI;
 using MDPro3.UI.ServantUI;
+using System.IO;
 using UnityEngine;
 
 namespace MDPro3.Servant
@@ -34,6 +35,9 @@ namespace MDPro3.Servant
             if (!forced && !UserInput.NeedDefaultSelect())
                 return;
 
+            if (lastPuzzleItem == null)
+                return;
+
             lastPuzzleItem.GetSelectable().Select();
         }
 
@@ -63,6 +67,9 @@ namespace MDPro3.Servant
         {
             //防止多次点击
             if (check && Program.instance.currentServant != Program.instance.puzzle)
+                return;
+
+            if (string.IsNullOrEmpty(currentPuzzle) || !File.Exists(currentPuzzle + Program.EXPANSION_LUA))
                 return;
 
             StartPuzzle(currentPuzzle);
