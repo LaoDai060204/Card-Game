@@ -1,0 +1,66 @@
+.root { position: absolute; left: 0; right: 0; top: 0; bottom: 0; color: rgb(235, 231, 218); font-size: 15px; }
+.content { flex-grow: 1; padding: 20px 24px 10px; }
+Label { -unity-text-align: middle-left; white-space: normal; }
+.header { height: 76px; flex-direction: row; align-items: center; justify-content: space-between; background-color: rgba(11, 17, 29, 0.95); border-bottom-width: 1px; border-bottom-color: rgb(159, 119, 62); padding: 10px 18px; border-radius: 8px; margin-bottom: 16px; }
+.brand-title { font-size: 27px; -unity-font-style: bold; letter-spacing: 4px; color: rgb(242, 218, 166); }
+.eyebrow { font-size: 11px; letter-spacing: 2px; color: rgb(161, 156, 141); }
+.turn-box { flex-direction: row; align-items: center; }
+.turn-label { color: rgb(243, 211, 151); font-size: 20px; -unity-font-style: bold; margin-right: 20px; }
+.turn-name { font-size: 17px; }
+.header-actions { flex-direction: row; }
+.body { flex-direction: row; flex-grow: 1; min-height: 300px; }
+.sidebar { background-color: rgba(11, 18, 31, 0.94); border-width: 1px; border-color: rgba(125, 143, 166, .25); border-radius: 8px; padding: 15px; }
+.left { width: 278px; margin-right: 16px; }
+.right { width: 340px; margin-left: 16px; }
+.arena-window { flex-grow: 1; align-items: center; padding-top: 18px; }
+.phase-title { color: rgb(240, 220, 182); font-size: 25px; letter-spacing: 2px; -unity-font-style: bold; -unity-text-align: middle-center; }
+.spacer { flex-grow: 1; }
+.battle-caption { background-color: rgba(10, 20, 34, .84); padding: 10px 16px; border-radius: 4px; margin-bottom: 10px; color: rgb(128, 217, 250); }
+.section-label { font-size: 11px; color: rgb(207, 180, 131); letter-spacing: 1px; -unity-font-style: bold; margin-bottom: 9px; margin-top: 5px; }
+.player-summary { background-color: rgba(31, 40, 55, .75); border-left-width: 2px; border-left-color: rgba(94, 110, 136, .45); border-radius: 4px; padding: 9px 11px; margin-bottom: 10px; }
+.active-player { border-left-color: rgb(233, 185, 103); background-color: rgba(76, 61, 37, .48); }
+.row { flex-direction: row; align-items: center; justify-content: space-between; }
+.player-name { font-size: 12px; -unity-font-style: bold; }
+.life { color: rgb(255, 147, 103); font-size: 22px; -unity-font-style: bold; }
+.core-count { color: rgb(142, 217, 241); font-size: 14px; margin-top: 3px; }
+.muted { color: rgb(161, 173, 187); font-size: 12px; }
+.wrap { white-space: normal; }
+.tiny { font-size: 10px; }
+.card-title { font-size: 19px; -unity-font-style: bold; color: rgb(240, 215, 164); margin: 4px 0; }
+.detail-art { height: 185px; margin: 2px 0 8px; }
+.level-row { font-size: 12px; color: rgb(195, 210, 225); margin-top: 3px; }
+.action-button { min-height: 34px; background-color: rgb(35, 46, 64); color: rgb(230, 233, 238); border-width: 1px; border-color: rgb(69, 85, 108); border-radius: 5px; margin: 4px 0; padding: 6px 10px; white-space: normal; -unity-text-align: middle-center; }
+.action-button:hover { background-color: rgb(55, 71, 91); border-color: rgb(183, 155, 107); }
+.action-button:active { background-color: rgb(78, 90, 109); }
+.action-button:disabled { opacity: .38; }
+.primary { background-color: rgb(130, 91, 43); border-color: rgb(208, 164, 95); color: rgb(255, 242, 217); -unity-font-style: bold; }
+.primary:hover { background-color: rgb(161, 115, 56); }
+.danger { background-color: rgb(103, 47, 44); border-color: rgb(170, 88, 76); }
+.subtle { background-color: rgba(34, 42, 58, .7); margin-left: 10px; min-width: 100px; }
+.source-link { background-color: rgba(15, 26, 41, .7); font-size: 11px; min-height: 28px; margin-top: 8px; color: rgb(129, 194, 217); }
+.controls { margin-bottom: 7px; }
+.controls > .muted { margin-bottom: 6px; }
+.field-list { flex-grow: 1; min-height: 65px; max-height: 210px; }
+.unit-row { background-color: rgba(28, 39, 56, .8); border-radius: 4px; padding: 3px 6px; margin-bottom: 6px; border-width: 1px; border-color: rgba(83, 104, 130, .4); }
+.selected-unit { border-color: rgb(219, 180, 102); }
+.unit-select { background-color: rgba(0, 0, 0, 0); border-width: 0; -unity-text-align: middle-left; font-size: 12px; padding: 4px; min-height: 42px; }
+.small { flex-grow: 1; font-size: 11px; min-height: 28px; padding: 4px 6px; margin-right: 4px; }
+.match-log { max-height: 94px; min-height: 38px; }
+.log-line { font-size: 10px; color: rgb(154, 169, 190); margin-bottom: 3px; }
+.hand-region { height: 234px; background-color: rgba(9, 16, 27, .96); border-width: 1px; border-color: rgba(125, 143, 166, .25); border-radius: 8px; margin-top: 15px; padding: 8px 14px 7px; }
+.hand-scroll { flex-grow: 1; }
+.hand-scroll > .unity-scroll-view__content-viewport > .unity-scroll-view__content-container { flex-direction: row; }
+.hand-card { width: 137px; margin-right: 10px; padding: 4px 5px; border-width: 1px; border-color: rgb(61, 73, 91); border-radius: 5px; background-color: rgb(22, 31, 46); }
+.inspected { border-color: rgb(224, 185, 112); }
+.card-inspect { background-color: rgba(0, 0, 0, 0); border-width: 0; padding: 0; align-items: center; margin: 0; }
+.card-inspect:hover { background-color: rgba(88, 104, 127, .22); }
+.hand-art { width: 120px; height: 113px; }
+.hand-name { font-size: 11px; height: 27px; -unity-text-align: middle-center; color: rgb(235, 223, 200); }
+.summon { min-height: 27px; font-size: 10px; padding: 3px 2px; margin: 3px 0 0; background-color: rgb(63, 83, 91); border-color: rgb(91, 138, 149); }
+.status { font-size: 12px; color: rgb(170, 199, 214); height: 26px; margin-top: 5px; }
+.error { color: rgb(255, 154, 126); }
+.victory { color: rgb(255, 217, 129); font-size: 23px; -unity-font-style: bold; margin: 12px 0; }
+.modal-shade { position: absolute; top: 0; right: 0; bottom: 0; left: 0; background-color: rgba(0, 3, 10, .83); align-items: center; justify-content: center; }
+.modal-dialog { width: 760px; background-color: rgb(18, 28, 44); border-width: 1px; border-color: rgb(182, 143, 85); border-radius: 9px; padding: 28px; }
+.modal-text { font-size: 15px; margin: 16px 0; color: rgb(204, 214, 227); }
+.fatal-panel { padding: 30px; margin: 80px; background-color: rgb(24, 34, 48); border-width: 1px; border-color: rgb(182, 143, 85); border-radius: 8px; }

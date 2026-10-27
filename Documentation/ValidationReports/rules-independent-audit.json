@@ -1,0 +1,25 @@
+{
+  "result": "PASS",
+  "scope": "Implemented Japanese Eternal vanilla Spirit subset, pure C# only",
+  "completedSeededGames": 100,
+  "gameplayStatesChecked": 8335,
+  "attemptedActions": 75015,
+  "catalogCards": 16,
+  "checks": [
+    "Core conservation",
+    "One Soul Core per player",
+    "Per-card ID conservation across all zones",
+    "Invalid player -1/2 rejected by all mutating APIs",
+    "Wrong phase and invalid core transfers reject without changing serialized gameplay state",
+    "Random ordinary and Soul Core transfers",
+    "All simulations reached GameOver"
+  ],
+  "harness": "/tmp/battlespirits-rules-audit",
+  "sourceSha256": {
+    "Assets/BattleSpirits/Runtime/Core/CardDefinition.cs": "66497bb89a86ea6ff3f6431a86ba357869111110910f63996077253fa9685eb8",
+    "Assets/BattleSpirits/Runtime/Core/BattleMatch.cs": "5b7be1b50a5fe5d881e644aeb2b35dbca168dd081b22604822844e40ca5226e4",
+    "Assets/BattleSpirits/Runtime/Core/MatchState.cs": "9d4aeb990479cd2cbd6b377a07cd5017343e5ddef1916948850f9a507974ebee",
+    "Assets/BattleSpirits/Resources/Data/cards.json": "60ec622a4143fdeda49f8fc3f48933185f4b19905d8f2fbfda53532f10b1246e"
+  },
+  "unityPlayTested": false
+}
