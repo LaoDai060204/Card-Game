@@ -1,0 +1,249 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Threading.Tasks;
+using WindBot.Game;
+using WindBot.Game.AI;
+using YGOSharp.OCGWrapper;
+
+namespace MDPro3
+{
+    public static class Program { public const string PATH_EXPANSIONS = "Expansions/"; }
+    public static class Config
+    {
+        private static readonly Dictionary<string, string> values = new Dictionary<string, string>();
+        public static string Get(string key, string fallback) => values.TryGetValue(key, out var value) ? value : fallback;
+        public static void Set(string key, string value) => values[key] = value;
+    }
+}
+namespace MDPro3.IO
+{
+    public static class ResourceManager
+    {
+        public static List<string> Paths;
+        public static List<string> GetAllCdbInZipPaths() => Paths;
+    }
+}
+namespace YGOSharp.OCGWrapper
+{
+    public static class NamedCardsManager
+    {
+        public static List<string> Loaded;
+        public static void InitForMulti(IEnumerable<string> paths) => Loaded = paths.ToList();
+    }
+}
+namespace WindBot
+{
+    public static class Logger { public static void WriteLine(string message) { } }
+}
+namespace WindBot.Game
+{
+    public sealed class Duel { }
+    public sealed class FakeGame { public string Deck; }
+}
+namespace WindBot.Game.AI
+{
+    public sealed class GameAI { public FakeGame Game = new FakeGame(); }
+    public abstract class Executor
+    {
+        protected Executor(GameAI ai, Duel duel) { }
+        public string Deck { get; set; }
+    }
+}
+namespace WindBotStartupFixtures
+{
+    [AttributeUsage(AttributeTargets.Class)]
+    public sealed class ExplodingAttribute : Attribute
+    {
+        public static int Created;
+        public ExplodingAttribute() { Created++; throw new Exception("Unrelated attribute constructor ran"); }
+    }
+    [Exploding]
+    public sealed class UnrelatedUnityLikeClass { }
+    [Deck("NormalFixture", "AI_NormalFixture")]
+    public class NormalFixture : Executor
+    {
+        public NormalFixture(GameAI ai, Duel duel) : base(ai, duel) { }
+    }
+    [Exploding, Deck("EasyFixture", "AI_EasyFixture", "Easy")]
+    internal sealed class EasyFixture : Executor
+    {
+        public EasyFixture(GameAI ai, Duel duel) : base(ai, duel) { }
+    }
+    [Deck("AbstractFixture")]
+    public abstract class AbstractFixture : Executor
+    {
+        protected AbstractFixture(GameAI ai, Duel duel) : base(ai, duel) { }
+    }
+    [Deck("GenericFixture")]
+    public sealed class GenericFixture<T> : Executor
+    {
+        public GenericFixture(GameAI ai, Duel duel) : base(ai, duel) { }
+    }
+    public sealed class InheritedFixture : NormalFixture
+    {
+        public InheritedFixture(GameAI ai, Duel duel) : base(ai, duel) { }
+    }
+}
+
+internal static class StartupTests
+{
+    private static int passed;
+    private static string root;
+
+    private static void Main(string[] args)
+    {
+        root = args[0];
+        Case("Vietnamese UI resolves the existing English database without expansions", () =>
+        {
+            Write("Data/locales/en-US/cards.cdb");
+            MDPro3.Utility.Language.SetConfig("vi-VN");
+            WindBot.Program.InitDatas("cards.cdb");
+            Equal(Path.GetFullPath("Data/locales/en-US/cards.cdb"), NamedCardsManager.Loaded.Single());
+            Equal(false, Directory.Exists("Expansions"));
+        });
+        Case("English card data remains selected for an English UI", () =>
+        {
+            Write("Data/locales/en-US/cards.cdb"); MDPro3.Utility.Language.SetConfig("en-US");
+            WindBot.Program.InitDatas("cards.cdb");
+            Equal(Path.GetFullPath("Data/locales/en-US/cards.cdb"), NamedCardsManager.Loaded.Single());
+        });
+        Case("An available Japanese database is preserved", () =>
+        {
+            Write("Data/locales/ja-JP/cards.cdb"); MDPro3.Utility.Language.SetConfig("ja-JP");
+            WindBot.Program.InitDatas("cards.cdb");
+            Equal(Path.GetFullPath("Data/locales/ja-JP/cards.cdb"), NamedCardsManager.Loaded.Single());
+        });
+        Case("Missing data throws a recoverable filename error before the loader", () =>
+        {
+            MDPro3.Utility.Language.SetConfig("vi-VN");
+            var error = Throws<FileNotFoundException>(() => WindBot.Program.InitDatas("cards.cdb"));
+            Equal(Path.GetFullPath("Data/locales/en-US/cards.cdb"), error.FileName);
+            Equal(null, NamedCardsManager.Loaded);
+        });
+        Case("Absolute custom database paths are honored", () =>
+        {
+            Write("custom/cards.cdb"); string path = Path.GetFullPath("custom/cards.cdb");
+            WindBot.Program.InitDatas(path); Equal(path, NamedCardsManager.Loaded.Single());
+        });
+        Case("Relative custom database paths are honored", () =>
+        {
+            Write("custom/custom.cdb"); WindBot.Program.InitDatas("custom/custom.cdb");
+            Equal(Path.GetFullPath("custom/custom.cdb"), NamedCardsManager.Loaded.Single());
+        });
+        Case("A missing explicit custom path does not silently use the default database", () =>
+        {
+            Write("Data/locales/en-US/cards.cdb");
+            var error = Throws<FileNotFoundException>(() => WindBot.Program.InitDatas("custom/missing.cdb"));
+            Equal(Path.GetFullPath("custom/missing.cdb"), error.FileName);
+        });
+        Case("Standalone cards.cdb next to the bot remains supported", () =>
+        {
+            Write("cards.cdb"); WindBot.Program.InitDatas("cards.cdb");
+            Equal(Path.GetFullPath("cards.cdb"), NamedCardsManager.Loaded.Single());
+        });
+        Case("Blank database configuration selects the normal filename", () =>
+        {
+            Write("Data/locales/en-US/cards.cdb"); WindBot.Program.InitDatas("  ");
+            Equal(Path.GetFullPath("Data/locales/en-US/cards.cdb"), NamedCardsManager.Loaded.Single());
+        });
+        Case("Cached and loose expansion databases are appended", () =>
+        {
+            Write("Data/locales/en-US/cards.cdb"); Write("cached/cache.cdb"); Write("Expansions/local.cdb");
+            MDPro3.IO.ResourceManager.Paths = new List<string> { Path.GetFullPath("cached/cache.cdb") };
+            WindBot.Program.InitDatas("cards.cdb");
+            Equal(3, NamedCardsManager.Loaded.Count);
+            Require(NamedCardsManager.Loaded.Select(Path.GetFullPath).Contains(Path.GetFullPath("Expansions/local.cdb")), "Loose expansion not loaded");
+        });
+        Case("Reflection excludes unrelated, abstract, generic and inherited-only annotations", () =>
+        {
+            DecksManager.Init();
+            var dictionary = (IDictionary)typeof(DecksManager).GetField("_decks", BindingFlags.NonPublic | BindingFlags.Static).GetValue(null);
+            Equal(2, dictionary.Count);
+            Equal(0, WindBotStartupFixtures.ExplodingAttribute.Created);
+            Equal(false, dictionary.Contains("AbstractFixture"));
+            Equal(false, dictionary.Contains("GenericFixture"));
+            Equal(true, dictionary.Contains("EasyFixture"));
+        });
+        Case("Explicit internal Easy executors retain their deck files", () =>
+        {
+            DecksManager.Init(); var ai = new GameAI(); ai.Game.Deck = "EasyFixture";
+            var result = DecksManager.Instantiate(ai, new Duel());
+            Equal(typeof(WindBotStartupFixtures.EasyFixture), result.GetType()); Equal("AI_EasyFixture", result.Deck);
+        });
+        Case("Unknown or absent deck requests choose only Normal executors", () =>
+        {
+            DecksManager.Init();
+            for (int i = 0; i < 100; i++)
+            {
+                var ai = new GameAI(); ai.Game.Deck = i % 2 == 0 ? "Unknown" : null;
+                Equal(typeof(WindBotStartupFixtures.NormalFixture), DecksManager.Instantiate(ai, new Duel()).GetType());
+            }
+        });
+        Case("No eligible Normal deck fails promptly instead of looping", () =>
+        {
+            DecksManager.Init();
+            var list = (IList)typeof(DecksManager).GetField("_normalDecks", BindingFlags.NonPublic | BindingFlags.Static).GetValue(null);
+            list.Clear();
+            var error = Throws<InvalidOperationException>(() => DecksManager.Instantiate(new GameAI(), new Duel()));
+            Require(error.Message.Contains("no Normal"), "No clear empty-pool error");
+            var ai = new GameAI(); ai.Game.Deck = "EasyFixture";
+            Equal(typeof(WindBotStartupFixtures.EasyFixture), DecksManager.Instantiate(ai, new Duel()).GetType());
+        });
+        Case("Concurrent initialization publishes complete catalogs", () =>
+        {
+            Task.WaitAll(Enumerable.Range(0, 8).Select(worker => Task.Run(() =>
+            {
+                for (int i = 0; i < 20; i++)
+                {
+                    DecksManager.Init();
+                    var ai = new GameAI(); ai.Game.Deck = i % 2 == 0 ? "NormalFixture" : null;
+                    Equal(typeof(WindBotStartupFixtures.NormalFixture), DecksManager.Instantiate(ai, new Duel()).GetType());
+                }
+            })).ToArray());
+            Equal(0, WindBotStartupFixtures.ExplodingAttribute.Created);
+        });
+        Case("The shipped Vietnamese UI resolves a real existing English CDB", () =>
+        {
+            Environment.CurrentDirectory = root; MDPro3.Utility.Language.SetConfig("vi-VN");
+            WindBot.Program.InitDatas("cards.cdb");
+            Equal(Path.GetFullPath(Path.Combine(root, "Data/locales/en-US/cards.cdb")), NamedCardsManager.Loaded[0]);
+        });
+        Console.WriteLine("PASS: " + passed + " WindBot startup/reflection scenarios using production code; no Unity Play test.");
+    }
+
+    private static void Case(string name, Action action)
+    {
+        string previous = Environment.CurrentDirectory;
+        string folder = Path.Combine(Path.GetTempPath(), "windbot-startup-fixture-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(folder);
+        try
+        {
+            Environment.CurrentDirectory = folder;
+            MDPro3.Utility.Language.SetConfig("vi-VN");
+            MDPro3.IO.ResourceManager.Paths = null; NamedCardsManager.Loaded = null;
+            action(); passed++; Console.WriteLine("PASS " + name);
+        }
+        finally { Environment.CurrentDirectory = previous; Directory.Delete(folder, true); }
+    }
+
+    private static void Write(string path)
+    {
+        var parent = Path.GetDirectoryName(path);
+        if (!string.IsNullOrEmpty(parent)) Directory.CreateDirectory(parent);
+        File.WriteAllText(path, "fixture");
+    }
+    private static void Require(bool value, string message) { if (!value) throw new Exception(message); }
+    private static void Equal(object expected, object actual)
+    {
+        if (!Equals(expected, actual)) throw new Exception("Expected " + expected + ", got " + actual);
+    }
+    private static T Throws<T>(Action action) where T : Exception
+    {
+        try { action(); } catch (T error) { return error; }
+        throw new Exception("Expected " + typeof(T).Name);
+    }
+}

@@ -1,0 +1,132 @@
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading;
+
+namespace UnityEngine
+{
+    public static class Debug
+    {
+        public static readonly ConcurrentQueue<string> Errors = new ConcurrentQueue<string>();
+        public static void LogError(object error) => Errors.Enqueue(error.ToString());
+    }
+}
+namespace MDPro3
+{
+    public static class Program { public static bool Running = true; }
+    public static class Config { public const string EMPTY_STRING = ""; public static string Get(string key, string fallback) => "Player"; }
+    public static class InterString { public static string Get(string key) => key; }
+    public static class MessageManager
+    {
+        public static string messageFromSubString;
+        public static readonly List<string> Messages = new List<string>();
+        public static void Cast(string message) => Messages.Add(message);
+    }
+    public static class Tools { @@SPLIT@@ }
+    public static class TcpHelper
+    {
+        public static bool canJoin = true, Available = true, Accept = true;
+        public static int Joins;
+        public static bool IsPortAvailable(int port) => Available;
+        public static bool LinkStart(string host, string name, string port, string password, bool local, Action success)
+        { Joins++; if (Accept) success?.Invoke(); return Accept; }
+    }
+}
+namespace MDPro3.Utility { public static class Language { public static string GetDataConfig() => "en-US"; } }
+namespace MDPro3.Net
+{
+    public static class YgoServer
+    {
+        public static bool IsBusy, Reject;
+        public static int Starts, Stops;
+        public static bool TryStartServer(string args) { Starts++; if (Reject) return false; IsBusy = true; return true; }
+        public static void StopServer() { Stops++; IsBusy = false; }
+    }
+}
+namespace MDPro3.Servant
+{
+    using UnityEngine;
+    using MDPro3.Net;
+    using MDPro3.Utility;
+    public static class RoomServant { public static bool FromSolo, SoloLockHand, FromLocalHost, FromHandTest; }
+    public sealed class SoloSelector
+    {
+        private const string WINDBOT_DIALOG_PATH = "Data/Windbot/Dialogs/";
+        public static string port;
+        public Thread LastThread;
+        public void LaunchTest() => LaunchWithConfig("Name='Test Bot' Deck=MokeyMokey Dialog=missing", 7911, 8000, 5, 1, false, false, false);
+        @@START_BOT@@
+        @@LAUNCH@@
+    }
+}
+namespace WindBot
+{
+    public static class Program
+    {
+        public static int Calls;
+        public static bool Fail, WasBackground;
+        public static string[] Arguments;
+        public static void Main(string[] args)
+        {
+            Calls++; WasBackground = Thread.CurrentThread.IsBackground; Arguments = args;
+            if (Fail) throw new FileNotFoundException("Missing test card database.");
+        }
+    }
+}
+namespace Regression
+{
+    using MDPro3;
+    using MDPro3.Net;
+    using MDPro3.Servant;
+    public static class Entry
+    {
+        private static int passed;
+        private static void Require(bool value, string message) { if (!value) throw new Exception(message); }
+        private static void Join(SoloSelector solo) { Require(solo.LastThread != null && solo.LastThread.Join(2000), "Bot worker did not finish"); }
+        private static void Case(string name, Action<SoloSelector> test)
+        {
+            TcpHelper.canJoin = TcpHelper.Available = TcpHelper.Accept = true; TcpHelper.Joins = 0;
+            YgoServer.IsBusy = YgoServer.Reject = false; YgoServer.Starts = YgoServer.Stops = 0;
+            MDPro3.Program.Running = true; WindBot.Program.Calls = 0; WindBot.Program.Fail = false;
+            MessageManager.messageFromSubString = null; MessageManager.Messages.Clear();
+            while (UnityEngine.Debug.Errors.TryDequeue(out _)) { }
+            test(new SoloSelector()); passed++; Console.WriteLine("PASS " + name);
+        }
+        private static void Main()
+        {
+            Case("Bot runs on a background worker with compatible quoted arguments", solo => {
+                solo.LaunchTest(); Join(solo);
+                Require(WindBot.Program.Calls == 1 && WindBot.Program.WasBackground, "Wrong thread");
+                Require(Array.Exists(WindBot.Program.Arguments, s => s == "Name=Test Bot"), "Quoted bot name was split into separate arguments");
+                Require(Array.Exists(WindBot.Program.Arguments, s => s == "Dialog=default"), "English dialog fallback");
+            });
+            Case("Missing bot data is caught and surfaced instead of escaping the thread", solo => {
+                WindBot.Program.Fail = true; solo.LaunchTest(); Join(solo);
+                Require(UnityEngine.Debug.Errors.Count == 1 && MessageManager.messageFromSubString != null, "Bot error not surfaced");
+            });
+            Case("Bot does not start after Play mode stopped", solo => {
+                MDPro3.Program.Running = false;
+                solo.StartWindBot("Deck=Test", "127.0.0.1", "7911", "", false, 1); Join(solo);
+                Require(WindBot.Program.Calls == 0, "Late bot started after shutdown");
+            });
+            Case("Repeated PLAY does not restart an active server", solo => {
+                solo.LaunchTest(); Join(solo); solo.LaunchTest();
+                Require(YgoServer.Starts == 1 && TcpHelper.Joins == 1, "Duplicate native launch");
+            });
+            Case("An existing connection attempt blocks another launch", solo => {
+                TcpHelper.canJoin = false; solo.LaunchTest(); Require(YgoServer.Starts == 0, "Server started while connecting");
+            });
+            Case("Occupied port never starts the native server", solo => {
+                TcpHelper.Available = false; solo.LaunchTest(); Require(YgoServer.Starts == 0, "Occupied port was used");
+            });
+            Case("Rejected server start does not attempt a client connection", solo => {
+                YgoServer.Reject = true; solo.LaunchTest(); Require(TcpHelper.Joins == 0, "Joined despite failed start");
+            });
+            Case("Rejected link request shuts down the newly started local server", solo => {
+                TcpHelper.Accept = false; solo.LaunchTest(); Require(YgoServer.Stops == 1 && solo.LastThread == null, "Failed link left a server/bot");
+            });
+            Console.WriteLine("PASS: " + passed + " Solo launch scenarios using production methods.");
+        }
+    }
+}

@@ -1124,6 +1124,12 @@ namespace MDPro3.UI.ServantUI
 
         private async UniTask HandTestAsync(HandTestSettings settings)
         {
+            if (!TcpHelper.canJoin || YgoServer.IsBusy)
+            {
+                MessageManager.Cast(InterString.Get("本地对局正在启动或停止，请稍候。"));
+                return;
+            }
+
             var launchSettings = settings != null ? settings.Clone() : HandTestSettings.Load();
             launchSettings.Clamp();
 
@@ -1140,7 +1146,11 @@ namespace MDPro3.UI.ServantUI
             RoomServant.FromSolo = false;
             RoomServant.FromLocalHost = false;
             RoomServant.FromHandTest = true;
-            YgoServer.StartServer(args);
+            if (!YgoServer.TryStartServer(args))
+            {
+                MessageManager.Cast(InterString.Get("本地对局正在启动或停止，请稍候。"));
+                return;
+            }
 
             UIManager.UIBlackIn(0.3f);
             await UniTask.WaitForSeconds(0.3f);

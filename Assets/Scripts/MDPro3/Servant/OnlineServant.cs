@@ -119,6 +119,12 @@ namespace MDPro3.Servant
 
         public void CreateServer(List<string> serverArgs)
         {
+            if (!TcpHelper.canJoin || YgoServer.IsBusy)
+            {
+                MessageManager.Cast(InterString.Get("本地对局正在启动或停止，请稍候。"));
+                return;
+            }
+
             int port = 7911;
             while (!TcpHelper.IsPortAvailable(port))
             {
@@ -145,7 +151,11 @@ namespace MDPro3.Servant
             RoomServant.FromLocalHost = true;
             RoomServant.FromHandTest = false;
 
-            YgoServer.StartServer(args);
+            if (!YgoServer.TryStartServer(args))
+            {
+                MessageManager.Cast(InterString.Get("本地对局正在启动或停止，请稍候。"));
+                return;
+            }
             TcpHelper.LinkStart("127.0.0.1", Config.Get("DuelPlayerName0", Config.EMPTY_STRING), port.ToString(), string.Empty, true, null);
         }
 

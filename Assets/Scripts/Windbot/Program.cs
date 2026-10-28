@@ -49,29 +49,34 @@ namespace WindBot
         {
             Rand = new Random();
             DecksManager.Init();
-            string absolutePath = Path.GetFullPath(databasePath);
-            //if (!File.Exists(absolutePath))
-            //    // In case windbot is placed in a folder under ygopro folder
-            //    absolutePath = Path.GetFullPath("../" + databasePath);
-            //if (!File.Exists(absolutePath))
-            //    // In case windbot is placed in a folder under ygopro2 folder
-            //    absolutePath = Path.GetFullPath("../cdb/" + databasePath);
-            absolutePath = Path.GetFullPath("Data/locales/" + MDPro3.Utility.Language.GetConfig() + "/" + databasePath);
+            string absolutePath = ResolveDatabasePath(databasePath);
             if (!File.Exists(absolutePath))
-            {
-                Logger.WriteErrorLine("Can't find cards database file.");
-                Logger.WriteErrorLine("Please place cards.cdb next to WindBot.exe or Bot.exe .");
-                Logger.WriteLine("Press any key to quit...");
-                Console.ReadKey();
-                System.Environment.Exit(1);
-            }
+                throw new FileNotFoundException("WindBot could not find its card database.", absolutePath);
+
             var paths = new System.Collections.Generic.List<string> { absolutePath };
             var zipCdbs = ResourceManager.GetAllCdbInZipPaths();
             if (zipCdbs != null)
                 paths.AddRange(zipCdbs);
-            foreach (var cdb in Directory.GetFiles(MDPro3.Program.PATH_EXPANSIONS, "*.cdb"))
-                paths.Add(cdb);
+            if (Directory.Exists(MDPro3.Program.PATH_EXPANSIONS))
+                foreach (var cdb in Directory.GetFiles(MDPro3.Program.PATH_EXPANSIONS, "*.cdb"))
+                    paths.Add(cdb);
             NamedCardsManager.InitForMulti(paths);
+        }
+
+        internal static string ResolveDatabasePath(string databasePath)
+        {
+            if (string.IsNullOrWhiteSpace(databasePath))
+                databasePath = "cards.cdb";
+
+            // Keep an explicitly configured file, including a standalone bot's local database.
+            var configuredPath = Path.GetFullPath(databasePath);
+            if (Path.IsPathRooted(databasePath) || Path.GetFileName(databasePath) != databasePath
+                || File.Exists(configuredPath))
+                return configuredPath;
+
+            // The UI can be Vietnamese while the card data remains English.
+            return Path.GetFullPath(Path.Combine("Data", "locales",
+                MDPro3.Utility.Language.GetDataConfig(), databasePath));
         }
 
         private static void RunFromArgs()

@@ -58,6 +58,14 @@ Chi tiết nguồn, các màn thiếu phụ thuộc và các kiểm tra có th�
 
 Để thử trong cùng mạng LAN, một máy tạo phòng ở mục tạo máy chủ; máy còn lại nhập IP nội bộ và cổng của máy đó trong mục kết nối. Mã hiện tại bắt đầu tìm cổng ở `7911` và chọn cổng trống tiếp theo nếu cổng này đã được dùng. Windows Firewall cần cho phép kết nối đến ứng dụng tạo phòng. Kết nối qua Internet còn phụ thuộc cấu hình mạng của máy chủ. Chức năng chơi mạng chưa được kiểm thử thực tế trong môi trường này.
 
+## Khởi động trận đấu với AI
+
+WindBot dùng ngôn ngữ **dữ liệu thẻ**, nên giao diện tiếng Việt vẫn đọc `Data/locales/en-US/cards.cdb`. Không cần tạo hoặc sao chép một CDB vào `vi-VN`. Thư mục `Expansions` có thể chưa tồn tại nếu bạn chưa cài gói mở rộng.
+
+Bản sửa khởi động Solo đã bỏ lệnh chờ bàn phím/thoát process khi thiếu CDB. Lỗi AI sẽ được ghi vào Console và hiện thông báo, thay vì gọi `Console.ReadKey()` trong Unity. PLAY lặp khi máy chủ đang khởi tạo/kết thúc sẽ được chặn; thao tác dừng máy chủ chạy ở luồng nền để tránh chặn luồng giao diện.
+
+Nếu bản cũ đã treo ở `Can't find cards database file` / `Press any key to quit...`, đóng Editor đang treo, cập nhật mã rồi mở lại bằng Unity **6000.0.24f1**. Xem [kiểm tra khởi động Solo](Tools/RuntimeData/SOLO_STARTUP.md) để biết các kiểm tra đã chạy và giới hạn còn lại.
+
 ## Cập nhật và giữ bản cũ
 
 Trước mỗi đợt chỉnh sửa, lưu các thay đổi cần giữ vào Git, tạo một nhánh backup và push nhánh đó lên GitHub. Bản trước đợt Việt hóa này được lưu tại:

@@ -265,7 +265,31 @@ namespace MDPro3.Servant
                 }
             }
 
-            (new Thread(() => { Thread.Sleep(delay); WindBot.Program.Main(args); })).Start();
+            var botThread = new Thread(() =>
+            {
+                try
+                {
+                    if (delay > 0)
+                        Thread.Sleep(delay);
+                    if (!Program.Running)
+                        return;
+                    WindBot.Program.Main(args);
+                }
+                catch (ThreadAbortException)
+                {
+                    // Unity can unload the managed domain when leaving Play mode.
+                }
+                catch (Exception exception)
+                {
+                    Debug.LogError($"WindBot could not start: {exception}");
+                    MessageManager.messageFromSubString = InterString.Get("无法启动AI，请检查游戏数据后重试。");
+                }
+            })
+            {
+                IsBackground = true,
+                Name = "MDPro3 WindBot"
+            };
+            botThread.Start();
         }
         public void Launch(string command, bool lockHand, bool noCheck, bool noShuffle)
         {
@@ -316,6 +340,12 @@ namespace MDPro3.Servant
         private void LaunchWithConfig(string command, int duelPort, int duelLp, int duelHand, int duelDraw
             , bool lockHand, bool noCheck, bool noShuffle)
         {
+            if (!TcpHelper.canJoin || YgoServer.IsBusy)
+            {
+                MessageManager.Cast(InterString.Get("本地对局正在启动或停止，请稍候。"));
+                return;
+            }
+
             port = duelPort.ToString();
 
             string lp = duelLp.ToString();
@@ -324,7 +354,11 @@ namespace MDPro3.Servant
             string args = port + " -1 5 0 F " + (noCheck ? "T " : "F ") + (noShuffle ? "T " : "F ") + lp + " " + hand + " " + draw + " 0 0";
             if (TcpHelper.IsPortAvailable(duelPort))
             {
-                YgoServer.StartServer(args);
+                if (!YgoServer.TryStartServer(args))
+                {
+                    MessageManager.Cast(InterString.Get("本地对局正在启动或停止，请稍候。"));
+                    return;
+                }
                 RoomServant.FromSolo = true;
                 if (lockHand)
                     RoomServant.SoloLockHand = true;
@@ -333,8 +367,12 @@ namespace MDPro3.Servant
                 RoomServant.FromLocalHost = false;
                 RoomServant.FromHandTest = false;
 
-                TcpHelper.LinkStart("127.0.0.1", Config.Get("DuelPlayerName0", Config.EMPTY_STRING), port, string.Empty, true
-                    , () => StartWindBot(command, "127.0.0.1", port, string.Empty, lockHand, 0));
+                if (!TcpHelper.LinkStart("127.0.0.1", Config.Get("DuelPlayerName0", Config.EMPTY_STRING), port, string.Empty, true
+                    , () => StartWindBot(command, "127.0.0.1", port, string.Empty, lockHand, 0)))
+                {
+                    YgoServer.StopServer();
+                    MessageManager.Cast(InterString.Get("本地对局正在启动或停止，请稍候。"));
+                }
             }
             else
             {

@@ -21,52 +21,64 @@ namespace WindBot.Game.AI
         }
 
         private static Dictionary<string, DeckInstance> _decks;
-        private static List<DeckInstance> _list;
+        private static List<DeckInstance> _normalDecks;
         private static Random _rand;
+        private static readonly object _sync = new object();
 
         public static void Init()
         {
-            _decks = new Dictionary<string, DeckInstance>();
-            _rand = new Random();
+            var decks = new Dictionary<string, DeckInstance>();
+            var normalDecks = new List<DeckInstance>();
 
             Assembly asm = Assembly.GetExecutingAssembly();
             Type[] types = asm.GetTypes();
             
             foreach (Type type in types)
             {
-                MemberInfo info = type;
-                object[] attributes = info.GetCustomAttributes(false);
+                if (!typeof(Executor).IsAssignableFrom(type) || type.IsAbstract || type.ContainsGenericParameters)
+                    continue;
+
+                // Assembly-CSharp also contains Unity UI and editor classes. Their
+                // attribute constructors must not run on the bot's worker thread.
+                object[] attributes = type.GetCustomAttributes(typeof(DeckAttribute), false);
                 foreach (object attribute in attributes)
                 {
-                    if (attribute is DeckAttribute)
-                    {
-                        DeckAttribute deck = (DeckAttribute)attribute;
-                        _decks.Add(deck.Name, new DeckInstance(deck.File, type, deck.Level));
-                    }
+                    DeckAttribute deck = (DeckAttribute)attribute;
+                    var instance = new DeckInstance(deck.File, type, deck.Level);
+                    decks.Add(deck.Name, instance);
+                    if (deck.Level == "Normal")
+                        normalDecks.Add(instance);
                 }
             }
 
-            _list = new List<DeckInstance>();
-            _list.AddRange(_decks.Values);
+            // Multiple room bots can initialize concurrently. Publish complete
+            // collections rather than exposing a catalog while it is being filled.
+            lock (_sync)
+            {
+                _decks = decks;
+                _normalDecks = normalDecks;
+                _rand = new Random();
+            }
 
-            Logger.WriteLine("Decks initialized, " + _decks.Count + " found.");
+            Logger.WriteLine("Decks initialized, " + decks.Count + " found.");
         }
 
         public static Executor Instantiate(GameAI ai, Duel duel)
         {
             DeckInstance infos;
 
-            string deck = ai.Game.Deck;
-
-            if (deck != null && _decks.ContainsKey(deck))
-                infos = _decks[deck];
-            else
+            lock (_sync)
             {
-                do
+                if (_decks == null)
+                    throw new InvalidOperationException("WindBot deck catalog has not been initialized.");
+
+                string deck = ai.Game.Deck;
+                if (deck == null || !_decks.TryGetValue(deck, out infos))
                 {
-                    infos = _list[_rand.Next(_list.Count)];
+                    if (_normalDecks.Count == 0)
+                        throw new InvalidOperationException("WindBot has no Normal deck executor available for random selection.");
+                    infos = _normalDecks[_rand.Next(_normalDecks.Count)];
                 }
-                while (infos.Level != "Normal");
             }
 
             Executor executor = (Executor)Activator.CreateInstance(infos.Type, ai, duel);

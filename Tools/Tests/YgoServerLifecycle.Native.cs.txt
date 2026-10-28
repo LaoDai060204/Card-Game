@@ -1,0 +1,117 @@
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Net;
+using System.Net.Sockets;
+using System.Text;
+using System.Threading;
+using MDPro3.Net;
+
+internal static class Program
+{
+    private static int FreePort()
+    {
+        var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        int port = ((IPEndPoint)listener.LocalEndpoint).Port;
+        listener.Stop();
+        return port;
+    }
+
+    private static string Args(int port) => port + " -1 5 0 F F F 8000 5 1 0 0";
+
+    private static void Require(bool condition, string message)
+    {
+        if (!condition) throw new Exception(message + " LastError=" + YgoServer.LastError);
+    }
+
+    private static void WaitStopped()
+    {
+        var time = Stopwatch.StartNew();
+        while (YgoServer.IsBusy && time.ElapsedMilliseconds < 4500) Thread.Sleep(5);
+        Require(!YgoServer.IsBusy && !YgoServer.ServerRunning(), "Native session did not stop.");
+        Require(string.IsNullOrEmpty(YgoServer.LastError), "Native shutdown reported an error.");
+    }
+
+    private static TcpClient Connect(int port)
+    {
+        var timer = Stopwatch.StartNew();
+        while (timer.ElapsedMilliseconds < 6000)
+        {
+            var client = new TcpClient();
+            try
+            {
+                client.Connect(IPAddress.Loopback, port);
+                client.ReceiveTimeout = 2000;
+                return client;
+            }
+            catch (SocketException) { client.Dispose(); Thread.Sleep(25); }
+        }
+        throw new Exception("Native listener did not become ready: " + YgoServer.LastError);
+    }
+
+    private static void Send(NetworkStream stream, byte kind, byte[] payload)
+    {
+        using var memory = new MemoryStream();
+        using var writer = new BinaryWriter(memory);
+        writer.Write((ushort)(payload.Length + 1)); writer.Write(kind); writer.Write(payload);
+        var packet = memory.ToArray(); stream.Write(packet, 0, packet.Length);
+    }
+
+    private static byte[] ReadFull(NetworkStream stream, int length)
+    {
+        var bytes = new byte[length]; int total = 0;
+        while (total < length)
+        {
+            int count = stream.Read(bytes, total, length - total);
+            if (count == 0) throw new EndOfStreamException("Native server closed the handshake.");
+            total += count;
+        }
+        return bytes;
+    }
+
+    private static void Handshake(TcpClient client)
+    {
+        var stream = client.GetStream();
+        var name = new byte[40]; var encoded = Encoding.Unicode.GetBytes("Lifecycle probe");
+        Array.Copy(encoded, name, encoded.Length); Send(stream, 0x10, name);
+        using var memory = new MemoryStream();
+        using var writer = new BinaryWriter(memory);
+        writer.Write((ushort)0x1362); writer.Write((byte)204); writer.Write((byte)204);
+        writer.Write(0); writer.Write(new byte[40]); Send(stream, 0x12, memory.ToArray());
+        var kinds = new HashSet<byte>();
+        for (int i = 0; i < 5 && !(kinds.Contains(0x12) && kinds.Contains(0x13)); i++)
+        {
+            var header = ReadFull(stream, 2); int length = BitConverter.ToUInt16(header, 0);
+            var packet = ReadFull(stream, length);
+            Require(packet.Length > 0, "Empty native packet."); kinds.Add(packet[0]);
+        }
+        Require(kinds.Contains(0x12) && kinds.Contains(0x13), "Native join/type-change handshake missing.");
+    }
+
+    private static void Main()
+    {
+        for (int cycle = 0; cycle < 3; cycle++)
+        {
+            int port = FreePort();
+            Require(YgoServer.TryStartServer(Args(port)), "Native start rejected.");
+            using (var client = Connect(port))
+            {
+                Handshake(client);
+                Require(!YgoServer.TryStartServer(Args(FreePort())), "An active native server was replaced.");
+                var elapsed = Stopwatch.StartNew(); YgoServer.StopServer();
+                Require(elapsed.ElapsedMilliseconds < 500, "Native stop blocked the caller.");
+                WaitStopped();
+                Console.WriteLine("PASS native TCP handshake and cooperative stop, cycle " + (cycle + 1));
+            }
+        }
+        // The request can race startup before the listener and event base exist.
+        for (int i = 0; i < 8; i++)
+        {
+            Require(YgoServer.TryStartServer(Args(FreePort())), "Immediate-stop native start rejected.");
+            YgoServer.StopServer(); WaitStopped();
+        }
+        Console.WriteLine("PASS real Linux native lifecycle: 3 handshakes/restarts and 8 immediate-stop races. No Unity or duel execution.");
+    }
+}

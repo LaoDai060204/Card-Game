@@ -1,0 +1,220 @@
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Threading;
+
+namespace MDPro3.Net
+{
+    // Native interop is the only substituted dependency. The complete production
+    // lifecycle class below is extracted directly from YgoServer.cs.
+    internal static class Dll
+    {
+        public static ManualResetEventSlim Started;
+        public static ManualResetEventSlim Ready;
+        public static ManualResetEventSlim ReleaseRun;
+        public static ManualResetEventSlim StopEntered;
+        public static ManualResetEventSlim ReleaseStop;
+        public static int StartCalls, StopCalls, StartDelay, ExitCode, Active;
+        public static bool ThrowOnStart, ThrowOnStop, IgnoreStop;
+        public static readonly List<int> StopThreads = new List<int>();
+
+        public static void Reset()
+        {
+            if (YgoServer.IsBusy) throw new Exception("A previous server session leaked.");
+            Started = new ManualResetEventSlim(false);
+            Ready = new ManualResetEventSlim(false);
+            ReleaseRun = new ManualResetEventSlim(false);
+            StopEntered = new ManualResetEventSlim(false);
+            ReleaseStop = new ManualResetEventSlim(true);
+            StartCalls = StopCalls = StartDelay = ExitCode = Active = 0;
+            ThrowOnStart = ThrowOnStop = IgnoreStop = false;
+            lock (StopThreads) StopThreads.Clear();
+        }
+
+        public static int start_server(string args)
+        {
+            Interlocked.Increment(ref StartCalls);
+            Started.Set();
+            if (ThrowOnStart) throw new DllNotFoundException("Probe native DLL unavailable");
+            Interlocked.Increment(ref Active);
+            try
+            {
+                if (StartDelay > 0) Thread.Sleep(StartDelay);
+                Ready.Set();
+                if (!ReleaseRun.Wait(10000)) throw new Exception("Fake server was not released by its test.");
+                return ExitCode;
+            }
+            finally { Interlocked.Decrement(ref Active); }
+        }
+
+        public static void stop_server()
+        {
+            Interlocked.Increment(ref StopCalls);
+            lock (StopThreads) StopThreads.Add(Thread.CurrentThread.ManagedThreadId);
+            StopEntered.Set();
+            if (!ReleaseStop.Wait(10000)) throw new Exception("Fake native stop remained blocked.");
+            if (ThrowOnStop) throw new InvalidOperationException("Probe native stop failure");
+            if (!IgnoreStop && Ready.IsSet) ReleaseRun.Set();
+        }
+    }
+
+    @@PRODUCTION_CLASS@@
+
+    internal static class Program
+    {
+        private const string Args = "7911 -1 5 0 F F F 8000 5 1 0 0";
+        private static int passed;
+
+        private static void Require(bool condition, string message)
+        {
+            if (!condition) throw new Exception(message);
+        }
+
+        private static void WaitFor(Func<bool> condition, string message, int timeout = 2000)
+        {
+            var clock = Stopwatch.StartNew();
+            while (!condition() && clock.ElapsedMilliseconds < timeout) Thread.Sleep(2);
+            Require(condition(), message);
+        }
+
+        private static void Start()
+        {
+            Require(YgoServer.TryStartServer(Args), "First start rejected.");
+            Require(Dll.Ready.Wait(1000), "Native fake did not start.");
+        }
+
+        private static void StopAndWait()
+        {
+            YgoServer.StopServer();
+            WaitFor(() => !YgoServer.IsBusy, "Server did not finish a normal cooperative stop.");
+            Require(YgoServer.serverThread == null && !YgoServer.ServerRunning(), "Stopped thread reference survived.");
+        }
+
+        private static void Case(string name, Action action)
+        {
+            Dll.Reset();
+            action();
+            Require(!YgoServer.IsBusy, "Test left a native session running: " + name);
+            passed++;
+            Console.WriteLine("PASS " + name);
+        }
+
+        private static void Main()
+        {
+            Case("Empty arguments fail without a native thread", () =>
+            {
+                Require(!YgoServer.TryStartServer(null), "Null args accepted.");
+                Require(!YgoServer.TryStartServer("  "), "Blank args accepted.");
+                Require(!string.IsNullOrEmpty(YgoServer.LastError) && Dll.StartCalls == 0, "Argument error not reported.");
+            });
+            Case("A duplicate start preserves the existing server", () =>
+            {
+                Start();
+                Require(YgoServer.IsBusy && YgoServer.ServerRunning(), "Started server state incorrect.");
+                Require(YgoServer.serverThread.IsBackground, "Server thread keeps the application alive.");
+                Require(!YgoServer.TryStartServer(Args) && Dll.StartCalls == 1, "Duplicate native start.");
+                Require(Dll.StopCalls == 0, "Duplicate start stopped the current server.");
+                StopAndWait();
+            });
+            Case("Blocked native shutdown never blocks its caller or state queries", () =>
+            {
+                Start(); Dll.ReleaseStop.Reset();
+                int caller = Thread.CurrentThread.ManagedThreadId;
+                var time = Stopwatch.StartNew(); YgoServer.StopServer();
+                Require(time.ElapsedMilliseconds < 500, "Stop blocked the Unity caller.");
+                Require(Dll.StopEntered.Wait(1000), "Shutdown worker did not enter native stop.");
+                Require(YgoServer.IsStopping && YgoServer.IsBusy && !YgoServer.ServerRunning(), "Stopping state incorrect.");
+                time.Restart(); Require(!YgoServer.TryStartServer(Args), "Restart accepted during blocked native stop.");
+                string diagnostic = YgoServer.LastError;
+                Require(time.ElapsedMilliseconds < 500, "Gate held while native stop blocked.");
+                lock (Dll.StopThreads) Require(Dll.StopThreads.All(id => id != caller), "Native stop ran on caller.");
+                Dll.ReleaseStop.Set(); StopAndWait();
+            });
+            Case("An early stop is repeated after delayed native initialization", () =>
+            {
+                Dll.StartDelay = 250;
+                Require(YgoServer.TryStartServer(Args) && Dll.Started.Wait(1000), "Delayed server did not enter start.");
+                YgoServer.StopServer();
+                WaitFor(() => !YgoServer.IsBusy, "Early stop leaked a late-starting native server.");
+                Require(Dll.StopCalls >= 2, "Early no-op stop was not retried.");
+            });
+            Case("A native start exception releases the session and records its error", () =>
+            {
+                Dll.ThrowOnStart = true;
+                Require(YgoServer.TryStartServer(Args), "Thread launch should be accepted before async native failure.");
+                WaitFor(() => !YgoServer.IsBusy, "Native start failure leaked busy state.");
+                Require(YgoServer.LastError.Contains("unavailable"), "Native start failure was swallowed.");
+            });
+            Case("A nonzero native return is reported", () =>
+            {
+                Dll.ExitCode = 7; Dll.ReleaseRun.Set();
+                Require(YgoServer.TryStartServer(Args), "Natural exit test could not start.");
+                WaitFor(() => !YgoServer.IsBusy, "Natural native return leaked state.");
+                Require(YgoServer.LastError.Contains("7"), "Native exit code was swallowed.");
+            });
+            Case("A stop exception blocks replacement until the original native run exits", () =>
+            {
+                Start(); Dll.ThrowOnStop = true; YgoServer.StopServer();
+                WaitFor(() => YgoServer.LastError.Contains("stop failure"), "Native stop exception was swallowed.");
+                Require(YgoServer.IsBusy && !YgoServer.TryStartServer(Args), "Native stop failure allowed replacement.");
+                Dll.ReleaseRun.Set();
+                WaitFor(() => !YgoServer.IsBusy, "Late native exit did not release stopped session.");
+            });
+            Case("An uncooperative server reaches a bounded worker timeout and cannot restart", () =>
+            {
+                Start(); Dll.IgnoreStop = true;
+                var clock = Stopwatch.StartNew(); YgoServer.StopServer();
+                Require(clock.ElapsedMilliseconds < 500, "Uncooperative stop blocked caller.");
+                WaitFor(() => YgoServer.LastError.Contains("timed out"), "No bounded stop timeout.", 4500);
+                Require(YgoServer.IsBusy && YgoServer.IsStopping && !YgoServer.TryStartServer(Args), "Hung server allowed replacement.");
+                int stoppedCalls = Dll.StopCalls;
+                Thread.Sleep(150);
+                Require(Dll.StopCalls == stoppedCalls, "Stop worker continues indefinitely after timeout.");
+                Dll.ReleaseRun.Set(); WaitFor(() => !YgoServer.IsBusy, "Late server return was not released.");
+            });
+            Case("A completed native run cannot be replaced while its old stop call is still blocked", () =>
+            {
+                Start(); Dll.ReleaseStop.Reset(); YgoServer.StopServer();
+                Require(Dll.StopEntered.Wait(1000), "Stop worker did not enter.");
+                Dll.ReleaseRun.Set(); WaitFor(() => Dll.Active == 0, "Native run did not finish independently.");
+                Require(YgoServer.IsBusy && !YgoServer.TryStartServer(Args), "Old stop can reach a newer server.");
+                Dll.ReleaseStop.Set(); WaitFor(() => !YgoServer.IsBusy, "Completed stop retained old session.");
+                Dll.Reset(); Start(); StopAndWait();
+            });
+            Case("Parallel start requests accept exactly one native server", () =>
+            {
+                var barrier = new ManualResetEventSlim(false);
+                var results = new bool[16]; var threads = new Thread[results.Length];
+                for (int i = 0; i < results.Length; i++)
+                {
+                    int index = i;
+                    threads[i] = new Thread(() => { barrier.Wait(); results[index] = YgoServer.TryStartServer(Args); });
+                    threads[i].Start();
+                }
+                barrier.Set(); foreach (var thread in threads) Require(thread.Join(1000), "Parallel start caller blocked.");
+                Require(results.Count(value => value) == 1 && Dll.Ready.Wait(1000), "Parallel starts were not serialized.");
+                Require(Dll.StartCalls == 1, "Parallel native runs overlapped."); StopAndWait();
+            });
+            Case("Legacy StartServer wrapper never force-restarts an active native server", () =>
+            {
+                YgoServer.StartServer(Args); Require(Dll.Ready.Wait(1000), "Wrapper did not launch.");
+                YgoServer.StartServer(Args);
+                Require(Dll.StartCalls == 1 && Dll.StopCalls == 0, "Legacy wrapper replaced the server.");
+                StopAndWait();
+            });
+            Case("Immediate start-stop races leave no stale busy state or thread", () =>
+            {
+                for (int i = 0; i < 24; i++)
+                {
+                    if (i > 0) Dll.Reset();
+                    Require(YgoServer.TryStartServer(Args), "Rapid start rejected after completed stop.");
+                    YgoServer.StopServer();
+                    WaitFor(() => !YgoServer.IsBusy, "Rapid stop leaked state.");
+                    Require(YgoServer.serverThread == null, "Rapid stop retained an old thread.");
+                }
+            });
+            Console.WriteLine("PASS: " + passed + " production server-lifecycle scenarios; 24 immediate-stop races.");
+        }
+    }
+}
