@@ -400,7 +400,7 @@ namespace MDPro3.Servant
             //上传已经有Id的本地较新卡组
             foreach (var deck in decksNeedUpdateToServer)
             {
-                Debug.LogFormat("卡组[{0}]需要更新上传。", deck.Key);
+                Debug.LogFormat("Deck [{0}] needs to be updated on the server.", deck.Key);
                 var time = DateTime.UtcNow;
                 var task = OnlineDeck.SyncDeck(deck.Value.deckId, Path.GetFileName(deck.Key), deck.Value, time, false);
                 while (!task.IsCompleted)
@@ -409,7 +409,7 @@ namespace MDPro3.Servant
             //更新已经有Id的本地较旧卡组
             foreach (var deck in decksNeedUpdateFromServer)
             {
-                Debug.LogFormat("卡组[{0}]需要更新。", deck.Key);
+                Debug.LogFormat("Deck [{0}] needs a local update.", deck.Key);
 
                 var od = OnlineDeck.GetByID(deck.Value.deckId);
                 var oldPath = Program.PATH_DECK + deck.Key + Program.EXPANSION_YDK;
@@ -431,11 +431,11 @@ namespace MDPro3.Servant
                 var path = Program.PATH_DECK + (deck.GetType() == string.Empty ? string.Empty : $"{deck.GetType()}/") + deck.deckName + Program.EXPANSION_YDK;
                 if (File.Exists(path))
                 {
-                    Debug.Log($"删除服务器同名卡组 [{deck.GetType()}/{deck.deckName}]  [{deck.deckId}]。");
+                    Debug.Log($"Deleting the server deck with the same name [{deck.GetType()}/{deck.deckName}]  [{deck.deckId}].");
                     _ = OnlineDeck.DeleteDecks(new List<string> { deck.deckId });
                     continue;
                 }
-                Debug.Log($"卡组[{deck.GetType()} / {deck.deckName}] [{deck.deckId}]需要下载。");
+                Debug.Log($"Deck [{deck.GetType()} / {deck.deckName}] [{deck.deckId}] needs to be downloaded.");
 
                 var d = new Deck(deck.deckYdk, deck.deckId, MyCard.account.user.username)
                 {
@@ -451,7 +451,7 @@ namespace MDPro3.Servant
                 var deckNames = new List<string>();
                 foreach (var deck in decksNeedUpload)
                 {
-                    var info = string.Format("卡组[{0}]需要上传：{1}。", deck.Key, deck.Value.deckId);
+                    var info = string.Format("Deck [{0}] needs to be uploaded: {1}.", deck.Key, deck.Value.deckId);
                     Debug.Log(info);
 
                     deckNames.Add(Path.GetFileName(deck.Key));

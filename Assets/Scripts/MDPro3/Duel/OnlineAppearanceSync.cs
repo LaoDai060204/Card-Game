@@ -246,7 +246,7 @@ namespace MDPro3
             if (ints == null)
                 throw new ArgumentNullException(nameof(ints));
             if (ints.Length != DefaultValues.Length)
-                throw new ArgumentException($"数组长度必须为 {DefaultValues.Length}");
+                throw new ArgumentException($"The array length must be {DefaultValues.Length}.");
 
             byte[] bytes = EncodeDiffs(ints);
             return EncodeToZeroWidth(bytes);

@@ -1,0 +1,281 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Text.Json;
+using System.Threading.Tasks;
+using MDPro3;
+using MDPro3.Net;
+using MDPro3.Utility;
+using UnityEngine;
+using UnityEngine.UI;
+
+// Unity display/tween and download stand-ins; NewsManager, Language and news models are production code.
+namespace UnityEngine
+{
+    public class Object
+    {
+        public bool Destroyed;
+        public static void Destroy(Object value) { if (value != null) value.Destroyed = true; }
+    }
+    public class Component : Object
+    {
+        private readonly Dictionary<Type, object> components = new Dictionary<Type, object>();
+        public Transform transform = new Transform();
+        public T GetComponent<T>() where T : new()
+        {
+            if (!components.TryGetValue(typeof(T), out var component))
+                components[typeof(T)] = component = new T();
+            return (T)component;
+        }
+    }
+    public class MonoBehaviour : Component { }
+    public class Transform : Object { public Vector2 localPosition; }
+    public class RectTransform : Transform { public Vector2 anchoredPosition; public Rect rect = new Rect { width = 455f }; }
+    public struct Rect { public float width; }
+    public struct Vector2 { public float x, y; public Vector2(float x, float y) { this.x = x; this.y = y; } }
+    public class Texture2D : Object { public string Name; public Texture2D(string name) { Name = name; } }
+    public class CanvasGroup { public float alpha; public bool blocksRaycasts; }
+    public static class Mathf { public static int Min(int a, int b) => Math.Min(a, b); }
+    public static class Time { public static float deltaTime = 0.016f; }
+    public static class Application
+    {
+        public static bool isPlaying = true;
+        public static readonly List<string> Opened = new List<string>();
+        public static void OpenURL(string url) => Opened.Add(url);
+    }
+    public static class Debug
+    {
+        public static readonly List<string> Warnings = new List<string>();
+        public static void LogWarning(object value) => Warnings.Add(value.ToString());
+    }
+}
+namespace UnityEngine.UI
+{
+    public class RawImage : Component { public Texture2D texture; public RectTransform rectTransform = new RectTransform(); }
+    public class Text { public string text; }
+}
+namespace DG.Tweening
+{
+    public static class TweenStandIn
+    {
+        public static int Kills;
+        public static void DOKill(this Transform target) { Kills++; }
+        public static void DOLocalMoveX(this Transform target, float x, float seconds) => target.localPosition = new Vector2(x, 0);
+    }
+}
+namespace MDPro3
+{
+    public class Manager : MonoBehaviour { }
+    public static class Config
+    {
+        private static readonly Dictionary<string, string> values = new Dictionary<string, string>();
+        public static string Get(string key, string fallback) => values.TryGetValue(key, out var value) ? value : fallback;
+        public static void Set(string key, string value) => values[key] = value;
+    }
+    public static class SystemEvent
+    {
+        public static event Action OnLanguageChange;
+        public static void Raise() => OnLanguageChange?.Invoke();
+    }
+    public sealed class Program
+    {
+        public static Program instance = new Program();
+        public Menu menu = new Menu();
+    }
+    public sealed class Menu { public bool showing = true; }
+    public static class Tools
+    {
+        public static readonly List<string> Downloads = new List<string>();
+        public static Func<string, Task<Texture2D>> Download = name => Task.FromResult(new Texture2D(name));
+        public static Task<Texture2D> DownloadImageAsync(string url) { Downloads.Add(url); return Download(url); }
+        public static void Reset()
+        {
+            Downloads.Clear();
+            Download = name => Task.FromResult(new Texture2D(name));
+            Debug.Warnings.Clear();
+            Application.Opened.Clear();
+            Application.isPlaying = true;
+        }
+    }
+}
+
+internal static class Entry
+{
+    private static int cases;
+    private static void Assert(bool condition, string message)
+    {
+        if (!condition) throw new Exception(message);
+    }
+    private static object Field(NewsManager manager, string name) =>
+        typeof(NewsManager).GetField(name, BindingFlags.Instance | BindingFlags.NonPublic).GetValue(manager);
+    private static void Invoke(NewsManager manager, string method) =>
+        typeof(NewsManager).GetMethod(method, BindingFlags.Instance | BindingFlags.NonPublic).Invoke(manager, null);
+    private static News Item(string prefix, int index = 0) => new News {
+        title = prefix + " title " + index, image = prefix + " image " + index,
+        url = "https://example.test/" + prefix + "/" + index
+    };
+    private static MyCardNews Feed(int english = 2, int chinese = 2) => new MyCardNews {
+        EnglishUS = Enumerable.Range(0, english).Select(index => Item("English", index)).ToArray(),
+        ChineseCN = Enumerable.Range(0, chinese).Select(index => Item("Chinese", index)).ToArray()
+    };
+    private static NewsManager Create(string language, MyCardNews feed)
+    {
+        Tools.Reset();
+        Language.SetConfig(language);
+        var manager = new NewsManager {
+            news = feed, newsPic = new RawImage(), newsPic2 = new RawImage(),
+            newsText = new Text(), newsText2 = new Text(), textCount = new Text()
+        };
+        Invoke(manager, "Awake");
+        return manager;
+    }
+    private static void Close(NewsManager manager) => Invoke(manager, "OnDestroy");
+    private static void Switch(string language)
+    {
+        Language.SetConfig(language);
+        SystemEvent.Raise();
+    }
+    private static void Test(string name, Action action)
+    {
+        action();
+        cases++;
+        Console.WriteLine("PASS " + name);
+    }
+    private static TaskCompletionSource<Texture2D> Pending() => new TaskCompletionSource<Texture2D>();
+
+    public static int Main()
+    {
+        Test("English feed, navigation, links and cache reuse", () => {
+            var manager = Create(Language.English, Feed());
+            manager.LoadNews();
+            Assert(manager.showing && manager.newsText.text == "English title 0", "English selected Chinese title");
+            Assert(Tools.Downloads.SequenceEqual(new[] { "English image 0", "English image 1" }), "Wrong English image source");
+            manager.OnRight(); manager.OnNewsClick();
+            Assert(manager.newsText2.text == "English title 1" && Application.Opened.Last().EndsWith("English/1"), "Next news mismatch");
+            manager.OnLeft(); manager.OnNewsClick();
+            Assert(Application.Opened.Last().EndsWith("English/0"), "Previous news mismatch");
+            manager.LoadNews();
+            Assert(Tools.Downloads.Count == 2, "Unchanged feed downloaded twice");
+            Close(manager);
+        });
+        Test("Missing English never falls back to Chinese", () => {
+            var feed = Feed(); feed.EnglishUS = null;
+            var manager = Create(Language.English, feed);
+            manager.LoadNews(); manager.Show(); manager.OnRight(); manager.OnNewsClick();
+            Assert(!manager.showing && Tools.Downloads.Count == 0 && Application.Opened.Count == 0, "Chinese fallback was exposed");
+            Close(manager);
+        });
+        Test("Empty English feed stays hidden", () => {
+            var manager = Create(Language.English, Feed(0)); manager.LoadNews();
+            Assert(!manager.showing && Tools.Downloads.Count == 0, "Empty English displayed Chinese"); Close(manager);
+        });
+        Test("Other non-Chinese languages use English", () => {
+            var manager = Create(Language.Japanese, Feed()); manager.LoadNews();
+            Assert(manager.newsText.text == "English title 0", "Non-Chinese language selected Chinese"); Close(manager);
+        });
+        Test("Simplified and Traditional Chinese select Chinese feed", () => {
+            var manager = Create(Language.SimplifiedChinese, Feed()); manager.LoadNews();
+            Assert(manager.newsText.text == "Chinese title 0", "Simplified Chinese selected wrong feed");
+            Switch(Language.TraditionalChinese);
+            Assert(manager.newsText.text == "Chinese title 0" && Tools.Downloads.Count == 4, "Traditional Chinese did not reset source");
+            Close(manager);
+        });
+        Test("Vietnamese remains hidden", () => {
+            var manager = Create(Language.Vietnamese, Feed()); manager.LoadNews(); manager.Show();
+            Assert(!manager.showing && Tools.Downloads.Count == 0, "Vietnamese news became visible"); Close(manager);
+        });
+        Test("Loaded language switch resets index, textures and tweens", () => {
+            var manager = Create(Language.English, Feed(5, 1)); manager.LoadNews();
+            manager.OnLeft(); var old = manager.newsPic.texture; int kills = DG.Tweening.TweenStandIn.Kills;
+            Switch(Language.SimplifiedChinese); manager.OnNewsClick();
+            Assert((int)Field(manager, "currentNewsIndex") == 0 && manager.textCount.text == "1/1", "Old index survived shorter feed");
+            Assert(old.Destroyed && DG.Tweening.TweenStandIn.Kills > kills, "Old cache or tween survived language switch");
+            Assert(manager.newsText.text == "Chinese title 0" && Application.Opened.Last().EndsWith("Chinese/0"), "Title/link mixed across languages");
+            Switch(Language.English);
+            Assert(manager.newsText.text == "English title 0", "Return to English reused Chinese"); Close(manager);
+        });
+        Test("Switch to Vietnamese clears cached display and returns cleanly", () => {
+            var manager = Create(Language.English, Feed()); manager.LoadNews(); var old = manager.newsPic.texture;
+            Switch(Language.Vietnamese);
+            Assert(!manager.showing && manager.newsPic.texture == null && manager.newsText.text == "" && old.Destroyed, "Vietnamese retained cached display");
+            Switch(Language.English);
+            Assert(manager.showing && manager.newsText.text == "English title 0" && Tools.Downloads.Count == 4, "English did not reload after Vietnamese"); Close(manager);
+        });
+        Test("Replacing source object clears previous cache", () => {
+            var manager = Create(Language.English, Feed()); manager.LoadNews(); var old = manager.newsPic.texture;
+            manager.news = new MyCardNews { ChineseCN = new[] { Item("New Chinese") } }; Invoke(manager, "Update");
+            Assert(!manager.showing && manager.newsText.text == "" && old.Destroyed, "New source reused old English or Chinese fallback"); Close(manager);
+        });
+        Test("Replacing selected array within source resets cache", () => {
+            var manager = Create(Language.English, Feed()); manager.LoadNews(); var old = manager.newsPic.texture;
+            manager.news.EnglishUS = new[] { Item("New English") }; manager.LoadNews();
+            Assert(manager.newsText.text == "New English title 0" && old.Destroyed, "New array reused old images"); Close(manager);
+        });
+        Test("Showing a changed feed reloads it before the next frame", () => {
+            var manager = Create(Language.English, Feed()); manager.LoadNews();
+            manager.news = new MyCardNews { EnglishUS = new[] { Item("Replacement") } }; manager.Show();
+            Assert(manager.showing && manager.newsText.text == "Replacement title 0", "Show consumed source change without reloading"); Close(manager);
+        });
+        Test("Late English image cannot attach to Chinese or clear its loader", () => {
+            var manager = Create(Language.English, Feed(1, 1)); var english = Pending(); var chinese = Pending();
+            Tools.Download = name => name.StartsWith("English") ? english.Task : chinese.Task;
+            manager.LoadNews(); Switch(Language.SimplifiedChinese);
+            var old = new Texture2D("late English"); english.SetResult(old);
+            Assert(old.Destroyed && !manager.showing && (bool)Field(manager, "loadingNews"), "Stale download changed current cache/loader");
+            manager.LoadNews(); Assert(Tools.Downloads.Count == 2, "Old finally allowed duplicate current download");
+            chinese.SetResult(new Texture2D("current Chinese"));
+            Assert(manager.showing && manager.newsPic.texture.Name == "current Chinese", "Current download was not retained"); Close(manager);
+        });
+        Test("Late Chinese image cannot replace already displayed English", () => {
+            var manager = Create(Language.SimplifiedChinese, Feed(1, 1)); var chinese = Pending();
+            Tools.Download = name => name.StartsWith("Chinese") ? chinese.Task : Task.FromResult(new Texture2D(name));
+            manager.LoadNews(); Switch(Language.English); var current = manager.newsPic.texture;
+            var old = new Texture2D("late Chinese"); chinese.SetResult(old);
+            Assert(old.Destroyed && manager.newsPic.texture == current && manager.newsText.text == "English title 0", "Stale Chinese replaced English"); Close(manager);
+        });
+        Test("Stale failure does not log or clear new loader", () => {
+            var manager = Create(Language.English, Feed(1, 1)); var english = Pending(); var chinese = Pending();
+            Tools.Download = name => name.StartsWith("English") ? english.Task : chinese.Task;
+            manager.LoadNews(); Switch(Language.SimplifiedChinese); english.SetException(new Exception("old request"));
+            Assert(Debug.Warnings.Count == 0 && (bool)Field(manager, "loadingNews"), "Stale failure affected new request");
+            chinese.SetResult(new Texture2D("Chinese")); Close(manager);
+        });
+        Test("Pending image is discarded while Vietnamese is selected", () => {
+            var manager = Create(Language.English, Feed(1, 1)); var pending = Pending(); Tools.Download = name => pending.Task;
+            manager.LoadNews(); Switch(Language.Vietnamese); var old = new Texture2D("late"); pending.SetResult(old);
+            Assert(old.Destroyed && !manager.showing && manager.newsPic.texture == null, "Pending image leaked into Vietnamese"); Close(manager);
+        });
+        Test("Source replacement is guarded before the next frame", () => {
+            var manager = Create(Language.English, Feed(1, 1)); var pending = Pending(); Tools.Download = name => pending.Task;
+            manager.LoadNews(); manager.news = Feed(0, 1); var old = new Texture2D("old source"); pending.SetResult(old);
+            Assert(old.Destroyed && !manager.showing, "Old source attached before Update noticed change"); Invoke(manager, "Update"); Close(manager);
+        });
+        Test("Current download failure can be retried", () => {
+            var manager = Create(Language.English, Feed(1, 1)); Tools.Download = name => Task.FromException<Texture2D>(new Exception("retry"));
+            manager.LoadNews();
+            Assert(Debug.Warnings.Count == 1 && !(bool)Field(manager, "loadingNews"), "Current failure was not recoverable");
+            Tools.Download = name => Task.FromResult(new Texture2D(name)); manager.LoadNews();
+            Assert(manager.showing, "Retry did not display current feed"); Close(manager);
+        });
+        Test("Closing the widget does not reopen it on an unchanged frame", () => {
+            var manager = Create(Language.English, Feed()); manager.LoadNews(); manager.OnClose(); Invoke(manager, "Update");
+            Assert(!manager.showing, "Closed widget reopened without a source change"); Close(manager);
+        });
+        Test("Destroyed manager invalidates pending downloads and unsubscribes", () => {
+            var manager = Create(Language.English, Feed(1, 1)); var pending = Pending(); Tools.Download = name => pending.Task;
+            manager.LoadNews(); Close(manager); var old = new Texture2D("late"); pending.SetResult(old);
+            int requests = Tools.Downloads.Count; Switch(Language.SimplifiedChinese);
+            Assert(old.Destroyed && Tools.Downloads.Count == requests && !manager.showing, "Destroyed manager still accepted news");
+        });
+        Test("Null news is safe", () => {
+            var manager = Create(Language.English, null); manager.LoadNews(); manager.Show(); manager.OnLeft(); manager.OnNewsClick();
+            Assert(!manager.showing && Tools.Downloads.Count == 0, "Null source was not hidden"); Close(manager);
+        });
+        Console.WriteLine(JsonSerializer.Serialize(new {
+            test = "NewsLocalization", scenarios = cases, productionClass = "NewsManager", productionLanguage = true,
+            models = "actual MyCardNews and News", controlledImageDownloads = true, unityEditorPlayTested = false
+        }));
+        return 0;
+    }
+}

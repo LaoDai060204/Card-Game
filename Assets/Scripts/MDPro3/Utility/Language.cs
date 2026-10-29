@@ -63,6 +63,13 @@ namespace MDPro3.Utility
             return GetDataLanguage(GetConfig());
         }
 
+        public static string GetUpdateContentAddress()
+        {
+            if (GetConfig() == Vietnamese)
+                return "UpdateContent_vi";
+            return UseChinese() ? "UpdateContent" : "UpdateContent_en";
+        }
+
         public static bool NeedBlankToAddWord()
         {
             var config = GetConfig();

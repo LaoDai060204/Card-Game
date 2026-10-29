@@ -126,6 +126,29 @@ namespace MDPro3
             return original;
         }
 
+        // Translate externally supplied display text without registering unknown
+        // names or hints as new keys in the user's translation files.
+        public static string GetIfDefined(string original, int type = 0)
+        {
+            if (string.IsNullOrEmpty(original))
+                return original;
+
+            if (!GetTranslations(type).TryGetValue(original, out var value))
+            {
+                var language = type switch
+                {
+                    1 => Language.GetCardConfig(),
+                    2 => Language.GetPrereleaseConfig(),
+                    _ => Language.GetConfig()
+                };
+                if (language == Language.SimplifiedChinese || language == Language.TraditionalChinese
+                    || !englishTranslations.TryGetValue(original, out value))
+                    return original;
+            }
+
+            return value.Replace(CONFIG_LINE_BREAK, Program.STRING_LINE_BREAK).Replace(STRING_EMPTY, string.Empty);
+        }
+
         public static string Get(string original, string replace, int type = 0)
         {
             return Get(original, type).Replace("[?]", replace);

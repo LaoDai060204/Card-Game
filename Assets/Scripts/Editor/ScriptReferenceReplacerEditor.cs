@@ -7,21 +7,21 @@ public class ScriptReferenceReplacerEditor : EditorWindow
     private ScriptReplacementConfig replacementConfig;
     private Vector2 scrollPosition;
 
-    [MenuItem("Assets/替换脚本引用", false, 102)]
+    [MenuItem("Assets/Replace Script References", false, 102)]
     private static void ReplaceScriptReferences()
     {
         // 首先显示确认弹窗
         bool userConfirmed = EditorUtility.DisplayDialog(
-            "危险操作确认", // 标题
-            $"你确定要进行【替换脚本引用】' 吗？此操作不可逆！\n\n建议提前备份项目。", // 消息
-            "继续", // 确定按钮
-            "取消" // 取消按钮
+            "Confirm Destructive Operation", // 标题
+            $"Replace script references? This operation cannot be undone.\n\nBack up the project before continuing.", // 消息
+            "Continue", // 确定按钮
+            "Cancel" // 取消按钮
         );
 
         // 如果用户点击了“取消”，则终止操作
         if (!userConfirmed)
         {
-            Debug.Log("用户取消了操作。");
+            Debug.Log("Operation canceled by the user.");
             return;
         }
 
@@ -45,7 +45,7 @@ public class ScriptReferenceReplacerEditor : EditorWindow
         ProcessAsset(assetPath, config);
     }
 
-    [MenuItem("Assets/替换脚本引用", true)]
+    [MenuItem("Assets/Replace Script References", true)]
     private static bool ValidateReplaceStringsInAsset()
     {
         return Selection.activeObject != null &&

@@ -1,0 +1,219 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Text.Json;
+using MDPro3;
+using MDPro3.Utility;
+using Cysharp.Threading.Tasks;
+using YGOSharp.Network.Utils;
+
+// Complete InterString, Language and BinaryExtensions are production classes.
+// Only the two packet handlers are extracted, with access changed to public.
+namespace UnityEngine
+{
+    public static class Debug
+    {
+        public static readonly List<string> Messages = new List<string>();
+        public static void Log(object message) => Messages.Add(message.ToString());
+    }
+}
+namespace Cysharp.Threading.Tasks
+{
+    public struct UniTask { public static UniTask CompletedTask => default; }
+}
+namespace MDPro3
+{
+    public static class Program
+    {
+        public const string PATH_LOCALES = "Data/locales/";
+        public const string STRING_LINE_BREAK = "\r\n";
+        public static bool noAccess;
+    }
+    public static class Config
+    {
+        public const string EMPTY_STRING = "";
+        private static readonly Dictionary<string, string> Values = new Dictionary<string, string>();
+        public static string Get(string key, string fallback) => Values.TryGetValue(key, out var value) ? value : fallback;
+        public static void Set(string key, string value) => Values[key] = value;
+    }
+    public static class MessageManager
+    {
+        public static string Last;
+        public static void Cast(string message) => Last = message;
+    }
+}
+namespace Regression
+{
+    public sealed class Text { public string text; }
+    public sealed class OcgCoreUI
+    {
+        public readonly Text TextPlayer0Name = new Text();
+        public readonly Text TextPlayer1Name = new Text();
+    }
+    public sealed class CoreStandIn
+    {
+        public readonly OcgCoreUI Ui = new OcgCoreUI();
+        public int FaceUpdates;
+        public T GetUI<T>() => (T)(object)Ui;
+        public void SetFace() => FaceUpdates++;
+    }
+    public sealed class PacketHandlers
+    {
+        public string name_0, name_0_c, name_1, name_1_c;
+        public bool isTag = true;
+        public readonly CoreStandIn Core = new CoreStandIn();
+        @@SHOWHINT@@
+        @@AINAME@@
+    }
+    public sealed class PuzzleText
+    {
+        public string operation { get; set; }
+        public string key { get; set; }
+        public string english { get; set; }
+        public string vietnamese { get; set; }
+    }
+    public static class Entry
+    {
+        private static int scenarios;
+        private const string FallbackKey = "Fixture fallback key";
+        private static void Equal<T>(T expected, T actual)
+        {
+            if (!EqualityComparer<T>.Default.Equals(expected, actual))
+                throw new Exception("Expected [" + expected + "] but got [" + actual + "]");
+        }
+        private static void Case(string name, Action action)
+        {
+            action(); scenarios++; Console.WriteLine("PASS " + name);
+        }
+        private static void Locale(string ui, string cards = "en-US", string prerelease = "en-US")
+        {
+            Language.SetConfig(ui); Language.SetCardConfig(cards); Language.SetPrereleaseConfig(prerelease);
+            InterString.Initialize();
+        }
+        private static string Expand(string value) => value.Replace("@n", Program.STRING_LINE_BREAK).Replace("@ui", "");
+        private static string[] Snapshot() => Directory.GetFiles("Data/locales", "translation.conf", SearchOption.AllDirectories)
+            .OrderBy(path => path, StringComparer.Ordinal).Select(path => path + "\0" + File.ReadAllText(path)).ToArray();
+        private static BinaryReader Packet(string value, int trailingNuls = 1)
+        {
+            byte[] payload = Encoding.UTF8.GetBytes(value + new string('\0', trailingNuls));
+            var stream = new MemoryStream();
+            using (var writer = new BinaryWriter(stream, Encoding.UTF8, true))
+            {
+                writer.Write((short)(payload.Length - 1)); writer.Write(payload);
+            }
+            stream.Position = 0;
+            return new BinaryReader(stream);
+        }
+        private static void AssertConsumed(BinaryReader reader) => Equal(reader.BaseStream.Length, reader.BaseStream.Position);
+
+        public static int Main()
+        {
+            File.AppendAllText("Data/locales/en-US/translation.conf",
+                "\n" + FallbackKey + "->Fixture English@nsecond@ui\nFixture blank->@ui\n");
+            var puzzles = JsonSerializer.Deserialize<List<PuzzleText>>(File.ReadAllText("puzzles.json"));
+            Case("Existing Vietnamese UI and normal Get remain unchanged", () => {
+                Locale(Language.Vietnamese);
+                Equal("ĐẤU VỚI MÁY", InterString.GetIfDefined("人机模式"));
+                Equal(InterString.Get("人机模式"), InterString.GetIfDefined("人机模式"));
+                Equal("人机模式", InterString.GetOriginal("ĐẤU VỚI MÁY"));
+            });
+            Case("English UI translates a known canonical key", () => {
+                Locale(Language.English); Equal("SOLO", InterString.GetIfDefined("人机模式"));
+            });
+            Case("Chinese interface keeps its own translation", () => {
+                Locale(Language.SimplifiedChinese); Equal("人机模式", InterString.GetIfDefined("人机模式"));
+                Equal(FallbackKey, InterString.GetIfDefined(FallbackKey));
+                Locale(Language.TraditionalChinese); Equal("人機模式", InterString.GetIfDefined("人机模式"));
+                Equal(FallbackKey, InterString.GetIfDefined(FallbackKey));
+            });
+            Case("Non-Chinese missing keys fall back to English with placeholder expansion", () => {
+                foreach (string language in new[] { Language.Vietnamese, Language.French, Language.Japanese })
+                {
+                    Locale(language); Equal("Fixture English\r\nsecond", InterString.GetIfDefined(FallbackKey));
+                }
+            });
+            Case("Card and prerelease target languages control fallback independently", () => {
+                Locale(Language.SimplifiedChinese, Language.English, Language.French);
+                Equal("SOLO", InterString.GetIfDefined("人机模式", 1));
+                Equal("Fixture English\r\nsecond", InterString.GetIfDefined(FallbackKey, 1));
+                Equal("Fixture English\r\nsecond", InterString.GetIfDefined(FallbackKey, 2));
+                Locale(Language.English, Language.TraditionalChinese, Language.SimplifiedChinese);
+                Equal("人機模式", InterString.GetIfDefined("人机模式", 1));
+                Equal(FallbackKey, InterString.GetIfDefined(FallbackKey, 1));
+                Equal(FallbackKey, InterString.GetIfDefined(FallbackKey, 2));
+            });
+            Case("Empty, null and arbitrary server content remain unchanged without side effects", () => {
+                Locale(Language.English); string[] before = Snapshot(); int logs = UnityEngine.Debug.Messages.Count;
+                foreach (string original in new[] { "", null, "Unmapped player name", "未收录的自定义提示", "unknown@n@ui" })
+                    Equal(original, InterString.GetIfDefined(original));
+                Equal(true, before.SequenceEqual(Snapshot())); Equal(logs, UnityEngine.Debug.Messages.Count);
+                Equal(false, Program.noAccess);
+            });
+            Case("Defined empty-display tokens expand to an empty string", () => {
+                Locale(Language.English); Equal("", InterString.GetIfDefined("Fixture blank"));
+            });
+            Case("Legacy Get still records unknown keys as before", () => {
+                Locale(Language.English); string path = "Data/locales/en-US/translation.conf";
+                int logs = UnityEngine.Debug.Messages.Count;
+                Equal("Legacy fixture", InterString.Get("Legacy fixture"));
+                Equal(logs + 1, UnityEngine.Debug.Messages.Count);
+                Equal(true, File.ReadAllText(path).Contains("Legacy fixture->Legacy fixture"));
+            });
+            Case("Release-note selection preserves Vietnamese and Chinese and selects English elsewhere", () => {
+                foreach (string language in new[] { "vi-VN", "zh-CN", "zh-TW", "en-US", "fr-FR", "de-DE", "it-IT", "es-ES", "pt-PT", "ja-JP", "ko-KR", "unknown-locale" })
+                {
+                    Language.SetConfig(language);
+                    Equal(language == "vi-VN" ? "UpdateContent_vi" : language == "zh-CN" || language == "zh-TW" ? "UpdateContent" : "UpdateContent_en",
+                        Language.GetUpdateContentAddress());
+                }
+            });
+            Case("Actual ShowHint trims terminators and consumes its complete payload", () => {
+                Locale(Language.English); var handlers = new PacketHandlers();
+                using var packet = Packet("人机模式", 3);
+                handlers.GameMessage_ShowHint(packet); Equal("SOLO", MessageManager.Last); AssertConsumed(packet);
+            });
+            Case("Actual AiName updates both displayed names and preserves the player name", () => {
+                Locale(Language.Vietnamese); Config.Set("DuelPlayerName0", "LaoDai");
+                var handlers = new PacketHandlers(); using var packet = Packet("人机模式", 2);
+                handlers.GameMessage_AiName(packet); AssertConsumed(packet);
+                Equal("LaoDai", handlers.name_0); Equal("LaoDai", handlers.name_0_c);
+                Equal("LaoDai", handlers.Core.Ui.TextPlayer0Name.text);
+                Equal("ĐẤU VỚI MÁY", handlers.name_1); Equal(handlers.name_1, handlers.name_1_c);
+                Equal(handlers.name_1, handlers.Core.Ui.TextPlayer1Name.text);
+                Equal(false, handlers.isTag); Equal(1, handlers.Core.FaceUpdates);
+            });
+            Case("Unknown packet text and AI names stay unchanged without translation-file writes", () => {
+                Locale(Language.English); var handlers = new PacketHandlers(); string[] before = Snapshot();
+                int logs = UnityEngine.Debug.Messages.Count;
+                using (var hint = Packet("Custom server hint 🐉")) { handlers.GameMessage_ShowHint(hint); AssertConsumed(hint); }
+                Equal("Custom server hint 🐉", MessageManager.Last);
+                using (var name = Packet("Unknown AI 🐉")) { handlers.GameMessage_AiName(name); AssertConsumed(name); }
+                Equal("Unknown AI 🐉", handlers.name_1);
+                Equal(true, before.SequenceEqual(Snapshot())); Equal(logs, UnityEngine.Debug.Messages.Count);
+            });
+            int puzzleCases = 0;
+            foreach (string language in new[] { Language.English, Language.Vietnamese })
+            {
+                Locale(language); string[] before = Snapshot(); int logs = UnityEngine.Debug.Messages.Count;
+                foreach (var puzzle in puzzles)
+                {
+                    var handlers = new PacketHandlers(); using var packet = Packet(puzzle.key);
+                    string expected = Expand(language == Language.English ? puzzle.english : puzzle.vietnamese);
+                    if (puzzle.operation == "ShowHint") { handlers.GameMessage_ShowHint(packet); Equal(expected, MessageManager.Last); }
+                    else { handlers.GameMessage_AiName(packet); Equal(expected, handlers.Core.Ui.TextPlayer1Name.text); }
+                    AssertConsumed(packet); puzzleCases++;
+                }
+                Equal(true, before.SequenceEqual(Snapshot())); Equal(logs, UnityEngine.Debug.Messages.Count);
+            }
+            Console.WriteLine(JsonSerializer.Serialize(new {
+                test = "DisplayLocalization", scenarios, officialPuzzleStrings = puzzles.Count,
+                officialPuzzlePacketCases = puzzleCases, languageVersion = "9.0",
+                fullProductionClasses = 3, extractedProductionHandlers = 2,
+                translationFiles = "temporary copies", unityPlayTested = false
+            }));
+            return 0;
+        }
+    }
+}

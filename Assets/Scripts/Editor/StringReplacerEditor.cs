@@ -12,28 +12,28 @@ public class StringReplacerEditor : EditorWindow
     private bool processTextFiles = true;
     private bool processSerializedAssets = true;
 
-    [MenuItem("Assets/替换字符串", false, 103)]
+    [MenuItem("Assets/Replace Strings", false, 103)]
     private static void ReplaceStringsInAsset()
     {
         // 首先显示确认弹窗
         bool userConfirmed = EditorUtility.DisplayDialog(
-            "危险操作确认", // 标题
-            $"你确定要进行【替换字符串】' 吗？此操作不可逆！\n\n建议提前备份项目。", // 消息
-            "继续", // 确定按钮
-            "取消" // 取消按钮
+            "Confirm Destructive Operation", // 标题
+            $"Replace strings? This operation cannot be undone.\n\nBack up the project before continuing.", // 消息
+            "Continue", // 确定按钮
+            "Cancel" // 取消按钮
         );
 
         // 如果用户点击了“取消”，则终止操作
         if (!userConfirmed)
         {
-            Debug.Log("用户取消了操作。");
+            Debug.Log("Operation canceled by the user.");
             return;
         }
 
         ProcessSelectedAsset(AssetDatabase.GetAssetPath(Selection.activeObject));
     }
 
-    [MenuItem("Assets/替换字符串", true)]
+    [MenuItem("Assets/Replace Strings", true)]
     private static bool ValidateReplaceStringsInAsset()
     {
         return Selection.activeObject != null &&
@@ -52,7 +52,7 @@ public class StringReplacerEditor : EditorWindow
         StringReplacementConfig config = FindConfig();
         if (config == null || !config.HasRules())
         {
-            Debug.LogError("请先创建StringReplacementConfig并配置替换规则");
+            Debug.LogError("Create a StringReplacementConfig and configure replacement rules first.");
             return;
         }
 
@@ -73,18 +73,18 @@ public class StringReplacerEditor : EditorWindow
         }
         else
         {
-            Debug.LogWarning($"不支持的文件类型: {extension}");
+            Debug.LogWarning($"Unsupported file type: {extension}");
             return;
         }
 
         if (processed)
         {
-            Debug.Log($"成功处理: {assetPath}");
+            Debug.Log($"Successfully processed: {assetPath}");
             AssetDatabase.ImportAsset(assetPath, ImportAssetOptions.ForceUpdate);
         }
         else
         {
-            Debug.Log($"未找到匹配的字符串: {assetPath}");
+            Debug.Log($"No matching strings found in: {assetPath}");
         }
     }
 
@@ -102,7 +102,7 @@ public class StringReplacerEditor : EditorWindow
             {
                 content = content.Replace(rule.findString, rule.replaceString);
                 modified = true;
-                Debug.Log($"替换文本: {rule.findString} -> {rule.replaceString}");
+                Debug.Log($"Replaced text: {rule.findString} -> {rule.replaceString}");
             }
         }
 
@@ -143,7 +143,7 @@ public class StringReplacerEditor : EditorWindow
                 {
                     property.stringValue = newValue;
                     modified = true;
-                    Debug.Log($"替换属性 {property.name}: {originalValue} -> {newValue}");
+                    Debug.Log($"Replaced property {property.name}: {originalValue} -> {newValue}");
                 }
             }
         }
@@ -198,16 +198,16 @@ public class StringReplacerEditor : EditorWindow
 
     private void OnGUI()
     {
-        GUILayout.Label("字符串批量替换工具", EditorStyles.boldLabel);
+        GUILayout.Label("Batch String Replacer", EditorStyles.boldLabel);
         EditorGUILayout.Space();
 
         // 配置选择
-        config = (StringReplacementConfig)EditorGUILayout.ObjectField("替换配置", config, typeof(StringReplacementConfig), false);
+        config = (StringReplacementConfig)EditorGUILayout.ObjectField("Replacement Config", config, typeof(StringReplacementConfig), false);
 
         if (config == null)
         {
-            EditorGUILayout.HelpBox("请先创建或指定一个StringReplacementConfig资产", MessageType.Warning);
-            if (GUILayout.Button("创建新配置"))
+            EditorGUILayout.HelpBox("Create or assign a StringReplacementConfig asset first.", MessageType.Warning);
+            if (GUILayout.Button("Create New Config"))
             {
                 CreateNewConfig();
             }
@@ -216,13 +216,13 @@ public class StringReplacerEditor : EditorWindow
 
         // 处理选项
         EditorGUILayout.Space();
-        GUILayout.Label("处理选项", EditorStyles.boldLabel);
-        processTextFiles = EditorGUILayout.Toggle("处理文本文件", processTextFiles);
-        processSerializedAssets = EditorGUILayout.Toggle("处理序列化资产", processSerializedAssets);
+        GUILayout.Label("Processing Options", EditorStyles.boldLabel);
+        processTextFiles = EditorGUILayout.Toggle("Process Text Files", processTextFiles);
+        processSerializedAssets = EditorGUILayout.Toggle("Process Serialized Assets", processSerializedAssets);
 
         // 显示和编辑配置
         EditorGUILayout.Space();
-        GUILayout.Label("替换规则配置", EditorStyles.boldLabel);
+        GUILayout.Label("Replacement Rules", EditorStyles.boldLabel);
 
         scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition);
         SerializedObject serializedConfig = new SerializedObject(config);
@@ -233,7 +233,7 @@ public class StringReplacerEditor : EditorWindow
 
         // 操作按钮
         EditorGUILayout.Space();
-        if (GUILayout.Button("处理选中资产"))
+        if (GUILayout.Button("Process Selected Asset"))
         {
             if (Selection.activeObject != null)
             {
@@ -242,11 +242,11 @@ public class StringReplacerEditor : EditorWindow
             }
             else
             {
-                Debug.LogWarning("请先选择一个资产");
+                Debug.LogWarning("Select an asset first.");
             }
         }
 
-        if (GUILayout.Button("处理文件夹中所有资产"))
+        if (GUILayout.Button("Process All Assets in Folder"))
         {
             if (Selection.activeObject != null)
             {
@@ -257,7 +257,7 @@ public class StringReplacerEditor : EditorWindow
                 }
                 else
                 {
-                    Debug.LogWarning("请选择一个文件夹");
+                    Debug.LogWarning("Select a folder.");
                 }
             }
         }
@@ -266,10 +266,10 @@ public class StringReplacerEditor : EditorWindow
     private void CreateNewConfig()
     {
         string path = EditorUtility.SaveFilePanelInProject(
-            "创建替换配置",
+            "Create Replacement Config",
             "StringReplacementConfig",
             "asset",
-            "请输入配置文件名");
+            "Enter a configuration file name.");
 
         if (!string.IsNullOrEmpty(path))
         {
@@ -286,7 +286,7 @@ public class StringReplacerEditor : EditorWindow
         StringReplacementConfig config = FindConfig();
         if (config == null || !config.HasRules())
         {
-            Debug.LogError("请先配置替换规则");
+            Debug.LogError("Configure replacement rules first.");
             return;
         }
 
@@ -314,6 +314,6 @@ public class StringReplacerEditor : EditorWindow
         }
 
         AssetDatabase.Refresh();
-        Debug.Log($"处理完成！共处理了 {processedCount} 个文件");
+        Debug.Log($"Processing complete. Processed {processedCount} files.");
     }
 }

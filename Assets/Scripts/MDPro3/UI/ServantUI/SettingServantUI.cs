@@ -2442,7 +2442,7 @@ namespace MDPro3.UI.ServantUI
         }
         public void OnUpdateContent()
         {
-            var address = Language.GetConfig() == Language.Vietnamese ? "UpdateContent_vi" : "UpdateContent";
+            var address = Language.GetUpdateContentAddress();
             var handle = Addressables.LoadAssetAsync<TextAsset>(address);
             handle.Completed += (result) =>
             {

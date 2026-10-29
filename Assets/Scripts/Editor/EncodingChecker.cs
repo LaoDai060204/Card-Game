@@ -10,35 +10,35 @@ public class EncodingChecker : EditorWindow
     private List<string> nonUTF8Files = new List<string>();
     private Vector2 scrollPos;
 
-    [MenuItem("Tools/编码检测/检查非UTF-8脚本")]
-    private static void ShowWindow() => GetWindow<EncodingChecker>("脚本编码检测器");
+    [MenuItem("Tools/Encoding/Find Non-UTF-8 Scripts")]
+    private static void ShowWindow() => GetWindow<EncodingChecker>("Script Encoding Checker");
 
     private void OnGUI()
     {
-        if (GUILayout.Button("扫描.cs文件（排除Packages）", GUILayout.Height(30)))
+        if (GUILayout.Button("Scan .cs Files (Exclude Packages)", GUILayout.Height(30)))
             ScanScripts();
 
         if (nonUTF8Files.Count > 0)
         {
             GUILayout.Space(10);
-            GUILayout.Label($"发现 {nonUTF8Files.Count} 个非UTF-8文件：");
+            GUILayout.Label($"Found {nonUTF8Files.Count} files that are not UTF-8 without BOM:");
             scrollPos = EditorGUILayout.BeginScrollView(scrollPos);
             foreach (var file in nonUTF8Files)
             {
                 EditorGUILayout.BeginHorizontal();
                 EditorGUILayout.LabelField(file);
-                if (GUILayout.Button("用VS打开", GUILayout.Width(80)))
+                if (GUILayout.Button("Open in VS", GUILayout.Width(80)))
                     OpenInVS(file);
                 EditorGUILayout.EndHorizontal();
             }
             EditorGUILayout.EndScrollView();
 
-            if (GUILayout.Button("一键转换为UTF-8 without BOM", GUILayout.Height(30)))
+            if (GUILayout.Button("Convert All to UTF-8 without BOM", GUILayout.Height(30)))
                 ConvertAllToUTF8();
         }
         else
         {
-            GUILayout.Label("✅ 所有脚本均为UTF-8 without BOM格式");
+            GUILayout.Label("✅ All scripts use UTF-8 without BOM.");
         }
     }
 
@@ -71,8 +71,8 @@ public class EncodingChecker : EditorWindow
                 continue;
 
             if (EditorUtility.DisplayCancelableProgressBar(
-                "扫描中...",
-                $"检测: {Path.GetFileName(path)} ({i + 1}/{total})",
+                "Scanning...",
+                $"Checking: {Path.GetFileName(path)} ({i + 1}/{total})",
                 (float)i / total))
                 break;
 
@@ -158,7 +158,7 @@ public class EncodingChecker : EditorWindow
             File.WriteAllText(path, content, new UTF8Encoding(false));
         }
         AssetDatabase.Refresh();
-        UnityEngine.Debug.Log($"已转换 {nonUTF8Files.Count} 个文件");
+        UnityEngine.Debug.Log($"Converted {nonUTF8Files.Count} files.");
         nonUTF8Files.Clear();
     }
 }

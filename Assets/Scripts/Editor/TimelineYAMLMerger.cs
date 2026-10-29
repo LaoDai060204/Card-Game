@@ -50,7 +50,7 @@ public class TimelineYAMLMerger
         }
     }
 
-    [MenuItem("Assets/合并Timeline及其所有依赖 (YAML)", false, 104)]
+    [MenuItem("Assets/Merge Timeline and All Dependencies (YAML)", false, 104)]
     private static void MergeTimelineAndDependencies()
     {
         string assetPath = AssetDatabase.GetAssetPath(Selection.activeObject);
@@ -126,10 +126,10 @@ public class TimelineYAMLMerger
         var newAsset = AssetDatabase.LoadAssetAtPath<Object>(newFilePath);
         Selection.activeObject = newAsset;
 
-        Debug.Log($"合并完成！新文件已保存至: {newFilePath}");
+        Debug.Log($"Merge complete. New file saved to: {newFilePath}");
     }
 
-    [MenuItem("Assets/合并Timeline及其所有依赖 (YAML)", true)]
+    [MenuItem("Assets/Merge Timeline and All Dependencies (YAML)", true)]
     private static bool ValidateReplaceStringsInAsset()
     {
         return Selection.activeObject != null &&

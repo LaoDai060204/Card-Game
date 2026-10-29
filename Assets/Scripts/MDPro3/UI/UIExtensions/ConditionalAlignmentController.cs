@@ -10,22 +10,22 @@ namespace MDPro3.UI
         [Serializable]
         public struct AlignmentPreset
         {
-            [Tooltip("锚点最小值（左下角）")]
+            [Tooltip("Minimum anchor (bottom left)")]
             public Vector2 anchorMin;
-            [Tooltip("锚点最大值（右上角）")]
+            [Tooltip("Maximum anchor (top right)")]
             public Vector2 anchorMax;
-            [Tooltip("相对锚点的偏移量")]
+            [Tooltip("Offset relative to the anchors")]
             public Vector2 anchoredPosition;
         }
 
-        [Header("子节点配置")]
+        [Header("Child configuration")]
         [SerializeField] private RectTransform targetChild;
 
-        [Header("布局参数")]
-        [SerializeField, Tooltip("触发布局变化的宽度阈值")]
+        [Header("Layout parameters")]
+        [SerializeField, Tooltip("Width threshold for switching layouts")]
         private float widthThreshold = 512f;
 
-        [Header("宽屏模式布局")]
+        [Header("Wide-screen layout")]
         [SerializeField]
         private AlignmentPreset wideScreenPreset = new()
         {
@@ -34,7 +34,7 @@ namespace MDPro3.UI
             anchoredPosition = Vector2.zero
         };
 
-        [Header("窄屏模式布局")]
+        [Header("Narrow-screen layout")]
         [SerializeField]
         private AlignmentPreset narrowScreenPreset = new AlignmentPreset
         {

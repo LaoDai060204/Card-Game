@@ -21,33 +21,89 @@ public class NewsManager : Manager
     private float width = 455f;
     private int maxLoad = 5;
     private bool loadingNews;
-    private bool hiddenForVietnamese;
+    private MyCardNews activeSource;
+    private News[] activeNews;
+    private string activeLanguage;
+    private int newsGeneration;
 
-    private static bool UsesVietnamese => Language.GetConfig() == Language.Vietnamese;
+    private static News[] SelectNews(MyCardNews source, string language)
+    {
+        if (language == Language.Vietnamese)
+            return null;
+        if (language == Language.SimplifiedChinese || language == Language.TraditionalChinese)
+            return source?.ChineseCN;
+        return source?.EnglishUS;
+    }
 
     private void Awake()
     {
-        hiddenForVietnamese = UsesVietnamese;
         SystemEvent.OnLanguageChange += OnLanguageChanged;
     }
 
     private void OnDestroy()
     {
         SystemEvent.OnLanguageChange -= OnLanguageChanged;
+        newsGeneration++;
+        ClearNewsImages();
     }
 
     private void OnLanguageChanged()
     {
-        if (UsesVietnamese)
+        LoadNews();
+    }
+
+    private bool RefreshSource()
+    {
+        var language = Language.GetConfig();
+        var selected = SelectNews(news, language);
+        if (activeLanguage == language && object.ReferenceEquals(activeSource, news)
+            && object.ReferenceEquals(activeNews, selected))
+            return false;
+
+        // A new feed or language owns a separate cache and loading generation.
+        // An older download may finish later, but cannot populate this cache.
+        newsGeneration++;
+        activeSource = news;
+        activeNews = selected;
+        activeLanguage = language;
+        loadingNews = false;
+        currentNewsIndex = 0;
+        idleTime = 0f;
+        Hide();
+        ClearNewsImages();
+        return true;
+    }
+
+    private void ClearNewsImages()
+    {
+        if (newsPic != null)
         {
-            hiddenForVietnamese = true;
-            Hide();
+            newsPic.transform.DOKill();
+            newsPic.texture = null;
         }
-        else if (hiddenForVietnamese)
+        if (newsPic2 != null)
         {
-            hiddenForVietnamese = false;
-            LoadNews();
+            newsPic2.transform.DOKill();
+            newsPic2.texture = null;
         }
+        if (newsText != null)
+            newsText.text = string.Empty;
+        if (newsText2 != null)
+            newsText2.text = string.Empty;
+        if (textCount != null)
+            textCount.text = string.Empty;
+        foreach (var texture in newsPics)
+            if (texture != null)
+                Destroy(texture);
+        newsPics.Clear();
+    }
+
+    private bool IsCurrentLoad(int generation, News[] source)
+    {
+        return generation == newsGeneration && activeLanguage == Language.GetConfig()
+            && object.ReferenceEquals(activeSource, news)
+            && object.ReferenceEquals(activeNews, source)
+            && object.ReferenceEquals(SelectNews(news, activeLanguage), source);
     }
 
     private void Start()
@@ -61,13 +117,10 @@ public class NewsManager : Manager
     float idleTime;
     private void Update()
     {
+        if (RefreshSource())
+            LoadNews();
         if (!showing)
             return;
-        if (UsesVietnamese)
-        {
-            Hide();
-            return;
-        }
         if (Program.instance == null || Program.instance.menu == null || !Program.instance.menu.showing)
             return;
         idleTime += Time.deltaTime;
@@ -77,18 +130,21 @@ public class NewsManager : Manager
 
     int GetMax()
     {
-        return Mathf.Min(news?.ChineseCN?.Length ?? 0, maxLoad);
+        return Mathf.Min(activeNews?.Length ?? 0, maxLoad);
     }
 
     public void Show()
     {
-        if (UsesVietnamese)
+        if (RefreshSource())
+        {
+            LoadNews();
+            return;
+        }
+        if (GetMax() == 0 || newsPics.Count == 0)
         {
             Hide();
             return;
         }
-        if (GetMax() == 0 || newsPics.Count == 0)
-            return;
         var cg = GetComponent<CanvasGroup>();
         cg.alpha = 1.0f;
         cg.blocksRaycasts = true;
@@ -96,7 +152,7 @@ public class NewsManager : Manager
         showing = true;
 
         newsPic.texture = newsPics[0];
-        newsText.text = news.ChineseCN[0]?.title ?? string.Empty;
+        newsText.text = activeNews[0]?.title ?? string.Empty;
         newsPic.rectTransform.anchoredPosition = new Vector2(0, 0);
         newsPic2.rectTransform.anchoredPosition = new Vector2(-width, 0);
 
@@ -115,36 +171,36 @@ public class NewsManager : Manager
 
     public void LoadNews()
     {
-        if (UsesVietnamese)
+        RefreshSource();
+        if (GetMax() == 0)
         {
-            hiddenForVietnamese = true;
             Hide();
             return;
         }
-        if (GetMax() == 0)
-            return;
         if (newsPics.Count > 0)
             Show();
         if (loadingNews || newsPics.Count >= GetMax())
             return;
-        _ = LoadNewsImageAsync();
+        _ = LoadNewsImageAsync(newsGeneration, activeNews);
     }
 
-    async Task LoadNewsImageAsync()
+    async Task LoadNewsImageAsync(int generation, News[] source)
     {
         loadingNews = true;
         try
         {
-            // Keep completed images when switching to Vietnamese, then resume
-            // at the next image if a supported news language is selected again.
-            for (int i = newsPics.Count; i < GetMax(); i++)
+            for (int i = newsPics.Count; i < Mathf.Min(source.Length, maxLoad); i++)
             {
-                if (UsesVietnamese)
+                if (!IsCurrentLoad(generation, source))
                     return;
-                var image = news.ChineseCN[i]?.image;
+                var image = source[i]?.image;
                 var texture = string.IsNullOrEmpty(image) ? null : await Tools.DownloadImageAsync(image);
-                if (this == null || !Application.isPlaying)
+                if (this == null || !Application.isPlaying || !IsCurrentLoad(generation, source))
+                {
+                    if (texture != null)
+                        Destroy(texture);
                     return;
+                }
 
                 newsPics.Add(texture);
                 if (i == 0)
@@ -153,12 +209,13 @@ public class NewsManager : Manager
         }
         catch (System.Exception exception)
         {
-            if (this != null && Application.isPlaying)
+            if (this != null && Application.isPlaying && IsCurrentLoad(generation, source))
                 Debug.LogWarning($"Unable to load news image: {exception.Message}");
         }
         finally
         {
-            loadingNews = false;
+            if (generation == newsGeneration)
+                loadingNews = false;
         }
     }
 
@@ -166,7 +223,12 @@ public class NewsManager : Manager
     public void OnRight(float moveTime = 0.1f)
     {
         idleTime = 0f;
-        if (UsesVietnamese || !showing || GetMax() < 2)
+        if (RefreshSource())
+        {
+            LoadNews();
+            return;
+        }
+        if (!showing || GetMax() < 2)
             return;
 
         var next = (currentNewsIndex + 1) % GetMax();
@@ -175,13 +237,13 @@ public class NewsManager : Manager
             newsPic.texture = null;
         else
             newsPic.texture = newsPics[currentNewsIndex];
-        newsText.text = news.ChineseCN[currentNewsIndex]?.title ?? string.Empty;
+        newsText.text = activeNews[currentNewsIndex]?.title ?? string.Empty;
 
         if (newsPics.Count < next + 1)
             newsPic2.texture = null;
         else
             newsPic2.texture = newsPics[next];
-        newsText2.text = news.ChineseCN[next]?.title ?? string.Empty;
+        newsText2.text = activeNews[next]?.title ?? string.Empty;
 
         currentNewsIndex = next;
         textCount.text = $"{currentNewsIndex + 1}/{GetMax()}";
@@ -197,7 +259,12 @@ public class NewsManager : Manager
     public void OnLeft(float moveTime = 0.1f)
     {
         idleTime = 0f;
-        if (UsesVietnamese || !showing || GetMax() < 2)
+        if (RefreshSource())
+        {
+            LoadNews();
+            return;
+        }
+        if (!showing || GetMax() < 2)
             return;
         var max = GetMax();
         var next = (max + currentNewsIndex - 1) % max;
@@ -207,12 +274,12 @@ public class NewsManager : Manager
         else
             newsPic.texture = newsPics[currentNewsIndex];
 
-        newsText.text = news.ChineseCN[currentNewsIndex]?.title ?? string.Empty;
+        newsText.text = activeNews[currentNewsIndex]?.title ?? string.Empty;
         if(newsPics.Count < next + 1)
             newsPic2.texture = null;
         else
             newsPic2.texture = newsPics[next];
-        newsText2.text = news.ChineseCN[next]?.title ?? string.Empty;
+        newsText2.text = activeNews[next]?.title ?? string.Empty;
         currentNewsIndex = next;
         textCount.text = $"{currentNewsIndex + 1}/{GetMax()}";
 
@@ -225,9 +292,14 @@ public class NewsManager : Manager
 
     public void OnNewsClick()
     {
-        if (UsesVietnamese || !showing || currentNewsIndex >= GetMax())
+        if (RefreshSource())
+        {
+            LoadNews();
             return;
-        var url = news.ChineseCN[currentNewsIndex]?.url;
+        }
+        if (!showing || currentNewsIndex >= GetMax())
+            return;
+        var url = activeNews[currentNewsIndex]?.url;
         if (!string.IsNullOrEmpty(url))
             Application.OpenURL(url.Replace("ygobbs.com", "ygobbs2.com"));
     }

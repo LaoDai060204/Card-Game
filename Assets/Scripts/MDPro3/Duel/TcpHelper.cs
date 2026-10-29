@@ -644,7 +644,7 @@ namespace MDPro3
         {
             if (port < IPEndPoint.MinPort || port > IPEndPoint.MaxPort)
             {
-                throw new ArgumentException($"指定的端口号 {port} 超出有效范围。");
+                throw new ArgumentException($"Port {port} is outside the valid range.");
             }
 
             bool? systemQueryResult = IsPortOccupiedBySystem(port);

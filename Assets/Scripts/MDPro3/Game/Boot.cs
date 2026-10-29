@@ -257,7 +257,7 @@ namespace MDPro3
             {
                 if(installVersion.Length > 5 || !installVersion.EndsWith("0"))
                 {
-                    title = "不能直接安装更新包。Can not install update apk directly.";
+                    title = "An update APK cannot be installed directly.";
                     Directory.Delete(Program.PATH_DATA);
                     return false;
                 }

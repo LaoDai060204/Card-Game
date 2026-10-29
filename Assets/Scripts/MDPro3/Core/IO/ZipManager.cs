@@ -107,7 +107,7 @@ namespace MDPro3.IO
             }
             catch (Exception e)
             {
-                Debug.LogError($"ZipManager: 读取 zip 文件失败 [{path}]: {e}");
+                Debug.LogError($"ZipManager: failed to read ZIP archive [{path}]: {e}");
             }
         }
 
@@ -130,7 +130,7 @@ namespace MDPro3.IO
                 foreach (var zip in _zipFiles)
                 {
                     try { zip.Dispose(); }
-                    catch (Exception e) { Debug.LogWarning($"释放 ZipFile 出错: {e.Message}"); }
+                    catch (Exception e) { Debug.LogWarning($"Failed to dispose ZIP archive: {e.Message}"); }
                 }
                 _zipFiles.Clear();
             }

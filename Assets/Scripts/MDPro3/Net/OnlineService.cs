@@ -126,7 +126,7 @@ namespace MDPro3.Net
             catch
             {
                 LogRequestFailure(request, "MyCard apps download");
-                Program.Debug("下载MyCard apps.json失败。");
+                Program.Debug("Failed to download MyCard apps.json.");
                 return;
             }
 
@@ -146,7 +146,7 @@ namespace MDPro3.Net
             else
             {
                 LogRequestFailure(request, "MyCard apps download");
-                Program.Debug("下载MyCard apps.json失败。");
+                Program.Debug("Failed to download MyCard apps.json.");
             }
         }
 
@@ -278,7 +278,7 @@ namespace MDPro3.Net
             catch (Exception e)
             {
                 raritySynced = false; // 失败允许下次登录重试
-                Program.Debug("Rarity.json 同步失败：" + e.Message);
+                Program.Debug("Rarity.json synchronization failed: " + e.Message);
             }
         }
 
@@ -288,7 +288,7 @@ namespace MDPro3.Net
             if (!ok)
             {
                 // 网络故障 ≠ 服务器无配置，直接中止，避免误上传
-                Program.Debug("Rarity.json 同步中止：无法访问服务器。");
+                Program.Debug("Rarity.json synchronization stopped: the server is unavailable.");
                 return;
             }
             var localPath = CardRarity.GetFilePath();
@@ -300,10 +300,10 @@ namespace MDPro3.Net
                 if (!string.IsNullOrEmpty(localText))
                 {
                     await UploadRarityAsync(userId, token, localText);
-                    Program.Debug("Rarity.json 同步：服务器无配置，已上传本地。");
+                    Program.Debug("Rarity.json synchronization: no server configuration; uploaded the local copy.");
                 }
                 else
-                    Program.Debug("Rarity.json 同步：本地与服务器均无数据。");
+                    Program.Debug("Rarity.json synchronization: no local or server data.");
                 return;
             }
 
@@ -311,14 +311,14 @@ namespace MDPro3.Net
             if (string.IsNullOrEmpty(localText))
             {
                 CardRarity.ApplyServerContent(remote.config);
-                Program.Debug("Rarity.json 同步：本地无文件，已下载服务器副本。");
+                Program.Debug("Rarity.json synchronization: no local file; downloaded the server copy.");
                 return;
             }
 
             // 内容一致：无需同步
             if (localText == remote.config)
             {
-                Program.Debug("Rarity.json 同步：内容一致，无需同步。");
+                Program.Debug("Rarity.json synchronization: the contents match; no update needed.");
                 return;
             }
 
@@ -328,12 +328,12 @@ namespace MDPro3.Net
             if (remoteMs > localMs)
             {
                 CardRarity.ApplyServerContent(remote.config);
-                Program.Debug("Rarity.json 同步：服务器副本较新，已覆盖本地。");
+                Program.Debug("Rarity.json synchronization: the server copy is newer; replaced the local copy.");
             }
             else
             {
                 await UploadRarityAsync(userId, token, localText);
-                Program.Debug("Rarity.json 同步：本地副本较新，已上传服务器。");
+                Program.Debug("Rarity.json synchronization: the local copy is newer; uploaded it to the server.");
             }
         }
 
@@ -353,12 +353,12 @@ namespace MDPro3.Net
             {
                 // UniTask 的 awaiter 在 result!=Success 时统一抛 UnityWebRequestException，带上状态码与响应体便于定位
                 var body = e.Text ?? "";
-                Program.Debug($"获取用户配置失败：HTTP {e.ResponseCode} {e.Error} {body}");
+                Program.Debug($"Failed to fetch user configuration: HTTP {e.ResponseCode} {e.Error} {body}");
                 return (false, null);
             }
             catch (Exception e)
             {
-                Program.Debug("获取用户配置失败：" + e.Message);
+                Program.Debug("Failed to fetch user configuration: " + e.Message);
                 return (false, null);
             }
 
@@ -405,20 +405,20 @@ namespace MDPro3.Net
             catch (UnityWebRequestException e)
             {
                 var respBody = e.Text ?? "";
-                Program.Debug($"上传用户配置失败：HTTP {e.ResponseCode} {e.Error} {respBody}");
+                Program.Debug($"Failed to upload user configuration: HTTP {e.ResponseCode} {e.Error} {respBody}");
                 return;
             }
             catch (Exception e)
             {
-                Program.Debug("上传用户配置失败：" + e.Message);
+                Program.Debug("Failed to upload user configuration: " + e.Message);
                 return;
             }
 
             var response = JsonUtility.FromJson<UserConfigPostResponse>(request.downloadHandler.text);
             if (response == null || response.code != 0)
-                Program.Debug("上传用户配置被拒绝：" + (response?.message ?? request.downloadHandler.text));
+                Program.Debug("User configuration upload was rejected: " + (response?.message ?? request.downloadHandler.text));
             else
-                Program.Debug("上传用户配置成功。");
+                Program.Debug("User configuration uploaded successfully.");
         }
 
         private static long ParseLong(string value)
@@ -501,7 +501,7 @@ namespace MDPro3.Net
             var onlineETag = headRequest.GetResponseHeader("ETag")?.Trim();
             if (string.IsNullOrEmpty(onlineETag))
             {
-                Program.Debug($"未找到ETag({GetRequestDisplayUrl(url)})，服务器可能未启用缓存");
+                Program.Debug($"No ETag found for {GetRequestDisplayUrl(url)}; the server may not support caching.");
                 return null;
             }
             return onlineETag;

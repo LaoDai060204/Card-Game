@@ -26,70 +26,70 @@ namespace MDPro3.Data
 
         public FileGroup Expansions = new()
         {
-            Note = "扩展文件等Zip文件。",
+            Note = "ZIP archives, including expansion packs.",
             Paths = new string[] { "Expansions/" },
             Extensions = new string[] { ".zip", ".ypk" },
         };
 
         public FileGroup ScriptZip = new()
         {
-            Note = "默认lua脚本文件zip。",
+            Note = "Default Lua script archive.",
             Paths = new string[] { "Data/script.zip" },
             Extensions = new string[] { ".zip" },
         };
 
         public FileGroup CardScript = new()
         {
-            Note = "卡片脚本。",
+            Note = "Card scripts.",
             Paths = new string[] { "script/" },
             Extensions = new string[] { ".lua" },
         };
 
         public CardFileGroup CardIllust = new()
         {
-            Note = "卡片插画。",
+            Note = "Card artwork.",
             Paths = new string[] { "Picture/Art/", "art/" },
             Extensions = new string[] { ".jpg" },
         };
 
         public CardFileGroup CardIllust2 = new()
         {
-            Note = "卡片插画，对于超框卡是框内插画，对于非超框卡是替换默认卡牌插画的快捷方式。",
+            Note = "Card artwork: the image inside the frame for overframe cards, or an override for the default artwork of other cards.",
             Paths = new string[] { "Picture/Art2/", "art2/" },
             Extensions = new string[] { ".png" },
         };
 
         public CardFileGroup CardCloseup = new()
         {
-            Note = "怪兽立绘，决斗场地中怪兽卡上方的立绘。",
+            Note = "Monster cutout artwork displayed above monster cards on the duel field.",
             Paths = new string[] { "Picture/Closeup/", "closeup/" },
             Extensions = new string[] { ".png" },
         };
 
         public CardFileGroup CardOverframe = new()
         {
-            Note = "超框卡卡图，jpg格式视为完整超框卡图。",
+            Note = "Overframe card images. JPG files are treated as complete overframe card images.",
             Paths = new string[] { "Picture/OverFrame/", "overframe/" },
             Extensions = new string[] { ".jpg" },
         };
 
         public CardFileGroup CardOverframe2 = new()
         {
-            Note = "超框卡卡图，png格式视为透明卡图，512x1024的png视为MasterDuel释出的带透明通道的完整卡图。",
+            Note = "Overframe card images. PNG files are treated as transparent artwork; 512x1024 PNG files are treated as complete transparent card images exported by Master Duel.",
             Paths = new string[] { "Picture/OverFrame/", "overframe/" },
             Extensions = new string[] { ".png" },
         };
 
         public CardFileGroup CardPicture = new()
         {
-            Note = "完整卡图，用于读取扩展卡包中的卡图。",
+            Note = "Complete card images, including artwork loaded from expansion packs.",
             Paths = new string[] { "pics/" },
             Extensions = new string[] { ".jpg" },
         };
 
         public CardFileGroup CardVideo = new()
         {
-            Note = "动态卡图的视频文件。zip中的视频文件必须解压才能使用，默认使用Path中的第一个作为解压路径。因此Path[0]中已存在的文件不会被解压。",
+            Note = "Animated card artwork videos. Videos inside ZIP archives must be extracted before use; the first Paths entry is the default extraction directory. Files already present in Paths[0] are not extracted again.",
             Paths = new string[] { "Video/Art/", "video/" },
             Extensions = new string[] { ".mp4" },
         };

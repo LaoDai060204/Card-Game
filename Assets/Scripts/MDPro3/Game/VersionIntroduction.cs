@@ -61,7 +61,7 @@ namespace MDPro3
 
         private static void Load()
         {
-            var handle = Addressables.LoadAssetAsync<TextAsset>("UpdateContent");
+            var handle = Addressables.LoadAssetAsync<TextAsset>(Language.GetUpdateContentAddress());
             handle.Completed += (result) =>
             {
                 var text = NOTICE_TEXT + "\n\n" + GetLatest(result.Result.text);

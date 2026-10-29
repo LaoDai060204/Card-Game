@@ -6,6 +6,8 @@ Giao diện có ngôn ngữ **Tiếng Việt**. Tên lá bài và mô tả hiệ
 
 Khi mở bản này lần đầu, giao diện tự chuyển sang tiếng Việt một lần; các lựa chọn ngôn ngữ bạn đổi sau đó được giữ lại. Bảng tin MyCard tiếng Trung được ẩn khi chọn tiếng Việt vì nguồn tin này chưa có bản dịch tiếng Việt. Lời thoại AI và tên vật phẩm dùng dữ liệu tiếng Anh hiện có.
 
+Các công cụ Unity Editor, thông báo chẩn đoán và tên AI/lời nhắc còn tiếng Trung trong Puzzle đã được bổ sung tiếng Anh. Mục lịch sử cập nhật có tài nguyên tiếng Anh riêng; bảng tin ở giao diện tiếng Anh dùng nguồn tin tiếng Anh nếu có. Xem [chi tiết bản dịch và kiểm tra](Tools/Translations/ENGLISH_CLEANUP.md).
+
 ## Mở dự án trên Windows
 
 1. Cài Git for Windows và Unity Hub.

@@ -20,14 +20,14 @@ public class FolderDependencyAnalyzer : EditorWindow
 
         if (!AssetDatabase.IsValidFolder(folderPath))
         {
-            EditorUtility.DisplayDialog("错误", "请选择一个有效的文件夹", "确定");
+            EditorUtility.DisplayDialog("Error", "Select a valid folder.", "OK");
             return;
         }
 
         // 创建并显示分析窗口
         var window = CreateInstance<FolderDependencyAnalyzer>();
         window.targetFolderPath = folderPath;
-        window.titleContent = new GUIContent($"依赖分析: {Path.GetFileName(folderPath)}");
+        window.titleContent = new GUIContent($"Dependencies: {Path.GetFileName(folderPath)}");
         window.ShowUtility();
         window.AnalyzeDependencies();
     }
@@ -41,7 +41,7 @@ public class FolderDependencyAnalyzer : EditorWindow
     void AnalyzeDependencies()
     {
         externalDependencies.Clear();
-        EditorUtility.DisplayProgressBar("分析依赖", "收集文件夹内资源...", 0);
+        EditorUtility.DisplayProgressBar("Analyzing Dependencies", "Collecting assets in the folder...", 0);
 
         try
         {
@@ -55,7 +55,7 @@ public class FolderDependencyAnalyzer : EditorWindow
             for (int i = 0; i < allAssetPaths.Length; i++)
             {
                 string assetPath = allAssetPaths[i];
-                EditorUtility.DisplayProgressBar("分析依赖", $"分析: {Path.GetFileName(assetPath)}", (float)i / allAssetPaths.Length);
+                EditorUtility.DisplayProgressBar("Analyzing Dependencies", $"Analyzing: {Path.GetFileName(assetPath)}", (float)i / allAssetPaths.Length);
 
                 // 获取该资源的所有依赖[3,7](@ref)
                 string[] dependencies = AssetDatabase.GetDependencies(assetPath, true);
@@ -85,21 +85,21 @@ public class FolderDependencyAnalyzer : EditorWindow
     void OnGUI()
     {
         EditorGUILayout.Space();
-        EditorGUILayout.LabelField($"分析文件夹: {targetFolderPath}", EditorStyles.boldLabel);
-        EditorGUILayout.LabelField($"发现 {externalDependencies.Count} 个资源有外部依赖");
+        EditorGUILayout.LabelField($"Folder: {targetFolderPath}", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField($"Found {externalDependencies.Count} assets with external dependencies.");
         EditorGUILayout.Space();
 
-        if (GUILayout.Button("重新分析"))
+        if (GUILayout.Button("Analyze Again"))
         {
             AnalyzeDependencies();
         }
 
-        showInternalDependencies = EditorGUILayout.Toggle("显示内部依赖", showInternalDependencies);
+        showInternalDependencies = EditorGUILayout.Toggle("Show Internal Dependencies", showInternalDependencies);
         EditorGUILayout.Space();
 
         if (externalDependencies.Count == 0)
         {
-            EditorGUILayout.HelpBox("未发现外部依赖，或者该文件夹内没有资源。", MessageType.Info);
+            EditorGUILayout.HelpBox("No external dependencies found, or the folder contains no assets.", MessageType.Info);
             return;
         }
 
@@ -118,15 +118,15 @@ public class FolderDependencyAnalyzer : EditorWindow
             GUIStyle boldStyle = new GUIStyle(EditorStyles.foldout);
             boldStyle.fontStyle = FontStyle.Bold;
 
-            bool isExpanded = EditorGUILayout.Foldout(false, $"{Path.GetFileName(assetPath)} ({deps.Count} 个外部依赖)", true, boldStyle);
+            bool isExpanded = EditorGUILayout.Foldout(false, $"{Path.GetFileName(assetPath)} ({deps.Count} external dependencies)", true, boldStyle);
 
-            if (GUILayout.Button("选择", GUILayout.Width(50)))
+            if (GUILayout.Button("Select", GUILayout.Width(50)))
             {
                 Selection.activeObject = AssetDatabase.LoadAssetAtPath<Object>(assetPath);
             }
             EditorGUILayout.EndHorizontal();
 
-            EditorGUILayout.LabelField($"路径: {assetPath}", EditorStyles.miniLabel);
+            EditorGUILayout.LabelField($"Path: {assetPath}", EditorStyles.miniLabel);
 
             // 显示外部依赖详情
             EditorGUI.indentLevel++;
@@ -136,7 +136,7 @@ public class FolderDependencyAnalyzer : EditorWindow
                 EditorGUILayout.LabelField(Path.GetFileName(depPath), GUILayout.Width(200));
                 EditorGUILayout.LabelField(depPath, EditorStyles.miniLabel);
 
-                if (GUILayout.Button("定位", GUILayout.Width(40)))
+                if (GUILayout.Button("Locate", GUILayout.Width(40)))
                 {
                     Object depObject = AssetDatabase.LoadAssetAtPath<Object>(depPath);
                     if (depObject != null)
@@ -157,11 +157,11 @@ public class FolderDependencyAnalyzer : EditorWindow
     }
 
     // 添加工具窗口菜单项
-    [MenuItem("Tools/资源分析/文件夹依赖分析器")]
+    [MenuItem("Tools/Asset Analysis/Folder Dependency Analyzer")]
     static void ShowWindow()
     {
         var window = CreateInstance<FolderDependencyAnalyzer>();
-        window.titleContent = new GUIContent("文件夹依赖分析");
+        window.titleContent = new GUIContent("Folder Dependency Analysis");
         window.Show();
     }
 }

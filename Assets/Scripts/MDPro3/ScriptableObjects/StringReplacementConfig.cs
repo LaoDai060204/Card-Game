@@ -11,7 +11,7 @@ public class StringReplacementConfig : ScriptableObject
     {
         public string findString;    // 要查找的字符串
         public string replaceString; // 替换成的字符串
-        [Tooltip("是否区分大小写")]
+        [Tooltip("Case sensitive")]
         public bool caseSensitive = true;
     }
 

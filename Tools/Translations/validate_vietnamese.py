@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check Vietnamese localization; --write exports the vi-VN CSV column first."""
+"""Check Vietnamese localization and English fallback; --write exports vi-VN first."""
 
 import argparse
 from collections import Counter
@@ -77,6 +77,20 @@ def read_bots(path):
 def validate():
     english = read_ui(LOCALES / "en-US/translation.conf")
     vietnamese = read_ui(VI / "translation.conf")
+    with (ROOT / "Tools/Translations/translations.csv").open(encoding="utf-8-sig", newline="") as stream:
+        rows = list(csv.reader(stream))
+    english_column = rows[0].index("en-US")
+    csv_english = {}
+    for number, row in enumerate(rows[1:], 2):
+        if not row or not row[0] or row[0].startswith("#"):
+            continue
+        require(len(row) > english_column and row[english_column], f"CSV row {number}: missing English")
+        key, value = row[0], row[english_column]
+        require(key not in csv_english or csv_english[key] == value, f"Conflicting English CSV translation: {key}")
+        csv_english[key] = value
+    require(csv_english == english, "CSV and en-US/translation.conf differ")
+    for key, value in english.items():
+        require(not HAN.search(value), f"Untranslated Chinese English UI value: {key}")
     require(english.keys() <= vietnamese.keys(), "Vietnamese is missing English UI keys")
     for key, value in vietnamese.items():
         require(value == unicodedata.normalize("NFC", value), f"Non-NFC Vietnamese: {key}")
@@ -105,6 +119,7 @@ def validate():
         for match in re.finditer(r'InterString\.Get\(\s*"((?:[^"\\]|\\.)*)"', content):
             key = json.loads('"' + match.group(1) + '"')
             if HAN.search(key):
+                require(key in english, f"Missing runtime English translation: {path}: {key}")
                 require(key in vietnamese, f"Missing runtime UI translation: {path}: {key}")
                 literal_count += 1
 
@@ -135,7 +150,7 @@ def validate():
         guid = re.search(r"^guid: ([0-9a-f]{32})$", Path(str(text) + ".meta").read_text(encoding="utf-8-sig"), re.M)
         require(guid and f"m_GUID: {guid[1]}\n    m_Address: {name}\n" in group,
                 f"About asset is not registered in Addressables: {name}")
-    print(f"PASS: {len(vietnamese)} Vietnamese UI keys; {literal_count} runtime uses; "
+    print(f"PASS: {len(english)} English and {len(vietnamese)} Vietnamese UI keys; {literal_count} runtime uses; "
           f"{len(translated_system)} system entries; {len(translated_bots)} AI profiles; "
           "CSV, placeholders and About Addressables verified.")
 

@@ -9,22 +9,22 @@ public class CheckFolderAssetReferences : EditorWindow
     private List<string> zeroReferenceAssets = new List<string>();
     private Vector2 scrollPosition;
 
-    [MenuItem("Assets/检查文件夹引用情况", false, 106)]
+    [MenuItem("Assets/Check Folder Asset References", false, 106)]
     private static void CheckFolderReferences()
     {
         string folderPath = AssetDatabase.GetAssetPath(Selection.activeObject);
         if (!AssetDatabase.IsValidFolder(folderPath))
         {
-            EditorUtility.DisplayDialog("错误", "请选择一个有效的文件夹", "确定");
+            EditorUtility.DisplayDialog("Error", "Select a valid folder.", "OK");
             return;
         }
 
-        CheckFolderAssetReferences window = GetWindow<CheckFolderAssetReferences>("资产引用检查器");
+        CheckFolderAssetReferences window = GetWindow<CheckFolderAssetReferences>("Asset Reference Checker");
         window.targetFolderPath = folderPath;
         window.AnalyzeReferences();
     }
 
-    [MenuItem("Assets/检查文件夹引用情况", true, 106)]
+    [MenuItem("Assets/Check Folder Asset References", true, 106)]
     private static bool ValidateCheckFolderReferences()
     {
         return Selection.activeObject != null &&
@@ -53,8 +53,8 @@ public class CheckFolderAssetReferences : EditorWindow
             // 跳过非Assets文件和非目标文件夹内的文件
             if (!assetPath.StartsWith("Assets/")) continue;
 
-            EditorUtility.DisplayProgressBar("分析引用关系",
-                $"扫描中... ({current}/{total})", (float)current / total);
+            EditorUtility.DisplayProgressBar("Analyzing References",
+                $"Scanning... ({current}/{total})", (float)current / total);
 
             string[] dependencies = AssetDatabase.GetDependencies(assetPath, false);
 
@@ -86,13 +86,13 @@ public class CheckFolderAssetReferences : EditorWindow
 
     private void OnGUI()
     {
-        EditorGUILayout.LabelField($"目标文件夹: {targetFolderPath}", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField($"Target Folder: {targetFolderPath}", EditorStyles.boldLabel);
 
-        if (GUILayout.Button("重新分析"))
+        if (GUILayout.Button("Analyze Again"))
             AnalyzeReferences();
 
         EditorGUILayout.Space();
-        EditorGUILayout.LabelField($"零引用资产 ({zeroReferenceAssets.Count}个):", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField($"Unreferenced Assets ({zeroReferenceAssets.Count}):", EditorStyles.boldLabel);
 
         scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition);
 
@@ -108,10 +108,10 @@ public class CheckFolderAssetReferences : EditorWindow
             EditorGUILayout.LabelField(assetPath, GUILayout.Width(400));
 
             // 删除按钮
-            if (GUILayout.Button("删除", GUILayout.Width(60)))
+            if (GUILayout.Button("Delete", GUILayout.Width(60)))
             {
-                if (EditorUtility.DisplayDialog("确认删除",
-                    $"确定要删除 {assetPath} 吗？", "删除", "取消"))
+                if (EditorUtility.DisplayDialog("Confirm Deletion",
+                    $"Delete {assetPath}?", "Delete", "Cancel"))
                 {
                     AssetDatabase.DeleteAsset(assetPath);
                     zeroReferenceAssets.Remove(assetPath);
