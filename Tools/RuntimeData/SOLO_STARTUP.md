@@ -12,6 +12,12 @@ Lỗi được xác nhận từ log Windows ngày 28/10/2026: kết nối localh
 - Worker AI chạy nền, có ranh giới bắt lỗi và không khởi động muộn sau khi game đã dừng.
 - Chặn khởi động máy chủ trùng; dừng native server trên worker nền và giữ trạng thái bận cho đến khi phiên cũ kết thúc. Không dùng `Thread.Abort` cho luồng máy chủ.
 
+## Tên AI vượt giới hạn giao thức
+
+Log tiếp theo ngày 29/10/2026 xác nhận WindBot đã vượt qua bước đọc dữ liệu nhưng dừng khi gửi `Horus the Black Flame Dragon LV8`: `WriteUnicode` báo tên quá dài cho trường có độ dài 20. Trường tên `PlayerInfo` chỉ có 40 byte: tối đa 19 đơn vị UTF-16 và một ký tự NUL kết thúc. Bản Debug của bộ ghi chủ động báo lỗi khi vượt giới hạn này.
+
+`GameClient` rút gọn riêng tên gửi qua mạng, không cắt đôi cặp surrogate của ký tự Unicode. Tên đầy đủ trong cấu hình, `Username`, bộ bài và lời thoại vẫn được giữ. Quy tắc kiểm tra độ dài trong `BinaryExtensions` và kích thước gói tin không thay đổi. Cách xử lý này áp dụng cho mọi tên AI dài, kể cả khi chọn AI ngẫu nhiên.
+
 ## Kiểm tra đã chạy
 
 | Bộ kiểm tra | Kết quả |
@@ -20,11 +26,15 @@ Lỗi được xác nhận từ log Windows ngày 28/10/2026: kết nối localh
 | Solo launcher, worker error boundary, PLAY lặp | 8 tình huống thành công |
 | Vòng đời server với native stub | 12 tình huống và 24 race dừng ngay thành công |
 | P/Invoke production + `libygoserver.so` đi kèm trên Linux | 3 lần TCP handshake, 2 lần khởi động lại, 8 race dừng ngay thành công |
+| Gửi tên AI và tuần tự ba gói tin khởi động | Debug và Release đều qua 552 trường hợp: 14 kiểm tra biên/serializer và 538 cấu hình AI, trong đó 125 tên quá dài |
 
 Các harness biên dịch các class/phương thức production theo C# 9. Probe native dùng mã `YgoServer.cs` production và thư viện Linux đi kèm trong thư mục tạm, không chạy Unity Editor. Nhánh AI dùng CDB Việt thiếu, CDB Anh có sẵn, thư mục mở rộng không tồn tại và các đường dẫn tùy chỉnh đều có kiểm tra.
 
+Kiểm tra tên AI biên dịch nguyên các class production `GameClient`, `WindBotInfo`, `GamePacketFactory`, `BinaryExtensions` và enum `CtosMessage`. Transport giả lập thu các gói tin để kiểm tra giới hạn 19/20, tiếng Việt, cặp surrogate, ký tự NUL, tên đầy đủ, bộ bài, mật khẩu và phiên bản giao thức. Đây là kiểm tra serialization, không phải kết nối mạng hay chạy Unity.
+
 ```bash
 python Tools/Tests/WindBotStartup.py
+python Tools/Tests/WindBotHandshake.py
 python Tools/Tests/SoloLaunchRegression.py
 python Tools/Tests/YgoServerLifecycle.py
 ```

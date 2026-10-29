@@ -1,0 +1,196 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Text;
+using System.Text.Json;
+using WindBot;
+using WindBot.Game;
+using YGOSharp.Network.Utils;
+
+// Only the transport/event source and the unrelated duel behavior are replaced.
+// The complete GameClient, packet factory, enum, and binary writer are production files.
+namespace YGOSharp.Network
+{
+    public sealed class YGOClient
+    {
+        public event Action Connected;
+        public event Action<BinaryReader> PacketReceived;
+        public readonly List<byte[]> Sent = new List<byte[]>();
+        public IPAddress Address;
+        public int Port;
+        private bool pending;
+
+        public void Connect(IPAddress address, int port)
+        {
+            Address = address;
+            Port = port;
+            pending = true;
+        }
+
+        public void Update()
+        {
+            if (!pending) return;
+            pending = false;
+            Connected?.Invoke();
+        }
+
+        public void Send(BinaryWriter writer) => Sent.Add(((MemoryStream)writer.BaseStream).ToArray());
+        public void Send(Enums.CtosMessage message) => Sent.Add(new[] { (byte)message });
+        public void Deliver(BinaryReader packet) => PacketReceived?.Invoke(packet);
+    }
+}
+
+namespace WindBot.Game
+{
+    public sealed class GameBehavior
+    {
+        public GameBehavior(GameClient client) { }
+        public void OnPacket(BinaryReader packet) { }
+    }
+}
+
+namespace Regression
+{
+    public sealed class Profile
+    {
+        public string Label { get; set; }
+        public string Name { get; set; }
+        public string Deck { get; set; }
+        public string DeckFile { get; set; }
+        public string Dialog { get; set; }
+    }
+
+    public static class Entry
+    {
+        private static readonly UnicodeEncoding StrictUnicode = new UnicodeEncoding(false, false, true);
+        private static int cases;
+
+        private static void Assert(bool condition, string message)
+        {
+            if (!condition) throw new Exception(message);
+        }
+
+        private static byte[] ExpectedPlayerInfo(string expected)
+        {
+            byte[] result = new byte[41];
+            result[0] = 0x10;
+            byte[] nameBytes = StrictUnicode.GetBytes(expected);
+            Assert(nameBytes.Length <= 38, "Test expectation itself exceeds the field");
+            Array.Copy(nameBytes, 0, result, 1, nameBytes.Length);
+            return result;
+        }
+
+        private static string CheckHandshake(string label, string name, string expected,
+            string deck = "Horus", string deckFile = "Decks/Horus.ydk", string dialog = "Universal_4.EN")
+        {
+            var info = new WindBotInfo
+            {
+                Name = name, Deck = deck, DeckFile = deckFile, Dialog = dialog,
+                Host = "127.0.0.1", Port = 7953, HostInfo = "room-password", Version = 0x1357,
+                Hand = 1, Debug = true, Chat = false
+            };
+            var client = new GameClient(info);
+            client.Start();
+            Assert(client.Connection.Sent.Count == 0, label + ": handshake ran before connected event");
+            client.Tick();
+            Assert(client.Connection.Sent.Count == 3, label + ": expected three handshake packets");
+            Assert(client.Connection.Address.Equals(IPAddress.Loopback) && client.Connection.Port == 7953,
+                label + ": connection target changed");
+
+            byte[] external = client.Connection.Sent[0];
+            using (var reader = new BinaryReader(new MemoryStream(external)))
+            {
+                Assert(reader.ReadByte() == 0x17 && reader.ReadUInt32() == 0, label + ": external-address header changed");
+                Assert(StrictUnicode.GetString(reader.ReadBytes(external.Length - 5)) == "127.0.0.1\0",
+                    label + ": external-address payload changed");
+            }
+
+            byte[] player = client.Connection.Sent[1];
+            Assert(player.Length == 41 && player[0] == 0x10, label + ": player-info framing changed");
+            // Strict decoding detects a surrogate split even when it happens at the last character.
+            string field = StrictUnicode.GetString(player, 1, 40);
+            int terminator = field.IndexOf('\0');
+            Assert(terminator >= 0 && terminator <= 19, label + ": missing in-field terminator");
+            string receivedName = field.Substring(0, terminator);
+            if (expected != null)
+                Assert(player.SequenceEqual(ExpectedPlayerInfo(expected)), label + ": unexpected serialized name");
+            Assert(field.Skip(terminator).All(character => character == '\0'), label + ": name has nonzero padding");
+            if (name != null)
+                Assert(name.StartsWith(receivedName, StringComparison.Ordinal), label + ": name is not an original prefix");
+
+            byte[] join = client.Connection.Sent[2];
+            Assert(join.Length == 49, label + ": join packet length changed");
+            using (var reader = new BinaryReader(new MemoryStream(join)))
+            {
+                Assert(reader.ReadByte() == 0x12 && reader.ReadInt16() == 0x1357, label + ": join version/order changed");
+                Assert(reader.ReadBytes(6).SequenceEqual(new byte[] { 0xCC, 0xCC, 0, 0, 0, 0 }),
+                    label + ": join compatibility bytes changed");
+                byte[] password = reader.ReadBytes(40);
+                byte[] expectedPassword = ExpectedPlayerInfo("room-password").Skip(1).ToArray();
+                Assert(password.SequenceEqual(expectedPassword), label + ": join password changed");
+            }
+
+            Assert(client.Username == name && info.Name == name, label + ": full display name was modified");
+            Assert(client.Deck == deck && client.DeckFile == deckFile && client.Dialog == dialog,
+                label + ": deck identity or dialog changed");
+            Assert(client.Hand == 1 && client.Debug && !client._chat, label + ": other bot options changed");
+            client.Tick();
+            Assert(client.Connection.Sent.Count == 3, label + ": handshake sent twice");
+            cases++;
+            return receivedName;
+        }
+
+        public static int Main(string[] args)
+        {
+            CheckHandshake("short", "WindBot", "WindBot");
+            CheckHandshake("Horus regression", "Horus the Black Flame Dragon LV8", "Horus the Black Fla");
+            CheckHandshake("exactly19", new string('A', 19), new string('A', 19));
+            CheckHandshake("exactly20", new string('A', 20), new string('A', 19));
+            CheckHandshake("Vietnamese short", "Rồng Lửa", "Rồng Lửa");
+            CheckHandshake("Vietnamese long", new string('Đ', 24), new string('Đ', 19));
+            CheckHandshake("pair fits boundary", new string('A', 17) + "🐉", new string('A', 17) + "🐉");
+            CheckHandshake("pair crosses boundary", new string('A', 18) + "🐉", new string('A', 18));
+            CheckHandshake("pair starts after boundary", new string('A', 19) + "🐉", new string('A', 19));
+            CheckHandshake("empty", "", "");
+            CheckHandshake("null", null, "");
+            CheckHandshake("embedded terminator", "Horus\0hidden suffix", "Horus");
+            CheckHandshake("leading terminator", "\0hidden suffix", "");
+
+            // The shared serializer remains strict in Editor-style Debug builds.
+            bool strictWriterRejected = false;
+            using (var stream = new MemoryStream())
+            using (var writer = new BinaryWriter(stream))
+            {
+                try { writer.WriteUnicode("Horus the Black Flame Dragon LV8", 20); }
+                catch (ArgumentException) { strictWriterRejected = true; }
+            }
+#if DEBUG
+            Assert(strictWriterRejected, "Shared Debug writer no longer rejects overlength unnormalized text");
+            const string configuration = "Debug";
+#else
+            Assert(!strictWriterRejected, "Shared Release writer behavior changed");
+            const string configuration = "Release";
+#endif
+            cases++;
+
+            var profiles = JsonSerializer.Deserialize<List<Profile>>(File.ReadAllText(args[0]));
+            int overlength = 0;
+            foreach (var profile in profiles)
+            {
+                string received = CheckHandshake(profile.Label, profile.Name, null,
+                    profile.Deck, profile.DeckFile, profile.Dialog);
+                if (profile.Name.Length <= 19 && profile.Name.IndexOf('\0') < 0)
+                    Assert(received == profile.Name, profile.Label + ": fitting name was changed");
+                else if (profile.Name.Length > 19) overlength++;
+            }
+            Console.WriteLine(JsonSerializer.Serialize(new {
+                test = "WindBotHandshake", configuration, cases, boundaryCases = 14,
+                shippedProfiles = profiles.Count, overlengthProfiles = overlength,
+                productionFiles = 5, transport = "captured packets; no network or Unity Editor"
+            }));
+            return 0;
+        }
+    }
+}

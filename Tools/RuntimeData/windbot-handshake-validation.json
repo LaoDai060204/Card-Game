@@ -1,0 +1,26 @@
+{
+  "date": "2026-10-29",
+  "editor": "6000.0.24f1",
+  "confirmedFailure": "Overlength WindBot username rejected by DEBUG WriteUnicode during PlayerInfo handshake",
+  "backupBranch": "backup/2026-10-29-before-windbot-name-fix",
+  "baseCommit": "e16fbb3c04870b36aa738a686910af58e08c1d3f",
+  "source": "Assets/Scripts/Windbot/Game/GameClient.cs",
+  "sourceSha256": "c84239e9dc3654947c4ef6ebb873a0b2fccf70a8bfa7b428a4c5e92a76bca8d6",
+  "sharedWriterUnchanged": true,
+  "sharedWriterSha256": "1ce66c2bd492e6308ffb67da87fac39fdc5734e91807ce5aa7587d205956ec66",
+  "languageVersion": "9.0",
+  "completeProductionFilesCompiled": 5,
+  "configurations": [
+    "Debug",
+    "Release"
+  ],
+  "casesPerConfiguration": 552,
+  "boundaryAndSerializerCasesPerConfiguration": 14,
+  "shippedProfilesPerConfiguration": 538,
+  "overlengthProfilesPerConfiguration": 125,
+  "originalSourceNegativeControl": "Failed at the original Horus PlayerInfo handshake as expected",
+  "transport": "Captured packets with a transport stub",
+  "networkConnectionTested": false,
+  "windowsUnityPlayTested": false,
+  "command": "python Tools/Tests/WindBotHandshake.py --dotnet /path/to/dotnet"
+}
