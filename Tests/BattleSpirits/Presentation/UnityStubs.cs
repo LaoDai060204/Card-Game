@@ -29,11 +29,15 @@ namespace UnityEngine {
  public class Light:Behaviour{public LightType type;public Color color;public float intensity;public LightShadows shadows;public int cullingMask;}
  public class Canvas:Behaviour{public bool overrideSorting;public int sortingOrder;public Camera worldCamera;}
  public class RectOffset{public RectOffset(int l,int r,int t,int b){}}
- public enum TextAnchor{UpperLeft,UpperCenter}public enum KeyCode{Escape}public static class Input{public static bool GetKeyDown(KeyCode key)=>false;}
+ public enum TextAnchor{UpperLeft,UpperCenter}public enum KeyCode{Escape}public static class Input{public static bool GetKeyDown(KeyCode key)=>throw new InvalidOperationException("Legacy Input is disabled: activeInputHandler is Input System package.");}
  public static class Mathf{public static float Abs(float f)=>Math.Abs(f);public static float Max(float a,float b)=>Math.Max(a,b);}
  public static class Application{public static string dataPath,productName="Battle Spirits",version="0.1.0";}
  public static class Debug{public static readonly List<string> Logs=new List<string>();public static void Log(object o)=>Logs.Add(o?.ToString());public static void LogWarning(object o)=>Logs.Add(o?.ToString());public static void LogError(object o)=>Logs.Add(o?.ToString());}
 }
+namespace UnityEngine.InputSystem {
+ public class Keyboard{public static Keyboard current;public Controls.KeyControl escapeKey=new Controls.KeyControl();}
+}
+namespace UnityEngine.InputSystem.Controls {public class KeyControl{public bool wasPressedThisFrame;}}
 namespace UnityEngine.Events {public delegate void UnityAction();public delegate void UnityAction<T>(T arg);public class UnityEvent{private event UnityAction list;public void AddListener(UnityAction action)=>list+=action;public void Invoke()=>list?.Invoke();}public class UnityEvent<T>{private event UnityAction<T> list;public void AddListener(UnityAction<T> action)=>list+=action;public void Invoke(T arg)=>list?.Invoke(arg);}}
 namespace UnityEngine.UI {
  public class Graphic:UnityEngine.Behaviour{public UnityEngine.Color color;public bool raycastTarget;public UnityEngine.Material material;public UnityEngine.RectTransform rectTransform=>transform as UnityEngine.RectTransform;}

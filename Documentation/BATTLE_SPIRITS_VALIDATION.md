@@ -8,7 +8,7 @@ Ngày 30/10/2026; Unity mục tiêu **6000.0.24f1**, Windows x64. Nhánh `battle
 | Kiểm tra độc lập engine | 100 trận, 8.324 trạng thái và 74.916 thao tác thử |
 | TCP với danh mục 256 thẻ | 16 tình huống, 47 thao tác; có một trận hoàn chỉnh giữa hai client |
 | Server console thật | 5 tình huống: hai client, trạng thái mở đầu, nhận thua, dừng bằng Ctrl+C |
-| Luồng trình bày | 18 tình huống với mã production và Unity stand-in; có deck, hotseat, replay cục bộ, ảnh tải muộn, cache, vòng đời field/pet và chat |
+| Luồng trình bày | 21 tình huống với mã production và Unity stand-in; có deck, hotseat, replay cục bộ, ảnh tải muộn, cache, vòng đời field/pet, chat và xử lý phím Esc |
 | Công cụ dữ liệu | 18 tình huống parser; 256 bản ghi/ảnh và metadata nguồn được kiểm tra |
 | Ảnh thẻ | 256 PNG khớp pixel với 256 WebP nguồn trong cache; import thử tái tạo đúng các bản ghi và byte ảnh |
 | Dự án/asset | 23 GUID mới duy nhất, 6 source project tham chiếu bằng đường dẫn tương đối |
@@ -20,6 +20,8 @@ Core và Networking production biên dịch với **.NET Standard 2.1/C# 9**. C�
 Harness trình bày biên dịch sáu class presentation, MainMenuUI và các class rules/network thật. UnityEngine, TMP, Addressables, DOTween và tải AssetBundle được thay bằng đối tượng kiểm soát. Các đường dẫn trang trí, tên nút menu và API MDPro3 cũng được đối chiếu source/prefab thật. Những kiểm tra này không xác nhận hình ảnh, shader, kích thước chữ hoặc thao tác chuột trong Unity Editor thật.
 
 Các lỗi đã sửa khi tích hợp: nguồn sprite Addressables bị nhả sớm; ảnh cũ tải xong ghi đè lựa chọn mới; cache ảnh không giới hạn; board/tween chưa được dọn khi đổi màn; UI camera chưa được kế thừa; thao tác còn bật sau mất kết nối; hàng đợi kết nối cũ làm hỏng kết nối mới; hướng pet khi xem replay.
+
+Sau khi người dùng thử Play, đã sửa thêm lỗi `InvalidOperationException` tại `BattleSpiritsApp.Update`: cấu hình dự án dùng Input System (`activeInputHandler: 1`), nhưng phím Esc còn đọc qua `UnityEngine.Input` cũ. Mã hiện dùng `Keyboard.current.escapeKey.wasPressedThisFrame`, có kiểm tra bàn phím null. Harness đã đổi API Input cũ từ trả false sang ném lỗi để tái hiện cấu hình thực tế: source cũ thất bại, source sửa vượt qua 21 tình huống. Ba tình huống bổ sung kiểm tra không có bàn phím, chưa nhấn Esc và nhấn Esc để đóng overlay/trả quyền nhập liệu; có gọi Update lại khi overlay đã đóng. Đây là kiểm tra luồng bằng stand-in, chưa phải kiểm tra thiết bị nhập liệu trong Unity thật.
 
 ## Chạy lại
 

@@ -15,6 +15,7 @@ using Newtonsoft.Json;
 using TMPro;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
@@ -61,6 +62,7 @@ internal static class Entry
     private static void Setup()
     {
         Cleanup();
+        Keyboard.current = null;
         Application.dataPath = Path.Combine(temporary, "Assets");
         var canvas = new GameObject("Canvas", typeof(RectTransform), typeof(Canvas));
         canvas.GetComponent<Canvas>().worldCamera = new GameObject("Existing UI camera").AddComponent<Camera>();
@@ -145,6 +147,26 @@ internal static class Entry
                 Assert(!menu.gameObject.activeSelf && MDPro3.UIManager.InputBlocker == App, "Overlay input ownership.");
                 Assert(Field<RectTransform>(App,"overlay").GetComponent<Canvas>().worldCamera == MDPro3.Program.instance.ui_.GetComponentInParent<Canvas>().worldCamera,"NestedcanvasUIcamera.");
                 Call(App, "Close"); Assert(menu.gameObject.activeSelf && MDPro3.UIManager.InputBlocker == null, "Menu restored.");
+            });
+            Case("Update is safe without a keyboard in Input System mode", () => {
+                menu.OnPuzzle();
+                Call(App, "Update");
+                Assert(BattleSpiritsApp.IsOpen && MDPro3.UIManager.InputBlocker == App, "Missing keyboard changed the open surface.");
+            });
+            Case("Update keeps the overlay open until Escape is pressed", () => {
+                Keyboard.current = new Keyboard();
+                menu.OnPuzzle();
+                Call(App, "Update");
+                Assert(BattleSpiritsApp.IsOpen && !menu.gameObject.activeSelf, "Unpressed Escape closed the overlay.");
+            });
+            Case("Input System Escape closes the overlay and restores menu input", () => {
+                Keyboard.current = new Keyboard();
+                Keyboard.current.escapeKey.wasPressedThisFrame = true;
+                menu.OnPuzzle();
+                Call(App, "Update");
+                Assert(!BattleSpiritsApp.IsOpen && menu.gameObject.activeSelf && MDPro3.UIManager.InputBlocker == null, "Escape did not restore the menu.");
+                Call(App, "Update");
+                Assert(menu.gameObject.activeSelf && MDPro3.UIManager.InputBlocker == null, "Escape with no overlay changed menu input.");
             });
             Case("Actual deck builder loads full mixed catalog and pages card artwork", () => {
                 menu.OnDeck(); var surface = Field<RectTransform>(App, "surface");

@@ -10,6 +10,7 @@ using MDPro3.UI.ServantUI;
 using Newtonsoft.Json;
 using TMPro;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 namespace LaoDai.BattleSpirits.Presentation
@@ -184,7 +185,7 @@ namespace LaoDai.BattleSpirits.Presentation
         {
             client?.Pump();
             PruneArtCache();
-            if (surface != null && Input.GetKeyDown(KeyCode.Escape)) Close();
+            if (surface != null && Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame) Close();
         }
 
         private void OnDestroy()
