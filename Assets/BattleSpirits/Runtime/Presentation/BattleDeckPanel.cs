@@ -192,7 +192,8 @@ namespace LaoDai.BattleSpirits.Presentation
         {
             if (current == null || !current.IsEternalEligible) return;
             int count = deck.Count(id => lookup.TryGetValue(id, out var card) && card.nameJa == current.nameJa);
-            if (count >= Math.Min(3, current.maxCopies)) { status("Đã đạt giới hạn số lá cùng tên."); return; }
+            int limit = catalog.Where(card => card.nameJa == current.nameJa).Min(card => card.EffectiveCopyLimit);
+            if (count >= limit) { status("Đã đạt giới hạn số lá cùng tên."); return; }
             deck.Add(current.id); RefreshDeck();
         }
 

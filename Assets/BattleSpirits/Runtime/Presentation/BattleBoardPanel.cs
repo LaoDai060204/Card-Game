@@ -35,6 +35,7 @@ namespace LaoDai.BattleSpirits.Presentation
         private bool allowActions;
         private int selectedSpirit = -1;
         private bool disposed;
+        private bool disconnected;
 
         internal RectTransform Root { get; }
         internal RawImage Background { get; }
@@ -284,6 +285,12 @@ namespace LaoDai.BattleSpirits.Presentation
         private void DrawActions()
         {
             Clear(controls);
+            if (disconnected)
+            {
+                decision.text = "KẾT NỐI ĐÃ NGẮT\nQuay lại để tạo hoặc tham gia phòng mới.";
+                AddAction("Quay lại", () => back(), true);
+                return;
+            }
             if (current.winner >= 0)
             {
                 decision.text = current.winner == current.viewer ? "<color=#94F2AE>BẠN CHIẾN THẮNG</color>" : "TRẬN ĐẤU KẾT THÚC";
@@ -454,6 +461,18 @@ namespace LaoDai.BattleSpirits.Presentation
                 child.SetParent(null, false);
                 UnityEngine.Object.Destroy(child.gameObject);
             }
+        }
+
+        internal void SetDisconnected()
+        {
+            if (disposed) return;
+            disconnected = true;
+            allowActions = false;
+            foreach (var button in hand.GetComponentsInChildren<Button>(true)) button.interactable = false;
+            foreach (var button in ownField.GetComponentsInChildren<Button>(true)) button.interactable = false;
+            var concede = Root.Find("Header/Concede")?.GetComponent<Button>();
+            if (concede != null) concede.interactable = false;
+            DrawActions();
         }
 
         public void Dispose()

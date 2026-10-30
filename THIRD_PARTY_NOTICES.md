@@ -33,3 +33,22 @@ Các thành phần trong kho có giấy phép và thông báo riêng, được g
 - `Assets/Tools/com.esotericsoftware.spine.timeline-4.2/LICENSE.md`
 
 Các thư viện, plugin, shader và font khác có thể kèm thông báo trong tệp nguồn hoặc thư mục tương ứng. Thông báo này ghi nhận các nguồn đã được dùng; nó không thay thế giấy phép của từng thành phần.
+# Battle Spirits conversion
+
+The `battle-spirits-mdpro3-ui` branch includes card metadata and artwork obtained
+from the official Japanese Battle Spirits website at
+https://www.battlespirits.com/cardlist/. Battle Spirits names, illustrations and
+other rights belong to BANDAI/BNP and the rights holders identified on the cards.
+These assets are not original artwork by LaoDai060204 and this project is not an
+official BANDAI game.
+
+`Data/BattleSpirits/card-sources.json` records individual source URLs, retrieval
+dates, official WebP hashes and bundled PNG hashes. PNG conversion preserves the
+decoded RGBA pixels; original card numbers, names, effect text and printed
+credits are retained. `Data/BattleSpirits/banlist.json` records the source and
+effective date of observed restrictions.
+
+This branch reuses the existing MDPro3 menu and presentation assets, including
+Master Duel field and Mate assets. Their original notices in this document continue to
+apply. The new Battle Spirits match protocol does not make these assets original
+Battle Spirits creature models.

@@ -15,6 +15,7 @@ namespace LaoDai.BattleSpirits.Networking
             public readonly CancellationTokenSource Stop = new CancellationTokenSource();
             public readonly SemaphoreSlim SendGate = new SemaphoreSlim(1, 1);
             public int Generation;
+            public int PendingMessages;
 
             public void Close()
             {
@@ -28,13 +29,13 @@ namespace LaoDai.BattleSpirits.Networking
             public int Generation;
             public string Line;
             public WireMessage Local;
+            public Connection Owner;
         }
 
         private readonly object gate = new object();
         private readonly ConcurrentQueue<Incoming> incoming = new ConcurrentQueue<Incoming>();
         private Connection current;
         private int generation;
-        private int queued;
 
         public event Action<WireMessage> MessageReceived;
 
@@ -119,12 +120,12 @@ namespace LaoDai.BattleSpirits.Networking
                 {
                     string line = await reader.ReadLineAsync(connection.Stop.Token).ConfigureAwait(false);
                     if (line == null) break;
-                    if (Interlocked.Increment(ref queued) > 256)
+                    if (Interlocked.Increment(ref connection.PendingMessages) > 256)
                     {
-                        Interlocked.Decrement(ref queued);
+                        Interlocked.Decrement(ref connection.PendingMessages);
                         throw new InvalidOperationException("Too many unprocessed server messages.");
                     }
-                    incoming.Enqueue(new Incoming { Generation = connection.Generation, Line = line });
+                    incoming.Enqueue(new Incoming { Generation = connection.Generation, Line = line, Owner = connection });
                 }
                 CloseCurrent(connection, "Máy chủ đã đóng kết nối.");
             }
@@ -138,7 +139,7 @@ namespace LaoDai.BattleSpirits.Networking
         {
             for (int count = 0; count < maxMessages && incoming.TryDequeue(out var item); count++)
             {
-                Interlocked.Decrement(ref queued);
+                if (item.Owner != null) Interlocked.Decrement(ref item.Owner.PendingMessages);
                 lock (gate)
                     if (item.Generation != generation) continue;
                 WireMessage message;
@@ -162,10 +163,13 @@ namespace LaoDai.BattleSpirits.Networking
                 previous = current;
                 current = null;
                 next = ++generation;
+                previous?.Close();
+                // A fresh connection must not inherit a saturated receive queue
+                // or callbacks from the previous generation.
+                while (incoming.TryDequeue(out var old))
+                    if (old.Owner != null) Interlocked.Decrement(ref old.Owner.PendingMessages);
             }
             if (previous == null) return;
-            previous.Close();
-            Interlocked.Increment(ref queued);
             incoming.Enqueue(new Incoming
             {
                 Generation = next,
@@ -181,7 +185,6 @@ namespace LaoDai.BattleSpirits.Networking
                 current = null;
             }
             connection.Close();
-            Interlocked.Increment(ref queued);
             incoming.Enqueue(new Incoming
             {
                 Generation = connection.Generation,

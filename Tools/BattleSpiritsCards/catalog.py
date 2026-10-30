@@ -21,6 +21,7 @@ import subprocess
 import tempfile
 import time
 import urllib.request
+import zlib
 
 ROOT = Path(__file__).resolve().parents[2]
 HOST = "https://www.battlespirits.com"
@@ -147,7 +148,7 @@ def discover(products_source, list_source, as_of):
             continue
         release_date = date(*(int(p) for p in when.groups())).isoformat()
         name = title.text()
-        format_name = "Eternal" if "エターナル" in name else "Standard" if "スタンダード" in item.text() or code[1].startswith("26R") else "Unspecified"
+        format_name = "Eternal" if "エターナル" in name else "Standard" if "スタンダード" in item.text() or re.match(r"\d{2}R", code[1]) else "Unspecified"
         products.append({"setId": code[1], "setName": name, "releaseDate": release_date,
                          "format": format_name, "released": release_date <= as_of,
                          "productUrl": urljoin(HOST, link.attrs.get("href", "/product/")), "productId": ids.get(code[1], "")})
@@ -260,6 +261,79 @@ def png_info(data):
     return struct.unpack(">II", data[16:24])
 
 
+def validate_png(data):
+    """Check complete bundled PNG streams without an optional image library."""
+    width, height = png_info(data)
+    if not 1 <= width <= 4096 or not 1 <= height <= 4096:
+        raise ValueError("PNG dimensions are outside the import limits")
+    offset, compressed, header, ended = 8, [], None, False
+    while offset < len(data):
+        if len(data) - offset < 12:
+            raise ValueError("Truncated PNG chunk")
+        length = struct.unpack(">I", data[offset:offset + 4])[0]
+        kind = data[offset + 4:offset + 8]
+        end = offset + length + 12
+        if end > len(data):
+            raise ValueError("Truncated PNG chunk content")
+        payload = data[offset + 8:end - 4]
+        crc = struct.unpack(">I", data[end - 4:end])[0]
+        if zlib.crc32(kind + payload) & 0xffffffff != crc:
+            raise ValueError("PNG chunk checksum mismatch")
+        if header is None and kind != b"IHDR":
+            raise ValueError("PNG does not begin with IHDR")
+        if kind == b"IHDR":
+            if header is not None or length != 13:
+                raise ValueError("Invalid PNG header")
+            header = struct.unpack(">IIBBBBB", payload)
+            if header[2:] != (8, 6, 0, 0, 0):
+                raise ValueError("Bundled artwork must be non-interlaced 8-bit RGBA PNG")
+        elif kind == b"IDAT":
+            compressed.append(payload)
+        elif kind == b"IEND":
+            if length != 0 or end != len(data):
+                raise ValueError("Invalid PNG ending")
+            ended = True
+            break
+        offset = end
+    if header is None or not ended or not compressed:
+        raise ValueError("Incomplete PNG stream")
+    expected = height * (width * 4 + 1)
+    decoder = zlib.decompressobj()
+    try:
+        raw = decoder.decompress(b"".join(compressed), expected + 1)
+    except zlib.error as error:
+        raise ValueError("Invalid compressed PNG pixels") from error
+    if len(raw) != expected or not decoder.eof or decoder.unused_data or decoder.unconsumed_tail:
+        raise ValueError("Unexpected PNG pixel stream length")
+    if any(value > 4 for value in raw[::width * 4 + 1]):
+        raise ValueError("Invalid PNG scanline filter")
+    return width, height
+
+
+def publish_import(root, staged, relative_paths):
+    """Publish a completely validated import, restoring old files on failure."""
+    with tempfile.TemporaryDirectory(prefix=".bs-card-rollback-", dir=root) as backup_folder:
+        backup, written = Path(backup_folder), []
+        try:
+            for relative in relative_paths:
+                destination, source = root / relative, staged / relative
+                if destination.exists():
+                    previous = backup / relative
+                    previous.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(destination, previous)
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                source.replace(destination)
+                written.append(relative)
+        except Exception:
+            for relative in reversed(written):
+                destination, previous = root / relative, backup / relative
+                if previous.exists():
+                    previous.replace(destination)
+                else:
+                    destination.unlink(missing_ok=True)
+            raise
+
+
 def artwork(fetcher, card, source_entry, root, magick):
     original = fetcher.get(card["imageUrl"])
     if original[:4] != b"RIFF" or original[8:12] != b"WEBP":
@@ -303,7 +377,7 @@ def import_catalog(args):
         raise ValueError("Official restriction page describes a future list; review before importing")
     if any(n.attrs.get("data-tags") == "pair" and n.all("li", "cardCol") for n in limits_document.all("div", "js-target")):
         raise ValueError("Official forbidden-pair list changed; explicit pair handling must be reviewed")
-    seeds = json.loads((root / "Data/BattleSpirits/starter-cards.json").read_text())["cards"]
+    seeds = json.loads((root / "Data/BattleSpirits/starter-cards.json").read_text(encoding="utf-8-sig"))["cards"]
     requests, set_sources = {}, []
     for product in sets:
         url = HOST + "/cardlist/index.php?search=true&prodid=" + product["productId"]
@@ -349,59 +423,165 @@ def import_catalog(args):
     magick = shutil.which("magick") or shutil.which("convert")
     if not magick:
         raise ValueError("Install ImageMagick for lossless WebP-to-PNG import; validation/check commands do not require it")
-    with ThreadPoolExecutor(max_workers=args.workers) as pool:
-        original_sizes = list(pool.map(lambda pair: artwork(fetcher, pair[0], pair[1], root, magick), parsed))
-    if sum(original_sizes) > 150_000_000:
-        raise ValueError("Artwork import exceeded the documented 150 MB source limit")
-    cards = sorted((card for card, _ in parsed), key=lambda card: (not card["implemented"], card["setId"], card["id"]))
-    catalog = {"schemaVersion": 1, "asOfDate": args.as_of, "ruleset": "Japanese Battle Spirits Eternal",
-               "latestReleasedSets": set_sources, "announcedFutureBoosters": announced, "cards": cards}
-    manifest = {"asOfDate": args.as_of, "officialProductsUrl": product_url, "productsHtmlSha256": digest(products_raw),
-                "officialCardListUrl": list_url, "cardListHtmlSha256": digest(list_raw), "sets": set_sources,
-                "announcedFutureBoosters": announced, "artworkSourceBytes": sum(original_sizes),
-                "symbolNote": "Official detail HTML does not expose printed symbol counts. Only the verified starter symbols are implemented; other symbol values are unknown, not inferred.",
-                "formatNote": "Standard-labeled cards are catalog entries only. Their Eternal legality has not been verified; eternalLegal=false does not claim they are prohibited.",
-                "implementationNote": "Importing card data or artwork does not implement an ability. Only verified vanilla starter IDs are enabled.",
-                "attribution": "Battle Spirits card artwork © BANDAI / BNP and credited illustrators; original printed notices retained.",
-                "license": "Official third-party card art; no open-source license or redistribution permission is inferred.",
-                "cards": sorted((entry for _, entry in parsed), key=lambda entry: entry["id"])}
-    limit_manifest = {"sourceUrl": limits_url, "sourceHtmlSha256": digest(limits_raw), "retrievedDate": args.as_of,
-                      "effectiveDate": effective_date, "restrictions": limitations, "forbiddenPairs": [],
-                      "scope": "Current official Japanese Eternal ban/restriction list; no forbidden pairs are currently listed."}
-    directory = root / "Data/BattleSpirits"
-    for filename, value in (("cards.json", catalog), ("card-sources.json", manifest), ("banlist.json", limit_manifest)):
-        (directory / filename).write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    # All source parsing and artwork validation finish before any bundled file
+    # is replaced. Staging on the project volume also works across Windows drives.
+    with tempfile.TemporaryDirectory(prefix=".bs-card-import-", dir=root) as temporary:
+        staged = Path(temporary)
+        seed_path = staged / "Data/BattleSpirits/starter-cards.json"
+        seed_path.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(root / "Data/BattleSpirits/starter-cards.json", seed_path)
+        with ThreadPoolExecutor(max_workers=args.workers) as pool:
+            original_sizes = list(pool.map(lambda pair: artwork(fetcher, pair[0], pair[1], staged, magick), parsed))
+        if sum(original_sizes) > 150_000_000:
+            raise ValueError("Artwork import exceeded the documented 150 MB source limit")
+        cards = sorted((card for card, _ in parsed), key=lambda card: (not card["implemented"], card["setId"], card["id"]))
+        catalog = {"schemaVersion": 1, "asOfDate": args.as_of, "ruleset": "Japanese Battle Spirits Eternal",
+                   "latestReleasedSets": set_sources, "announcedFutureBoosters": announced, "cards": cards}
+        manifest = {"asOfDate": args.as_of, "officialProductsUrl": product_url, "productsHtmlSha256": digest(products_raw),
+                    "officialCardListUrl": list_url, "cardListHtmlSha256": digest(list_raw), "sets": set_sources,
+                    "announcedFutureBoosters": announced, "artworkSourceBytes": sum(original_sizes),
+                    "symbolNote": "Official detail HTML does not expose printed symbol counts. Only the verified starter symbols are implemented; other symbol values are unknown, not inferred.",
+                    "formatNote": "Standard-labeled cards are catalog entries only. Their Eternal legality has not been verified; eternalLegal=false does not claim they are prohibited.",
+                    "implementationNote": "Importing card data or artwork does not implement an ability. Only verified vanilla starter IDs are enabled.",
+                    "attribution": "Battle Spirits card artwork © BANDAI / BNP and credited illustrators; original printed notices retained.",
+                    "license": "Official third-party card art; no open-source license or redistribution permission is inferred.",
+                    "cards": sorted((entry for _, entry in parsed), key=lambda entry: entry["id"])}
+        limit_manifest = {"sourceUrl": limits_url, "sourceHtmlSha256": digest(limits_raw), "retrievedDate": args.as_of,
+                          "effectiveDate": effective_date, "restrictions": limitations, "forbiddenPairs": [],
+                          "scope": "Current official Japanese Eternal ban/restriction list; no forbidden pairs are currently listed."}
+        directory = staged / "Data/BattleSpirits"
+        for filename, value in (("cards.json", catalog), ("card-sources.json", manifest), ("banlist.json", limit_manifest)):
+            (directory / filename).write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        validate_catalog(staged, report=False)
+        publications = [Path("Data/BattleSpirits") / name
+                        for name in ("cards.json", "card-sources.json", "banlist.json")]
+        publications.extend(Path(card["artPath"]) for card in cards)
+        publish_import(root, staged, publications)
     return validate_catalog(root)
 
 
-def validate_catalog(root):
-    catalog = json.loads((root / "Data/BattleSpirits/cards.json").read_text())
-    sources = json.loads((root / "Data/BattleSpirits/card-sources.json").read_text())
-    seeds = {card["id"]: card for card in json.loads((root / "Data/BattleSpirits/starter-cards.json").read_text())["cards"]}
+def require_hash(value, label):
+    if not isinstance(value, str) or re.fullmatch(r"[0-9a-f]{64}", value) is None:
+        raise ValueError("Invalid SHA-256: " + label)
+
+
+def require_official_url(value, label):
+    parsed = urlparse(value)
+    if parsed.scheme != "https" or parsed.netloc != "www.battlespirits.com":
+        raise ValueError("Unexpected official URL: " + label)
+
+
+def validate_pixels(root, entries, cache, workers):
+    magick = shutil.which("magick") or shutil.which("convert")
+    if not magick:
+        raise ValueError("Install ImageMagick to run optional --pixels verification")
+    environment = dict(os.environ, MAGICK_THREAD_LIMIT="1")
+
+    def check(entry):
+        png = subprocess.check_output([magick, str(root / entry["artPath"]), "-depth", "8", "rgba:-"],
+                                      env=environment, timeout=30)
+        if digest(png) != entry["decodedRgbaSha256"]:
+            raise ValueError("Decoded PNG pixel checksum mismatch: " + entry["id"])
+        original = Path(cache) / digest(entry["officialImageUrl"].encode())
+        if not original.exists():
+            return False
+        raw = original.read_bytes()
+        if digest(raw) != entry["originalWebpSha256"]:
+            raise ValueError("Cached official WebP checksum mismatch: " + entry["id"])
+        before = subprocess.check_output([magick, "webp:-", "-depth", "8", "rgba:-"], input=raw,
+                                         env=environment, timeout=30)
+        if before != png:
+            raise ValueError("Official WebP and bundled PNG pixels differ: " + entry["id"])
+        return True
+
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        checked_sources = sum(pool.map(check, entries))
+    return {"decodedPngImagesVerified": len(entries), "cachedOfficialWebpImagesVerified": checked_sources,
+            "operation": "Decoded RGBA checksums; exact cached WebP/PNG pixel equality where the source cache exists"}
+
+
+def validate_catalog(root, pixels=False, cache=None, workers=3, report=True):
+    root = Path(root)
+    catalog = json.loads((root / "Data/BattleSpirits/cards.json").read_text(encoding="utf-8-sig"))
+    sources = json.loads((root / "Data/BattleSpirits/card-sources.json").read_text(encoding="utf-8-sig"))
+    limits = json.loads((root / "Data/BattleSpirits/banlist.json").read_text(encoding="utf-8-sig"))
+    seed_list = json.loads((root / "Data/BattleSpirits/starter-cards.json").read_text(encoding="utf-8-sig"))["cards"]
+    seeds = {card["id"]: card for card in seed_list}
     provenance = {entry["id"]: entry for entry in sources["cards"]}
     cards = catalog["cards"]
-    if len({c["id"] for c in cards}) != len(cards) or {c["id"] for c in cards} != set(provenance):
+    as_of = date.fromisoformat(catalog["asOfDate"]).isoformat()
+    if not cards or len(seeds) != len(seed_list) or not seeds:
+        raise ValueError("Empty catalog or duplicate starter IDs")
+    if len({c["id"] for c in cards}) != len(cards) or len(provenance) != len(sources["cards"]) or {c["id"] for c in cards} != set(provenance):
         raise ValueError("Catalog IDs and provenance entries differ")
+    if sources["asOfDate"] != as_of or sources["sets"] != catalog["latestReleasedSets"]:
+        raise ValueError("Catalog dates or set provenance differ")
+    if sources["announcedFutureBoosters"] != catalog["announcedFutureBoosters"]:
+        raise ValueError("Announced product provenance differs")
+    for name in ("officialProductsUrl", "officialCardListUrl"):
+        require_official_url(sources[name], name)
+    for name in ("productsHtmlSha256", "cardListHtmlSha256"):
+        require_hash(sources[name], name)
+    require_official_url(limits["sourceUrl"], "banlist source")
+    require_hash(limits["sourceHtmlSha256"], "banlist source")
+    if date.fromisoformat(limits["effectiveDate"]).isoformat() > as_of or limits["retrievedDate"] != as_of:
+        raise ValueError("Restriction list date is not valid for this catalog")
+    if limits.get("forbiddenPairs"):
+        raise ValueError("Forbidden-pair implementation must be reviewed")
+    for product in catalog["latestReleasedSets"]:
+        if not product["released"] or date.fromisoformat(product["releaseDate"]).isoformat() > as_of:
+            raise ValueError("An announced product was selected as released")
+        for name in ("productUrl", "cardListUrl"):
+            require_official_url(product[name], product["setId"] + " " + name)
+        require_hash(product["cardListSha256"], product["setId"])
+    for product in catalog["announcedFutureBoosters"]:
+        if product["released"] or date.fromisoformat(product["releaseDate"]).isoformat() <= as_of:
+            raise ValueError("An announced product release status is inconsistent")
     enabled = set()
     for card in cards:
         if not ID.fullmatch(card["id"]) or not card["sourceUrl"].startswith(HOST + "/cardlist/detail_iframe.php?"):
             raise ValueError("Invalid card identity/source")
+        entry = provenance[card["id"]]
+        args = parse_qs(urlparse(card["sourceUrl"]).query)
+        if (args.get("card_no") != [card["id"]] or args.get("card_no2") != [card["sourceCardNumber"]]
+                or entry["sourceCardNumber"] != card["sourceCardNumber"]
+                or entry["officialDetailUrl"] != card["sourceUrl"] or entry["officialImageUrl"] != card["imageUrl"]
+                or entry["retrievedDate"] != as_of):
+            raise ValueError("Card identity/provenance mismatch: " + card["id"])
+        require_official_url(card["imageUrl"], card["id"] + " image")
+        for name in ("detailHtmlSha256", "originalWebpSha256", "convertedPngSha256", "decodedRgbaSha256"):
+            require_hash(entry[name], card["id"] + " " + name)
         path = Path(card["artPath"])
-        if path.parts != ("Picture", "BattleSpirits", card["id"] + ".png"):
+        if path.parts != ("Picture", "BattleSpirits", card["id"] + ".png") or entry["artPath"] != card["artPath"]:
             raise ValueError("Invalid artwork path")
         data = (root / path).read_bytes()
-        if digest(data) != provenance[card["id"]]["convertedPngSha256"]:
+        if digest(data) != entry["convertedPngSha256"]:
             raise ValueError("Artwork checksum mismatch: " + card["id"])
-        width, height = png_info(data)
-        if width < 300 or height < 400:
+        width, height = validate_png(data)
+        if width < 300 or height < 400 or (width, height) != (entry["width"], entry["height"]):
             raise ValueError("Unexpected artwork dimensions")
+        if not isinstance(card["nameJa"], str) or not card["nameJa"] or not isinstance(card["effectTextJa"], str):
+            raise ValueError("Missing official Japanese card text")
+        if card["released"] is not True or type(card["implemented"]) is not bool:
+            raise ValueError("Invalid card release/implementation status")
+        matching_limits = [r["maxCopies"] for r in limits["restrictions"]
+                           if card["id"] == r["id"] or card["nameJa"] == r["nameJa"]]
+        if card["maxCopies"] != (min(matching_limits) if matching_limits else 3):
+            raise ValueError("Card restriction differs from the official list: " + card["id"])
+        if card["restrictionSourceUrl"] != limits["sourceUrl"] or card["restrictionVerified"] != (card["format"] == "Eternal"):
+            raise ValueError("Card restriction provenance is inconsistent")
         if card["implemented"]:
             enabled.add(card["id"])
             if card["id"] not in seeds or card["type"] != "Spirit" or card["effectTextJa"] != "-" or not card["symbolsVerified"]:
                 raise ValueError("An unsupported ability was marked implemented")
-        if card["format"] == "Standard" and (card["implemented"] or card["legalityStatus"] != "not-verified"):
+            for key in ("nameJa", "color", "cost", "reductionSymbols", "levels", "effectTextJa", "symbols"):
+                if card[key] != seeds[card["id"]][key]:
+                    raise ValueError("Verified starter data changed: " + card["id"] + " " + key)
+        elif card["symbolsVerified"] or card["symbols"] != 0 or card["symbolDetails"]:
+            raise ValueError("Unknown printed symbols were inferred for a browse-only card")
+        if card["format"] == "Standard" and (card["implemented"] or card["legalityStatus"] != "not-verified" or card["eternalLegal"]):
             raise ValueError("Unverified Standard card was promoted into the Eternal implementation")
-        if card["releaseDate"] and card["releaseDate"] > catalog["asOfDate"]:
+        if card["releaseDate"] and date.fromisoformat(card["releaseDate"]).isoformat() > as_of:
             raise ValueError("Announced card incorrectly imported as released")
     if enabled != set(seeds):
         raise ValueError("Verified starter implementation set changed")
@@ -409,24 +589,48 @@ def validate_catalog(root):
               "browseOnlyCards": len(cards) - len(enabled), "artImages": len(provenance),
               "sets": [{"id": p["setId"], "released": p["releaseDate"], "format": p["format"], "cards": p["uniqueCards"]} for p in catalog["latestReleasedSets"]],
               "scope": "Official metadata, artwork checksums and supported-card flags; not Unity Play or full card-ability validation"}
-    print(json.dumps(result, ensure_ascii=False, indent=2))
+    if pixels:
+        result["pixelVerification"] = validate_pixels(root, sources["cards"], cache or Path(tempfile.gettempdir()) / "bs-official-card-cache", workers)
+    if report:
+        print(json.dumps(result, ensure_ascii=False, indent=2))
     return result
+
+
+def observed_changes(bundled, observed):
+    # Include all parsed fields, including color/family and a removed back face.
+    keys = list(observed)
+    if "faces" not in keys:
+        keys.append("faces")
+    return {key: {"bundled": bundled.get(key), "official": observed.get(key)}
+            for key in keys if bundled.get(key) != observed.get(key)}
 
 
 def check_catalog(args):
     root, fetcher = Path(args.root), Fetcher(args.cache, True)
-    catalog = json.loads((root / "Data/BattleSpirits/cards.json").read_text())
+    catalog = json.loads((root / "Data/BattleSpirits/cards.json").read_text(encoding="utf-8-sig"))
     selected, announced = discover(fetcher.get(HOST + "/product/").decode(), fetcher.get(HOST + "/cardlist/").decode(), args.as_of)
     old_sets = {s["setId"] for s in catalog["latestReleasedSets"]}
     result = {"asOfDate": args.as_of, "latestReleasedSets": selected, "newReleasedSets": [s for s in selected if s["setId"] not in old_sets],
-              "announcedFutureBoosters": announced, "checkedCards": 0, "changedCards": [], "errors": []}
+              "announcedFutureBoosters": announced, "checkedCards": 0, "changedCards": [], "changedRestrictions": [], "errors": []}
+    try:
+        bundled_limits = json.loads((root / "Data/BattleSpirits/banlist.json").read_text(encoding="utf-8-sig"))
+        limits_source = fetcher.get(HOST + "/rule/limited.php").decode("utf-8")
+        observed_limits = parse_limits(limits_source)
+        order = lambda entry: (entry["id"], entry["nameJa"], entry["maxCopies"])
+        if sorted(observed_limits, key=order) != sorted(bundled_limits["restrictions"], key=order):
+            result["changedRestrictions"].append({"bundled": bundled_limits["restrictions"], "official": observed_limits})
+        if any(n.attrs.get("data-tags") == "pair" and n.all("li", "cardCol")
+               for n in Document(limits_source).root.all("div", "js-target")):
+            result["changedRestrictions"].append({"review": "Official forbidden-pair restrictions need implementation review"})
+    except Exception as error:
+        result["errors"].append({"id": "official-restriction-list", "error": str(error)})
     cards = catalog["cards"] if not args.id else [c for c in catalog["cards"] if c["id"] in args.id]
     if args.id and set(args.id) - {c["id"] for c in cards}:
         raise ValueError("Unknown catalog card ID")
     def compare(card):
         try:
             observed = parse_detail(fetcher.get(card["sourceUrl"]).decode(), card["id"])
-            changes = {key: {"bundled": card[key], "official": observed[key]} for key in ("nameJa", "type", "cost", "reductions", "levels", "effectTextJa") if observed[key] != card[key]}
+            changes = observed_changes(card, observed)
             return {"id": card["id"], "changes": changes}, None
         except Exception as error:
             return None, {"id": card["id"], "error": str(error)}
@@ -438,7 +642,7 @@ def check_catalog(args):
             elif change["changes"]:
                 result["changedCards"].append(change)
     print(json.dumps(result, ensure_ascii=False, indent=2))
-    return 1 if result["newReleasedSets"] or result["changedCards"] or result["errors"] else 0
+    return 1 if result["newReleasedSets"] or result["changedCards"] or result["changedRestrictions"] or result["errors"] else 0
 
 
 def main():
@@ -450,10 +654,11 @@ def main():
     parser.add_argument("--refresh", action="store_true", help="Refresh cached official responses during import")
     parser.add_argument("--workers", type=int, default=3, choices=range(1, 5))
     parser.add_argument("--id", action="append", help="Restrict check to this card ID; repeatable")
+    parser.add_argument("--pixels", action="store_true", help="Also decode PNG pixels and compare cached official WebP images during validate; requires ImageMagick")
     args = parser.parse_args()
     date.fromisoformat(args.as_of)
     if args.command == "validate":
-        validate_catalog(Path(args.root))
+        validate_catalog(Path(args.root), pixels=args.pixels, cache=args.cache, workers=args.workers)
     elif args.command == "import":
         import_catalog(args)
     elif args.command == "check":

@@ -60,10 +60,16 @@ internal static class ConversionTests
     private static CardDefinition Clone(CardDefinition card) => JsonSerializer.Deserialize<CardDefinition>(JsonSerializer.Serialize(card, Json), Json);
     private static CardDefinition New(string id)
     {
-        var card = Clone(official.First(c => c.IsPlayable));
-        card.id = id; card.nameJa = id; card.nameVi = id;
-        card.cost = 0; card.reductionSymbols = 0;
-        return card;
+        // Synthetic rule fixtures must not inherit a real card's verified
+        // restriction or printed-symbol metadata from the imported catalog.
+        return new CardDefinition
+        {
+            id = id, nameJa = id, nameVi = id, implemented = true,
+            color = CardColor.Red, cost = 0, reductionSymbols = 0,
+            symbols = 1, effectTextJa = "-",
+            levels = new List<CardLevel> { new CardLevel { cores = 1, bp = 1000 } },
+            restrictionVerified = false
+        };
     }
     private static BattleMatch Match()
     {

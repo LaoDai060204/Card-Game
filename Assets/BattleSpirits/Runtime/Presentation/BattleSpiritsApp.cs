@@ -31,6 +31,10 @@ namespace LaoDai.BattleSpirits.Presentation
         private DeckDefinition selectedDeck;
         private readonly Dictionary<string, Texture2D> art = new Dictionary<string, Texture2D>();
         private readonly Dictionary<string, List<RawImage>> pendingArt = new Dictionary<string, List<RawImage>>();
+        private readonly Dictionary<RawImage, string> requestedArt = new Dictionary<RawImage, string>();
+        private readonly Dictionary<string, long> artLastUsed = new Dictionary<string, long>();
+        private long artClock;
+        private const int ArtCacheLimit = 64;
         private BattleBoardPanel board;
         private BattleFieldBackdrop backdrop;
         private BattleMatch localMatch;
@@ -117,6 +121,7 @@ namespace LaoDai.BattleSpirits.Presentation
 
         private RectTransform OpenSurface(string title)
         {
+            board?.Dispose();
             if (surface != null) Destroy(surface.gameObject);
             board = null;
             backdrop = null;
@@ -135,6 +140,7 @@ namespace LaoDai.BattleSpirits.Presentation
                 overlay.SetParent(canvas.transform, false);
                 BattleUiTheme.Stretch(overlay);
                 var ownCanvas = go.GetComponent<Canvas>();
+                ownCanvas.worldCamera = canvas.worldCamera;
                 ownCanvas.overrideSorting = true;
                 ownCanvas.sortingOrder = 40;
             }
@@ -147,6 +153,7 @@ namespace LaoDai.BattleSpirits.Presentation
             var back = BattleUiTheme.Button(surface, "‹", Close);
             Place(back.transform as RectTransform, 0.015f, 0.925f, 0.065f, 0.985f);
             status = BattleUiTheme.Text(surface, "Status", string.Empty, 18, TextAlignmentOptions.MidlineLeft);
+            status.richText = false;
             Place(status.rectTransform, 0.02f, 0.01f, 0.98f, 0.065f);
             return surface;
         }
@@ -165,6 +172,7 @@ namespace LaoDai.BattleSpirits.Presentation
             localMatch = null;
             replay = null;
             record = null;
+            board?.Dispose();
             board = null;
             if (surface != null) Destroy(surface.gameObject);
             surface = null;
@@ -175,6 +183,7 @@ namespace LaoDai.BattleSpirits.Presentation
         private void Update()
         {
             client?.Pump();
+            PruneArtCache();
             if (surface != null && Input.GetKeyDown(KeyCode.Escape)) Close();
         }
 
@@ -184,6 +193,8 @@ namespace LaoDai.BattleSpirits.Presentation
             foreach (var texture in art.Values) if (texture != null) Destroy(texture);
             art.Clear();
             pendingArt.Clear();
+            requestedArt.Clear();
+            artLastUsed.Clear();
             if (overlay != null) Destroy(overlay.gameObject);
             if (UIManager.InputBlocker == this) UIManager.InputBlocker = null;
             if (instance == this) instance = null;
@@ -194,8 +205,11 @@ namespace LaoDai.BattleSpirits.Presentation
         private async void LoadArt(string id, RawImage image)
         {
             if (image == null || string.IsNullOrEmpty(id)) return;
+            requestedArt[image] = id;
+            artLastUsed[id] = ++artClock;
             if (art.TryGetValue(id, out var existing)) { image.texture = existing; return; }
-            if (pendingArt.TryGetValue(id, out var waiting)) { waiting.Add(image); return; }
+            image.texture = Texture2D.blackTexture;
+            if (pendingArt.TryGetValue(id, out var waiting)) { if (!waiting.Contains(image)) waiting.Add(image); return; }
             pendingArt[id] = new List<RawImage> { image };
             Texture2D texture = null;
             try
@@ -207,7 +221,7 @@ namespace LaoDai.BattleSpirits.Presentation
                 byte[] bytes = await Task.Run(() => File.ReadAllBytes(path));
                 if (this == null) return;
                 texture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
-                if (!texture.LoadImage(bytes)) { Destroy(texture); texture = null; return; }
+                if (!texture.LoadImage(bytes, true)) { Destroy(texture); texture = null; return; }
                 texture.name = "BS_Art_" + id;
                 art[id] = texture;
             }
@@ -215,11 +229,33 @@ namespace LaoDai.BattleSpirits.Presentation
             catch (UnauthorizedAccessException) { }
             finally
             {
-                if (pendingArt.TryGetValue(id, out var targets))
-                {
-                    foreach (var target in targets) if (target != null) target.texture = texture;
-                    pendingArt.Remove(id);
-                }
+                ApplyArtToTargets(id, texture);
+            }
+        }
+
+        private void ApplyArtToTargets(string id, Texture2D texture)
+        {
+            if (!pendingArt.TryGetValue(id, out var targets)) return;
+            foreach (var target in targets)
+                if (target != null && requestedArt.TryGetValue(target, out var requested) && requested == id)
+                    target.texture = texture;
+            pendingArt.Remove(id);
+        }
+
+        private void PruneArtCache()
+        {
+            foreach (var target in requestedArt.Keys.Where(target => target == null).ToArray())
+                requestedArt.Remove(target);
+            if (art.Count <= ArtCacheLimit) return;
+            var visible = new HashSet<string>(requestedArt.Where(pair => pair.Key != null
+                && pair.Key.gameObject.activeInHierarchy).Select(pair => pair.Value), StringComparer.Ordinal);
+            foreach (var id in art.Keys.Where(id => !visible.Contains(id))
+                .OrderBy(id => artLastUsed.TryGetValue(id, out var used) ? used : 0).ToArray())
+            {
+                if (art.Count <= ArtCacheLimit) break;
+                Destroy(art[id]);
+                art.Remove(id);
+                artLastUsed.Remove(id);
             }
         }
 
@@ -369,6 +405,7 @@ namespace LaoDai.BattleSpirits.Presentation
             var note = BattleUiTheme.Text(left, "ConnectionNote", "Máy khác dùng IP LAN của người tạo phòng. Chơi Internet cần địa chỉ máy chủ truy cập được từ Internet.", 18);
             Place(note.rectTransform, 0.06f, 0.04f, 0.94f, 0.22f);
             lobbyText = BattleUiTheme.Text(root, "LobbyPlayers", "Chưa vào phòng.", 26);
+            lobbyText.richText = false;
             Place(lobbyText.rectTransform, 0.51f, 0.59f, 0.96f, 0.86f);
             readyButton = BattleUiTheme.Button(root, "SẴN SÀNG", () => SendNetwork(new WireMessage { type = "ready", ready = !lobby.Any(player => player.playerIndex == seat && player.ready) }));
             Place(readyButton.transform as RectTransform, 0.51f, 0.49f, 0.72f, 0.57f);
@@ -376,6 +413,7 @@ namespace LaoDai.BattleSpirits.Presentation
             Place(startButton.transform as RectTransform, 0.75f, 0.49f, 0.96f, 0.57f);
             readyButton.interactable = startButton.interactable = false;
             chatText = BattleUiTheme.Text(root, "Chat", string.Empty, 19);
+            chatText.richText = false;
             Place(chatText.rectTransform, 0.51f, 0.24f, 0.96f, 0.46f);
             var input = BattleUiTheme.Input(root, "Tin nhắn", string.Empty);
             input.characterLimit = 300;
@@ -429,7 +467,13 @@ namespace LaoDai.BattleSpirits.Presentation
                     chat.Add(message.name + ": " + message.text); if (chat.Count > 8) chat.RemoveAt(0);
                     if (chatText != null) chatText.text = string.Join("\n", chat);
                     break;
-                case "error": case "disconnected": SetStatus(message.text); break;
+                case "error": SetStatus(message.text); break;
+                case "disconnected":
+                    if (readyButton != null) readyButton.interactable = false;
+                    if (startButton != null) startButton.interactable = false;
+                    board?.SetDisconnected();
+                    SetStatus(message.text);
+                    break;
             }
         }
 
@@ -495,7 +539,8 @@ namespace LaoDai.BattleSpirits.Presentation
                 var match = BattleMatch.Create(database.cards, replay.decks[0].cards, replay.decks[1].cards, replay.seed);
                 for (int p = 0; p < 2; p++) match.State.Players[p].Name = replay.names[p];
                 for (int i = 0; i < replayStep; i++) if (!BattleCommandDispatcher.TryExecute(match, replay.actions[i].actor, replay.actions[i].command, out string error)) throw new InvalidDataException(error);
-                board.Render(ViewFactory.Create(match, match.DecisionPlayerIndex), false);
+                pendingLocalView = ViewFactory.Create(match, match.DecisionPlayerIndex);
+                board.Render(pendingLocalView, false);
                 SetStatus("Xem lại thao tác " + replayStep + " / " + replay.actions.Count);
             }
             catch (Exception error) { SetStatus(error.Message); }
@@ -505,7 +550,7 @@ namespace LaoDai.BattleSpirits.Presentation
         {
             var root = OpenSurface("BATTLE SPIRITS — LUẬT ETERNAL");
             var scroll = BattleUiTheme.Scroll(root, "Rules", out var content); Place(scroll.transform as RectTransform, 0.1f, 0.15f, 0.9f, 0.87f);
-            var text = BattleUiTheme.Text(content, "RuleText", "Mỗi bộ bài có ít nhất 40 lá, tối đa 3 lá cùng tên (và tuân theo danh sách giới hạn).\n\nBắt đầu với 5 Life, 3 core thường và 1 Soul Core ở Reserve, rút 4 lá. Mỗi người được đổi toàn bộ bài mở đầu một lần.\n\nLượt Eternal: Start → Core → Draw → Refresh → Main → Attack → End. Người đi trước bỏ qua Core và Attack ở lượt đầu nhưng vẫn Draw.\n\nTrong Main, trả Cost sau khi giảm theo symbol cùng màu và đặt đủ core duy trì Lv1. Chuyển core để thay đổi Level/BP; Spirit không đủ core Lv1 sẽ tiêu biến.\n\nTấn công làm Spirit mệt. Bên phòng thủ có quyền Flash trước. Sau hai lần bỏ qua, chọn chặn hoặc nhận sát thương Life. Nếu chặn, có cửa sổ Flash thứ hai trước khi so BP; BP bằng nhau thì cả hai bị phá hủy.\n\nMất Life theo Symbol; core Life bị mất chuyển về Reserve. Life về 0 thì thua. Hết Deck được kiểm tra ở Start Step.\n\nBản này có bộ luyện tập gồm Spirit không hiệu ứng. Các thẻ mới vẫn có ảnh, chỉ số và văn bản gốc để tra cứu; chỉ thẻ được ghi Đã hỗ trợ mới dùng được trong trận tự động.\n\nLuật gốc: battlespirits.com/rule/official-rule-manual-eternal/", 25);
+            var text = BattleUiTheme.Text(content, "RuleText", "Mỗi bộ bài có ít nhất 40 lá; mặc định tối đa 3 lá cùng tên, trừ ngoại lệ đã xác minh và danh sách giới hạn.\n\nBắt đầu với 5 Life, 3 core thường và 1 Soul Core ở Reserve, rút 4 lá. Mỗi người được đổi toàn bộ bài mở đầu một lần.\n\nLượt Eternal: Start → Core → Draw → Refresh → Main → Attack → End. Người đi trước bỏ qua Core và Attack ở lượt đầu nhưng vẫn Draw.\n\nTrong Main, trả Cost sau khi giảm theo symbol cùng màu và đặt đủ core duy trì Lv1. Chuyển core để thay đổi Level/BP; Spirit không đủ core Lv1 sẽ tiêu biến.\n\nTấn công làm Spirit mệt. Bên phòng thủ có quyền Flash trước. Sau hai lần bỏ qua, chọn chặn hoặc nhận sát thương Life. Nếu chặn, có cửa sổ Flash thứ hai trước khi so BP; BP bằng nhau thì cả hai bị phá hủy.\n\nMất Life theo Symbol; core Life bị mất chuyển về Reserve. Life về 0 thì thua. Hết Deck được kiểm tra ở Start Step.\n\nBản này có bộ luyện tập gồm Spirit không hiệu ứng. Các thẻ mới vẫn có ảnh, chỉ số và văn bản gốc để tra cứu; chỉ thẻ được ghi Đã hỗ trợ mới dùng được trong trận tự động.\n\nLuật gốc: battlespirits.com/rule/official-rule-manual-eternal/", 25);
             var layout = text.gameObject.AddComponent<LayoutElement>(); layout.preferredHeight = 1300;
         }
     }

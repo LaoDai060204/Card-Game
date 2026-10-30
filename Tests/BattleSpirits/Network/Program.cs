@@ -143,7 +143,7 @@ internal static class Entry
 
     public static async Task<int> Main(string[] args)
     {
-        string fixture = args.Length > 0 ? args[0] : "Tests/BattleSpirits/Network/Fixtures/vanilla-cards.json";
+        string fixture = args.Length > 0 ? args[0] : "Data/BattleSpirits/cards.json";
         cards = JsonConvert.DeserializeObject<CardsDatabase>(File.ReadAllText(fixture)).cards;
         hash = CatalogFingerprint.Compute(cards);
         decks = StarterDecks.CreatePair(cards).Select(deck => deck.cards).ToArray();
@@ -163,6 +163,15 @@ internal static class Entry
             await ExpectError(a, new WireMessage { type = "deck", deck = new[] { "missing-card" } }, b);
             await ExpectError(a, new WireMessage { type = "action", action = "endTurn" }, b);
             Pass("Server rejects invalid decks and actions outside a match");
+            var unsupported = cards.FirstOrDefault(card => !card.IsPlayable && card.IsEternalEligible);
+            if (unsupported != null)
+            {
+                var unsupportedDeck = (string[])decks[0].Clone();
+                unsupportedDeck[0] = unsupported.id;
+                await ExpectError(a, new WireMessage { type = "deck", deck = unsupportedDeck }, b);
+                Require(a.Lobby[0].deckCount == 0, "Rejected ability card changed the selected deck.");
+                Pass("The mixed official catalog rejects browse-only ability cards on the server");
+            }
             int chats = b.Count("chat");
             await a.Client.SendAsync(new WireMessage { type = "chat", text = "Chào bạn, đấu Battle Spirits nhé!" });
             await Until(() => b.Count("chat") > chats, a, b);
@@ -250,7 +259,14 @@ internal static class Entry
             Pass("Overlong protocol line closes its connection");
             server.Stop();
         }
+        await ClientBackpressureRegression.Run(cards);
+        Pass("A fresh connection recovers from previous receive backpressure without stale callbacks");
+        string runtimeFramework = typeof(BattleLanServer).Assembly
+            .GetCustomAttributes(typeof(System.Runtime.Versioning.TargetFrameworkAttribute), false)
+            .Cast<System.Runtime.Versioning.TargetFrameworkAttribute>().Single().FrameworkName;
+        Require(runtimeFramework == ".NETStandard,Version=v2.1", "Production runtime was not compiled against .NET Standard 2.1.");
         Console.WriteLine(JsonConvert.SerializeObject(new { status = "PASS", scenarios, networkActions, actualTcp = true,
+            catalogCards = cards.Length, runtimeFramework,
             unityPlayTested = false, windowsLanTested = false, scope = "Production code on Linux loopback; no Unity or Internet deployment" }));
         return 0;
     }

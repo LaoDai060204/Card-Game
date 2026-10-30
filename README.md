@@ -1,114 +1,85 @@
-# LaoDai Card Game
+# LaoDai Battle Spirits — Eternal
 
-Bản tùy biến tiếng Việt do **LaoDai060204** duy trì, phát triển từ [MDPro3 của Sherry Chaos](https://code.moenext.com/sherry_chaos/MDPro3). Dự án mô phỏng đấu bài Yu-Gi-Oh! bằng Unity, có chơi với máy, tạo phòng LAN, kết nối máy chủ và tích hợp MyCard.
+Nhánh chuyển đổi từ Card-Game/MDPro3 sang **Battle Spirits Nhật, thể thức Eternal**, giữ Unity **6000.0.24f1** và giao diện tiếng Việt. Menu chính, hình nền, font và tài nguyên ngoại hình của template được dùng lại; dữ liệu thẻ, bộ bài, luật và giao thức trận đấu dùng hệ thống Battle Spirits riêng.
 
-Giao diện có ngôn ngữ **Tiếng Việt**. Tên lá bài và mô tả hiệu ứng dùng dữ liệu tiếng Anh khi chưa có cơ sở dữ liệu tiếng Việt. Tên nhân vật, bộ bài, dịch vụ và tác giả có thể giữ nguyên tên riêng.
+**Phạm vi bản này:** có tra cứu thẻ, xây/lưu bộ bài, hai người chơi chung máy, tạo/tham gia phòng TCP qua LAN hoặc địa chỉ Internet và lịch sử trận cục bộ. Engine hiện hỗ trợ **16 Spirit không hiệu ứng** để chơi trọn một trận bằng hai bộ luyện tập 40 lá. **240 thẻ mới còn lại hiện chỉ để tra cứu**; việc tải được tên, ảnh và mô tả không có nghĩa hiệu ứng đã được lập trình. Chưa có AI hoặc toàn bộ khả năng của Eternal.
 
-Khi mở bản này lần đầu, giao diện tự chuyển sang tiếng Việt một lần; các lựa chọn ngôn ngữ bạn đổi sau đó được giữ lại. Bảng tin MyCard tiếng Trung được ẩn khi chọn tiếng Việt vì nguồn tin này chưa có bản dịch tiếng Việt. Lời thoại AI và tên vật phẩm dùng dữ liệu tiếng Anh hiện có.
+Bản Yu-Gi-Oh đang chạy được vẫn ở nhánh `main`. Bản này ở `battle-spirits-mdpro3-ui`.
 
-Các công cụ Unity Editor, thông báo chẩn đoán và tên AI/lời nhắc còn tiếng Trung trong Puzzle đã được bổ sung tiếng Anh. Mục lịch sử cập nhật có tài nguyên tiếng Anh riêng; bảng tin ở giao diện tiếng Anh dùng nguồn tin tiếng Anh nếu có. Xem [chi tiết bản dịch và kiểm tra](Tools/Translations/ENGLISH_CLEANUP.md).
+## Mở và kiểm tra
 
-## Mở dự án trên Windows
-
-1. Cài Git for Windows và Unity Hub.
-2. Cài **Unity Editor 6000.0.24f1**, đúng phiên bản trong `ProjectSettings/ProjectVersion.txt`.
-3. Tải mã nguồn:
-
-   ```bash
-   git clone https://github.com/LaoDai060204/Card-Game.git
-   ```
-
-4. Trong Unity Hub, chọn **Add project from disk** và mở thư mục `Card-Game` chứa `Assets`, `Packages`, `ProjectSettings`.
-5. Giữ kết nối Internet để Unity tải các package. Chờ import hoàn tất.
-6. Trong **File → Build Profiles**, chọn nền tảng **Windows**.
-7. Mở `Assets/Scenes/Boot.unity`, rồi nhấn **Play**.
-
-Nếu cần chạy Addressables trực tiếp từ mã nguồn, mở **Window → Asset Management → Addressables → Groups** và chọn **Play Mode Script → Use Asset Database**.
-
-Các thư mục tài nguyên Windows đã được bổ sung vào kho:
-
-- `Platforms/StandaloneWindows64`
-- `Picture/Art`, `Picture/Closeup`, `Picture/DIY`
-- `Sound`
-- `Puzzle` và `Data/cards_Lite.json`
-
-Giữ các thư mục này cùng cấp với `Assets`, `Data`, `Packages`, `ProjectSettings`. Windows Editor đọc chúng từ thư mục gốc dự án. Các nền tảng Android, Linux, macOS, iOS và Switch chưa được bổ sung tài nguyên trong bản này.
-
-Để xuất ứng dụng Windows với cấu hình IL2CPP hiện tại, cài thêm **Windows Build Support (IL2CPP)** cho đúng bản Unity và bộ công cụ C++ cùng Windows SDK của Visual Studio. Kho này không kèm một bản `.exe` đã được kiểm thử.
-
-## Màn chơi Puzzle
-
-Thư mục `Puzzle` có **104 tệp màn chơi gốc**, được kiểm tra với commit `3a7423e6b389c413cc64b157dc213ab67b2ae551` của [mdpro3-other](https://code.moenext.com/mycard/mdpro3-other):
-
-- 55 tệp ở thư mục gốc, gồm các thử thách WCS.
-- 40 tệp trong `CardEffect`, 6 trong `FinalAttack`, 3 trong `SpecialWin`.
-
-Đặt `Puzzle` cùng cấp với `Assets`, mở scene **Boot**, Play rồi vào mục **Puzzle / Thử thách giải thế cờ**. Không đặt các tệp này trong `Assets` hoặc `StreamingAssets`.
-
-Trong bộ dữ liệu đi kèm, 99 màn có đủ các ID thẻ được tham chiếu trực tiếp. **5 màn WCS cũ cần 6 ID thẻ phiên bản cũ chưa được cung cấp**; game sẽ báo ID thiếu khi mở các màn đó. Tệp gốc được giữ nguyên, không đổi sang ID của lá bài có hiệu ứng khác. Nếu bạn bổ sung gói mở rộng tương thích, việc kiểm tra sẽ dùng dữ liệu thẻ đang được game nạp.
-
-Chi tiết nguồn, các màn thiếu phụ thuộc và các kiểm tra có thể chạy lại nằm trong [Tools/RuntimeData](Tools/RuntimeData/README.md). Kiểm tra ID và cú pháp Lua không chứng minh tất cả màn đã chơi hoặc giải thành công trong Unity.
-
-`Data/cards_Lite.json` chứa ánh xạ CID/YDK gọn, đã gộp `cards_Alt.json`. File này giúp bản clone mới mở vật phẩm/đồng hành mà không cần tự tải `cards.json`. Bộ nạp có xử lý tệp thiếu, tệp hỏng và lỗi ghi cache.
-
-## Chơi với người khác
-
-- **Single Duel**: đấu 1v1 một trận.
-- **Match**: đấu 1v1 theo loạt trận.
-- **Tag**: đấu đội 2v2, tổng cộng bốn người.
-- Có thể tạo phòng tại máy mình, tham gia bằng IP/cổng, hoặc sử dụng các chức năng MyCard.
-
-Để thử trong cùng mạng LAN, một máy tạo phòng ở mục tạo máy chủ; máy còn lại nhập IP nội bộ và cổng của máy đó trong mục kết nối. Mã hiện tại bắt đầu tìm cổng ở `7911` và chọn cổng trống tiếp theo nếu cổng này đã được dùng. Windows Firewall cần cho phép kết nối đến ứng dụng tạo phòng. Kết nối qua Internet còn phụ thuộc cấu hình mạng của máy chủ. Chức năng chơi mạng chưa được kiểm thử thực tế trong môi trường này.
-
-## Khởi động trận đấu với AI
-
-WindBot dùng ngôn ngữ **dữ liệu thẻ**, nên giao diện tiếng Việt vẫn đọc `Data/locales/en-US/cards.cdb`. Không cần tạo hoặc sao chép một CDB vào `vi-VN`. Thư mục `Expansions` có thể chưa tồn tại nếu bạn chưa cài gói mở rộng.
-
-Bản sửa khởi động Solo đã bỏ lệnh chờ bàn phím/thoát process khi thiếu CDB. Lỗi AI sẽ được ghi vào Console và hiện thông báo, thay vì gọi `Console.ReadKey()` trong Unity. PLAY lặp khi máy chủ đang khởi tạo/kết thúc sẽ được chặn; thao tác dừng máy chủ chạy ở luồng nền để tránh chặn luồng giao diện.
-
-Nếu bản cũ đã treo ở `Can't find cards database file` / `Press any key to quit...`, đóng Editor đang treo, cập nhật mã rồi mở lại bằng Unity **6000.0.24f1**. Xem [kiểm tra khởi động Solo](Tools/RuntimeData/SOLO_STARTUP.md) để biết các kiểm tra đã chạy và giới hạn còn lại.
-
-## Cập nhật và giữ bản cũ
-
-Trước mỗi đợt chỉnh sửa, lưu các thay đổi cần giữ vào Git, tạo một nhánh backup và push nhánh đó lên GitHub. Bản trước đợt Việt hóa này được lưu tại:
-
-[`backup/2026-10-25-before-vietnamese-ui`](https://github.com/LaoDai060204/Card-Game/tree/backup/2026-10-25-before-vietnamese-ui)
-
-Nhánh backup lưu các tệp đã được commit. Cấu hình cá nhân, bộ bài tự tạo và một số thư mục runtime có thể nằm trong `.gitignore`, nên cần sao lưu riêng nếu chưa được Git theo dõi. Đóng Unity trước khi chuyển nhánh.
-
-Để cập nhật bản tùy biến, dùng các thay đổi trong kho `LaoDai060204/Card-Game`. Các gói phát hành MDPro3 gốc thuộc dự án nền; chép trực tiếp chúng vào đây có thể ghi đè phần tùy biến.
-
-## Nguồn gốc và ghi công
-
-Mã nền được nhập từ nhánh `master` của [MDPro3](https://code.moenext.com/sherry_chaos/MDPro3), tại commit `e177cd8d53092ae9249e37b38d3cef0040e41095`. Đây là bản nhập nội dung mã nguồn; lịch sử Git và các nhánh khác của kho gốc không được chuyển đầy đủ.
-
-| Thư mục | Nguồn |
-| --- | --- |
-| `Platforms/StandaloneWindows64` | [mdpro3-assetbundles](https://code.mycard.moe/sherry_chaos/mdpro3-assetbundles) |
-| `Picture/Art` | [hd-arts](https://code.mycard.moe/mycard/hd-arts) |
-| `Picture/Closeup` | [ygopro2-closeup](https://code.mycard.moe/mycard/ygopro2-closeup) |
-| `Picture/DIY` | Dữ liệu phát hành chính thức qua [mdpro3-other](https://code.moenext.com/mycard/mdpro3-other) |
-| `Sound` | Gói MyCard chính thức `mdpro3-sound`, phiên bản `ea4ad1eb`; liên kết kho được README gốc nêu trả về 404 khi nhập dữ liệu |
-
-Các tài nguyên Master Duel, Cross Duel và Duel Links cùng tên gọi Yu-Gi-Oh! thuộc các chủ sở hữu tương ứng. Xem [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) và mục **Giới thiệu trò chơi** để biết thêm về các tác giả, cộng tác viên và thông báo đi kèm.
-
-## Công cụ phát triển
-
-Chỉnh cột `vi-VN` trong `Tools/Translations/translations.csv`, rồi xuất và kiểm tra bản dịch bằng Python 3:
+Đóng Unity trước khi chuyển nhánh. Lưu các chỉnh sửa cục bộ cần giữ; nếu Git báo file bị thay đổi, cất chúng bằng commit hoặc stash trước khi chuyển.
 
 ```bash
-python Tools/Translations/validate_vietnamese.py --write
+git fetch origin
+git switch battle-spirits-mdpro3-ui
+git pull --ff-only origin battle-spirits-mdpro3-ui
 ```
 
-Chạy cùng lệnh không có `--write` để chỉ kiểm tra. Công cụ kiểm tra khóa dịch giao diện, placeholder, ID thông báo trận đấu, cấu hình AI và liên kết Addressables của phần giới thiệu. Đây là kiểm tra dữ liệu; vẫn cần mở Unity để kiểm tra hiển thị và chạy game.
+1. Mở thư mục dự án bằng **Unity 6000.0.24f1**, chọn Windows.
+2. Giữ `Data`, `Picture`, `Platforms` và `Sound` cùng cấp với `Assets` như bản template.
+3. Trong Addressables Groups, chọn **Play Mode Script → Use Asset Database** nếu đang chạy trực tiếp từ mã nguồn.
+4. Mở `Assets/Scenes/Boot.unity`, nhấn Play.
+5. Vào **Bộ bài** để tra cứu, hoặc **Chơi cùng máy** để dùng hai bộ luyện tập có sẵn. Chế độ này có màn che khi chuyển người điều khiển.
 
-Tệp cấu hình URP đã bỏ riêng mục `UniversalRenderPipelineEditorAssets` không có trong bản Editor 6000.0.24f1. Các thay đổi khác bạn tự thực hiện trên Windows chỉ có trong kho sau khi được commit/push hoặc chuyển sang môi trường này.
+Menu xem pet, ngoại hình và hoạt cảnh vẫn dùng tài nguyên template. Bàn đấu Battle Spirits có trình tải riêng cho field/Mate hiện có. Pet là yếu tố trang trí; ảnh thẻ Battle Spirits không tự tạo ra mô hình 3D chính thức của quái vật.
 
-Registry OpenUPM dùng `https://package.openupm.com`. Các lượt tải tùy chọn có giới hạn thời gian và thông báo URL lỗi đã loại bỏ thông tin đăng nhập/query. Nguồn dịch thẻ phát hành trước `ElderLich/TransSuperpre` hiện đã ngừng cung cấp gói tải; game giữ nguyên thẻ đã cài và bỏ qua kiểm tra nguồn đó. URL tùy chỉnh vẫn được giữ lại, và việc xác minh chứng chỉ HTTPS vẫn được bật.
+## Thẻ mới và bộ bài
 
-- `Tools/Translations`: bảng và công cụ xuất dữ liệu dịch giao diện.
-- `Tools/DumpShaders`: dữ liệu phục vụ thay thế shader khi đóng gói tài nguyên.
-- `Tools/YGO Classes`: mã và công cụ biên dịch các thư viện YGOPro phụ thuộc.
-- QuickBMS: công cụ xử lý dữ liệu ID vật phẩm của Master Duel.
+Đối chiếu nguồn chính thức ngày **30/10/2026**: **256 thẻ và 256 ảnh PNG** đã đóng gói.
 
-Các bản dịch MDPro3 gốc được cộng tác tại [bảng dịch của dự án](https://docs.google.com/spreadsheets/d/1BbSTxgobDqLyHL7De6uFSqfGiK9WIH3no5fQPW2Xwls/edit?usp=sharing). Dữ liệu WindBot gốc liên quan đến [YGOMobile](https://github.com/fallenstardust/YGOMobile-cn-ko-en).
+| Nhóm | Số thẻ | Phát hành | Trạng thái trong bản này |
+| --- | ---: | --- | --- |
+| Bộ luyện tập BS01/BS02 | 16 | Các bộ đầu tiên | Chơi được: Spirit không hiệu ứng |
+| [BS76 — 永皇の輝き](https://www.battlespirits.com/product/booster/booster-76.php) | 123 | 30/05/2026 | Đợt Eternal đã phát hành; hiện tra cứu |
+| [26RBS03 — 絶界の覇者](https://www.battlespirits.com/product/booster/booster-26rbs03.php) | 117 | 17/10/2026 | Đợt Standard mới hơn; hiện tra cứu, không mặc định xem là hợp lệ trong Eternal |
+
+BS77 và 26RBS04 đã được công bố nhưng chưa phát hành vào ngày đối chiếu, nên không được đưa vào nhóm thẻ đã phát hành. Đây là tập các bộ đã nhập, không phải toàn bộ lịch sử thẻ Battle Spirits.
+
+Trong Bộ bài có tìm theo tên/mã/hệ, lọc màu, loại, Cost, BP, bộ phát hành và trạng thái hỗ trợ. Bộ bài lưu riêng tại `Data/BattleSpirits/Decks`, không dùng YDK, Main/Extra/Side hoặc CDB của Yu-Gi-Oh. Eternal cần ít nhất 40 lá; giới hạn số bản theo tên gốc và dữ liệu hạn chế/ngoại lệ đã được xác minh. Những thẻ chưa hỗ trợ không được đưa vào trận tự động.
+
+Tên, thông số và hiệu ứng gốc tiếng Nhật được giữ để đối chiếu. Nguồn, ngày truy cập, checksum HTML/ảnh và phép chuyển WebP→PNG giữ nguyên pixel nằm trong `Data/BattleSpirits/card-sources.json`. Danh sách hạn chế nằm trong `Data/BattleSpirits/banlist.json`.
+
+```bash
+# Kiểm tra dữ liệu và ảnh đã đóng gói; không cần mạng.
+python Tools/BattleSpiritsCards/catalog.py validate
+
+# Đối chiếu nguồn chính thức; chỉ báo thay đổi.
+python Tools/BattleSpiritsCards/catalog.py check
+```
+
+Xem [công cụ cập nhật thẻ](Tools/BattleSpiritsCards/README.md) trước khi nhập đợt mới. Luôn backup trước khi cập nhật. Công cụ không tự đánh dấu hiệu ứng mới là đã được lập trình.
+
+## Chơi LAN và Internet
+
+Trong **Chơi mạng**, một máy tạo phòng ở cổng TCP **7777**; máy khác nhập IPv4 của máy chủ và đúng cổng. Cả hai chọn bộ bài hợp lệ, bấm sẵn sàng; người tạo phòng bắt đầu trận. Khi thử cùng một máy có thể dùng `127.0.0.1`; máy khác phải dùng IP LAN của máy chủ.
+
+Windows Firewall cần cho phép Unity/game nhận kết nối trong mạng riêng. Có thể kiểm tra cổng từ PowerShell trên máy tham gia:
+
+```powershell
+Test-NetConnection 192.168.1.10 -Port 7777
+```
+
+Kết nối Internet dùng cùng giao thức và server, nhưng máy chủ phải có địa chỉ/cổng truy cập được từ ngoài mạng nhà. Bản này hỗ trợ kết nối trực tiếp; không có dịch vụ tài khoản/ghép trận MyCard cho Battle Spirits. Chưa triển khai tự mở cổng router, khôi phục trận sau mất kết nối hoặc dịch vụ xếp hạng.
+
+Có thể chạy server riêng ngoài Unity theo [hướng dẫn server](Tools/BattleSpiritsServer/README.md). Server xác minh phiên bản và fingerprint danh mục; hai máy cần cùng phiên bản dữ liệu. Server chỉ gửi tay bài của chính người nhận cùng trạng thái công khai, không gửi tay bài, thứ tự deck hay seed của đối thủ.
+
+## Luật và kiểm tra
+
+Engine dùng C# thuần, tách khỏi Unity. Các thẻ hiện chơi được hỗ trợ Life, Reserve/Trash, Core/Soul Core, giảm phí, Level/BP, trình tự lượt Eternal, đổi bài đầu, tấn công, hai cửa sổ Flash, chặn, tiêu biến/phá hủy và thắng/thua. Xem [phạm vi triển khai](Documentation/BATTLE_SPIRITS_SCOPE.md).
+
+```bash
+dotnet run --project Tests/BattleSpirits/Core/BattleSpirits.Core.Tests.csproj -c Release -- Data/BattleSpirits/cards.json
+dotnet run --project Tests/BattleSpirits/Network/BattleSpirits.Network.Tests.csproj -c Release
+python -m unittest discover -s Tools/BattleSpiritsCards -p 'test_*.py'
+```
+
+Các lệnh `dotnet` dùng SDK 10 bên ngoài Unity. Mã runtime vẫn nhắm C# 9/.NET Standard 2.1 cho Editor 6000.0.24f1. Xem [kết quả kiểm tra](Documentation/BATTLE_SPIRITS_VALIDATION.md) để phân biệt các bài kiểm tra thực sự đã chạy với Play/render/build trong Unity Windows chưa được xác minh.
+
+## Nguồn và bản cũ
+
+Template: [MDPro3 của Sherry Chaos](https://code.moenext.com/sherry_chaos/MDPro3), được tùy biến bởi LaoDai060204. Ghi nhận nguồn, giấy phép và tài nguyên Master Duel vẫn được giữ trong [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Thông tin bản template trước chuyển đổi nằm tại [MDPRO3_TEMPLATE.md](Documentation/MDPRO3_TEMPLATE.md).
+
+Thẻ và hình Battle Spirits lấy từ [website chính thức BANDAI](https://www.battlespirits.com/cardlist/), không phải artwork tự sáng tác. Tên và quyền đối với các tài nguyên thuộc các chủ sở hữu tương ứng. Đây là dự án cộng đồng độc lập.
+
+Backup trước chuyển đổi: `backup/2026-10-30-before-battle-spirits-conversion`. Snapshot công việc đang làm: `backup/2026-10-30-battle-spirits-conversion-wip`. Không force-push hoặc ghi đè các nhánh backup.

@@ -6,6 +6,7 @@ import struct
 import sys
 import tempfile
 import unittest
+import zlib
 
 sys.dont_write_bytecode = True
 HERE = Path(__file__).resolve().parent
@@ -22,7 +23,7 @@ def product(code, title, year, month, day):
 
 class CatalogTests(unittest.TestCase):
     def test_official_vanilla_fixture(self):
-        card = catalog.parse_detail((HERE / "Fixtures/vanilla-detail.html").read_text(), "BS01-001")
+        card = catalog.parse_detail((HERE / "Fixtures/vanilla-detail.html").read_text(encoding="utf-8-sig"), "BS01-001")
         self.assertEqual("ゴラドン", card["nameJa"])
         self.assertEqual("Spirit", card["type"])
         self.assertEqual(["Red"], card["colors"])
@@ -34,7 +35,7 @@ class CatalogTests(unittest.TestCase):
         self.assertEqual(catalog.HOST + "/images/cardlist/BS01-001.webp", card["imageUrl"])
 
     def test_official_current_ability_fixture(self):
-        card = catalog.parse_detail((HERE / "Fixtures/bs76-x01-detail.html").read_text(), "BS76-X01")
+        card = catalog.parse_detail((HERE / "Fixtures/bs76-x01-detail.html").read_text(encoding="utf-8-sig"), "BS76-X01")
         self.assertEqual("紅蓮の龍星神ジーク・メテオヴルム", card["nameJa"])
         self.assertEqual(6, card["cost"])
         self.assertEqual("X", card["rarity"])
@@ -60,6 +61,13 @@ class CatalogTests(unittest.TestCase):
             catalog.discover(product("BS77", "エターナルブースター", 2026, 11, 21),
                              '<option value="62307">[BS77]カード</option>', "2026-10-30")
 
+    def test_standard_year_prefix_does_not_expire_after_2026(self):
+        source = (product("BS77", "エターナルブースター", 2026, 11, 21)
+                  + product("27RBS01", "新しいブースター", 2027, 4, 17))
+        options = '<option value="1">[BS77]カード</option><option value="2">[27RBS01]カード</option>'
+        selected, _ = catalog.discover(source, options, "2027-05-01")
+        self.assertEqual(["BS77", "27RBS01"], [p["setId"] for p in selected])
+
     def test_list_deduplicates_alt_art_and_prefers_original_variant(self):
         source = '''<li class="cardCol"><a data-src="./detail_iframe.php?card_no=BS76-X01&amp;card_no2=BS76-X01_Secret"></a></li>
 <li class="cardCol"><a data-src="./detail_iframe.php?card_no=BS76-X01&amp;card_no2=BS76-X01"></a></li>'''
@@ -83,6 +91,13 @@ class CatalogTests(unittest.TestCase):
     def test_line_breaks_in_effect_text_are_preserved(self):
         root = catalog.Document('<dd>【Lv1】<br>『このスピリットの召喚時』<br/>カードを1枚引く。</dd>').root
         self.assertEqual("【Lv1】\n『このスピリットの召喚時』\nカードを1枚引く。", root.first("dd").text(multiline=True))
+
+    def test_update_report_includes_colors_families_and_removed_back_faces(self):
+        original = {"nameJa": "同じ名前", "colors": ["Red"], "families": ["古竜"], "faces": [{"nameJa": "裏面"}]}
+        changed = {"nameJa": "同じ名前", "colors": ["White"], "families": ["機人"]}
+        report = catalog.observed_changes(original, changed)
+        self.assertEqual({"colors", "families", "faces"}, set(report))
+        self.assertIsNone(report["faces"]["official"])
 
     def test_limits_are_read_only_from_restriction_sections(self):
         source = '''<span class="cardNum">NAVIGATION-NOT-A-CARD</span>
@@ -110,6 +125,43 @@ class CatalogTests(unittest.TestCase):
         for bad in (b"HTML error", b"\x89PNG\r\n\x1a\n"):
             with self.assertRaises(ValueError):
                 catalog.png_info(bad)
+
+    def test_complete_png_crc_pixels_and_truncation(self):
+        def chunk(kind, data):
+            return struct.pack(">I", len(data)) + kind + data + struct.pack(">I", zlib.crc32(kind + data) & 0xffffffff)
+        png = (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", 1, 1, 8, 6, 0, 0, 0))
+               + chunk(b"IDAT", zlib.compress(b"\0\xff\x80\0\xff")) + chunk(b"IEND", b""))
+        self.assertEqual((1, 1), catalog.validate_png(png))
+        for bad in (png[:-1], png + b"junk", png[:29] + b"\0\0\0\0" + png[33:]):
+            with self.assertRaises(ValueError):
+                catalog.validate_png(bad)
+        bad_filter = (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", 1, 1, 8, 6, 0, 0, 0))
+                      + chunk(b"IDAT", zlib.compress(b"\x05\xff\x80\0\xff")) + chunk(b"IEND", b""))
+        with self.assertRaises(ValueError):
+            catalog.validate_png(bad_filter)
+
+    def test_failed_publication_restores_existing_and_removes_new_files(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            destination, staged = root / "project", root / "staged"
+            destination.mkdir(); staged.mkdir()
+            (destination / "existing.json").write_bytes(b"original metadata")
+            (staged / "existing.json").write_bytes(b"new metadata")
+            (staged / "new.png").write_bytes(b"new image")
+            with self.assertRaises(FileNotFoundError):
+                catalog.publish_import(destination, staged,
+                                       [Path("existing.json"), Path("new.png"), Path("missing.json")])
+            self.assertEqual(b"original metadata", (destination / "existing.json").read_bytes())
+            self.assertFalse((destination / "new.png").exists())
+
+    def test_successful_publication_installs_the_validated_files(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            destination, staged = root / "project", root / "staged"
+            destination.mkdir(); staged.mkdir()
+            (staged / "catalog.json").write_bytes(b"validated metadata")
+            catalog.publish_import(destination, staged, [Path("catalog.json")])
+            self.assertEqual(b"validated metadata", (destination / "catalog.json").read_bytes())
 
 
 if __name__ == "__main__":
