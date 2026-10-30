@@ -66,12 +66,16 @@ namespace LaoDai.BattleSpirits.Presentation
                 Capture(MDPro3.Program.instance.ui_.transform);
         }
 
-        private static RectTransform Rect(Transform parent, string name)
+        internal static RectTransform Rect(Transform parent, string name, params Type[] components)
         {
             var go = new GameObject(name, typeof(RectTransform));
+            // Parenting does not inherit a GameObject's layer. Camera_UI excludes
+            // Default, so every runtime widget must use its UI parent's layer.
+            go.layer = parent.gameObject.layer;
             var rect = go.GetComponent<RectTransform>();
             rect.SetParent(parent, false);
             rect.localScale = Vector3.one;
+            foreach (var component in components) go.AddComponent(component);
             return rect;
         }
 

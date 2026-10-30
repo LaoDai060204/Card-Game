@@ -8,7 +8,7 @@ Ngày 30/10/2026; Unity mục tiêu **6000.0.24f1**, Windows x64. Nhánh `battle
 | Kiểm tra độc lập engine | 100 trận, 8.324 trạng thái và 74.916 thao tác thử |
 | TCP với danh mục 256 thẻ | 16 tình huống, 47 thao tác; có một trận hoàn chỉnh giữa hai client |
 | Server console thật | 5 tình huống: hai client, trạng thái mở đầu, nhận thua, dừng bằng Ctrl+C |
-| Luồng trình bày | 21 tình huống với mã production và Unity stand-in; có deck, hotseat, replay cục bộ, ảnh tải muộn, cache, vòng đời field/pet, chat và xử lý phím Esc |
+| Luồng trình bày | 26 tình huống với mã production và Unity stand-in; có deck, hotseat, replay cục bộ, ảnh tải muộn, cache, vòng đời field/pet, chat, xử lý phím Esc và layer/camera UI |
 | Công cụ dữ liệu | 18 tình huống parser; 256 bản ghi/ảnh và metadata nguồn được kiểm tra |
 | Ảnh thẻ | 256 PNG khớp pixel với 256 WebP nguồn trong cache; import thử tái tạo đúng các bản ghi và byte ảnh |
 | Dự án/asset | 23 GUID mới duy nhất, 6 source project tham chiếu bằng đường dẫn tương đối |
@@ -22,6 +22,10 @@ Harness trình bày biên dịch sáu class presentation, MainMenuUI và các cl
 Các lỗi đã sửa khi tích hợp: nguồn sprite Addressables bị nhả sớm; ảnh cũ tải xong ghi đè lựa chọn mới; cache ảnh không giới hạn; board/tween chưa được dọn khi đổi màn; UI camera chưa được kế thừa; thao tác còn bật sau mất kết nối; hàng đợi kết nối cũ làm hỏng kết nối mới; hướng pet khi xem replay.
 
 Sau khi người dùng thử Play, đã sửa thêm lỗi `InvalidOperationException` tại `BattleSpiritsApp.Update`: cấu hình dự án dùng Input System (`activeInputHandler: 1`), nhưng phím Esc còn đọc qua `UnityEngine.Input` cũ. Mã hiện dùng `Keyboard.current.escapeKey.wasPressedThisFrame`, có kiểm tra bàn phím null. Harness đã đổi API Input cũ từ trả false sang ném lỗi để tái hiện cấu hình thực tế: source cũ thất bại, source sửa vượt qua 21 tình huống. Ba tình huống bổ sung kiểm tra không có bàn phím, chưa nhấn Esc và nhấn Esc để đóng overlay/trả quyền nhập liệu; có gọi Update lại khi overlay đã đóng. Đây là kiểm tra luồng bằng stand-in, chưa phải kiểm tra thiết bị nhập liệu trong Unity thật.
+
+Đã sửa lỗi bấm Chơi cùng máy/Chơi mạng/Bộ bài chỉ còn hình nền: `Camera_UI` trong `Main.unity` có culling mask `1073741856` (layer 5 và 30), còn các GameObject UI tạo bằng code mặc định ở layer 0. Unity không tự kế thừa layer khi gọi `SetParent`. Toàn bộ UI Battle Spirits hiện lấy layer từ UI cha ngay lúc tạo, gồm overlay, chữ, nút, ảnh thẻ, danh sách được tạo lại và hình trang trí tải bất đồng bộ. Canvas con giữ camera, sorting layer và additional shader channels của Canvas gốc. Sân/pet 3D tiếp tục dùng camera riêng ở layer 31.
+
+Harness hiện đọc layer, camera mask và thiết lập Canvas trực tiếp từ `Main.unity`. Năm tình huống bổ sung kiểm tra các màn từ menu, trang trí tải muộn, đổi trang bộ bài và ảnh bàn đấu; cả 26 tình huống đạt. Chạy source trước sửa (`0a32535e`) với harness mới thất bại đúng ở overlay layer 0 bị camera loại bỏ. Kiểm tra này đối chiếu cấu hình và luồng tạo đối tượng, chưa xác nhận render bằng Unity Editor thật.
 
 ## Chạy lại
 

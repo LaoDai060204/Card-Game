@@ -27,7 +27,8 @@ namespace UnityEngine {
  public class RenderTexture:Texture{public bool released,created;public FilterMode filterMode;public int antiAliasing;public RenderTexture(int a,int b,int c,RenderTextureFormat d){}public void Create()=>created=true;public void Release()=>released=true;}
  public class Camera:Behaviour{public float fieldOfView,nearClipPlane,farClipPlane;public int cullingMask;public CameraClearFlags clearFlags;public Color backgroundColor;public bool allowHDR,allowMSAA;public RenderTexture targetTexture;}
  public class Light:Behaviour{public LightType type;public Color color;public float intensity;public LightShadows shadows;public int cullingMask;}
- public class Canvas:Behaviour{public bool overrideSorting;public int sortingOrder;public Camera worldCamera;}
+ [Flags] public enum AdditionalCanvasShaderChannels{None=0,TexCoord1=1,TexCoord2=2,TexCoord3=4,Normal=8,Tangent=16}
+ public class Canvas:Behaviour{public bool overrideSorting;public int sortingOrder,sortingLayerID;public Camera worldCamera;public AdditionalCanvasShaderChannels additionalShaderChannels;}
  public class RectOffset{public RectOffset(int l,int r,int t,int b){}}
  public enum TextAnchor{UpperLeft,UpperCenter}public enum KeyCode{Escape}public static class Input{public static bool GetKeyDown(KeyCode key)=>throw new InvalidOperationException("Legacy Input is disabled: activeInputHandler is Input System package.");}
  public static class Mathf{public static float Abs(float f)=>Math.Abs(f);public static float Max(float a,float b)=>Math.Max(a,b);}

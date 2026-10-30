@@ -136,12 +136,12 @@ namespace LaoDai.BattleSpirits.Presentation
             {
                 var canvas = MDPro3.Program.instance.ui_.GetComponentInParent<Canvas>();
                 if (canvas == null) throw new InvalidOperationException("Không tìm thấy Canvas MDPro3.");
-                var go = new GameObject("BattleSpirits_Overlay", typeof(RectTransform), typeof(Canvas), typeof(GraphicRaycaster));
-                overlay = go.GetComponent<RectTransform>();
-                overlay.SetParent(canvas.transform, false);
+                overlay = BattleUiTheme.Rect(canvas.transform, "BattleSpirits_Overlay", typeof(Canvas), typeof(GraphicRaycaster));
                 BattleUiTheme.Stretch(overlay);
-                var ownCanvas = go.GetComponent<Canvas>();
+                var ownCanvas = overlay.GetComponent<Canvas>();
                 ownCanvas.worldCamera = canvas.worldCamera;
+                ownCanvas.additionalShaderChannels = canvas.additionalShaderChannels;
+                ownCanvas.sortingLayerID = canvas.sortingLayerID;
                 ownCanvas.overrideSorting = true;
                 ownCanvas.sortingOrder = 40;
             }

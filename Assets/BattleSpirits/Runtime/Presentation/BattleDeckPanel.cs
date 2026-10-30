@@ -62,11 +62,9 @@ namespace LaoDai.BattleSpirits.Presentation
         {
             _ = BattleTemplateVisuals.CopyDeckFrameAsync(root);
             var left = BattleUiTheme.Panel(root, "BS_CardDetail", new Vector2(0.012f, 0.13f), new Vector2(0.285f, 0.9f), new Color(0.01f, 0.025f, 0.045f, 0.78f));
-            var previewFrame = new GameObject("CardArtFrame", typeof(RectTransform)).GetComponent<RectTransform>();
-            previewFrame.SetParent(left, false);
+            var previewFrame = BattleUiTheme.Rect(left, "CardArtFrame");
             BattleSpiritsApp.Place(previewFrame, 0.1f, 0.49f, 0.9f, 0.97f);
-            var image = new GameObject("CardArt", typeof(RectTransform), typeof(RawImage), typeof(AspectRatioFitter));
-            image.transform.SetParent(previewFrame, false);
+            var image = BattleUiTheme.Rect(previewFrame, "CardArt", typeof(RawImage), typeof(AspectRatioFitter));
             preview = image.GetComponent<RawImage>(); preview.color = Color.white; preview.raycastTarget = false;
             var aspect = image.GetComponent<AspectRatioFitter>(); aspect.aspectMode = AspectRatioFitter.AspectMode.FitInParent; aspect.aspectRatio = 0.715f;
             var detailsScroll = BattleUiTheme.Scroll(left, "CardDescription", out var details);
@@ -102,8 +100,7 @@ namespace LaoDai.BattleSpirits.Presentation
 
             var collection = BattleUiTheme.Panel(root, "BS_CardCollection", new Vector2(0.30f, 0.35f), new Vector2(0.98f, 0.69f), new Color(0.01f, 0.035f, 0.055f, 0.7f));
             var scroll = BattleUiTheme.Scroll(collection, "CardGrid", out var gridContent);
-            grid = new GameObject("Grid", typeof(RectTransform)).GetComponent<RectTransform>();
-            grid.SetParent(gridContent, false);
+            grid = BattleUiTheme.Rect(gridContent, "Grid");
             grid.anchorMin = new Vector2(0, 1); grid.anchorMax = Vector2.one;
             grid.pivot = new Vector2(0.5f, 1); grid.sizeDelta = Vector2.zero;
             var gridLayout = grid.gameObject.AddComponent<GridLayoutGroup>();
@@ -166,7 +163,7 @@ namespace LaoDai.BattleSpirits.Presentation
             foreach (var card in all.Skip(page * PageSize).Take(PageSize))
             {
                 var button = BattleUiTheme.Button(grid, string.Empty, () => Select(card));
-                var imageGo = new GameObject("Artwork", typeof(RectTransform), typeof(RawImage)); imageGo.transform.SetParent(button.transform, false);
+                var imageGo = BattleUiTheme.Rect(button.transform, "Artwork", typeof(RawImage));
                 var image = imageGo.GetComponent<RawImage>(); image.raycastTarget = false;
                 BattleSpiritsApp.Place(image.rectTransform, 0.04f, 0.17f, 0.96f, 0.98f); loadArt(card.id, image);
                 var label = BattleUiTheme.Text(button.transform, "CardName", card.id + (card.IsPlayable ? " ✓" : ""), 15, TextAlignmentOptions.Center);

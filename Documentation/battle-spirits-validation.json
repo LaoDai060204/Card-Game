@@ -19,13 +19,23 @@
   "tcpScenarios": 16,
   "tcpActions": 47,
   "standaloneConsoleScenarios": 5,
-  "presentationControlledScenarios": 21,
+  "presentationControlledScenarios": 26,
   "inputBackendRegression": {
     "activeInputHandler": 1,
     "legacyApiThrowsInHarness": true,
     "oldSourceFailureReproduced": true,
     "newScenarios": 3,
     "unityInputDevicesTested": false
+  },
+  "uiCameraLayerRegression": {
+    "scene": "Assets/Scenes/Main.unity",
+    "sourceUiLayer": 5,
+    "sourceCameraMask": 1073741856,
+    "sceneMetadataReadByHarness": true,
+    "oldSourceFailureReproduced": true,
+    "newScenarios": 5,
+    "isolatedCosmeticStageLayer": 31,
+    "unityRenderingTested": false
   },
   "cardParserScenarios": 18,
   "decodedOfficialImagePairsVerified": 256,

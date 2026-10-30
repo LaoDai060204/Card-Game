@@ -22,9 +22,9 @@ namespace LaoDai.BattleSpirits.Presentation
             {
                 var prefab = await handle.Task;
                 if (target == null || prefab == null) return;
-                var art = new GameObject("BS_MDPro3_OriginalDeckFrame", typeof(RectTransform));
-                var root = art.GetComponent<RectTransform>(); root.SetParent(target, false); BattleUiTheme.Stretch(root);
-                var lease = art.AddComponent<BattleTemplateVisuals>();
+                var root = BattleUiTheme.Rect(target, "BS_MDPro3_OriginalDeckFrame");
+                BattleUiTheme.Stretch(root);
+                var lease = root.gameObject.AddComponent<BattleTemplateVisuals>();
                 lease.retainedHandle = handle;
                 lease.ownsHandle = true;
                 retained = true;
@@ -52,8 +52,8 @@ namespace LaoDai.BattleSpirits.Presentation
         private static void Copy(Transform source, Transform parent)
         {
             if (!(source is RectTransform original)) return;
-            var go = new GameObject(source.name, typeof(RectTransform));
-            var copy = go.GetComponent<RectTransform>(); copy.SetParent(parent, false);
+            var copy = BattleUiTheme.Rect(parent, source.name);
+            var go = copy.gameObject;
             copy.anchorMin = original.anchorMin; copy.anchorMax = original.anchorMax;
             copy.pivot = original.pivot; copy.sizeDelta = original.sizeDelta; copy.anchoredPosition = original.anchoredPosition;
             copy.localRotation = original.localRotation; copy.localScale = original.localScale;

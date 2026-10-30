@@ -100,8 +100,7 @@ namespace LaoDai.BattleSpirits.Presentation
             var scroll = root.gameObject.AddComponent<ScrollRect>();
             var viewport = BattleUiTheme.Panel(root, "Viewport", Vector2.zero, Vector2.one, new Color(0, 0, 0, 0.01f));
             viewport.gameObject.AddComponent<RectMask2D>();
-            var content = new GameObject("Content", typeof(RectTransform)).GetComponent<RectTransform>();
-            content.SetParent(viewport, false);
+            var content = BattleUiTheme.Rect(viewport, "Content");
             content.anchorMin = Vector2.zero;
             content.anchorMax = new Vector2(0, 1);
             content.pivot = new Vector2(0, 0.5f);
@@ -251,8 +250,7 @@ namespace LaoDai.BattleSpirits.Presentation
 
         private static RawImage NewRawImage(Transform parent, string name)
         {
-            var image = new GameObject(name, typeof(RectTransform), typeof(RawImage)).GetComponent<RawImage>();
-            image.transform.SetParent(parent, false);
+            var image = BattleUiTheme.Rect(parent, name, typeof(RawImage)).GetComponent<RawImage>();
             image.texture = Texture2D.blackTexture;
             return image;
         }

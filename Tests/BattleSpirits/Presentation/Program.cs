@@ -30,6 +30,12 @@ internal static class Entry
     private static readonly MainThreadContext Context = new MainThreadContext();
     private static string sourceRoot, temporary;
     private static CardsDatabase database;
+    private sealed class SceneUiProfile
+    {
+        public int layer, cameraMask, renderMode, sortingLayer;
+        public AdditionalCanvasShaderChannels shaderChannels;
+    }
+    private static SceneUiProfile sceneUi;
     private static MainMenuUI menu;
     private static int passed;
     private static readonly BindingFlags Private = BindingFlags.Instance | BindingFlags.NonPublic;
@@ -65,9 +71,15 @@ internal static class Entry
         Keyboard.current = null;
         Application.dataPath = Path.Combine(temporary, "Assets");
         var canvas = new GameObject("Canvas", typeof(RectTransform), typeof(Canvas));
-        canvas.GetComponent<Canvas>().worldCamera = new GameObject("Existing UI camera").AddComponent<Camera>();
+        canvas.layer = sceneUi.layer;
+        var uiCanvas = canvas.GetComponent<Canvas>();
+        uiCanvas.sortingLayerID = sceneUi.sortingLayer;
+        uiCanvas.additionalShaderChannels = sceneUi.shaderChannels;
+        uiCanvas.worldCamera = new GameObject("Existing UI camera").AddComponent<Camera>();
+        uiCanvas.worldCamera.cullingMask = sceneUi.cameraMask;
         var owner = new GameObject("Program").AddComponent<MDPro3.Program>(); MDPro3.Program.instance = owner;
         owner.ui_ = new GameObject("UI", typeof(RectTransform)).AddComponent<MDPro3.UIManager>(); owner.ui_.transform.SetParent(canvas.transform, false); owner.ui_.tmpFont = new TMP_FontAsset();
+        owner.ui_.gameObject.layer = sceneUi.layer;
         owner.menu = new GameObject("MainMenuServant").AddComponent<MDPro3.Servant.Servant>();
         menu = new GameObject("MainMenuUI", typeof(RectTransform)).AddComponent<MainMenuUI>(); menu.transform.SetParent(owner.ui_.transform, false);
         owner.menu.servantUI = menu; menu.Manager = menu.gameObject.AddComponent<YgomSystem.ElementSystem.ElementObjectManager>();
@@ -130,16 +142,113 @@ internal static class Entry
             }parts.Reverse();result.Add(string.Join("/",parts));}
         return result.ToArray();
     }
+    private static SceneUiProfile ReadSceneUiProfile()
+    {
+        var blocks = Regex.Matches(File.ReadAllText(Path.Combine(sourceRoot, "Assets/Scenes/Main.unity")),
+            @"(?ms)^--- !u!(?<kind>\d+) &(?<id>\d+)[^\n]*\n(?<body>.*?)(?=^---|\z)").Cast<Match>().ToArray();
+        string Scalar(string body, string field)
+        {
+            var value = Regex.Match(body, @"(?m)^\s*" + Regex.Escape(field) + @": ([^\r\n]+)");
+            Assert(value.Success, "Missing scene field: " + field);
+            return value.Groups[1].Value.Trim();
+        }
+        string Owner(Match block) => Scalar(block.Groups["body"].Value, "m_GameObject");
+        var ui = blocks.Single(block => block.Groups["kind"].Value == "1"
+            && Regex.IsMatch(block.Groups["body"].Value, @"(?m)^  m_Name: UI\r?$"));
+        string uiRef = "{fileID: " + ui.Groups["id"].Value + "}";
+        var canvas = blocks.Single(block => block.Groups["kind"].Value == "223" && Owner(block) == uiRef);
+        string canvasBody = canvas.Groups["body"].Value;
+        string cameraRef = Scalar(canvasBody, "m_Camera");
+        var camera = blocks.Single(block => block.Groups["kind"].Value == "20"
+            && "{fileID: " + block.Groups["id"].Value + "}" == cameraRef);
+        return new SceneUiProfile {
+            layer = int.Parse(Scalar(ui.Groups["body"].Value, "m_Layer")),
+            cameraMask = unchecked((int)uint.Parse(Scalar(camera.Groups["body"].Value, "m_Bits"))),
+            renderMode = int.Parse(Scalar(canvasBody, "m_RenderMode")),
+            sortingLayer = int.Parse(Scalar(canvasBody, "m_SortingLayerID")),
+            shaderChannels = (AdditionalCanvasShaderChannels)int.Parse(Scalar(canvasBody, "m_AdditionalShaderChannelsFlag"))
+        };
+    }
+    private static void AssertUiLayers()
+    {
+        var overlay = Field<RectTransform>(App, "overlay");
+        var rootCanvas = MDPro3.Program.instance.ui_.GetComponentInParent<Canvas>();
+        var overlayCanvas = overlay.GetComponent<Canvas>();
+        Assert(overlay.parent == rootCanvas.transform && overlay.gameObject.activeInHierarchy, "Overlay is outside the active UI root.");
+        Assert(overlayCanvas.worldCamera == rootCanvas.worldCamera, "Overlay lost its UI camera.");
+        var widgets = overlay.GetComponentsInChildren<RectTransform>(true);
+        Assert(widgets.Length > 3 && overlay.GetComponentsInChildren<Graphic>(true).Length > 0, "No runtime UI to inspect.");
+        foreach (var widget in widgets)
+            Assert(widget.gameObject.layer == sceneUi.layer
+                && (rootCanvas.worldCamera.cullingMask & (1 << widget.gameObject.layer)) != 0,
+                "Camera_UI excludes runtime widget " + widget.name + " on layer " + widget.gameObject.layer + ".");
+        Assert(overlayCanvas.additionalShaderChannels == rootCanvas.additionalShaderChannels, "Overlay lost source shader vertex channels.");
+        Assert(overlayCanvas.sortingLayerID == rootCanvas.sortingLayerID, "Overlay moved to another sorting layer.");
+    }
     public static int Main(string[] args)
     {
         SynchronizationContext.SetSynchronizationContext(Context);
         sourceRoot = Path.GetFullPath(args.Length > 0 ? args[0] : ".");
+        sceneUi = ReadSceneUiProfile();
         temporary = Path.Combine(Path.GetTempPath(), "bs-presentation-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(Path.Combine(temporary, "Assets")); Directory.CreateDirectory(Path.Combine(temporary, "Data/BattleSpirits"));
         string catalog = File.ReadAllText(Path.Combine(sourceRoot, "Data/BattleSpirits/cards.json"));
         File.WriteAllText(Path.Combine(temporary, "Data/BattleSpirits/cards.json"), catalog); database = JsonConvert.DeserializeObject<CardsDatabase>(catalog);
         try
         {
+            Case("Scene-derived UI camera excludes Default and includes the UI layer", () => {
+                Assert(sceneUi.renderMode == 1, "Expected the actual Screen Space Camera UI canvas.");
+                Assert(sceneUi.layer != 0 && (sceneUi.cameraMask & 1) == 0, "Fixture no longer reproduces Default-layer culling.");
+                Assert((sceneUi.cameraMask & (1 << sceneUi.layer)) != 0, "Scene UI layer is excluded by Camera_UI.");
+                menu.OnPuzzle();
+                AssertUiLayers();
+            });
+            Case("Solo, network, deck, rules and history screens stay inside the UI camera mask", () => {
+                foreach (var open in new Action[] { menu.OnSolo, menu.OnOnline, menu.OnDeck, menu.OnPuzzle, menu.OnReplay })
+                {
+                    open(); Context.Drain(); AssertUiLayers();
+                    Assert(!menu.gameObject.activeSelf && Field<RectTransform>(App, "surface").GetComponentsInChildren<Graphic>().Length > 0,
+                        "Menu hidden without an active replacement screen.");
+                    Call(App, "Close");
+                }
+            });
+            Case("Deferred original deck decorations inherit the visible target layer", () => {
+                var completion = new TaskCompletionSource<GameObject>(TaskCreationOptions.RunContinuationsAsynchronously);
+                Addressables.Load = path => completion.Task;
+                menu.OnDeck();
+                var surface = Field<RectTransform>(App, "surface");
+                Assert(surface.Find("BS_MDPro3_OriginalDeckFrame") == null, "Deferred artwork fixture loaded too early.");
+                completion.SetResult(Template());
+                PumpUntil(() => surface.Find("BS_MDPro3_OriginalDeckFrame") != null);
+                Assert(surface.Find("BS_MDPro3_OriginalDeckFrame").GetComponentsInChildren<Image>(true).Length == 4, "Missing copied decoration graphics.");
+                AssertUiLayers();
+            });
+            Case("Deck paging and selection keep newly created artwork and rows visible", () => {
+                menu.OnDeck();
+                var surface = Field<RectTransform>(App, "surface");
+                var grid = surface.GetComponentsInChildren<RectTransform>(true).Single(widget => widget.name == "Grid");
+                string firstPageCard = grid.GetComponentsInChildren<TextMeshProUGUI>(true).First(label => label.name == "CardName").text;
+                var next = surface.GetComponentsInChildren<Button>(true).Single(button => button.GetComponentInChildren<TextMeshProUGUI>(true)?.text == "›");
+                next.onClick.Invoke();
+                Assert(grid.GetComponentsInChildren<TextMeshProUGUI>(true).First(label => label.name == "CardName").text != firstPageCard,
+                    "Paging did not create another set of card widgets.");
+                grid.GetComponentsInChildren<Button>(true).First().onClick.Invoke();
+                Assert(grid.GetComponentsInChildren<RawImage>(true).Length > 0, "No card artwork widgets after paging.");
+                AssertUiLayers();
+            });
+            Case("Handovers and refreshed board artwork use UI while 3D cosmetics keep their stage layer", () => {
+                StartLocal(); AssertUiLayers(); Reveal(); AssertUiLayers();
+                Call(App, "SendAction", new WireMessage { type = "action", action = "opening" });
+                AssertUiLayers(); Reveal(); AssertUiLayers();
+                var board = Field<BattleBoardPanel>(App, "board");
+                Assert(board.Root.GetComponentsInChildren<RawImage>(true).Length > 1, "No hand/card/background images on refreshed board.");
+                var backdrop = Field<BattleFieldBackdrop>(App, "backdrop");
+                var stage = Field<GameObject>(backdrop, "stage");
+                var stageCamera = Field<Camera>(backdrop, "stageCamera");
+                Assert(stage.layer == 31 && stageCamera.cullingMask == (1 << 31), "UI fix changed the isolated cosmetic stage mask.");
+                Assert(stage.GetComponentsInChildren<Transform>(true).All(item => item.gameObject.layer == 31), "Stage children leaked onto UI layer.");
+                Assert(board.Background.gameObject.layer == sceneUi.layer, "RenderTexture presenter is excluded from Camera_UI.");
+            });
             Case("Actual main-menu handlers preserve labels and route to Battle Spirits", () => {
                 Assert(menu.Title.text.Contains("0.1.0"), "Title.");
                 Assert(menu.transform.Find("ButtonSolo/#Text_Menu").GetComponent<TextMeshProUGUI>().text == "CHƠI CÙNG MÁY", "Local label.");
