@@ -23,3 +23,21 @@ commit generated Unity caches such as `Library`, `Temp`, or `Logs`.
   when customizing names, documentation, or the interface.
 - A verified Git transfer or static localization check is not a Unity Play/build
   test. Report which checks actually ran.
+
+## Battle Spirits conversion branch
+
+- This branch retains the MDPro3 menu, appearance assets and Windows bundles,
+  and targets **Unity 6000.0.24f1**, as selected by the owner.
+- Gameplay is **Japanese Battle Spirits Eternal**, with Vietnamese UI. Do not
+  silently substitute Saga or Standard rules, or imply that a Standard-only
+  catalog entry is legal in Eternal.
+- New rules live in `Assets/BattleSpirits/Runtime/Core`, without Unity objects.
+  Keep C# 9 and Unity's .NET Standard 2.1 API compatibility.
+- Network clients receive filtered player views. Never send the opponent's hand,
+  deck order or random seed in an active match snapshot.
+- Imported official card text is catalog data, not an implementation of an
+  ability. Mark a card playable only when its rules behavior is implemented and
+  tested. Preserve original IDs, Japanese text, sources and artwork checksums.
+- Preserve the working Yu-Gi-Oh project on `main`; publish conversion changes on
+  `battle-spirits-mdpro3-ui` until the converted game has been reviewed.
+- Keep official card provenance and existing third-party notices accurate.

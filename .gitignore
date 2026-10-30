@@ -80,3 +80,17 @@ Data/FileGroups.json
 !Tools/Tests/**/*.csproj
 Tools/Tests/**/bin/
 Tools/Tests/**/obj/
+
+# Battle Spirits source projects, official art and local runtime files.
+!Tests/BattleSpirits/**/*.csproj
+!Tools/BattleSpiritsServer/**/*.csproj
+Tests/BattleSpirits/**/bin/
+Tests/BattleSpirits/**/obj/
+Tools/BattleSpiritsServer/**/bin/
+Tools/BattleSpiritsServer/**/obj/
+!/Picture/
+/Picture/*
+!/Picture/BattleSpirits/
+!/Picture/BattleSpirits/**
+Data/BattleSpirits/Decks/
+Data/BattleSpirits/Replays/

@@ -7,6 +7,7 @@ using System.Collections;
 using System.IO;
 using System.Collections.Generic;
 using MDPro3.Servant;
+using LaoDai.BattleSpirits.Presentation;
 
 namespace MDPro3.UI.ServantUI
 {
@@ -27,6 +28,8 @@ namespace MDPro3.UI.ServantUI
             base.Initialize(servant);
 
             Title.text = Application.productName + " v" + Application.version;
+            if (BattleSpiritsApp.Active)
+                BattleSpiritsApp.ConfigureMenu(this);
         }
 
         #region Button Function
@@ -35,6 +38,8 @@ namespace MDPro3.UI.ServantUI
         {
             if (Program.exitOnReturn)
                 return;
+
+            if (BattleSpiritsApp.Active) { BattleSpiritsApp.ShowLocal(); return; }
 
             Program.instance.solo.SwitchCondition(SoloSelector.Condition.ForSolo);
             Program.instance.ShiftToServant(Program.instance.solo);
@@ -45,6 +50,8 @@ namespace MDPro3.UI.ServantUI
             if (Program.exitOnReturn)
                 return;
 
+            if (BattleSpiritsApp.Active) { BattleSpiritsApp.ShowOnline(); return; }
+
             Program.instance.ShiftToServant(Program.instance.online);
         }
 
@@ -53,6 +60,8 @@ namespace MDPro3.UI.ServantUI
             if (Program.exitOnReturn)
                 return;
 
+            if (BattleSpiritsApp.Active) { BattleSpiritsApp.ShowRules(); return; }
+
             Program.instance.ShiftToServant(Program.instance.puzzlePortal);
         }
 
@@ -60,6 +69,8 @@ namespace MDPro3.UI.ServantUI
         {
             if (Program.exitOnReturn)
                 return;
+
+            if (BattleSpiritsApp.Active) { BattleSpiritsApp.ShowHistory(); return; }
 
             Program.instance.ShiftToServant(Program.instance.replay);
         }
@@ -83,6 +94,8 @@ namespace MDPro3.UI.ServantUI
         {
             if (Program.exitOnReturn)
                 return;
+
+            if (BattleSpiritsApp.Active) { BattleSpiritsApp.ShowDeckBuilder(); return; }
 
             Program.instance.deckSelector.SwitchCondition(DeckSelector.Condition.ForEdit);
             Program.instance.ShiftToServant(Program.instance.deckSelector);

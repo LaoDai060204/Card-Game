@@ -35,7 +35,8 @@ namespace MDPro3.Servant
         {
             returnServant = Program.instance.menu;
             base.Initialize();
-            TryTokenIn();
+            if (!LaoDai.BattleSpirits.BattleSpiritsMode.Enabled)
+                TryTokenIn();
         }
 
         protected override void ApplyShowArrangement(int preDepth)

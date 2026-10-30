@@ -27,7 +27,8 @@ namespace MDPro3.Servant
             Program.instance.currentServant = this;
             Program.instance.depth = 0;
 
-            StartCoroutine(CheckUpdateAsync());
+            if (!LaoDai.BattleSpirits.BattleSpiritsMode.Enabled)
+                StartCoroutine(CheckUpdateAsync());
             LoadUI();
         }
 
@@ -51,11 +52,14 @@ namespace MDPro3.Servant
         {
             base.FirstLoadEvent();
             servantUI.ResetUI();
-            StartCoroutine(LoadMyCardNewsAsync());
+            if (LaoDai.BattleSpirits.BattleSpiritsMode.Enabled)
+                GetUI<MainMenuUI>().News.Hide();
+            else
+                StartCoroutine(LoadMyCardNewsAsync());
 
             EnsureButtonsWidth();
             Program.instance.ReadParams();
-            if(!Program.exitOnReturn)
+            if(!Program.exitOnReturn && !LaoDai.BattleSpirits.BattleSpiritsMode.Enabled)
                 VersionIntroduction.Show();
         }
 

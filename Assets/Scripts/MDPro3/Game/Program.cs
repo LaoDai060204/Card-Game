@@ -142,7 +142,8 @@ namespace MDPro3
             items.Initialize();
             await BanlistManager.InitializeAsync();
             await CardImageLoader.InitializeAsync();
-            _ = OnlineService.InitializeAsync();
+            if (!LaoDai.BattleSpirits.BattleSpiritsMode.Enabled)
+                _ = OnlineService.InitializeAsync();
 
             InitializeAllManagers();
             InitializeAllServants();
@@ -150,6 +151,8 @@ namespace MDPro3
 
         public void ReadParams()
         {
+            if (LaoDai.BattleSpirits.BattleSpiritsMode.Enabled)
+                return;
             var args = Environment.GetCommandLineArgs();
             //args = new string[11]
             //{
@@ -246,7 +249,8 @@ namespace MDPro3
         {
             await ResourceManager.InitializeAsync();
             await BanlistManager.InitializeAsync();
-            await OnlineService.InitializeAsync();
+            if (!LaoDai.BattleSpirits.BattleSpiritsMode.Enabled)
+                await OnlineService.InitializeAsync();
             await CardImageLoader.InitializeAsync();
 
             await UniTask.RunOnThreadPool(() =>
