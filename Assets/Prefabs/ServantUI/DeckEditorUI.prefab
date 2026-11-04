@@ -5520,7 +5520,6 @@ GameObject:
   - component: {fileID: 8036513514692140464}
   - component: {fileID: 8921615635453584637}
   - component: {fileID: 137382794967481660}
-  - component: {fileID: 64889566179028967}
   m_Layer: 5
   m_Name: CardCollectionView
   m_TagString: Untagged
@@ -5583,26 +5582,6 @@ MonoBehaviour:
   - {fileID: 7861385358453533528}
   - {fileID: 8945569682449018836}
   - {fileID: 1552709659026985654}
---- !u!114 &64889566179028967
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 857208399684431938}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7258ed310c5d5c94dbb5d67f08a04577, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  defaultSelectable: {fileID: 0}
-  needTranslate: 0
-  responseInput: 0
-  area: 0
-  defaultArea: 0
-  showingRelatedCards: 0
-  historyCards: 
-  printedCards: 
 --- !u!1 &860233090027872845
 GameObject:
   m_ObjectHideFlags: 0
@@ -6319,7 +6298,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 937080751242044615}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a04dece1c1d09ec409bdf40389a218b8, type: 3}
+  m_Script: {fileID: 11500000, guid: 3f88580cb54a6d247b0379b8f582fa90, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   index: -1
@@ -8881,19 +8860,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 6639526559980956135}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 4623432510864296486}
-        m_TargetAssemblyTypeName: MDPro3.UI.ServantUI.DeckEditorUI, Assembly-CSharp
-        m_MethodName: OnHandTest
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &4500407293198540334
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9847,7 +9814,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1440408858899403471}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 84b7f87a21e5474438986dbb1f3f2b9e, type: 3}
+  m_Script: {fileID: 11500000, guid: 3f88580cb54a6d247b0379b8f582fa90, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   index: -1
@@ -10864,19 +10831,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 7177001607348771778}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 4623432510864296486}
-        m_TargetAssemblyTypeName: MDPro3.UI.ServantUI.DeckEditorUI, Assembly-CSharp
-        m_MethodName: ShiftToAppearance
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &2445261881814862239
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -14734,7 +14689,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 2347684750709585855}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a04dece1c1d09ec409bdf40389a218b8, type: 3}
+  m_Script: {fileID: 11500000, guid: 3f88580cb54a6d247b0379b8f582fa90, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   index: -1
@@ -15732,19 +15687,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1377383332035964828}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 8072614313350264766}
-        m_TargetAssemblyTypeName: 
-        m_MethodName: 
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: 
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &7655556377520503999
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -15754,7 +15697,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 2561058018232512280}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 325d9aca8078d75458bb01d3a0483309, type: 3}
+  m_Script: {fileID: 11500000, guid: 3f88580cb54a6d247b0379b8f582fa90, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   index: -1
@@ -16336,19 +16279,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 2827130321597459070}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 4623432510864296486}
-        m_TargetAssemblyTypeName: MDPro3.UI.ServantUI.DeckEditorUI, Assembly-CSharp
-        m_MethodName: OnSubMenu
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &5616675575197285879
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -19533,7 +19464,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 3143623181743041544}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9dfc2baf08c4e334d8e898b35e60040f, type: 3}
+  m_Script: {fileID: 11500000, guid: 3f88580cb54a6d247b0379b8f582fa90, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   index: -1
@@ -19635,7 +19566,6 @@ GameObject:
   - component: {fileID: 8512686125212842750}
   - component: {fileID: 5199592574377084698}
   - component: {fileID: 4312798272894835810}
-  - component: {fileID: 5979871343696541466}
   m_Layer: 5
   m_Name: RelatedCardButton
   m_TagString: Untagged
@@ -19821,19 +19751,7 @@ MonoBehaviour:
         m_Calls: []
     onDownNavigation:
       m_PersistentCalls:
-        m_Calls:
-        - m_Target: {fileID: 64889566179028967}
-          m_TargetAssemblyTypeName: MDPro3.UI.CardCollectionView, Assembly-CSharp
-          m_MethodName: OnRalatedAreaNavigationDown
-          m_Mode: 1
-          m_Arguments:
-            m_ObjectArgument: {fileID: 0}
-            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-            m_IntArgument: 0
-            m_FloatArgument: 0
-            m_StringArgument: 
-            m_BoolArgument: 0
-          m_CallState: 2
+        m_Calls: []
   hoverEvent:
     onHoverOn:
       m_PersistentCalls:
@@ -19874,20 +19792,6 @@ MonoBehaviour:
   serializedElements:
   - {fileID: 1499611452153504766}
   - {fileID: 5931824714644230198}
---- !u!114 &5979871343696541466
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3180082522232812626}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 35b333cb30a7d094b997b5a31c5f4b7f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  cache: 0
-  protectorCode: 1070001
 --- !u!1 &3185043598421145800
 GameObject:
   m_ObjectHideFlags: 0
@@ -33136,7 +33040,6 @@ GameObject:
   - component: {fileID: 3764233294681942425}
   - component: {fileID: 2288748164114612152}
   - component: {fileID: 1552709659026985654}
-  - component: {fileID: 6188048573558420276}
   m_Layer: 30
   m_Name: DropArea
   m_TagString: Untagged
@@ -33195,19 +33098,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   label: DropArea
---- !u!114 &6188048573558420276
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6292623923826004512}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 31c3678438b9caf49b810796b3e1aca7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  active: 1
 --- !u!1 &6301342576626268865
 GameObject:
   m_ObjectHideFlags: 0
@@ -33585,19 +33475,7 @@ MonoBehaviour:
         m_Calls: []
     onDownNavigation:
       m_PersistentCalls:
-        m_Calls:
-        - m_Target: {fileID: 64889566179028967}
-          m_TargetAssemblyTypeName: MDPro3.UI.CardCollectionView, Assembly-CSharp
-          m_MethodName: OnRalatedAreaNavigationDown
-          m_Mode: 1
-          m_Arguments:
-            m_ObjectArgument: {fileID: 0}
-            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-            m_IntArgument: 0
-            m_FloatArgument: 0
-            m_StringArgument: 
-            m_BoolArgument: 0
-          m_CallState: 2
+        m_Calls: []
   hoverEvent:
     onHoverOn:
       m_PersistentCalls:
@@ -33973,19 +33851,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 7282233369945009707}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 4623432510864296486}
-        m_TargetAssemblyTypeName: MDPro3.UI.ServantUI.DeckEditorUI, Assembly-CSharp
-        m_MethodName: OnRegulation
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &779356043577164662
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -35660,19 +35526,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 5199174904530408273}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 4623432510864296486}
-        m_TargetAssemblyTypeName: MDPro3.UI.ServantUI.DeckEditorUI, Assembly-CSharp
-        m_MethodName: OnSave
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &3156272630559668367
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -36341,19 +36195,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 2168896435441210086}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 4623432510864296486}
-        m_TargetAssemblyTypeName: MDPro3.UI.ServantUI.DeckEditorUI, Assembly-CSharp
-        m_MethodName: OnSort
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &4688111798085532850
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -40232,11 +40074,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 8072614313350264766}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 582095737003f3840875ef846e2ee430, type: 3}
+  m_Script: {fileID: 11500000, guid: a5a4f7790f184bf893839293bd793101, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   defaultSelectable: {fileID: 0}
   callExit: 0
+  screen: 0
 --- !u!114 &3628990550786892258
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -40273,7 +40116,6 @@ GameObject:
   - component: {fileID: 1297179804319411560}
   - component: {fileID: 9079190360276452248}
   - component: {fileID: 7415773267348455527}
-  - component: {fileID: 8710323877973789942}
   m_Layer: 5
   m_Name: ImageCard
   m_TagString: Untagged
@@ -40361,20 +40203,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   label: ImageCard
---- !u!114 &8710323877973789942
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8166086360927241581}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 35b333cb30a7d094b997b5a31c5f4b7f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  cache: 0
-  protectorCode: 1070001
 --- !u!1 &8205179468633232697
 GameObject:
   m_ObjectHideFlags: 0
@@ -40892,19 +40720,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 5486933094665832855}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 4623432510864296486}
-        m_TargetAssemblyTypeName: MDPro3.UI.ServantUI.ServantUI, Assembly-CSharp
-        m_MethodName: OnBack
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &6315423421794645272
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -41248,19 +41064,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 8078609660447170207}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 4623432510864296486}
-        m_TargetAssemblyTypeName: MDPro3.UI.ServantUI.DeckEditorUI, Assembly-CSharp
-        m_MethodName: OnChangeSideComplete
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &6523323227118016704
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -41797,7 +41601,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 8490587652567462807}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a04dece1c1d09ec409bdf40389a218b8, type: 3}
+  m_Script: {fileID: 11500000, guid: 3f88580cb54a6d247b0379b8f582fa90, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   index: -1

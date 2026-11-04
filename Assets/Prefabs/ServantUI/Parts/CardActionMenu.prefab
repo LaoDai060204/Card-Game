@@ -2073,19 +2073,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 7219846620261097036}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 7663378465934007826}
-        m_TargetAssemblyTypeName: MDPro3.UI.CardActionMenu, Assembly-CSharp
-        m_MethodName: OnNext
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &5594990913114069084
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3912,7 +3900,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1657865054723891253}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d755df5dfec294f4788ab6df3e8a294d, type: 3}
+  m_Script: {fileID: 11500000, guid: 3f88580cb54a6d247b0379b8f582fa90, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   index: -1
@@ -6823,34 +6811,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   OnSwipeLeft:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 7663378465934007826}
-        m_TargetAssemblyTypeName: MDPro3.UI.CardActionMenu, Assembly-CSharp
-        m_MethodName: OnNext
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
   OnSwipeRight:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 7663378465934007826}
-        m_TargetAssemblyTypeName: MDPro3.UI.CardActionMenu, Assembly-CSharp
-        m_MethodName: OnPrev
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
   swipeRange: 50
 --- !u!1 &2602284224262426894
 GameObject:
@@ -7099,19 +7063,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 2084438132865581111}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 7663378465934007826}
-        m_TargetAssemblyTypeName: MDPro3.UI.CardActionMenu, Assembly-CSharp
-        m_MethodName: OnPrev
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &1192661719203099536
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11673,7 +11625,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 4485444574317160320}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d755df5dfec294f4788ab6df3e8a294d, type: 3}
+  m_Script: {fileID: 11500000, guid: 3f88580cb54a6d247b0379b8f582fa90, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   index: -1
@@ -14108,19 +14060,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 6914707119009502634}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 7663378465934007826}
-        m_TargetAssemblyTypeName: MDPro3.UI.CardActionMenu, Assembly-CSharp
-        m_MethodName: Hide
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &7490684482247988229
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -14472,7 +14412,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 5843440257321262486}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d755df5dfec294f4788ab6df3e8a294d, type: 3}
+  m_Script: {fileID: 11500000, guid: 3f88580cb54a6d247b0379b8f582fa90, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   index: -1
@@ -18393,7 +18333,6 @@ GameObject:
   - component: {fileID: 7866587877193111007}
   - component: {fileID: 7352736512332244844}
   - component: {fileID: 8079327755078612341}
-  - component: {fileID: 7663378465934007826}
   m_Layer: 5
   m_Name: CardActionMenu
   m_TagString: Untagged
@@ -18471,22 +18410,6 @@ MonoBehaviour:
   - {fileID: 5633384988135380651}
   - {fileID: 1822716171575434159}
   - {fileID: 4407613026944568296}
---- !u!114 &7663378465934007826
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7592458747420388804}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fb19786d8c568d44dbbd64709c945bd4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  defaultSelectable: {fileID: 0}
-  needTranslate: 0
-  responseInput: 0
-  showing: 0
 --- !u!1 &7652442349630716273
 GameObject:
   m_ObjectHideFlags: 0
@@ -18500,7 +18423,6 @@ GameObject:
   - component: {fileID: 8229966171075194939}
   - component: {fileID: 5098506126859355037}
   - component: {fileID: 8521971784351278075}
-  - component: {fileID: 8843850237937357595}
   m_Layer: 5
   m_Name: ImageCard
   m_TagString: Untagged
@@ -18619,20 +18541,6 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &8843850237937357595
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7652442349630716273}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 35b333cb30a7d094b997b5a31c5f4b7f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  cache: 0
-  protectorCode: 1070001
 --- !u!1 &7654842347184522912
 GameObject:
   m_ObjectHideFlags: 0
@@ -20357,7 +20265,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 8115183158385551940}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d755df5dfec294f4788ab6df3e8a294d, type: 3}
+  m_Script: {fileID: 11500000, guid: 3f88580cb54a6d247b0379b8f582fa90, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   index: -1

@@ -8,6 +8,7 @@ using System.IO;
 using System.Collections.Generic;
 using MDPro3.Servant;
 using LaoDai.BattleSpirits.Presentation;
+using LaoDai.BattleSpirits.NativeUI;
 
 namespace MDPro3.UI.ServantUI
 {
@@ -39,7 +40,7 @@ namespace MDPro3.UI.ServantUI
             if (Program.exitOnReturn)
                 return;
 
-            if (BattleSpiritsApp.Active) { BattleSpiritsApp.ShowLocal(); return; }
+            if (BattleSpiritsApp.Active) { BattleNativeNavigation.Open(BattleNativeScreen.Solo); return; }
 
             Program.instance.solo.SwitchCondition(SoloSelector.Condition.ForSolo);
             Program.instance.ShiftToServant(Program.instance.solo);
@@ -50,7 +51,7 @@ namespace MDPro3.UI.ServantUI
             if (Program.exitOnReturn)
                 return;
 
-            if (BattleSpiritsApp.Active) { BattleSpiritsApp.ShowOnline(); return; }
+            if (BattleSpiritsApp.Active) { BattleNativeNavigation.Open(BattleNativeScreen.Online); return; }
 
             Program.instance.ShiftToServant(Program.instance.online);
         }
@@ -80,6 +81,8 @@ namespace MDPro3.UI.ServantUI
             if (Program.exitOnReturn)
                 return;
 
+            if (BattleSpiritsApp.Active) { BattleSpiritsApp.ShowBossGallery(); return; }
+
             Program.instance.ShiftToServant(Program.instance.cutin);
         }
         public void OnMate()
@@ -95,7 +98,7 @@ namespace MDPro3.UI.ServantUI
             if (Program.exitOnReturn)
                 return;
 
-            if (BattleSpiritsApp.Active) { BattleSpiritsApp.ShowDeckBuilder(); return; }
+            if (BattleSpiritsApp.Active) { BattleNativeNavigation.Open(BattleNativeScreen.Deck); return; }
 
             Program.instance.deckSelector.SwitchCondition(DeckSelector.Condition.ForEdit);
             Program.instance.ShiftToServant(Program.instance.deckSelector);

@@ -3,6 +3,15 @@ using System;
 namespace LaoDai.BattleSpirits.Core
 {
     [Serializable]
+    public sealed class CoreTransfer
+    {
+        // -1 is Reserve; nonnegative values identify an owned Spirit.
+        public int source = -1;
+        public int normal;
+        public bool soul;
+    }
+
+    [Serializable]
     public sealed class BattleCommand
     {
         public string action = string.Empty;
@@ -13,6 +22,7 @@ namespace LaoDai.BattleSpirits.Core
         public int target = -1;
         public bool soul;
         public bool redraw;
+        public CoreTransfer[] transfers;
     }
 
     public static class BattleCommandDispatcher
@@ -28,7 +38,10 @@ namespace LaoDai.BattleSpirits.Core
             {
                 case "opening": return match.TryConfirmOpening(actor, command.redraw, out error);
                 case "summon": return match.TrySummon(actor, command.index, out error);
+                case "playMagic": return match.TryPlayMagic(actor, command.index, command.target, command.transfers, out error);
+                case "awaken": return match.TryAwaken(actor, command.source, command.target, command.index, command.soul, command.transfers, out error);
                 case "moveCore": return match.TryMoveCore(actor, command.source, command.target, command.soul, out error);
+                case "swapCore": return match.TrySwapCore(actor, command.source, command.target, command.soul, out error);
                 case "attackStep": return match.TryBeginAttackStep(actor, out error);
                 case "attack": return match.TryAttack(actor, command.index, out error);
                 case "passFlash": return match.TryPassFlash(actor, out error);

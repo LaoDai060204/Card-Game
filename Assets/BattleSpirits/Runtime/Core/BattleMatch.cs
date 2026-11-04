@@ -5,8 +5,8 @@ using System.Linq;
 namespace LaoDai.BattleSpirits.Core
 {
     /// <summary>
-    /// A deterministic, Unity-independent implementation of the vanilla Spirit
-    /// subset of Japanese Eternal rules v17.1. Card abilities are never guessed.
+    /// A deterministic, Unity-independent Japanese Eternal rules engine. The
+    /// explicit AbilityRegistry is the boundary for reviewed card implementations.
     /// Official rule references are recorded in Documentation/RULES_AND_SCOPE.md.
     /// </summary>
     public sealed class BattleMatch
@@ -75,7 +75,7 @@ namespace LaoDai.BattleSpirits.Core
                 Shuffle(State.Players[player].Deck);
                 for (int i = 0; i < 4; i++) Draw(player);
             }
-            AddLog("Eternal v17.1 · Spirit không có hiệu ứng đã hỗ trợ.");
+            AddLog("Eternal v17.1 · Spirit, Nexus và Magic có hồ sơ luật đã kiểm chứng.");
             AddLog("Chọn giữ hoặc đổi toàn bộ 4 lá bài mở đầu, mỗi người một lần.");
         }
 
@@ -146,8 +146,8 @@ namespace LaoDai.BattleSpirits.Core
             if (handIndex < 0 || handIndex >= owner.Hand.Count)
                 return Fail("Lá bài đã chọn không còn trên tay.", out error);
             var card = GetCard(owner.Hand[handIndex]);
-            if (!IsSupportedVanilla(card))
-                return Fail("Hiệu ứng của lá bài này chưa được triển khai.", out error);
+            if (!IsSupportedVanilla(card) || (!card.IsSpirit && !card.IsNexus))
+                return Fail("Chỉ triệu hồi Spirit hoặc bố trí Nexus đã hỗ trợ; Magic dùng lệnh kích hoạt.", out error);
             int cost = GetSummonCost(player, card);
             int required = card.levels[0].cores;
             int usableCores = owner.Reserve.Total + owner.Field.Sum(s => s.Cores.Total);
@@ -175,8 +175,185 @@ namespace LaoDai.BattleSpirits.Core
             owner.Hand.RemoveAt(handIndex);
             owner.Field.Add(spirit);
             AddLog(owner.Name + " triệu hồi " + card.DisplayName + " (phí " + cost + ").");
-            Emit("Summoned", player, spirit.InstanceId, -1, card.id, cost);
+            Emit(card.IsNexus ? "NexusPlaced" : "Summoned", player, spirit.InstanceId, -1, card.id, cost);
             return Success(out error);
+        }
+
+        public bool TryPlayMagic(int player, int handIndex, int targetId, CoreTransfer[] transfers, out string error)
+        {
+            BeginAction();
+            if (!RequireAbilityWindow(player, out error)) return false;
+            var owner = State.Players[player];
+            if (handIndex < 0 || handIndex >= owner.Hand.Count)
+                return Fail("Lá Magic không còn trên tay.", out error);
+            var card = GetCard(owner.Hand[handIndex]);
+            if (!card.IsMagic || !card.IsPlayable)
+                return Fail("Hiệu ứng Magic chưa được triển khai.", out error);
+            bool flashWindow = IsFlashPhase(State.Phase);
+            var target = targetId < 0 ? null : FindSpirit(targetId);
+            if (targetId >= 0 && (target == null || !target.Card.IsSpirit))
+                return Fail("Mục tiêu phải là một Spirit đang trên sân.", out error);
+            if (card.id == AbilityRegistry.DoubleDraw)
+            {
+                if (targetId < 0 && flashWindow)
+                    return Fail("Flash của Double Draw cần chọn Spirit nhận BP; rút 2 lá chỉ dùng trong Main.", out error);
+                if (transfers != null && transfers.Length > 0)
+                    return Fail("Double Draw không chuyển core.", out error);
+            }
+            else if (card.id == AbilityRegistry.AwakenMagic)
+            {
+                if (target == null || !owner.Field.Contains(target))
+                    return Fail("Awaken cần chọn Spirit của mình.", out error);
+                if (transfers != null && (transfers.Length > 1 || transfers.Any(t => t == null || t.source != -1 || t.normal < 0 || (long)t.normal + (t.soul ? 1 : 0) > 3)))
+                    return Fail("Awaken chỉ chuyển tối đa 3 core từ Reserve.", out error);
+            }
+            else return Fail("Magic chưa có hồ sơ hiệu ứng.", out error);
+            int cost = GetSummonCost(player, card);
+            if (AvailableCores(owner) < cost)
+                return Fail("Không đủ core trả phí Magic.", out error);
+            var afterPayment = PreviewReserveAfterPayment(owner, cost);
+            CoreTransfer chosen = null;
+            if (card.id == AbilityRegistry.AwakenMagic)
+            {
+                chosen = transfers == null
+                    ? new CoreTransfer { normal = Math.Min(3, afterPayment.Normal) }
+                    : transfers.Length == 0 ? new CoreTransfer() : transfers[0];
+                if (chosen.normal > afterPayment.Normal || chosen.soul && !afterPayment.Soul)
+                    return Fail("Core được chọn không còn ở Reserve sau khi trả phí Magic.", out error);
+            }
+
+            // Every rejecting path is above the mutation boundary. A target can
+            // leave the field while paying the cost; its effect then has no
+            // target to change, but the paid Magic still resolves/discards.
+            PayMagicCost(owner, cost);
+            owner.Hand.RemoveAt(handIndex);
+            owner.Discard.Add(card.id);
+            Emit("MagicPlayed", player, -1, targetId, card.id, cost);
+            AddLog(owner.Name + " sử dụng " + card.DisplayName + " (phí " + cost + ").");
+            bool targetRemains = target != null && FindSpirit(targetId) == target;
+            if (card.id == AbilityRegistry.DoubleDraw)
+            {
+                if (targetId < 0) { Draw(player); Draw(player); }
+                else if (targetRemains)
+                {
+                    target.TurnBpBonus = (int)Math.Min(int.MaxValue, (long)target.TurnBpBonus + 2000);
+                    Emit("BpChanged", player, targetId, -1, card.id, 2000);
+                }
+            }
+            else
+            {
+                if (targetRemains)
+                {
+                    for (int i=0;i<chosen.normal;i++) MoveOne(owner.Reserve, target.Cores, false);
+                    if (chosen.soul) MoveOne(owner.Reserve, target.Cores, true);
+                    Emit("CoreMoved", player, -1, targetId, card.id, chosen.normal + (chosen.soul ? 1 : 0));
+                }
+                Draw(player);
+            }
+            CompleteAbility(player, flashWindow);
+            return Success(out error);
+        }
+
+        public bool TryAwaken(int player, int sourceId, int targetId, int ordinaryCount, bool soul,
+            CoreTransfer[] transfers, out string error)
+        {
+            BeginAction();
+            if (!RequireAbilityWindow(player, out error)) return false;
+            var owner = State.Players[player];
+            var target = owner.Field.Find(s => s.InstanceId == targetId);
+            if (target == null || !AbilityRegistry.HasAwaken(target.Card))
+                return Fail("Mục tiêu phải là Spirit có kỹ năng Giác tỉnh đã hỗ trợ của mình.", out error);
+            if (transfers == null)
+                transfers = new[] { new CoreTransfer { source = sourceId, normal = ordinaryCount == 0 && !soul ? 1 : ordinaryCount, soul = soul } };
+            if (transfers.Length == 0 || transfers.Length > owner.Field.Count)
+                return Fail("Chọn các Spirit cấp core cho Giác tỉnh.", out error);
+            var used = new HashSet<int>();
+            var sources = new List<SpiritState>();
+            foreach (var transfer in transfers)
+            {
+                if (transfer == null || transfer.normal < 0 || !used.Add(transfer.source))
+                    return Fail("Nguồn core Giác tỉnh không hợp lệ hoặc bị trùng.", out error);
+                var source = owner.Field.Find(s => s.InstanceId == transfer.source);
+                if (source == null || !source.Card.IsSpirit || source == target
+                    || transfer.normal > source.Cores.Normal || transfer.soul && !source.Cores.Soul
+                    || (long)transfer.normal + (transfer.soul ? 1 : 0) == 0)
+                    return Fail("Giác tỉnh chỉ lấy core hiện có trên các Spirit khác của mình.", out error);
+                sources.Add(source);
+            }
+            bool flashWindow = IsFlashPhase(State.Phase);
+            // All selected sources move in this ONE Flash activation, before
+            // checking vanish. The opponent cannot interrupt between sources.
+            for (int i=0;i<transfers.Length;i++)
+            {
+                var transfer = transfers[i]; var source = sources[i];
+                for (int n=0;n<transfer.normal;n++) MoveOne(source.Cores, target.Cores, false);
+                if (transfer.soul) MoveOne(source.Cores, target.Cores, true);
+                Emit("CoreMoved", player, source.InstanceId, targetId, target.Card.id, transfer.normal + (transfer.soul ? 1 : 0));
+            }
+            foreach (var source in sources)
+                if (source.Level == 0) RemoveSpirit(player, source, "Vanished");
+            Emit("Awakened", player, targetId, -1, target.Card.id);
+            AddLog(target.Card.DisplayName + " Giác tỉnh: chuyển core từ các Spirit của mình.");
+            CompleteAbility(player, flashWindow);
+            return Success(out error);
+        }
+
+        private bool RequireAbilityWindow(int player, out string error)
+        {
+            if (player < 0 || player > 1 || !((State.Phase == MatchPhase.Main && player == State.ActivePlayerIndex)
+                || (IsFlashPhase(State.Phase) && player == State.FlashPlayerIndex)))
+                return Fail("Hiệu ứng chỉ được sử dụng trong Main của mình hoặc khi có quyền Flash.", out error);
+            error = string.Empty;
+            return true;
+        }
+
+        private static bool IsFlashPhase(MatchPhase phase) => phase == MatchPhase.FlashBeforeBlock || phase == MatchPhase.FlashAfterBlock;
+        private static bool IsAttackPhase(MatchPhase phase) => phase == MatchPhase.Attack || phase == MatchPhase.Block || IsFlashPhase(phase);
+        private static long AvailableCores(PlayerState owner) => owner.Reserve.Total + owner.Field.Sum(s => (long)s.Cores.Total);
+
+        private void CompleteAbility(int player, bool flashWindow)
+        {
+            // An attacker or blocker leaving the field does not close Flash.
+            // Finish the remaining priority window before ending that battle.
+            // Official Eternal FAQ Q1015/Q1125/Q1197 explicitly retains Flash
+            // when the attacking Spirit is no longer present.
+            if (flashWindow)
+            {
+                consecutiveFlashPasses = 0;
+                State.FlashPlayerIndex = 1 - player;
+            }
+        }
+
+        private void PayMagicCost(PlayerState owner, int cost)
+        {
+            int fromReserve = Math.Min(cost, owner.Reserve.Total);
+            Transfer(owner.Reserve, owner.Trash, fromReserve);
+            int remaining = TakeFieldCores(owner, owner.Trash, cost - fromReserve, true);
+            remaining = TakeFieldCores(owner, owner.Trash, remaining, false);
+            if (remaining != 0) throw new InvalidOperationException("Validated Magic payment was not available.");
+        }
+
+        private static CorePool PreviewReserveAfterPayment(PlayerState owner, int cost)
+        {
+            var reserve = new CorePool { Normal = owner.Reserve.Normal, Soul = owner.Reserve.Soul };
+            var paid = new CorePool();
+            int initial = Math.Min(cost, reserve.Total);
+            Transfer(reserve, paid, initial);
+            int remaining = cost - initial;
+            var pools = owner.Field.Select(s => new CorePool { Normal=s.Cores.Normal, Soul=s.Cores.Soul }).ToArray();
+            var vanished = new bool[pools.Length];
+            for (int pass=0;pass<2;pass++)
+                for (int i=0;i<pools.Length && remaining>0;i++)
+                {
+                    if (vanished[i]) continue;
+                    int minimum = owner.Field[i].Card.levels[0].cores;
+                    int available = pass == 0 ? Math.Max(0,pools[i].Total - minimum) : pools[i].Total;
+                    int take = Math.Min(remaining,available);
+                    Transfer(pools[i],paid,take); remaining-=take;
+                    if (pools[i].Total < minimum)
+                    { Transfer(pools[i],reserve,pools[i].Total); vanished[i]=true; }
+                }
+            return reserve;
         }
 
         public bool TryMoveCore(int player, int fromSpiritId, int toSpiritId, bool soul, out string error)
@@ -202,6 +379,37 @@ namespace LaoDai.BattleSpirits.Core
             return Success(out error);
         }
 
+        // Main-step allocation can exchange a Soul Core and an ordinary core
+        // atomically. Moving either core first would incorrectly vanish a
+        // one-core Spirit; the official Eternal Main-step FAQ permits the swap.
+        public bool TrySwapCore(int player, int fromSpiritId, int toSpiritId, bool sourceSoul, out string error)
+        {
+            BeginAction();
+            if (!RequireTurn(player, MatchPhase.Main, out error)) return false;
+            if (fromSpiritId == toSpiritId)
+                return Fail("Chọn hai vị trí core khác nhau.", out error);
+            var owner = State.Players[player];
+            var from = owner.Field.Find(spirit => spirit.InstanceId == fromSpiritId);
+            var to = owner.Field.Find(spirit => spirit.InstanceId == toSpiritId);
+            if ((fromSpiritId != -1 && from == null) || (toSpiritId != -1 && to == null))
+                return Fail("Chỉ đổi core giữa các vị trí của mình.", out error);
+            var source = from == null ? owner.Reserve : from.Cores;
+            var target = to == null ? owner.Reserve : to.Cores;
+            if (sourceSoul ? !source.Soul || target.Soul || target.Normal == 0
+                : source.Normal == 0 || source.Soul || !target.Soul)
+                return Fail("Chọn Soul Core ở một bên và core thường ở bên còn lại.", out error);
+
+            var soulPool = sourceSoul ? source : target;
+            var ordinaryPool = sourceSoul ? target : source;
+            soulPool.Soul = false;
+            soulPool.Normal++;
+            ordinaryPool.Normal--;
+            ordinaryPool.Soul = true;
+            Emit("CoreSwapped", player, fromSpiritId, toSpiritId, string.Empty, 1);
+            AddLog(owner.Name + " đổi Soul Core và core thường đồng thời.");
+            return Success(out error);
+        }
+
         public bool TryBeginAttackStep(int player, out string error)
         {
             BeginAction();
@@ -209,6 +417,14 @@ namespace LaoDai.BattleSpirits.Core
             if (State.TurnNumber == 1)
                 return Fail("Người đi trước bỏ qua Attack Step ở lượt đầu.", out error);
             State.Phase = MatchPhase.Attack;
+            var defender = State.Players[1 - player];
+            if (defender.Trash.Total > 0 && defender.Field.Any(n => n.Card.id == AbilityRegistry.SilverWorld && n.Level > 0))
+            {
+                int recycled = defender.Trash.Total;
+                Transfer(defender.Trash, defender.Reserve, recycled);
+                Emit("CoresRecycled", 1 - player, -1, -1, AbilityRegistry.SilverWorld, recycled);
+                AddLog("侵食されゆく銀世界: lấy core từ Trash về Reserve ở đầu Attack Step của đối phương.");
+            }
             AddLog(State.Players[player].Name + " vào Attack Step.");
             return Success(out error);
         }
@@ -218,7 +434,7 @@ namespace LaoDai.BattleSpirits.Core
             BeginAction();
             if (!RequireTurn(player, MatchPhase.Attack, out error)) return false;
             var attacker = State.Players[player].Field.Find(s => s.InstanceId == spiritId);
-            if (attacker == null || attacker.Exhausted)
+            if (attacker == null || !attacker.Card.IsSpirit || attacker.Exhausted)
                 return Fail("Chọn một Spirit đang hồi phục của mình để tấn công.", out error);
             attacker.Exhausted = true;
             State.PendingAttackerId = spiritId;
@@ -240,7 +456,8 @@ namespace LaoDai.BattleSpirits.Core
             if (consecutiveFlashPasses == 2)
             {
                 State.FlashPlayerIndex = -1;
-                if (State.Phase == MatchPhase.FlashBeforeBlock) State.Phase = MatchPhase.Block;
+                if (FindSpirit(State.PendingAttackerId) == null) EndBattle();
+                else if (State.Phase == MatchPhase.FlashBeforeBlock) State.Phase = MatchPhase.Block;
                 else ResolveBlockedBattle();
             }
             else State.FlashPlayerIndex = 1 - player;
@@ -253,9 +470,14 @@ namespace LaoDai.BattleSpirits.Core
             if (State.Phase != MatchPhase.Block || player != 1 - State.ActivePlayerIndex)
                 return Fail("Chưa đến bước chọn chặn.", out error);
             var blocker = State.Players[player].Field.Find(s => s.InstanceId == spiritId);
-            if (blocker == null || blocker.Exhausted)
+            if (blocker == null || !blocker.Card.IsSpirit || blocker.Exhausted)
                 return Fail("Chỉ Spirit đang hồi phục của bên phòng thủ mới chặn được.", out error);
             blocker.Exhausted = true;
+            if (blocker.Card.id == AbilityRegistry.Valkyrius)
+            {
+                blocker.BattleBpBonus = 6000;
+                Emit("BpChanged", player, spiritId, -1, blocker.Card.id, 6000);
+            }
             State.PendingBlockerId = spiritId;
             BeginFlash(MatchPhase.FlashAfterBlock);
             AddLog(blocker.Card.DisplayName + " chặn; bắt đầu Flash sau khi chặn.");
@@ -316,7 +538,7 @@ namespace LaoDai.BattleSpirits.Core
                 foreach (var spirit in owner.Field)
                 {
                     CheckPool(spirit.Cores);
-                    if (!ids.Add(spirit.InstanceId) || spirit.Level == 0)
+                    if (!ids.Add(spirit.InstanceId) || spirit.Level == 0 || (!spirit.Card.IsSpirit && !spirit.Card.IsNexus))
                         throw new InvalidOperationException("Invalid or vanished Spirit on field.");
                     total += spirit.Cores.Total;
                     souls += spirit.Cores.Soul ? 1 : 0;
@@ -332,6 +554,8 @@ namespace LaoDai.BattleSpirits.Core
         {
             State.ActivePlayerIndex = player;
             State.TurnNumber++;
+            foreach (var ownerToReset in State.Players)
+                foreach (var permanent in ownerToReset.Field) permanent.TurnBpBonus = 0;
             ClearBattle();
             var owner = State.Players[player];
             AddLog("Lượt " + State.TurnNumber + " · " + owner.Name + " · Start Step.");
@@ -367,8 +591,9 @@ namespace LaoDai.BattleSpirits.Core
         {
             var attacker = FindSpirit(State.PendingAttackerId);
             var blocker = FindSpirit(State.PendingBlockerId);
-            if (attacker == null || blocker == null)
-                throw new InvalidOperationException("Battle participants must exist in the vanilla rules subset.");
+            // A declared block still prevents Life damage if either participant
+            // left during Flash. No BP comparison is possible in that case.
+            if (attacker == null || blocker == null) { EndBattle(); return; }
             int attackBp = attacker.Bp;
             int blockBp = blocker.Bp;
             AddLog("So sánh BP: " + attackBp + " / " + blockBp + ".");
@@ -380,11 +605,26 @@ namespace LaoDai.BattleSpirits.Core
         private void RemoveSpirit(int player, SpiritState spirit, string reason)
         {
             var owner = State.Players[player];
+            int levelAtDestruction = spirit.Level;
+            int nexusTriggers = reason == "Destroyed" && spirit.Card.IsSpirit && player != State.ActivePlayerIndex
+                && IsAttackPhase(State.Phase)
+                ? owner.Field.Count(n => n.Card.id == AbilityRegistry.SilverWorld && n.Level >= 2) : 0;
             owner.Field.Remove(spirit);
             owner.Discard.Add(spirit.Card.id);
             Transfer(spirit.Cores, owner.Reserve, spirit.Cores.Total);
             AddLog(spirit.Card.DisplayName + (reason == "Vanished" ? " tiêu biến vì không đủ core Lv1." : " bị phá hủy; core về Reserve."));
             Emit(reason, player, spirit.InstanceId, -1, spirit.Card.id);
+            if (reason == "Destroyed" && spirit.Card.id == AbilityRegistry.Siegfried && levelAtDestruction >= 3)
+            {
+                owner.Life++; owner.CoreGains++;
+                Emit("LifeGained", player, spirit.InstanceId, -1, spirit.Card.id, 1);
+                AddLog("龍皇ジークフリード Lv3: thêm 1 core từ Void vào Life khi bị phá hủy.");
+            }
+            if (nexusTriggers > 0)
+            {
+                owner.Reserve.Normal += nexusTriggers; owner.CoreGains += nexusTriggers;
+                Emit("CoreGained", player, spirit.InstanceId, -1, AbilityRegistry.SilverWorld, nexusTriggers);
+            }
         }
 
         private void EndBattle()
@@ -395,6 +635,8 @@ namespace LaoDai.BattleSpirits.Core
 
         private void ClearBattle()
         {
+            foreach (var player in State.Players)
+                foreach (var permanent in player.Field) permanent.BattleBpBonus = 0;
             State.PendingAttackerId = -1;
             State.PendingBlockerId = -1;
             State.FlashPlayerIndex = -1;

@@ -572,6 +572,12 @@ namespace MDPro3.UI.ServantUI
             InitializeRumble();
             InitializeConfirm();
             InitializeLayout();
+            if (LaoDai.BattleSpirits.BattleSpiritsMode.Enabled)
+            {
+                InitializeLanguage();
+                ConfigureBattleSpiritsSettings();
+                return;
+            }
             InitializeSyncDeck();
             InitializeBackground();
             InitializeBgmBy();
@@ -612,6 +618,12 @@ namespace MDPro3.UI.ServantUI
         public override void ShowEvent()
         {
             base.ShowEvent();
+            if (LaoDai.BattleSpirits.BattleSpiritsMode.Enabled)
+            {
+                ConfigureBattleSpiritsSettings();
+                ToggleSystem.SetToggleOn();
+                return;
+            }
 
             if (Program.instance.currentServant == Program.instance.ocgcore)
             {
@@ -668,6 +680,20 @@ namespace MDPro3.UI.ServantUI
                 ButtonSurrender.gameObject.SetActive(false);
                 ButtonCheckDecks.gameObject.SetActive(false);
             }
+        }
+
+        private void ConfigureBattleSpiritsSettings()
+        {
+            // Keep the existing system/about forms. Legacy card-rendering,
+            // YGO timing and expansion controls do not configure BS rules.
+            var hidden = new HashSet<string>(StringComparer.Ordinal)
+            {
+                "ToggleDuel", "ToggleWatch", "ToggleReplay", "TogglePort", "ToggleExpansions",
+                "ButtonRetry", "ButtonSurrender", "ButtonCheckDecks", "Voice", "SyncDeck",
+                "Background", "BgmBy", "CardStyle", "VideoCard", "CardLanguage"
+            };
+            foreach (var item in GetComponentsInChildren<Transform>(true))
+                if (hidden.Contains(item.name)) item.gameObject.SetActive(false);
         }
 
         protected override void HideEvent()

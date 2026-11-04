@@ -815,7 +815,6 @@ GameObject:
   - component: {fileID: 1074679158555499627}
   - component: {fileID: 6200292874627241087}
   - component: {fileID: 2079414359172892672}
-  - component: {fileID: 2537715797898282535}
   m_Layer: 5
   m_Name: Hint
   m_TagString: Untagged
@@ -896,18 +895,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &2537715797898282535
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 657637266006334377}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c8ef8238de063ab46b4bf887f9997558, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &774085617434212128
 GameObject:
   m_ObjectHideFlags: 0
@@ -1953,19 +1940,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 6660929776224670236}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 6586480796325130100}
-        m_TargetAssemblyTypeName: MDPro3.UI.ServantUI.OcgCoreUI, Assembly-CSharp
-        m_MethodName: OnAttachedEffect
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &7913815938638535550
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2808,19 +2783,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 2539133373479931189}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 6586480796325130100}
-        m_TargetAssemblyTypeName: MDPro3.UI.ServantUI.OcgCoreUI, Assembly-CSharp
-        m_MethodName: OnPlay
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &8726852530247568848
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3885,19 +3848,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 3030492833903958247}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 6586480796325130100}
-        m_TargetAssemblyTypeName: MDPro3.UI.ServantUI.OcgCoreUI, Assembly-CSharp
-        m_MethodName: OnAcc
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &1505323273779112081
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4401,19 +4352,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1417858108396738328}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 6586480796325130100}
-        m_TargetAssemblyTypeName: MDPro3.UI.ServantUI.OcgCoreUI, Assembly-CSharp
-        m_MethodName: OnTiming
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &8464455667023764980
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5243,19 +5182,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 3926436614213931943}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 6586480796325130100}
-        m_TargetAssemblyTypeName: MDPro3.UI.ServantUI.OcgCoreUI, Assembly-CSharp
-        m_MethodName: OnLog
-        m_Mode: 6
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &5626300846877262465
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5922,7 +5849,6 @@ GameObject:
   - component: {fileID: 2579512101535257729}
   - component: {fileID: 8986059805413270204}
   - component: {fileID: 3693512737400671313}
-  - component: {fileID: 2437178243409273147}
   - component: {fileID: 6492668989461274954}
   m_Layer: 5
   m_Name: Badge
@@ -6023,21 +5949,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &2437178243409273147
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5754889927990999640}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 622cbdc10c81b8946985e405f4c1addf, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  text: {fileID: 3128954067470861231}
-  cg: {fileID: 6492668989461274954}
-  offsetCG: {fileID: 4342548374849407746}
 --- !u!225 &6492668989461274954
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -6480,19 +6391,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 4005659213109063749}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 6586480796325130100}
-        m_TargetAssemblyTypeName: MDPro3.UI.ServantUI.OcgCoreUI, Assembly-CSharp
-        m_MethodName: OnNor
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &8701116323963303095
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6699,12 +6598,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 6394455262634497455}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 36175f75e7408e14082e457446db6b1d, type: 3}
+  m_Script: {fileID: 11500000, guid: a5a4f7790f184bf893839293bd793101, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   defaultSelectable: {fileID: 0}
   CardList: {fileID: 0}
   DuelLog: {fileID: 0}
+  screen: 4
 --- !u!114 &1145659959175042647
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7818,19 +7718,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 5791519642655301400}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 6586480796325130100}
-        m_TargetAssemblyTypeName: MDPro3.UI.ServantUI.OcgCoreUI, Assembly-CSharp
-        m_MethodName: OnStop
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &1830842011373857649
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7898,7 +7786,6 @@ GameObject:
   - component: {fileID: 5404832312272650582}
   - component: {fileID: 636462185737171281}
   - component: {fileID: 6301718549977052606}
-  - component: {fileID: 851013966068796467}
   m_Layer: 5
   m_Name: DamageFrame
   m_TagString: Untagged
@@ -7988,18 +7875,6 @@ CanvasGroup:
   m_Interactable: 0
   m_BlocksRaycasts: 0
   m_IgnoreParentGroups: 0
---- !u!114 &851013966068796467
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7269307377547879415}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 70da469e485b2f04fb115932de96a5ac, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &7269954108027272684
 GameObject:
   m_ObjectHideFlags: 0
@@ -8014,7 +7889,6 @@ GameObject:
   - component: {fileID: 4343271177147206515}
   - component: {fileID: 6086062005876741279}
   - component: {fileID: 6546802745440161714}
-  - component: {fileID: 4666489872579802941}
   m_Layer: 5
   m_Name: DuelErrorLog
   m_TagString: Untagged
@@ -8137,19 +8011,6 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 0
   m_IgnoreParentGroups: 0
---- !u!114 &4666489872579802941
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7269954108027272684}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 95c84126f7b349e41bf18309a0655af3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  text: {fileID: 3334090423499114355}
 --- !u!1 &7328595150639525685
 GameObject:
   m_ObjectHideFlags: 0
@@ -9248,19 +9109,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 319419774160101661}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 4666489872579802941}
-        m_TargetAssemblyTypeName: MDPro3.UI.DuelErrorLog, Assembly-CSharp
-        m_MethodName: Hide
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!1 &8240402921570711032
 GameObject:
   m_ObjectHideFlags: 0
@@ -9600,34 +9449,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   onPointDown:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 6586480796325130100}
-        m_TargetAssemblyTypeName: MDPro3.UI.ServantUI.OcgCoreUI, Assembly-CSharp
-        m_MethodName: SwitchBgDetail
-        m_Mode: 6
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 1
-        m_CallState: 2
+      m_Calls: []
   onPointUp:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 6586480796325130100}
-        m_TargetAssemblyTypeName: MDPro3.UI.ServantUI.OcgCoreUI, Assembly-CSharp
-        m_MethodName: SwitchBgDetail
-        m_Mode: 6
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &8837029251613158814
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9934,19 +9759,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 363127962990813596}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 6586480796325130100}
-        m_TargetAssemblyTypeName: MDPro3.UI.ServantUI.OcgCoreUI, Assembly-CSharp
-        m_MethodName: OnSetting
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &5090632423373692606
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10104,19 +9917,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 2304752454017364072}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 6586480796325130100}
-        m_TargetAssemblyTypeName: MDPro3.UI.ServantUI.OcgCoreUI, Assembly-CSharp
-        m_MethodName: ToChat
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!1 &8781804550695091688
 GameObject:
   m_ObjectHideFlags: 0
@@ -10502,7 +10303,6 @@ GameObject:
   m_Component:
   - component: {fileID: 4491304130061668606}
   - component: {fileID: 3817756115298105842}
-  - component: {fileID: 444389270545579124}
   - component: {fileID: 5785521052828839300}
   m_Layer: 5
   m_Name: CardDescription
@@ -10544,19 +10344,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   label: CardDescription
---- !u!114 &444389270545579124
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9060108006648255264}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cb7b85e823fd644409b6324a00990ad7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  showing: 0
 --- !u!114 &5785521052828839300
 MonoBehaviour:
   m_ObjectHideFlags: 0

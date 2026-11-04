@@ -1,369 +1,330 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
-using System.Threading.Tasks;
-using System.Text.RegularExpressions;
 using LaoDai.BattleSpirits.Core;
+using LaoDai.BattleSpirits.Integration;
+using LaoDai.BattleSpirits.NativeUI;
 using LaoDai.BattleSpirits.Networking;
 using LaoDai.BattleSpirits.Presentation;
+using LaoDai.BattleSpirits.Visuals;
+using MDPro3.UI;
 using MDPro3.UI.ServantUI;
 using Newtonsoft.Json;
 using TMPro;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
-using UnityEngine.InputSystem;
 using UnityEngine.UI;
-using Object = UnityEngine.Object;
+using Object=UnityEngine.Object;
 
 internal static class Entry
 {
-    private sealed class MainThreadContext : SynchronizationContext
+    private sealed class MainContext:SynchronizationContext
     {
-        private readonly ConcurrentQueue<Action> queue = new ConcurrentQueue<Action>();
-        public override void Post(SendOrPostCallback callback, object state) => queue.Enqueue(() => callback(state));
-        public void Drain() { while (queue.TryDequeue(out var action)) action(); }
+        private readonly ConcurrentQueue<Action> work=new ConcurrentQueue<Action>();
+        public override void Post(SendOrPostCallback callback,object state)=>work.Enqueue(()=>callback(state));
+        public void Drain(){while(work.TryDequeue(out var action))action();}
     }
-    private static readonly MainThreadContext Context = new MainThreadContext();
-    private static string sourceRoot, temporary;
-    private static CardsDatabase database;
-    private sealed class SceneUiProfile
+    private sealed class FixtureNode {public string path="";public string[] components=Array.Empty<string>();public int layer=5;public bool active=true;}
+    private sealed class FakeSession:IBattleNativeSession,IBattleNativeReplaySession
     {
-        public int layer, cameraMask, renderMode, sortingLayer;
-        public AdditionalCanvasShaderChannels shaderChannels;
+        public IReadOnlyList<CardDefinition> Cards{get;set;}
+        public IReadOnlyList<DeckDefinition> Decks{get;set;}
+        public DeckDefinition SelectedDeck{get;private set;}
+        public FilteredMatchView View{get;set;}
+        public IReadOnlyList<LobbyPlayerView> Players{get;set;}=Array.Empty<LobbyPlayerView>();
+        public string Status{get;set;}="Controlled native session";
+        public int Seat{get;set;}=-1;
+        public bool IsConnected{get;set;}
+        public bool IsReady{get;set;}
+        public bool CanSendCommands{get;set;}=true;
+        public bool IsReplay{get;set;}
+        public int ReplayDelta,Hosts,Joins,Starts,ReadyRequests,SoloStarts,Disconnected;
+        public string HostName,JoinAddress;public int Port;
+        public readonly List<string> RequestedArt=new List<string>();
+        public readonly List<WireMessage> Commands=new List<WireMessage>();
+        public DeckDefinition Saved;
+        public event Action Changed;
+        public FakeSession(IReadOnlyList<CardDefinition> cards){Cards=cards;Decks=StarterDecks.CreatePair(cards);SelectedDeck=Decks[0];}
+        public void SelectDeck(DeckDefinition deck){SelectedDeck=deck;Changed?.Invoke();}
+        public bool SaveDeck(DeckDefinition deck,out string error){Saved=deck;error="";return true;}
+        public void StartSolo(DeckDefinition player,DeckDefinition opponent){SoloStarts++;}
+        public void Host(int port,string name){Hosts++;Port=port;HostName=name;}
+        public void Join(string host,int port,string name){Joins++;JoinAddress=host;Port=port;HostName=name;}
+        public void SetReady(bool ready){ReadyRequests++;IsReady=ready;}
+        public void StartOnline(){Starts++;}
+        public void Send(WireMessage command)=>Commands.Add(command);
+        public void LoadArt(string id,RawImage image){RequestedArt.Add(id);image.texture=Texture2D.blackTexture;}
+        public void AttachField(RawImage image){image.texture=Texture2D.blackTexture;}
+        public void Disconnect(){Disconnected++;IsConnected=false;View=null;}
+        public void StepReplay(int delta)=>ReplayDelta+=delta;
+        public void Refresh()=>Changed?.Invoke();
     }
-    private static SceneUiProfile sceneUi;
-    private static MainMenuUI menu;
+    private static readonly MainContext Context=new MainContext();
+    private static readonly BindingFlags Private=BindingFlags.Instance|BindingFlags.NonPublic;
+    private static string sourceRoot,temporary;
+    private static CardsDatabase catalog;
+    private static Dictionary<string,FixtureNode[]> fixtures;
+    private static MDPro3.Program program;
+    private static FakeSession fake;
     private static int passed;
-    private static readonly BindingFlags Private = BindingFlags.Instance | BindingFlags.NonPublic;
-    private static T Field<T>(object owner, string name) => (T)owner.GetType().GetField(name, Private).GetValue(owner);
-    private static void Set(object owner, string name, object value) => owner.GetType().GetField(name, Private).SetValue(owner, value);
-    private static object Call(object owner, string name, params object[] arguments)
+    private static void Assert(bool value,string message){if(!value)throw new Exception(message);}
+    private static T Field<T>(object owner,string name)=>(T)owner.GetType().GetField(name,Private).GetValue(owner);
+    private static object Call(object owner,string name,params object[] args)
     {
-        try { return owner.GetType().GetMethod(name, Private).Invoke(owner, arguments); }
-        catch (TargetInvocationException error) { throw error.InnerException; }
+        try{return owner.GetType().GetMethod(name,Private).Invoke(owner,args);}
+        catch(TargetInvocationException error){throw error.InnerException;}
     }
-    private static void Assert(bool condition, string message) { if (!condition) throw new Exception(message); }
-    private static BattleSpiritsApp App => (BattleSpiritsApp)typeof(BattleSpiritsApp).GetField("instance", BindingFlags.Static | BindingFlags.NonPublic).GetValue(null);
-    private static RectTransform Rect(string name, Transform parent = null)
+    private static Transform Find(Transform root,string suffix)=>BattleNativeWidgets.Find(root,suffix);
+    private static void Click(Transform root,string suffix)
     {
-        var rect = new GameObject(name, typeof(RectTransform)).GetComponent<RectTransform>(); rect.SetParent(parent, false); return rect;
+        var node=Find(root,suffix);Assert(node!=null,"Missing actual prefab button: "+suffix);
+        Assert(node.gameObject.activeInHierarchy,"Button inactive: "+suffix);
+        var selectable=node.GetComponent<Selectable>();
+        Assert(selectable==null||selectable.interactable,"Button disabled: "+suffix);
+        if(node.GetComponent<SelectionToggle>() is SelectionToggle toggle)toggle.Submit();
+        else if(node.GetComponent<SelectionButton>() is SelectionButton selection)selection.Click();
+        else {var button=node.GetComponent<Button>();Assert(button!=null,"Button has no event API: "+suffix);button.onClick.Invoke();}
     }
-    private static void PumpUntil(Func<bool> condition)
+    private static void Input(Transform root,string suffix,string value)
     {
-        var deadline = DateTime.UtcNow.AddSeconds(8);
-        while (!condition() && DateTime.UtcNow < deadline) { Context.Drain(); Thread.Sleep(1); }
-        Context.Drain(); Assert(condition(), "Timed out waiting for controlled continuation.");
+        var input=Find(root,suffix)?.GetComponent<TMP_InputField>();Assert(input!=null,"Missing actual prefab input: "+suffix);
+        input.text=value;input.onValueChanged.Invoke(value);
+    }
+    private static GameObject Fixture(string name)
+    {
+        var objects=new Dictionary<string,GameObject>(StringComparer.Ordinal);
+        foreach(var row in fixtures[name].OrderBy(row=>row.path.Count(c=>c=='/')))
+        {
+            if(objects.ContainsKey(row.path))continue;
+            var go=new GameObject(row.path.Split('/').Last(),typeof(RectTransform)){layer=row.layer};objects.Add(row.path,go);
+            int slash=row.path.LastIndexOf('/');if(slash>=0)go.transform.SetParent(objects[row.path.Substring(0,slash)].transform,false);
+            foreach(string kind in row.components??Array.Empty<string>())
+            {
+                Type type=kind switch {
+                    "CanvasGroup"=>typeof(CanvasGroup),"SelectionButton"=>typeof(SelectionButton),"SelectionToggle"=>typeof(SelectionToggle),
+                    "TMP_InputField"=>typeof(TMP_InputField),"TMP_Dropdown"=>typeof(TMP_Dropdown),"TextMeshProUGUI"=>typeof(TextMeshProUGUI),
+                    "RawImage"=>typeof(RawImage),"Image"=>typeof(Image),"Button"=>typeof(Button),"Toggle"=>typeof(Toggle),
+                    "ScrollRect"=>typeof(ScrollRect),"ElementObjectManager"=>typeof(YgomSystem.ElementSystem.ElementObjectManager),_=>null};
+                if(type!=null)go.AddComponent(type);
+            }
+            if(go.GetComponent<Image>() is Image image)image.sprite=new Sprite();
+            go.SetActive(row.active);
+        }
+        var result=objects.Values.First(go=>go.transform.parent==null);
+        result.SetActive(true);return result;
+    }
+    private static BattleNativeScreenUI Screen(BattleNativeScreen screen,IBattleNativeSession session=null)
+    {
+        BattleNativeNavigation.Session=session??fake;
+        var go=Fixture(BattleNativeNavigation.PrefabName(screen));go.transform.SetParent(program.ui_.transform,false);
+        var controller=go.AddComponent<BattleNativeScreenUI>();controller.screen=screen;
+        controller.Initialize(new GameObject("ControlledServant").AddComponent<MDPro3.Servant.Servant>());
+        return controller;
     }
     private static void Cleanup()
     {
-        if (App != null) Object.Destroy(App.gameObject);
         Context.Drain();
-        foreach (var go in GameObject.All.Where(go => !go.destroyed && go.transform.parent == null).ToArray()) Object.Destroy(go);
-        MDPro3.UIManager.InputBlocker = null;
+        foreach(var root in GameObject.All.Where(go=>!go.destroyed&&go.transform.parent==null).ToArray())Object.Destroy(root);
+        Context.Drain();BattleNativeNavigation.Session=null;MDPro3.Program.instance=null;MDPro3.UIManager.Popup=null;MDPro3.UIManager.PopupSelected=null;
     }
     private static void Setup()
     {
-        Cleanup();
-        Keyboard.current = null;
-        Application.dataPath = Path.Combine(temporary, "Assets");
-        var canvas = new GameObject("Canvas", typeof(RectTransform), typeof(Canvas));
-        canvas.layer = sceneUi.layer;
-        var uiCanvas = canvas.GetComponent<Canvas>();
-        uiCanvas.sortingLayerID = sceneUi.sortingLayer;
-        uiCanvas.additionalShaderChannels = sceneUi.shaderChannels;
-        uiCanvas.worldCamera = new GameObject("Existing UI camera").AddComponent<Camera>();
-        uiCanvas.worldCamera.cullingMask = sceneUi.cameraMask;
-        var owner = new GameObject("Program").AddComponent<MDPro3.Program>(); MDPro3.Program.instance = owner;
-        owner.ui_ = new GameObject("UI", typeof(RectTransform)).AddComponent<MDPro3.UIManager>(); owner.ui_.transform.SetParent(canvas.transform, false); owner.ui_.tmpFont = new TMP_FontAsset();
-        owner.ui_.gameObject.layer = sceneUi.layer;
-        owner.menu = new GameObject("MainMenuServant").AddComponent<MDPro3.Servant.Servant>();
-        menu = new GameObject("MainMenuUI", typeof(RectTransform)).AddComponent<MainMenuUI>(); menu.transform.SetParent(owner.ui_.transform, false);
-        owner.menu.servantUI = menu; menu.Manager = menu.gameObject.AddComponent<YgomSystem.ElementSystem.ElementObjectManager>();
-        menu.Title = Rect("Title", menu.transform).gameObject.AddComponent<TextMeshProUGUI>();
-        foreach (var name in new[] { "ButtonSolo", "ButtonPuzzle", "ButtonReplay" })
-        {
-            var button = Rect(name, menu.transform); var art = button.gameObject.AddComponent<Image>(); art.sprite = new Sprite(); art.material = new Material();
-            button.gameObject.AddComponent<MDPro3.UI.SelectionButton>(); Rect("#Text_Menu", button).gameObject.AddComponent<TextMeshProUGUI>();
-        }
-        MDPro3.Program.items = new MDPro3.Items();
-        MDPro3.Program.items.mats.Add(new MDPro3.Items.Item { id = 1090001, path = "Mat/Mat_002" });
-        MDPro3.Program.items.mates.Add(new MDPro3.Items.Item { id = 1000001, path = "Mate/M09755_Model" });
-        MDPro3.ABLoader.Field = path => Task.FromResult(new GameObject(path));
-        MDPro3.ABLoader.Pet = id => Task.FromResult(new GameObject("Mate").AddComponent<MDPro3.Mate>());
-        Addressables.Load = path => Task.FromResult<GameObject>(null); Addressables.Releases = 0;
-        menu.Initialize(owner.menu);
-    }
-    private static void Case(string name, Action test)
-    {
-        Setup(); test(); Context.Drain(); passed++; Console.WriteLine("PASS " + name);
-    }
-    private static void Reveal()
-    {
-        var curtain = Field<RectTransform>(App, "handover");
-        Assert(curtain != null, "Expected handover curtain.");
-        curtain.GetComponentsInChildren<Button>(true).Single().onClick.Invoke();
-    }
-    private static void StartLocal()
-    {
-        menu.OnSolo(); var pair = StarterDecks.CreatePair(database.cards);
-        Call(App, "StartLocal", pair[0], pair[1], "Người Một", "Người Hai");
-    }
-    private static GameObject Template()
-    {
-        var prefab = Rect("DeckEditorUI"); var root = Rect("Root", prefab); var safe = Rect("SafeArea", root);
-        foreach (var parent in new[] { root, safe, safe, safe })
-        {
-            string name = parent == root ? "BG" : !parent.children.Any(x => x.name == "DeckEditHeader") ? "DeckEditHeader" : !parent.children.Any(x => x.name == "DeckEditOverHeader") ? "DeckEditOverHeader" : "Footer";
-            var part = Rect(name, parent); part.anchorMin = new Vector2(0.1f, 0.2f); part.gameObject.AddComponent<Image>().sprite = new Sprite();
-        }
-        return prefab.gameObject;
-    }
-    private static string[] PrefabPaths(string path)
-    {
-        string source=File.ReadAllText(path);
-        var names=new Dictionary<string,string>();var owners=new Dictionary<string,string>();var parents=new Dictionary<string,string>();
-        foreach(Match block in Regex.Matches(source,@"(?ms)^--- !u!(?<kind>\d+) &(?<id>\d+)[^\n]*\n(?<body>.*?)(?=^---|\z)"))
-        {
-            string body=block.Groups["body"].Value,id=block.Groups["id"].Value,kind=block.Groups["kind"].Value;
-            if(kind=="1"){var name=Regex.Match(body,@"(?m)^  m_Name: (.*)$");if(name.Success)names[id]=name.Groups[1].Value.Trim().Trim('\"','\'');}
-            if(kind=="224"||kind=="4"){
-                var owner=Regex.Match(body,@"m_GameObject: \{fileID: (\d+)\}");var parent=Regex.Match(body,@"m_Father: \{fileID: (\d+)\}");
-                if(owner.Success)owners[id]=owner.Groups[1].Value;if(parent.Success)parents[id]=parent.Groups[1].Value;
-            }
-        }
-        var result=new List<string>();
-        foreach(string id in owners.Keys){var parts=new List<string>();var seen=new HashSet<string>();string current=id;
-            while(seen.Add(current)&&owners.TryGetValue(current,out string owner)&&names.TryGetValue(owner,out string name)){
-                parts.Add(name);if(!parents.TryGetValue(current,out current)||current=="0")break;
-            }parts.Reverse();result.Add(string.Join("/",parts));}
-        return result.ToArray();
-    }
-    private static SceneUiProfile ReadSceneUiProfile()
-    {
-        var blocks = Regex.Matches(File.ReadAllText(Path.Combine(sourceRoot, "Assets/Scenes/Main.unity")),
-            @"(?ms)^--- !u!(?<kind>\d+) &(?<id>\d+)[^\n]*\n(?<body>.*?)(?=^---|\z)").Cast<Match>().ToArray();
-        string Scalar(string body, string field)
-        {
-            var value = Regex.Match(body, @"(?m)^\s*" + Regex.Escape(field) + @": ([^\r\n]+)");
-            Assert(value.Success, "Missing scene field: " + field);
-            return value.Groups[1].Value.Trim();
-        }
-        string Owner(Match block) => Scalar(block.Groups["body"].Value, "m_GameObject");
-        var ui = blocks.Single(block => block.Groups["kind"].Value == "1"
-            && Regex.IsMatch(block.Groups["body"].Value, @"(?m)^  m_Name: UI\r?$"));
-        string uiRef = "{fileID: " + ui.Groups["id"].Value + "}";
-        var canvas = blocks.Single(block => block.Groups["kind"].Value == "223" && Owner(block) == uiRef);
-        string canvasBody = canvas.Groups["body"].Value;
-        string cameraRef = Scalar(canvasBody, "m_Camera");
-        var camera = blocks.Single(block => block.Groups["kind"].Value == "20"
-            && "{fileID: " + block.Groups["id"].Value + "}" == cameraRef);
-        return new SceneUiProfile {
-            layer = int.Parse(Scalar(ui.Groups["body"].Value, "m_Layer")),
-            cameraMask = unchecked((int)uint.Parse(Scalar(camera.Groups["body"].Value, "m_Bits"))),
-            renderMode = int.Parse(Scalar(canvasBody, "m_RenderMode")),
-            sortingLayer = int.Parse(Scalar(canvasBody, "m_SortingLayerID")),
-            shaderChannels = (AdditionalCanvasShaderChannels)int.Parse(Scalar(canvasBody, "m_AdditionalShaderChannelsFlag"))
+        Cleanup();Time.unscaledTime=0;
+        Application.dataPath=Path.Combine(temporary,"Assets");
+        var canvas=new GameObject("Canvas",typeof(RectTransform),typeof(Canvas)){layer=5};
+        canvas.GetComponent<Canvas>().worldCamera=new GameObject("Camera_UI").AddComponent<Camera>();
+        canvas.GetComponent<Canvas>().worldCamera.cullingMask=1073741856;
+        program=new GameObject("Program").AddComponent<MDPro3.Program>();MDPro3.Program.instance=program;
+        program.ui_=new GameObject("UI",typeof(RectTransform)).AddComponent<MDPro3.UIManager>();program.ui_.gameObject.layer=5;
+        program.ui_.transform.SetParent(canvas.transform,false);program.ui_.tmpFont=new TMP_FontAsset();
+        program.menu=new GameObject("Menu").AddComponent<MDPro3.Servant.Servant>();program.currentServant=program.menu;
+        program.UiFactory=servant=>{
+            if (!(servant is BattleNativeServant native)) return null;
+            var view=Screen(native.Screen,BattleNativeNavigation.Session);servant.servantUI=view;return view;
         };
+        MDPro3.Program.items=new MDPro3.Items();
+        fake=new FakeSession(catalog.cards);BattleNativeNavigation.Session=fake;
+        BattleAudio.Configure(temporary);
     }
-    private static void AssertUiLayers()
+    private static void Case(string name,Action test){Setup();test();Context.Drain();passed++;Console.WriteLine("PASS "+name);}
+    private static void Pump(Func<bool> done,Action tick=null)
     {
-        var overlay = Field<RectTransform>(App, "overlay");
-        var rootCanvas = MDPro3.Program.instance.ui_.GetComponentInParent<Canvas>();
-        var overlayCanvas = overlay.GetComponent<Canvas>();
-        Assert(overlay.parent == rootCanvas.transform && overlay.gameObject.activeInHierarchy, "Overlay is outside the active UI root.");
-        Assert(overlayCanvas.worldCamera == rootCanvas.worldCamera, "Overlay lost its UI camera.");
-        var widgets = overlay.GetComponentsInChildren<RectTransform>(true);
-        Assert(widgets.Length > 3 && overlay.GetComponentsInChildren<Graphic>(true).Length > 0, "No runtime UI to inspect.");
-        foreach (var widget in widgets)
-            Assert(widget.gameObject.layer == sceneUi.layer
-                && (rootCanvas.worldCamera.cullingMask & (1 << widget.gameObject.layer)) != 0,
-                "Camera_UI excludes runtime widget " + widget.name + " on layer " + widget.gameObject.layer + ".");
-        Assert(overlayCanvas.additionalShaderChannels == rootCanvas.additionalShaderChannels, "Overlay lost source shader vertex channels.");
-        Assert(overlayCanvas.sortingLayerID == rootCanvas.sortingLayerID, "Overlay moved to another sorting layer.");
+        var watch=Stopwatch.StartNew();while(!done()&&watch.Elapsed.TotalSeconds<10){Context.Drain();tick?.Invoke();Thread.Sleep(2);}Context.Drain();Assert(done(),"Timed out waiting for actual production continuation.");
+    }
+    private static void AssertGeneratedLayers(Transform root)
+    {
+        foreach(var item in root.GetComponentsInChildren<Transform>(true).Where(item=>item.name.StartsWith("BS_",StringComparison.Ordinal)))
+            Assert(item.gameObject.layer==5,"Generated widget not visible to actual UI camera: "+item.name);
+    }
+    private static MainMenuUI Menu()
+    {
+        var go=Fixture("MainMenuUI");go.transform.SetParent(program.ui_.transform,false);
+        var menu=go.AddComponent<MainMenuUI>();menu.Manager=go.GetComponent<YgomSystem.ElementSystem.ElementObjectManager>()??go.AddComponent<YgomSystem.ElementSystem.ElementObjectManager>();
+        menu.Title=new GameObject("ControlledTitle",typeof(RectTransform)).AddComponent<TextMeshProUGUI>();menu.Initialize(program.menu);return menu;
+    }
+    private static void LoadFixtures()
+    {
+        var start=new ProcessStartInfo("python"){RedirectStandardOutput=true,RedirectStandardError=true,UseShellExecute=false};
+        start.ArgumentList.Add(Path.Combine(sourceRoot,"Tests/BattleSpirits/Presentation/prefab_fixture.py"));start.ArgumentList.Add(sourceRoot);
+        using var child=Process.Start(start);string output=child.StandardOutput.ReadToEnd(),error=child.StandardError.ReadToEnd();child.WaitForExit();
+        Assert(child.ExitCode==0,"Prefab fixture export failed: "+error);fixtures=JsonConvert.DeserializeObject<Dictionary<string,FixtureNode[]>>(output);
     }
     public static int Main(string[] args)
     {
         SynchronizationContext.SetSynchronizationContext(Context);
-        sourceRoot = Path.GetFullPath(args.Length > 0 ? args[0] : ".");
-        sceneUi = ReadSceneUiProfile();
-        temporary = Path.Combine(Path.GetTempPath(), "bs-presentation-" + Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(Path.Combine(temporary, "Assets")); Directory.CreateDirectory(Path.Combine(temporary, "Data/BattleSpirits"));
-        string catalog = File.ReadAllText(Path.Combine(sourceRoot, "Data/BattleSpirits/cards.json"));
-        File.WriteAllText(Path.Combine(temporary, "Data/BattleSpirits/cards.json"), catalog); database = JsonConvert.DeserializeObject<CardsDatabase>(catalog);
+        sourceRoot=Path.GetFullPath(args.Length>0?args[0]:".");LoadFixtures();
+        catalog=JsonConvert.DeserializeObject<CardsDatabase>(File.ReadAllText(Path.Combine(sourceRoot,"Data/BattleSpirits/cards.json")));
+        temporary=Path.Combine(Path.GetTempPath(),"bs-native-presentation-"+Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(Path.Combine(temporary,"Assets"));Directory.CreateDirectory(Path.Combine(temporary,"Data/BattleSpirits"));
+        File.WriteAllText(Path.Combine(temporary,"Data/BattleSpirits/cards.json"),JsonConvert.SerializeObject(catalog));
+        Directory.CreateDirectory(Path.Combine(temporary,"Sound/BattleSpirits"));
+        foreach(string wave in Directory.GetFiles(Path.Combine(sourceRoot,"Sound/BattleSpirits"),"*.wav"))File.Copy(wave,Path.Combine(temporary,"Sound/BattleSpirits",Path.GetFileName(wave)));
         try
         {
-            Case("Scene-derived UI camera excludes Default and includes the UI layer", () => {
-                Assert(sceneUi.renderMode == 1, "Expected the actual Screen Space Camera UI canvas.");
-                Assert(sceneUi.layer != 0 && (sceneUi.cameraMask & 1) == 0, "Fixture no longer reproduces Default-layer culling.");
-                Assert((sceneUi.cameraMask & (1 << sceneUi.layer)) != 0, "Scene UI layer is excluded by Camera_UI.");
-                menu.OnPuzzle();
-                AssertUiLayers();
+            Case("Native navigation registers original prefab Servants without another Canvas",()=>{
+                BattleNativeNavigation.Open(BattleNativeScreen.Solo);
+                var first=program.currentServant;Assert(first is BattleNativeServant&&program.Registered.Count==1,"Native servant was not registered.");
+                Assert(first.servantUI is BattleNativeScreenUI,"Original prefab did not receive native controller.");
+                BattleNativeNavigation.Open(BattleNativeScreen.Solo);Assert(program.Registered.Count==1,"Duplicate native screen registration.");
+                Assert(GameObject.All.Count(go=>!go.destroyed&&go.GetComponent<Canvas>()!=null)==1,"Separate overlay Canvas created.");
+                BattleNativeNavigation.Open(BattleNativeScreen.Deck);Assert(!first.servantUI.gameObject.activeSelf,"Old form did not hide on navigation.");
             });
-            Case("Solo, network, deck, rules and history screens stay inside the UI camera mask", () => {
-                foreach (var open in new Action[] { menu.OnSolo, menu.OnOnline, menu.OnDeck, menu.OnPuzzle, menu.OnReplay })
+            Case("Native deck uses original collection, deck and detail form with Battle Spirits images",()=>{
+                var screen=Screen(BattleNativeScreen.Deck);var view=Field<BattleNativeDeckView>(screen,"deck");
+                var collection=Field<RectTransform>(view,"collection");var deck=Field<RectTransform>(view,"deckContent");
+                Assert(collection!=null&&deck!=null,"Original nested deck form paths not resolved.");
+                Assert(collection.children.Count(child=>child.name.StartsWith("BS_Card_"))==42,"Collection first page missing.");
+                Assert(deck.children.Count(child=>child.name.StartsWith("BS_Card_"))==fake.SelectedDeck.cards.Length,"Deck cards not rebound.");
+                Assert(fake.RequestedArt.All(id=>catalog.cards.Any(card=>card.id==id)),"Legacy YGO card images requested.");AssertGeneratedLayers(screen.transform);
+            });
+            Case("Native search filters actual catalog by card ID, type, cost and BP",()=>{
+                var screen=Screen(BattleNativeScreen.Deck);var view=Field<BattleNativeDeckView>(screen,"deck");var grid=Field<RectTransform>(view,"collection");
+                foreach(string query in new[]{"BS01-X01","Magic","cost:4","bp:10000"})
                 {
-                    open(); Context.Drain(); AssertUiLayers();
-                    Assert(!menu.gameObject.activeSelf && Field<RectTransform>(App, "surface").GetComponentsInChildren<Graphic>().Length > 0,
-                        "Menu hidden without an active replacement screen.");
-                    Call(App, "Close");
+                    Input(screen.transform,"CardCollectionView/Root/Window/FilterAndSortArea/UpperArea/InputField",query);
+                    var cards=grid.children.Where(child=>child.name.StartsWith("BS_Card_")).ToArray();Assert(cards.Length>0,"Search empty unexpectedly: "+query);
+                    foreach(var node in cards){string id=node.name.Substring("BS_Card_".Length);var card=catalog.cards.Single(card=>card.id==id);
+                        Assert(query=="Magic"?card.type=="Magic":query=="cost:4"?card.cost==4:query=="bp:10000"?card.levels.Any(level=>level.bp>=10000):id==query,"Native BS search returned incompatible card.");}
                 }
             });
-            Case("Deferred original deck decorations inherit the visible target layer", () => {
-                var completion = new TaskCompletionSource<GameObject>(TaskCreationOptions.RunContinuationsAsynchronously);
-                Addressables.Load = path => completion.Task;
-                menu.OnDeck();
-                var surface = Field<RectTransform>(App, "surface");
-                Assert(surface.Find("BS_MDPro3_OriginalDeckFrame") == null, "Deferred artwork fixture loaded too early.");
-                completion.SetResult(Template());
-                PumpUntil(() => surface.Find("BS_MDPro3_OriginalDeckFrame") != null);
-                Assert(surface.Find("BS_MDPro3_OriginalDeckFrame").GetComponentsInChildren<Image>(true).Length == 4, "Missing copied decoration graphics.");
-                AssertUiLayers();
+            Case("Native collection paging creates fresh visible card widgets",()=>{
+                var screen=Screen(BattleNativeScreen.Deck);var view=Field<BattleNativeDeckView>(screen,"deck");var grid=Field<RectTransform>(view,"collection");
+                string first=grid.children.First(child=>child.name.StartsWith("BS_Card_")).name;Click(screen.transform,"BS_Next");
+                Assert(first!=grid.children.First(child=>child.name.StartsWith("BS_Card_")).name,"Next page reused first page.");AssertGeneratedLayers(screen.transform);
             });
-            Case("Deck paging and selection keep newly created artwork and rows visible", () => {
-                menu.OnDeck();
-                var surface = Field<RectTransform>(App, "surface");
-                var grid = surface.GetComponentsInChildren<RectTransform>(true).Single(widget => widget.name == "Grid");
-                string firstPageCard = grid.GetComponentsInChildren<TextMeshProUGUI>(true).First(label => label.name == "CardName").text;
-                var next = surface.GetComponentsInChildren<Button>(true).Single(button => button.GetComponentInChildren<TextMeshProUGUI>(true)?.text == "›");
-                next.onClick.Invoke();
-                Assert(grid.GetComponentsInChildren<TextMeshProUGUI>(true).First(label => label.name == "CardName").text != firstPageCard,
-                    "Paging did not create another set of card widgets.");
-                grid.GetComponentsInChildren<Button>(true).First().onClick.Invoke();
-                Assert(grid.GetComponentsInChildren<RawImage>(true).Length > 0, "No card artwork widgets after paging.");
-                AssertUiLayers();
+            Case("Original deck add action enforces same-name copy cap",()=>{
+                var screen=Screen(BattleNativeScreen.Deck);var view=Field<BattleNativeDeckView>(screen,"deck");
+                Click(screen.transform,"DeckEditHeader/Root/Header/ButtonChangeSide");Call(view,"Select",catalog.cards.First(card=>card.IsPlayable));
+                for(int i=0;i<4;i++)Click(screen.transform,"CardDetailView/Root/Window/Content/DescriptionArea/MenuAreaRoot/MenuArea/CardGroup/AddCardButton");
+                Assert(Field<List<string>>(view,"deck").Count==3,"Copy limit not enforced.");
             });
-            Case("Handovers and refreshed board artwork use UI while 3D cosmetics keep their stage layer", () => {
-                StartLocal(); AssertUiLayers(); Reveal(); AssertUiLayers();
-                Call(App, "SendAction", new WireMessage { type = "action", action = "opening" });
-                AssertUiLayers(); Reveal(); AssertUiLayers();
-                var board = Field<BattleBoardPanel>(App, "board");
-                Assert(board.Root.GetComponentsInChildren<RawImage>(true).Length > 1, "No hand/card/background images on refreshed board.");
-                var backdrop = Field<BattleFieldBackdrop>(App, "backdrop");
-                var stage = Field<GameObject>(backdrop, "stage");
-                var stageCamera = Field<Camera>(backdrop, "stageCamera");
-                Assert(stage.layer == 31 && stageCamera.cullingMask == (1 << 31), "UI fix changed the isolated cosmetic stage mask.");
-                Assert(stage.GetComponentsInChildren<Transform>(true).All(item => item.gameObject.layer == 31), "Stage children leaked onto UI layer.");
-                Assert(board.Background.gameObject.layer == sceneUi.layer, "RenderTexture presenter is excluded from Camera_UI.");
+            Case("Native Solo starts a real selected Battle Spirits deck pair",()=>{
+                var screen=Screen(BattleNativeScreen.Solo);
+                Assert(screen.GetComponentsInChildren<Transform>(true).Any(node=>node.name.StartsWith("BS_Row_")),"No original Solo list rows.");
+                Click(screen.transform,"ButtonDeck");Click(screen.transform,"ButtonPlay");Assert(fake.SoloStarts==1,"Solo button did not call BS session.");
+                AssertGeneratedLayers(screen.transform);
             });
-            Case("Actual main-menu handlers preserve labels and route to Battle Spirits", () => {
-                Assert(menu.Title.text.Contains("0.1.0"), "Title.");
-                Assert(menu.transform.Find("ButtonSolo/#Text_Menu").GetComponent<TextMeshProUGUI>().text == "CHƠI CÙNG MÁY", "Local label.");
-                menu.OnPuzzle(); Assert(BattleSpiritsApp.IsOpen && MDPro3.Program.instance.Shifted == null, "Legacy Puzzle was invoked.");
-                Assert(!menu.gameObject.activeSelf && MDPro3.UIManager.InputBlocker == App, "Overlay input ownership.");
-                Assert(Field<RectTransform>(App,"overlay").GetComponent<Canvas>().worldCamera == MDPro3.Program.instance.ui_.GetComponentInParent<Canvas>().worldCamera,"NestedcanvasUIcamera.");
-                Call(App, "Close"); Assert(menu.gameObject.activeSelf && MDPro3.UIManager.InputBlocker == null, "Menu restored.");
+            Case("Original online inputs send direct IP and port to Battle Spirits",()=>{
+                var screen=Screen(BattleNativeScreen.Online);
+                Input(screen.transform,"PageLegacy/Right/InputFieldName","Tester");Input(screen.transform,"PageLegacy/Right/InputFieldHost","192.168.1.20");Input(screen.transform,"PageLegacy/Right/InputFieldPort","7788");
+                Click(screen.transform,"PageLegacy/Right/ButtonJoin");Assert(fake.Joins==1&&fake.JoinAddress=="192.168.1.20"&&fake.Port==7788&&fake.HostName=="Tester","Original IP/port bindings lost.");
+                Click(screen.transform,"ToggleHost");Input(screen.transform,"PageHost/InputFieldTime","7799");Click(screen.transform,"PageHost/ButtonCreate");Assert(fake.Hosts==1&&fake.Port==7799,"Host form did not call BS server.");
             });
-            Case("Update is safe without a keyboard in Input System mode", () => {
-                menu.OnPuzzle();
-                Call(App, "Update");
-                Assert(BattleSpiritsApp.IsOpen && MDPro3.UIManager.InputBlocker == App, "Missing keyboard changed the open surface.");
+            Case("Native room ready/start follows connection and server lobby authority",()=>{
+                fake.IsConnected=true;fake.Seat=0;fake.Players=new[]{new LobbyPlayerView{playerIndex=0,ready=true},new LobbyPlayerView{playerIndex=1,ready=true}};
+                var screen=Screen(BattleNativeScreen.Room);Click(screen.transform,"ButtonReady");Click(screen.transform,"ButtonStart");Assert(fake.ReadyRequests==1&&fake.Starts==1,"Room actions not rebound.");
+                fake.IsConnected=false;fake.Refresh();Assert(!Find(screen.transform,"ButtonReady").GetComponent<Selectable>().interactable,"Ready remains active after disconnect.");
             });
-            Case("Update keeps the overlay open until Escape is pressed", () => {
-                Keyboard.current = new Keyboard();
-                menu.OnPuzzle();
-                Call(App, "Update");
-                Assert(BattleSpiritsApp.IsOpen && !menu.gameObject.activeSelf, "Unpressed Escape closed the overlay.");
+            Case("Duel uses own hand snapshot and dispatches opening choices",()=>{
+                fake.View=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards),0);var screen=Screen(BattleNativeScreen.Duel);
+                var view=Field<BattleNativeDuelView>(screen,"duel");var hand=Field<RectTransform>(view,"hand");Assert(hand.childCount==4,"Own hand not displayed.");
+                Click(screen.transform,"Buttons/ButtonInfo");Assert(fake.Commands.Single().action=="opening","Keep opening did not send BS command.");AssertGeneratedLayers(screen.transform);
             });
-            Case("Input System Escape closes the overlay and restores menu input", () => {
-                Keyboard.current = new Keyboard();
-                Keyboard.current.escapeKey.wasPressedThisFrame = true;
-                menu.OnPuzzle();
-                Call(App, "Update");
-                Assert(!BattleSpiritsApp.IsOpen && menu.gameObject.activeSelf && MDPro3.UIManager.InputBlocker == null, "Escape did not restore the menu.");
-                Call(App, "Update");
-                Assert(menu.gameObject.activeSelf && MDPro3.UIManager.InputBlocker == null, "Escape with no overlay changed menu input.");
+            Case("Native duel controls close on disconnected state and replay uses step controls",()=>{
+                fake.View=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards),0);var screen=Screen(BattleNativeScreen.Duel);fake.CanSendCommands=false;fake.Refresh();
+                Assert(Find(screen.transform,"Buttons/ButtonInfo").GetComponentInChildren<TextMeshProUGUI>(true).text=="QUAY LẠI",
+                    "Disconnected state did not replace commands with a return route.");
+                Assert(!Find(screen.transform,"Buttons/ButtonTiming").gameObject.activeSelf,"Disconnected opening action remains enabled.");
+                fake.IsReplay=true;fake.Refresh();Click(screen.transform,"Buttons/ButtonInfo");Assert(fake.ReplayDelta==1,"Replay step controls not wired.");
             });
-            Case("Actual deck builder loads full mixed catalog and pages card artwork", () => {
-                menu.OnDeck(); var surface = Field<RectTransform>(App, "surface");
-                Assert(Field<CardsDatabase>(App,"database").cards.Length == database.cards.Length, "Catalog data lost.");
-                Assert(surface.GetComponentsInChildren<TMP_Dropdown>(true).Length == 5, "Battle Spirits filters missing.");
-                var grid = surface.GetComponentsInChildren<RectTransform>(true).Single(x => x.name == "Grid");
-                Assert(grid.childCount == Math.Min(42,database.cards.Length), "Artwork page size.");
+            Case("Native servant return disconnects an active room and restores original menu",()=>{
+                BattleNativeNavigation.Open(BattleNativeScreen.Room);((BattleNativeServant)program.currentServant).OnReturn();Assert(fake.Disconnected==1&&program.currentServant==program.menu,"Native return lifecycle lost.");
             });
-            Case("Printed verified copy exceptions and name-wide limits match Core", () => {
-                var card = JsonConvert.DeserializeObject<CardDefinition>(JsonConvert.SerializeObject(database.cards.First(x=>x.IsPlayable)));
-                card.maxCopies=20;card.restrictionVerified=true;
-                var root=Rect("DeckTest");var panel=new BattleDeckPanel(root,temporary,new[]{card},new DeckDefinition{cards=Array.Empty<string>()},(id,img)=>{},deck=>{},message=>{});panel.Build();Call(panel,"Select",card);
-                for(int i=0;i<21;i++)Call(panel,"AddCurrent");Assert(Field<List<string>>(panel,"deck").Count==20,"Verified20-copylimit.");
-                var other=JsonConvert.DeserializeObject<CardDefinition>(JsonConvert.SerializeObject(card));other.id+="-reprint";other.maxCopies=2;
-                panel=new BattleDeckPanel(Rect("DeckTest2"),temporary,new[]{card,other},new DeckDefinition{cards=Array.Empty<string>()},(id,img)=>{},deck=>{},message=>{});panel.Build();Call(panel,"Select",card);
-                for(int i=0;i<3;i++)Call(panel,"AddCurrent");Assert(Field<List<string>>(panel,"deck").Count==2,"Name-widecap.");
+            Case("Actual menu facade initializes native session and routes original handlers",()=>{
+                var menu=Menu();Assert(BattleNativeSession.Ensure().Initialized,"Catalog/backend initialization failed.");
+                menu.OnSolo();Assert(((BattleNativeServant)program.currentServant).Screen==BattleNativeScreen.Solo,"Solo menu uses old overlay.");
+                menu.OnDeck();Assert(((BattleNativeServant)program.currentServant).Screen==BattleNativeScreen.Deck,"Deck route not native.");
+                menu.OnOnline();Assert(((BattleNativeServant)program.currentServant).Screen==BattleNativeScreen.Online,"Online route not native.");
+                menu.OnPuzzle();Assert(MDPro3.UIManager.Popup?.First()=="BATTLE SPIRITS — ETERNAL","Rules popup not native.");
             });
-            Case("Older artwork completion cannot overwrite the newly selected card", () => {
-                var image=Rect("Preview").gameObject.AddComponent<RawImage>();var newer=new Texture2D(1,1,TextureFormat.RGBA32,false);image.texture=newer;
-                Field<Dictionary<RawImage,string>>(App,"requestedArt")[image]="new";Field<Dictionary<string,List<RawImage>>>(App,"pendingArt")["old"]=new List<RawImage>{image};
-                Call(App,"ApplyArtToTargets","old",new Texture2D(1,1,TextureFormat.RGBA32,false));Assert(image.texture==newer,"Late oldselection overwrotepreview.");
+            Case("Session save/load preserves deck IDs and rejects path/format mistakes",()=>{
+                var session=BattleNativeSession.Ensure();var deck=StarterDecks.Create(catalog.cards,"../CON:Battle/Deck");
+                Assert(session.SaveDeck(deck,out string error),"Valid BS deck save failed: "+error);
+                Assert(Directory.GetFiles(Path.Combine(temporary,"Data/BattleSpirits/Decks"),"*.json").Length>0,"No saved BS deck.");
+                Assert(!session.SaveDeck(new DeckDefinition{name="Short",cards=new[]{"BS01-X01"}},out error),"Undersized deck accepted.");
             });
-            Case("Artwork cache evicts unused entries while keeping visible images", () => {
-                var art=Field<Dictionary<string,Texture2D>>(App,"art");var ages=Field<Dictionary<string,long>>(App,"artLastUsed");
-                for(int i=0;i<65;i++){art["art"+i]=new Texture2D(1,1,TextureFormat.RGBA32,false);ages["art"+i]=i;}
-                var active=Rect("Visible").gameObject.AddComponent<RawImage>();active.texture=art["art0"];Field<Dictionary<RawImage,string>>(App,"requestedArt")[active]="art0";
-                var removed=art["art1"];Call(App,"PruneArtCache");Assert(art.Count==64&&art.ContainsKey("art0")&&!art.ContainsKey("art1")&&removed.destroyed,"LRU inactive eviction.");
+            Case("Actual Solo session runs WindBot on filtered views and records complete match",()=>{
+                var session=BattleNativeSession.Ensure();var pair=StarterDecks.CreatePair(catalog.cards);session.StartSolo(pair[0],pair[1]);Assert(session.View?.viewer==0&&session.Seat==0,"Human own-view not fixed.");
+                session.Send(new WireMessage{type="action",action="opening"});
+                Pump(()=>session.View.phase=="Main",()=>{Time.unscaledTime+=0.5f;Call(session,"Update");});
+                Assert(session.View.players[1].handCount==4,"AI opening did not complete.");
+                session.Send(new WireMessage{type="action",action="concede"});Assert(session.View.winner==1,"Solo concession did not complete.");
+                Assert(session.ReplayFiles().Length>0,"Completed Solo not saved.");
             });
-            Case("Destroyed artwork targets are removed from cache tracking", () => {
-                var image=Rect("OldPreview").gameObject.AddComponent<RawImage>();var requested=Field<Dictionary<RawImage,string>>(App,"requestedArt");requested[image]="old";Object.Destroy(image.gameObject);Call(App,"PruneArtCache");Assert(requested.Count==0,"Destroyedtargetretained.");
+            Case("Actual replay reconstructs commands and disables live action authority",()=>{
+                var session=BattleNativeSession.Ensure();var existing=session.ReplayFiles();var pair=StarterDecks.CreatePair(catalog.cards);session.StartSolo(pair[0],pair[1]);session.Send(new WireMessage{type="action",action="concede"});
+                string file=session.ReplayFiles().Except(existing).Single();session.LoadReplay(file,0);Assert(session.IsReplay&&!session.CanSendCommands,"Replay retained command authority.");
+                session.StepReplay(1);Assert(session.View.winner==1,"Recorded concession replay diverged.");
             });
-            Case("Original template sprites stay leased until the visual clone is destroyed", () => {
-                var prefab=Template();Addressables.Load=path=>Task.FromResult(prefab);var target=Rect("Target");BattleTemplateVisuals.CopyDeckFrameAsync(target).GetAwaiter().GetResult();
-                Assert(Addressables.Releases==0,"Releasedwhilevisible.");Assert(target.GetComponentsInChildren<Image>(true).Length==4,"Originalframepartsnotcopied.");
-                Object.Destroy(target.gameObject);Assert(Addressables.Releases==1,"Leasewasnotreleased.");Object.Destroy(target.gameObject);Assert(Addressables.Releases==1,"Doublelease release.");
+            Case("Actual field allocates isolated stage and disposes render targets on disconnect",()=>{
+                var session=BattleNativeSession.Ensure();var go=new GameObject("ControlledField",typeof(RectTransform));go.layer=5;var image=go.AddComponent<RawImage>();
+                session.AttachField(image);var field=go.GetComponent<BattleFieldVisuals>();Assert(field.IsLoaded,"Own field failed to load: "+field.LastError);
+                var texture=(RenderTexture)image.texture;var stage=Field<GameObject>(field,"stage");Assert(stage.layer==31,"Own field leaked into UI layer.");
+                session.Disconnect();Assert(texture.released&&field.IsDisposed&&image.texture==null,"Field render target not cleaned.");
+                session.AttachField(image);Assert(go.GetComponents<BattleFieldVisuals>().Any(value=>!value.IsDisposed&&value.IsLoaded),"Cached native form cannot create next field.");
             });
-            Case("Closing a template target during load releases its handle without adding UI", () => {
-                var completion=new TaskCompletionSource<GameObject>(TaskCreationOptions.RunContinuationsAsynchronously);Addressables.Load=path=>completion.Task;var target=Rect("ClosingTarget");var task=BattleTemplateVisuals.CopyDeckFrameAsync(target);Object.Destroy(target.gameObject);completion.SetResult(Template());PumpUntil(()=>task.IsCompleted);task.GetAwaiter().GetResult();Assert(Addressables.Releases==1,"Cancelledlease.");
+            Case("Delayed artwork completion cannot overwrite a newer card selection",()=>{
+                var session=BattleNativeSession.Ensure();var image=new GameObject("Preview",typeof(RectTransform)).AddComponent<RawImage>();
+                var newer=new Texture2D(1,1,TextureFormat.RGBA32,false);image.texture=newer;
+                Field<Dictionary<RawImage,string>>(session,"requestedArt")[image]="new";
+                // Actual async loader race is covered by target ownership: a subsequent
+                // request overwrites the old ID before any read completes.
+                session.LoadArt(catalog.cards[0].id,image);session.LoadArt("unknown-id",image);Context.Drain();
+                Assert(Field<Dictionary<RawImage,string>>(session,"requestedArt")[image]=="unknown-id","Old artwork retained ownership.");
             });
-            Case("Local hotseat hides each hand until its owner confirms the handover", () => {
-                StartLocal();var board=Field<BattleBoardPanel>(App,"board");Assert(!board.Root.gameObject.activeSelf,"Openinghand exposed.");Reveal();Assert(board.Root.gameObject.activeSelf,"Revealfailed.");
-                Call(App,"SendAction",new WireMessage{type="action",action="opening"});Assert(!board.Root.gameObject.activeSelf&&Field<FilteredMatchView>(App,"pendingLocalView").viewer==1,"Otherhand exposed duringhandover.");Reveal();
-                Call(App,"SendAction",new WireMessage{type="action",action="opening"});Assert(!board.Root.gameObject.activeSelf,"Returningownerhandovermissing.");Reveal();Assert(Field<BattleMatch>(App,"localMatch").State.Phase==MatchPhase.Main,"OpeningdidnotreachMain.");
+            Case("Boss preview uses the native duel form without live match authority",()=>{
+                var session=BattleNativeSession.Ensure();session.StartBossPreview("BS01-X01");
+                Assert(session.IsPreview&&!session.CanSendCommands&&session.View.players[0].field.Single().cardId=="BS01-X01","Boss preview entered a live match.");
+                var screen=(BattleNativeScreenUI)program.currentServant.servantUI;
+                Click(screen.transform,"Buttons/ButtonInfo");Click(screen.transform,"Buttons/ButtonTiming");
+                Assert(session.IsPreview&&session.View.phase=="XEM HOẠT CẢNH","Preview playback changed game rules.");
+                Click(screen.transform,"Buttons/ButtonLog");Assert(!session.IsPreview&&program.currentServant==program.menu,"Preview did not release its native screen.");
             });
-            Case("Closing a board disposes tweens, render target, and input ownership", () => {
-                StartLocal();var board=Field<BattleBoardPanel>(App,"board");var target=(RenderTexture)board.Background.texture;Call(App,"Close");Assert(board.Root.gameObject.destroyed&&target.released&&MDPro3.UIManager.InputBlocker==null,"Boardcleanup.");
+            Case("Official card faces and generated closeups retain separate cache ownership",()=>{
+                string face=Path.Combine(temporary,"Picture/Art/BS01-X01.png"),portrait=Path.Combine(temporary,"Picture/Closeup/BS01-X01.png");
+                Directory.CreateDirectory(Path.GetDirectoryName(face));Directory.CreateDirectory(Path.GetDirectoryName(portrait));
+                File.Copy(Path.Combine(sourceRoot,"Picture/Art/BS01-X01.png"),face,true);File.Copy(Path.Combine(sourceRoot,"Picture/Closeup/BS01-X01.png"),portrait,true);
+                var session=BattleNativeSession.Ensure();var image=new GameObject("CardPortrait",typeof(RectTransform)).AddComponent<RawImage>();
+                session.LoadPortrait("BS01-X01",image);
+                var textures=Field<Dictionary<string,Texture2D>>(session,"textures");Pump(()=>textures.ContainsKey("closeup:BS01-X01"));
+                Assert(image.texture==textures["closeup:BS01-X01"],"Generated closeup not used.");
+                session.LoadArt("BS01-X01",image);Pump(()=>textures.ContainsKey("BS01-X01"));
+                Assert(image.texture==textures["BS01-X01"]&&image.texture!=textures["closeup:BS01-X01"],"Official card face replaced by a cached closeup.");
             });
-            Case("Replacing a surface also disposes the old board", () => {
-                StartLocal();var board=Field<BattleBoardPanel>(App,"board");var target=(RenderTexture)board.Background.texture;Call(App,"OpenRules");Assert(board.Root.gameObject.destroyed&&target.released,"Replacedsurfaceleakedboard.");
+            Case("Corrupt future replay commands are rejected before replacing a live Solo",()=>{
+                var session=BattleNativeSession.Ensure();var pair=StarterDecks.CreatePair(catalog.cards);session.StartSolo(pair[0],pair[1]);session.Send(new WireMessage{type="action",action="concede"});
+                var saved=Newtonsoft.Json.Linq.JObject.Parse(File.ReadAllText(session.ReplayFiles().First()));
+                saved["actions"]=new Newtonsoft.Json.Linq.JArray(new Newtonsoft.Json.Linq.JObject { ["actor"]=0,["command"]=new Newtonsoft.Json.Linq.JObject { ["action"]="invented-command" } });
+                string bad=Path.Combine(temporary,"bad-replay.json");File.WriteAllText(bad,saved.ToString());
+                session.StartSolo(pair[0],pair[1]);var before=session.View;session.LoadReplay(bad,0);
+                Assert(!session.IsReplay&&session.CanSendCommands&&ReferenceEquals(before,session.View),"Invalid replay discarded the active game.");
             });
-            Case("A completed local match saves and replays actual engine commands", () => {
-                StartLocal();Reveal();Call(App,"SendAction",new WireMessage{type="action",action="opening"});Reveal();Call(App,"SendAction",new WireMessage{type="action",action="opening"});Reveal();Call(App,"SendAction",new WireMessage{type="action",action="concede"});
-                string file=Directory.GetFiles(Path.Combine(temporary,"Data/BattleSpirits/Replays"),"*.json").Single();Call(App,"OpenHistory");Call(App,"LoadReplay",file);Set(App,"replayStep",3);Call(App,"RenderReplay");var view=Field<BattleBoardPanel>(App,"board");Assert(Field<FilteredMatchView>(view,"current").winner==1,"Replayresultdiverged.");
-            });
-            Case("Network lobby and chat render untrusted text as plain text", () => {
-                menu.OnOnline();var chat=Field<TextMeshProUGUI>(App,"chatText");var lobby=Field<TextMeshProUGUI>(App,"lobbyText");Assert(!chat.richText&&!lobby.richText&&!Field<TextMeshProUGUI>(App,"status").richText,"Richtext enabled.");Call(App,"OnNetworkMessage",new WireMessage{type="chat",name="Player",text="<size=300>message</size>"});Assert(chat.text.Contains("<size=300>"),"Chatcontentwasnotretainedasplaintext.");
-            });
-            Case("A disconnected lobby disables stale ready and start buttons", () => {
-                menu.OnOnline();Call(App,"OnNetworkMessage",new WireMessage{type="welcome",playerIndex=0});Call(App,"OnNetworkMessage",new WireMessage{type="lobby",players=new[]{new LobbyPlayerView{playerIndex=0,ready=true},new LobbyPlayerView{playerIndex=1,ready=true}}});Assert(Field<Button>(App,"startButton").interactable,"Fixturelobbystart.");Call(App,"OnNetworkMessage",new WireMessage{type="disconnected",text="closed"});Assert(!Field<Button>(App,"readyButton").interactable&&!Field<Button>(App,"startButton").interactable,"Stalecontrols.");
-            });
-            Case("A disconnected board disables actions and offers a return route", () => {
-                menu.OnOnline();var match=BattleMatch.CreateDefault(database.cards);Call(App,"OnNetworkMessage",new WireMessage{type="state",view=ViewFactory.Create(match,0)});var board=Field<BattleBoardPanel>(App,"board");Call(App,"OnNetworkMessage",new WireMessage{type="disconnected",text="closed"});Assert(!Field<bool>(board,"allowActions"),"Commandsstillenabled.");Assert(Field<TextMeshProUGUI>(board,"decision").text.StartsWith("KẾT NỐI ĐÃ NGẮT"),"Wrongdisconnectlabel.");Assert(!board.Root.Find("Header/Concede").GetComponent<Button>().interactable,"Concedestillenabled.");
-            });
-            Case("Late cosmetic asset loads are discarded after closing their stage", () => {
-                var completion = new TaskCompletionSource<GameObject>(TaskCreationOptions.RunContinuationsAsynchronously);
-                MDPro3.ABLoader.Field = path => completion.Task;
-                var component = new GameObject("Backdrop").AddComponent<BattleFieldBackdrop>();
-                component.Load(Rect("Target").gameObject.AddComponent<RawImage>());
-                Object.Destroy(component.gameObject);var late = new GameObject("LateField");completion.SetResult(late);
-                PumpUntil(() => late.destroyed);Assert(!component.IsLoaded,"Closedstagebecameactive.");
-            });
-            Case("Cosmetic events use the filtered view's own/opponent orientation", () => {
-                var component = new GameObject("Backdrop").AddComponent<BattleFieldBackdrop>();
-                component.Load(Rect("Target").gameObject.AddComponent<RawImage>());var mates=Field<MDPro3.Mate[]>(component,"mates");
-                component.PlayEvent(new PublicBattleEvent{kind="Attacked",actor=1},1);Assert(mates[0].Played.Last()==MDPro3.Mate.MateAction.Attack,"Ownmateorientation.");
-                component.PlayEvent(new PublicBattleEvent{kind="GameWon",actor=0},1);Assert(mates[1].Played.Last()==MDPro3.Mate.MateAction.Victory&&mates[0].Played.Last()==MDPro3.Mate.MateAction.Defeat,"Winnerorientation.");
-            });
-            Case("Decorative copy and menu-label paths match the actual MDPro3 prefabs", () => {
-                var paths = PrefabPaths(Path.Combine(sourceRoot,"Assets/Prefabs/ServantUI/DeckEditorUI.prefab"));
-                foreach(string path in new[]{"Root/BG","Root/SafeArea/DeckEditHeader","Root/SafeArea/DeckEditOverHeader","Root/SafeArea/Footer"})
-                    Assert(paths.Any(value=>value.EndsWith("/"+path,StringComparison.Ordinal)),"Missingactualtemplatepath: "+path);
-                paths=PrefabPaths(Path.Combine(sourceRoot,"Assets/Prefabs/ServantUI/MainMenuUI.prefab"));
-                foreach(string button in new[]{"ButtonSolo","ButtonPuzzle","ButtonReplay"})
-                    Assert(paths.Any(value=>value.Contains("/"+button+"/")&&value.EndsWith("_Menu",StringComparison.Ordinal)),"Missingactualmenulabel: "+button);
-            });
-            Console.WriteLine("PASS " + passed + " production presentation scenarios; controlled Unity/asset/tween stand-ins, no Unity Editor rendering.");
-            return 0;
+            Console.WriteLine("PASS "+passed+" native production flow scenarios; actual prefab metadata, controlled Unity APIs, no Editor/render/device test.");return 0;
         }
-        finally { Cleanup();Context.Drain();Directory.Delete(temporary,true); }
+        finally{Cleanup();Directory.Delete(temporary,true);}
     }
 }

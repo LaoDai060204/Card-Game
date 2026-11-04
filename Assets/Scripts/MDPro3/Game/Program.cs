@@ -118,6 +118,13 @@ namespace MDPro3
         private readonly List<Servant.Servant> servants = new();
         public static bool exitOnReturn = false;
 
+        public void RegisterBattleServant(Servant.Servant servant)
+        {
+            if (servant == null || servants.Contains(servant)) return;
+            servants.Add(servant);
+            servant.Initialize();
+        }
+
         private async UniTask Initialize()
         {
             if (!Directory.Exists(PATH_DATA))
@@ -137,13 +144,14 @@ namespace MDPro3
                 items = handle.Result;
             }
 
-            cardRenderer = (await Addressables.InstantiateAsync("Prefab/CardRenderer.prefab")).GetComponent<CardRenderer>();
-
             items.Initialize();
-            await BanlistManager.InitializeAsync();
-            await CardImageLoader.InitializeAsync();
             if (!LaoDai.BattleSpirits.BattleSpiritsMode.Enabled)
+            {
+                cardRenderer = (await Addressables.InstantiateAsync("Prefab/CardRenderer.prefab")).GetComponent<CardRenderer>();
+                await BanlistManager.InitializeAsync();
+                await CardImageLoader.InitializeAsync();
                 _ = OnlineService.InitializeAsync();
+            }
 
             InitializeAllManagers();
             InitializeAllServants();
@@ -278,6 +286,15 @@ namespace MDPro3
 
         private void InitializeAllServants()
         {
+            if (LaoDai.BattleSpirits.BattleSpiritsMode.Enabled)
+            {
+                // Only the retained general settings and cosmetic viewers use
+                // legacy servants. Gameplay screens register their native adapters.
+                servants.Add(setting); servants.Add(menu); servants.Add(mate);
+                servants.Add(appearance); servants.Add(character);
+                foreach (var servant in servants) servant.Initialize();
+                return;
+            }
             servants.Add(setting);
             servants.Add(menu);
             servants.Add(solo);
@@ -340,6 +357,9 @@ namespace MDPro3
 
 #if UNITY_EDITOR
             root = PATH_ROOT_EDITOR + root;
+#elif UNITY_STANDALONE_WIN
+            if (LaoDai.BattleSpirits.BattleSpiritsMode.Enabled)
+                root = Path.Combine(Application.dataPath, root.TrimEnd('/', '\\')) + Path.DirectorySeparatorChar;
 #endif
         }
 
@@ -362,7 +382,7 @@ namespace MDPro3
 
         private void Update()
         {
-            TcpHelper.PerFrameFunction();
+            if (!LaoDai.BattleSpirits.BattleSpiritsMode.Enabled) TcpHelper.PerFrameFunction();
             foreach (Manager manager in managers) 
                 manager.PerFrameFunction();
             foreach (Servant.Servant servant in servants) 

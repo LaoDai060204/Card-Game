@@ -52,11 +52,15 @@ namespace MDPro3
         public static void SetSeVol(float vol)
         {
             se.volume = vol;
+            if (LaoDai.BattleSpirits.BattleSpiritsMode.Enabled)
+                LaoDai.BattleSpirits.Visuals.BattleAudio.SetVolumes(Config.GetFloat("BgmVol", 0.7f), vol);
         }
 
         public static void SetBGMVol(float vol)
         {
             bgm.volume = vol * currentBGMScale;
+            if (LaoDai.BattleSpirits.BattleSpiritsMode.Enabled)
+                LaoDai.BattleSpirits.Visuals.BattleAudio.SetVolumes(vol, Config.GetFloat("SEVol", 0.7f));
         }
 
         public static void SetVoiceVol(float vol)
@@ -195,6 +199,15 @@ namespace MDPro3
         {
             if (string.IsNullOrEmpty(path))
                 return;
+
+            if (LaoDai.BattleSpirits.BattleSpiritsMode.Enabled)
+            {
+                // Keep the template's call sites while replacing their active audio.
+                var cue = path.IndexOf("ATTACK", StringComparison.OrdinalIgnoreCase) >= 0 ? "attack"
+                    : path.IndexOf("SUMMON", StringComparison.OrdinalIgnoreCase) >= 0 ? "summon" : "core";
+                LaoDai.BattleSpirits.Visuals.BattleAudio.PlayCue(cue, volumeScale);
+                return;
+            }
 
             if (se == null)
                 return;
@@ -582,6 +595,13 @@ namespace MDPro3
 
         public static void PlayBGM(string path, float volumeScale = 1f)
         {
+            if (LaoDai.BattleSpirits.BattleSpiritsMode.Enabled)
+            {
+                LaoDai.BattleSpirits.Visuals.BattleAudio.Configure(Path.GetFullPath(Path.Combine(Application.dataPath, "..")));
+                LaoDai.BattleSpirits.Visuals.BattleAudio.SetVolumes(Config.GetFloat("BgmVol", 0.7f) * volumeScale, Config.GetFloat("SEVol", 0.7f));
+                LaoDai.BattleSpirits.Visuals.BattleAudio.PlayMusic();
+                return;
+            }
             currentBGMScale = volumeScale;
             var handle = Addressables.LoadAssetAsync<AudioClip>(path);
             handle.Completed += (result) =>
@@ -600,6 +620,11 @@ namespace MDPro3
 
         public static void StopBGM()
         {
+            if (LaoDai.BattleSpirits.BattleSpiritsMode.Enabled)
+            {
+                LaoDai.BattleSpirits.Visuals.BattleAudio.StopMusic();
+                return;
+            }
             var volume = bgm.volume;
             DOTween.To(() => volume, x => bgm.volume = x, 0, 0.5f).OnComplete(() =>
             {
@@ -637,6 +662,7 @@ namespace MDPro3
 
         private void Update()
         {
+            if (LaoDai.BattleSpirits.BattleSpiritsMode.Enabled) return;
             if (bgm == null)
                 return;
             if (bgm.time > loopEnd)

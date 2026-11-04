@@ -195,9 +195,9 @@ namespace MDPro3
 
             InitializeLanguage();
             Program.instance.menu.EnsureButtonsWidth();
-            Program.instance.cutin.LoadCutins();
+            if (!LaoDai.BattleSpirits.BattleSpiritsMode.Enabled) Program.instance.cutin.LoadCutins();
             Program.instance.mate.LoadMates();
-            Program.instance.solo.LoadBots();
+            if (!LaoDai.BattleSpirits.BattleSpiritsMode.Enabled) Program.instance.solo.LoadBots();
             Program.instance.character.LoadCharacters();
             Program.instance.setting.RefreshCharacterName();
 
@@ -212,9 +212,9 @@ namespace MDPro3
                 overrider.Override();
 
             ShowExitButton(0f);
-            Program.instance.cutin.LoadCutins();
+            if (!LaoDai.BattleSpirits.BattleSpiritsMode.Enabled) Program.instance.cutin.LoadCutins();
             Program.instance.mate.LoadMates();
-            Program.instance.solo.LoadBots();
+            if (!LaoDai.BattleSpirits.BattleSpiritsMode.Enabled) Program.instance.solo.LoadBots();
         }
 
         private async UniTask LoadDiyWallpaperAsync(string path, Transform parent)
@@ -227,6 +227,16 @@ namespace MDPro3
         {
             if (wallpaper.transform.childCount > 0)
                 Destroy(wallpaper.transform.GetChild(0).gameObject);
+            if (LaoDai.BattleSpirits.BattleSpiritsMode.Enabled)
+            {
+                var go = new GameObject("BattleSpiritsWallpaper", typeof(RectTransform), typeof(RawImage));
+                go.layer = wallpaper.gameObject.layer;
+                var rect = go.GetComponent<RectTransform>(); rect.SetParent(wallpaper.transform, false);
+                rect.anchorMin = Vector2.zero; rect.anchorMax = Vector2.one;
+                rect.offsetMin = Vector2.zero; rect.offsetMax = Vector2.zero;
+                go.AddComponent<LaoDai.BattleSpirits.Integration.BattleMenuWallpaper>().Load(go.GetComponent<RawImage>());
+                return rect;
+            }
             if (path == Items.CODE_NONE.ToString())
                 return null;
 

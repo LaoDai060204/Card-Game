@@ -1615,7 +1615,6 @@ GameObject:
   - component: {fileID: 5394489881207077629}
   - component: {fileID: 7273259698063996632}
   - component: {fileID: 6252818801110712684}
-  - component: {fileID: 3695877487222408842}
   m_Layer: 5
   m_Name: ImageCard
   m_TagString: Untagged
@@ -1704,20 +1703,6 @@ MonoBehaviour:
     y: 0
     width: 1
     height: 1
---- !u!114 &3695877487222408842
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 782322642467544292}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 35b333cb30a7d094b997b5a31c5f4b7f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  cache: 1
-  protectorCode: 1070001
 --- !u!1 &797650737807150163
 GameObject:
   m_ObjectHideFlags: 0
@@ -3465,7 +3450,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1351105477813456829}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 354d9ae813ba00b448be48b46b2de683, type: 3}
+  m_Script: {fileID: 11500000, guid: 3f88580cb54a6d247b0379b8f582fa90, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   index: -1
@@ -16505,7 +16490,6 @@ GameObject:
   - component: {fileID: 455859118504903497}
   - component: {fileID: 791404702182000562}
   - component: {fileID: 3116966387316818377}
-  - component: {fileID: 2612993068313265338}
   m_Layer: 5
   m_Name: DeckView
   m_TagString: Untagged
@@ -16573,29 +16557,6 @@ MonoBehaviour:
   - {fileID: 5157918703551584181}
   - {fileID: 7446141808201205229}
   - {fileID: 2108942507208933573}
---- !u!114 &2612993068313265338
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8593068203310562346}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1817b5d14b6a2974c89f9e1a3c29c8f0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  defaultSelectable: {fileID: 0}
-  needTranslate: 0
-  responseInput: 0
-  condition: 0
-  deckDropAddIcon: {fileID: 21300000, guid: 0ad5763fd1b693d46a0f603d4d62a59c, type: 3}
-  deckDropDisableIcon: {fileID: 21300000, guid: 4637b8325917552419ac87e73defdc46, type: 3}
-  deckLoaded: 0
-  mainCount: 0
-  extraCount: 0
-  sideCount: 0
-  cards: []
 --- !u!1 &8684155536494339904
 GameObject:
   m_ObjectHideFlags: 0

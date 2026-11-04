@@ -29,6 +29,10 @@ namespace MDPro3
         private void Start()
         {
             Application.targetFrameRate = 0;
+#if !UNITY_EDITOR && UNITY_STANDALONE_WIN
+            if (LaoDai.BattleSpirits.BattleSpiritsMode.Enabled)
+                Directory.SetCurrentDirectory(Path.GetDirectoryName(Application.dataPath));
+#endif
 
 #if !UNITY_EDITOR && (UNITY_ANDROID || UNITY_IOS)
             Environment.CurrentDirectory = Application.persistentDataPath;

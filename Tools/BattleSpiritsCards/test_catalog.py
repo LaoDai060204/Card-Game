@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """Offline parser regressions: official HTML fixtures and edge cases."""
 from pathlib import Path
+import copy
 import importlib.util
+import json
 import struct
 import sys
 import tempfile
@@ -22,6 +24,55 @@ def product(code, title, year, month, day):
 
 
 class CatalogTests(unittest.TestCase):
+    def test_selected_boss_stats_are_read_from_official_source(self):
+        card = catalog.parse_detail((HERE / "Fixtures/bs01-x01-detail.html").read_text(), "BS01-X01")
+        self.assertEqual("龍皇ジークフリード", card["nameJa"])
+        self.assertEqual((6, 3, "Spirit"), (card["cost"], card["reductionSymbols"], card["type"]))
+        self.assertEqual([{"cores": 1, "bp": 4000}, {"cores": 2, "bp": 6000}, {"cores": 5, "bp": 10000}], card["levels"])
+        self.assertIn("【覚醒】", card["effectTextJa"])
+        self.assertIn("『このスピリットの破壊時』", card["effectTextJa"])
+        self.assertNotIn("implemented", card)
+
+    def test_nexus_level_one_needs_zero_core_and_has_no_bp(self):
+        card = catalog.parse_detail((HERE / "Fixtures/bs01-113-detail.html").read_text(), "BS01-113")
+        self.assertEqual("Nexus", card["type"])
+        self.assertEqual([{"cores": 0, "bp": 0}, {"cores": 4, "bp": 0}], card["levels"])
+        self.assertEqual([{"bp": "-", "cores": "0"}, {"bp": "-", "cores": "4"}, {"bp": "-", "cores": "-"}], card["levelsRaw"])
+
+    def test_double_draw_keeps_both_main_and_flash_text(self):
+        card = catalog.parse_detail((HERE / "Fixtures/bs01-117-detail.html").read_text(), "BS01-117")
+        self.assertEqual("Magic", card["type"])
+        self.assertEqual([], card["levels"])
+        self.assertIn("[メイン]自分はデッキから2枚ドローする。", card["effectTextJa"])
+        self.assertIn("[フラッシュ]このターンの間、スピリット1体をBP+2000する。", card["effectTextJa"])
+
+    def test_effect_baseline_rejects_changed_cost_text_or_rule_profile(self):
+        baseline = catalog.implementation_baseline(HERE.parents[1])["BS01-X01"]
+        catalog.verify_implementation(baseline, baseline)
+        for field, value in (("cost", 0), ("effectTextJa", "-"), ("rulesProfile", "arbitrary-profile")):
+            changed = copy.deepcopy(baseline)
+            changed[field] = value
+            with self.assertRaises(ValueError):
+                catalog.verify_implementation(changed, baseline)
+
+    def test_imported_data_cannot_enable_an_unapproved_effect(self):
+        baseline = copy.deepcopy(catalog.implementation_baseline(HERE.parents[1])["BS01-117"])
+        baseline["implemented"] = False
+        changed = copy.deepcopy(baseline)
+        changed["implemented"] = True
+        with self.assertRaises(ValueError):
+            catalog.verify_implementation(changed, baseline)
+
+    def test_unknown_effect_id_and_profile_are_rejected(self):
+        for document in ({"rulesProfile": catalog.EFFECT_RULES_PROFILE, "cards": [{"id": "BS76-X01"}]},
+                         {"rulesProfile": "future-rules-v9", "cards": []}):
+            with tempfile.TemporaryDirectory() as directory:
+                folder = Path(directory) / "Data/BattleSpirits"
+                folder.mkdir(parents=True)
+                (folder / "implemented-cards.json").write_text(json.dumps(document))
+                with self.assertRaises(ValueError):
+                    catalog.implementation_baseline(directory)
+
     def test_official_vanilla_fixture(self):
         card = catalog.parse_detail((HERE / "Fixtures/vanilla-detail.html").read_text(encoding="utf-8-sig"), "BS01-001")
         self.assertEqual("ゴラドン", card["nameJa"])

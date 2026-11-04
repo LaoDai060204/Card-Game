@@ -1,0 +1,350 @@
+{
+  "schemaVersion": 1,
+  "rulesProfile": "bs01-effects-v1",
+  "verifiedDate": "2026-10-31",
+  "enabledOnlyAfterRuntimeTests": true,
+  "translationNote": "Vietnamese display names are unofficial local translations; original Japanese names and effects are retained.",
+  "symbolVerification": "All five official PNGs were inspected. X01 red1,097 white1,113 white1;115/117 Magic0. Nexus levels retain 0/4 core thresholds with BP0 representing printed dash.",
+  "cards": [
+    {
+      "nameJa": "龍皇ジークフリード",
+      "type": "Spirit",
+      "typeJa": "スピリット",
+      "colors": [
+        "Red"
+      ],
+      "color": 0,
+      "cost": 6,
+      "costText": "6",
+      "reductions": [
+        {
+          "color": "Red",
+          "count": 3
+        }
+      ],
+      "reductionSymbols": 3,
+      "levels": [
+        {
+          "cores": 1,
+          "bp": 4000
+        },
+        {
+          "cores": 2,
+          "bp": 6000
+        },
+        {
+          "cores": 5,
+          "bp": 10000
+        }
+      ],
+      "levelsRaw": [
+        {
+          "bp": "4000",
+          "cores": "1"
+        },
+        {
+          "bp": "6000",
+          "cores": "2"
+        },
+        {
+          "bp": "10000",
+          "cores": "5"
+        }
+      ],
+      "families": [
+        "古竜"
+      ],
+      "effectTextJa": "[Lv1-Lv2-Lv3:フラッシュ]【覚醒】自分のスピリット上から、コアを好きなだけこのスピリット上に置くことができる。 [Lv3]『このスピリットの破壊時』ボイドから、コア1個を自分のライフに置く。",
+      "rarity": "X",
+      "imageUrl": "https://www.battlespirits.com/images/cardlist/BS01-X01.webp",
+      "id": "BS01-X01",
+      "nameVi": "Long Hoàng Siegfried",
+      "setId": "BS01",
+      "setName": "Verified BS01 effect cards",
+      "releaseDate": "",
+      "format": "Eternal",
+      "released": true,
+      "eternalLegal": true,
+      "legalityStatus": "format-confirmed",
+      "maxCopies": 3,
+      "restrictionSourceUrl": "https://www.battlespirits.com/rule/limited.php",
+      "restrictionVerified": true,
+      "sourceUrl": "https://www.battlespirits.com/cardlist/detail_iframe.php?card_no=BS01-X01&card_no2=BS01-X01",
+      "sourceCardNumber": "BS01-X01",
+      "artPath": "Picture/Art/BS01-X01.png",
+      "symbols": 1,
+      "symbolsVerified": true,
+      "symbolDetails": [
+        {
+          "color": "Red",
+          "count": 1
+        }
+      ],
+      "rulesProfile": "bs01-effects-v1",
+      "implemented": true
+    },
+    {
+      "nameJa": "飛龍ヴァルキュリウス",
+      "type": "Spirit",
+      "typeJa": "スピリット",
+      "colors": [
+        "White"
+      ],
+      "color": 3,
+      "cost": 8,
+      "costText": "8",
+      "reductions": [
+        {
+          "color": "White",
+          "count": 5
+        }
+      ],
+      "reductionSymbols": 5,
+      "levels": [
+        {
+          "cores": 1,
+          "bp": 4000
+        },
+        {
+          "cores": 4,
+          "bp": 6000
+        },
+        {
+          "cores": 8,
+          "bp": 9000
+        }
+      ],
+      "levelsRaw": [
+        {
+          "bp": "4000",
+          "cores": "1"
+        },
+        {
+          "bp": "6000",
+          "cores": "4"
+        },
+        {
+          "bp": "9000",
+          "cores": "8"
+        }
+      ],
+      "families": [
+        "機竜"
+      ],
+      "effectTextJa": "[Lv1-Lv2-Lv3]『このスピリットのブロック時』このスピリットをBP+6000する。",
+      "rarity": "R",
+      "imageUrl": "https://www.battlespirits.com/images/cardlist/BS01-097.webp",
+      "id": "BS01-097",
+      "nameVi": "Phi Long Valkyrious",
+      "setId": "BS01",
+      "setName": "Verified BS01 effect cards",
+      "releaseDate": "",
+      "format": "Eternal",
+      "released": true,
+      "eternalLegal": true,
+      "legalityStatus": "format-confirmed",
+      "maxCopies": 3,
+      "restrictionSourceUrl": "https://www.battlespirits.com/rule/limited.php",
+      "restrictionVerified": true,
+      "sourceUrl": "https://www.battlespirits.com/cardlist/detail_iframe.php?card_no=BS01-097&card_no2=BS01-097",
+      "sourceCardNumber": "BS01-097",
+      "artPath": "Picture/Art/BS01-097.png",
+      "symbols": 1,
+      "symbolsVerified": true,
+      "symbolDetails": [
+        {
+          "color": "White",
+          "count": 1
+        }
+      ],
+      "rulesProfile": "bs01-effects-v1",
+      "implemented": true
+    },
+    {
+      "nameJa": "侵食されゆく銀世界",
+      "type": "Nexus",
+      "typeJa": "ネクサス",
+      "colors": [
+        "White"
+      ],
+      "color": 3,
+      "cost": 5,
+      "costText": "5",
+      "reductions": [
+        {
+          "color": "White",
+          "count": 3
+        }
+      ],
+      "reductionSymbols": 3,
+      "levels": [
+        {
+          "cores": 0,
+          "bp": 0
+        },
+        {
+          "cores": 4,
+          "bp": 0
+        }
+      ],
+      "levelsRaw": [
+        {
+          "bp": "-",
+          "cores": "0"
+        },
+        {
+          "bp": "-",
+          "cores": "4"
+        },
+        {
+          "bp": "-",
+          "cores": "-"
+        }
+      ],
+      "families": [],
+      "effectTextJa": "[Lv1-Lv2]『相手のアタックステップ』ステップ開始時、自分のトラッシュにあるコアすべてを、自分のリザーブに置く。 [Lv2]『相手のアタックステップ』自分のスピリットが破壊されたとき、ボイドからコア1個を自分のリザーブに置く",
+      "rarity": "C",
+      "imageUrl": "https://www.battlespirits.com/images/cardlist/BS01-113.webp",
+      "id": "BS01-113",
+      "nameVi": "Thế Giới Bạc Xâm Thực",
+      "setId": "BS01",
+      "setName": "Verified BS01 effect cards",
+      "releaseDate": "",
+      "format": "Eternal",
+      "released": true,
+      "eternalLegal": true,
+      "legalityStatus": "format-confirmed",
+      "maxCopies": 3,
+      "restrictionSourceUrl": "https://www.battlespirits.com/rule/limited.php",
+      "restrictionVerified": true,
+      "sourceUrl": "https://www.battlespirits.com/cardlist/detail_iframe.php?card_no=BS01-113&card_no2=BS01-113",
+      "sourceCardNumber": "BS01-113",
+      "artPath": "Picture/Art/BS01-113.png",
+      "symbols": 1,
+      "symbolsVerified": true,
+      "symbolDetails": [
+        {
+          "color": "White",
+          "count": 1
+        }
+      ],
+      "rulesProfile": "bs01-effects-v1",
+      "implemented": true
+    },
+    {
+      "nameJa": "ダブルドロー",
+      "type": "Magic",
+      "typeJa": "マジック",
+      "colors": [
+        "Red"
+      ],
+      "color": 0,
+      "cost": 4,
+      "costText": "4",
+      "reductions": [
+        {
+          "color": "Red",
+          "count": 2
+        }
+      ],
+      "reductionSymbols": 2,
+      "levels": [],
+      "levelsRaw": [
+        {
+          "bp": "-",
+          "cores": "-"
+        },
+        {
+          "bp": "-",
+          "cores": "-"
+        },
+        {
+          "bp": "-",
+          "cores": "-"
+        }
+      ],
+      "families": [],
+      "effectTextJa": "[メイン]自分はデッキから2枚ドローする。。 [フラッシュ]このターンの間、スピリット1体をBP+2000する。",
+      "rarity": "C",
+      "imageUrl": "https://www.battlespirits.com/images/cardlist/BS01-117.webp",
+      "id": "BS01-117",
+      "nameVi": "Rút Đôi",
+      "setId": "BS01",
+      "setName": "Verified BS01 effect cards",
+      "releaseDate": "",
+      "format": "Eternal",
+      "released": true,
+      "eternalLegal": true,
+      "legalityStatus": "format-confirmed",
+      "maxCopies": 3,
+      "restrictionSourceUrl": "https://www.battlespirits.com/rule/limited.php",
+      "restrictionVerified": true,
+      "sourceUrl": "https://www.battlespirits.com/cardlist/detail_iframe.php?card_no=BS01-117&card_no2=BS01-117",
+      "sourceCardNumber": "BS01-117",
+      "artPath": "Picture/Art/BS01-117.png",
+      "symbols": 0,
+      "symbolsVerified": true,
+      "symbolDetails": [],
+      "rulesProfile": "bs01-effects-v1",
+      "implemented": true
+    },
+    {
+      "nameJa": "アウェイクン",
+      "type": "Magic",
+      "typeJa": "マジック",
+      "colors": [
+        "Red"
+      ],
+      "color": 0,
+      "cost": 3,
+      "costText": "3",
+      "reductions": [
+        {
+          "color": "Red",
+          "count": 1
+        }
+      ],
+      "reductionSymbols": 1,
+      "levels": [],
+      "levelsRaw": [
+        {
+          "bp": "-",
+          "cores": "-"
+        },
+        {
+          "bp": "-",
+          "cores": "-"
+        },
+        {
+          "bp": "-",
+          "cores": "-"
+        }
+      ],
+      "families": [],
+      "effectTextJa": "[フラッシュ]自分のリザーブにあるコア3個までを、自分のスピリット1体に置き、デッキから1枚ドローする。",
+      "rarity": "C",
+      "imageUrl": "https://www.battlespirits.com/images/cardlist/BS01-115.webp",
+      "id": "BS01-115",
+      "nameVi": "Thức Tỉnh",
+      "setId": "BS01",
+      "setName": "Verified BS01 effect cards",
+      "releaseDate": "",
+      "format": "Eternal",
+      "released": true,
+      "eternalLegal": true,
+      "legalityStatus": "format-confirmed",
+      "maxCopies": 3,
+      "restrictionSourceUrl": "https://www.battlespirits.com/rule/limited.php",
+      "restrictionVerified": true,
+      "sourceUrl": "https://www.battlespirits.com/cardlist/detail_iframe.php?card_no=BS01-115&card_no2=BS01-115",
+      "sourceCardNumber": "BS01-115",
+      "artPath": "Picture/Art/BS01-115.png",
+      "symbols": 0,
+      "symbolsVerified": true,
+      "symbolDetails": [],
+      "rulesProfile": "bs01-effects-v1",
+      "implemented": true
+    }
+  ],
+  "runtimeValidation": "AbilityRegistry bs01-effects-v1: 20 explicit ability regressions and existing Core suites passed before enablement, 2026-10-31."
+}

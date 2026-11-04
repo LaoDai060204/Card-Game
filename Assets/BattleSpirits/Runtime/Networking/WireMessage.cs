@@ -26,13 +26,14 @@ namespace LaoDai.BattleSpirits.Networking
         public int target = -1;
         public bool soul;
         public bool redraw;
+        public CoreTransfer[] transfers;
         public LobbyPlayerView[] players = Array.Empty<LobbyPlayerView>();
         public FilteredMatchView view;
     }
 
     public static class Protocol
     {
-        public const int Version = 1;
+        public const int Version = 2;
         public const int DefaultPort = 7777;
         public const int MaxLineBytes = 65536;
         public const int MaxNameLength = 24;
@@ -144,7 +145,8 @@ namespace LaoDai.BattleSpirits.Networking
         private static readonly HashSet<string> PublicEvents = new HashSet<string>(StringComparer.Ordinal)
         {
             "Summoned", "CoreMoved", "Attacked", "Blocked", "LifeLost", "TurnStarted",
-            "Destroyed", "Vanished", "GameWon"
+            "Destroyed", "Vanished", "GameWon", "MagicPlayed", "Awakened", "LifeGained", "NexusPlaced",
+            "CoreGained", "BpChanged", "CoresRecycled", "CoreSwapped"
         };
 
         public static FilteredMatchView Create(BattleMatch match, int viewer)

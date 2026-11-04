@@ -1,9 +1,9 @@
 {
-  "asOfDate": "2026-10-30",
+  "asOfDate": "2026-10-31",
   "officialProductsUrl": "https://www.battlespirits.com/product/",
-  "productsHtmlSha256": "919782d761918042320b86f70222b777b435bd31560a0577570a0645a632e866",
+  "productsHtmlSha256": "84a223b962d8a9d197e7cd1c13c2012e34706a89a94fcf5a553d0e923d11d1fd",
   "officialCardListUrl": "https://www.battlespirits.com/cardlist/",
-  "cardListHtmlSha256": "20c4ad0e074468618ac29983fae5b678906b7c3468a83e0356672a9f9bd79aa7",
+  "cardListHtmlSha256": "068acc3d4b71c4f646e1d563a3106b3e6e576fe62dcb7ffa67e010572df19693",
   "sets": [
     {
       "setId": "BS76",
@@ -50,10 +50,10 @@
       "productId": ""
     }
   ],
-  "artworkSourceBytes": 27970250,
-  "symbolNote": "Official detail HTML does not expose printed symbol counts. Only the verified starter symbols are implemented; other symbol values are unknown, not inferred.",
+  "artworkSourceBytes": 28412844,
+  "symbolNote": "Official detail HTML does not expose printed symbols. Sixteen vanilla starter symbols and five explicit effect baseline symbols were verified; other values remain unknown.",
   "formatNote": "Standard-labeled cards are catalog entries only. Their Eternal legality has not been verified; eternalLegal=false does not claim they are prohibited.",
-  "implementationNote": "Importing card data or artwork does not implement an ability. Only verified vanilla starter IDs are enabled.",
+  "implementationNote": "Five explicit BS01 effect cards use rulesProfile bs01-effects-v1 and were enabled after 20 official ability regression scenarios plus existing Core tests passed. Runtime registration requires exact verified definitions. The 240 newer cards remain browse-only.",
   "attribution": "Battle Spirits card artwork © BANDAI / BNP and credited illustrators; original printed notices retained.",
   "license": "Official third-party card art; no open-source license or redistribution permission is inferred.",
   "cards": [
@@ -69,7 +69,7 @@
       "decodedRgbaSha256": "707dc01c9eb7a9199f1d3ae414b6fe680f0670aaeb5dcfa447a5ef6ccc8c8803",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-001.png",
+      "artPath": "Picture/Art/26RBS03-001.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -84,7 +84,7 @@
       "decodedRgbaSha256": "4e42a209f5469104fb5d412845159c22bb9b984bf00faf593968a45090dad8d9",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-002.png",
+      "artPath": "Picture/Art/26RBS03-002.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -99,7 +99,7 @@
       "decodedRgbaSha256": "156c40a570dc8ba5b65f8ee5c36e8d85721e84ed9586ed7c9f205494790fed19",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-003.png",
+      "artPath": "Picture/Art/26RBS03-003.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -114,7 +114,7 @@
       "decodedRgbaSha256": "3af5f0d1f8dc5a6e8a2ba9cfa74eaa2ee531931c1750a0eae81e7b7a5edcdd83",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-004.png",
+      "artPath": "Picture/Art/26RBS03-004.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -129,7 +129,7 @@
       "decodedRgbaSha256": "a06050d43e745bd936bcc03c09c561cfc3ac521719738c8d843482cabc25f6d9",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-005.png",
+      "artPath": "Picture/Art/26RBS03-005.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -144,7 +144,7 @@
       "decodedRgbaSha256": "a97e3bada5d2605751c4eabb81982ed08c6147c1a4af918505ea24f735da4825",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-006.png",
+      "artPath": "Picture/Art/26RBS03-006.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -159,7 +159,7 @@
       "decodedRgbaSha256": "cbb3915c5a389ea2201f9196655db8fd73d46dcf48996b2ede2c15ee064afa1f",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-007.png",
+      "artPath": "Picture/Art/26RBS03-007.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -174,7 +174,7 @@
       "decodedRgbaSha256": "b69f851175b7696fb95c8c823fa37dde17ffc35d57a9dddc6cf90d6d62454a3c",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-008.png",
+      "artPath": "Picture/Art/26RBS03-008.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -189,7 +189,7 @@
       "decodedRgbaSha256": "9a88016675885298ac41551b2c6ecdd841a31d1d108a18b79f310c9f2af3377b",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-009.png",
+      "artPath": "Picture/Art/26RBS03-009.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -204,7 +204,7 @@
       "decodedRgbaSha256": "77c874e045a1e6bfbbc60d9ca932713142ecf38129b8f7fc7fa381dd9636fd87",
       "width": 675,
       "height": 982,
-      "artPath": "Picture/BattleSpirits/26RBS03-010.png",
+      "artPath": "Picture/Art/26RBS03-010.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -219,7 +219,7 @@
       "decodedRgbaSha256": "f59cc479827cbeddf9845195b48c41490b2da9575a9533574adcd24bf2b88573",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-011.png",
+      "artPath": "Picture/Art/26RBS03-011.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -234,7 +234,7 @@
       "decodedRgbaSha256": "9d67a9bd32a6272499f15d9930b616dead95443044f3541e1c333773bcc4b9bb",
       "width": 675,
       "height": 982,
-      "artPath": "Picture/BattleSpirits/26RBS03-012.png",
+      "artPath": "Picture/Art/26RBS03-012.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -249,7 +249,7 @@
       "decodedRgbaSha256": "d7ba22b66cca7da8eb7b9d3cdbae2560a3db3d2ac811f35c2c6a1f5674e4b5a0",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-013.png",
+      "artPath": "Picture/Art/26RBS03-013.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -264,7 +264,7 @@
       "decodedRgbaSha256": "e9bdd884ad6fa1fe016369476bd722f1694890e020b77a47502295de58547dc8",
       "width": 675,
       "height": 982,
-      "artPath": "Picture/BattleSpirits/26RBS03-014.png",
+      "artPath": "Picture/Art/26RBS03-014.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -279,7 +279,7 @@
       "decodedRgbaSha256": "dc8ac09388954d7ec5339a7d727a0f0fdf07d43234e4cada9dbafff6579c6f12",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-015.png",
+      "artPath": "Picture/Art/26RBS03-015.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -294,7 +294,7 @@
       "decodedRgbaSha256": "bc684833fd34eeb08fe355bfe9d8d74c1b76333816a335c3795b1a9cbfb69985",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-016.png",
+      "artPath": "Picture/Art/26RBS03-016.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -309,7 +309,7 @@
       "decodedRgbaSha256": "e168602318c084bd714b18be8cbe25e2c8611864e37b24fcf78c6bff48f38688",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-017.png",
+      "artPath": "Picture/Art/26RBS03-017.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -324,7 +324,7 @@
       "decodedRgbaSha256": "c5cbdcaaddacffa190fd79953398fc24a75b88923b4913047c31ca9330d71adf",
       "width": 675,
       "height": 982,
-      "artPath": "Picture/BattleSpirits/26RBS03-018.png",
+      "artPath": "Picture/Art/26RBS03-018.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -339,7 +339,7 @@
       "decodedRgbaSha256": "41a7644229611f6dbcd96b08694ea2d730af9af619ad0adf423518842bc4b7a6",
       "width": 675,
       "height": 982,
-      "artPath": "Picture/BattleSpirits/26RBS03-019.png",
+      "artPath": "Picture/Art/26RBS03-019.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -354,7 +354,7 @@
       "decodedRgbaSha256": "f532a2f40f90f56a1b12094e68658e19b9162cb762c65d55446a948237fdd107",
       "width": 675,
       "height": 982,
-      "artPath": "Picture/BattleSpirits/26RBS03-020.png",
+      "artPath": "Picture/Art/26RBS03-020.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -369,7 +369,7 @@
       "decodedRgbaSha256": "4e2e592106e49d4d321eeafb8714a1b1c3937db343238534041c542257b72a77",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-021.png",
+      "artPath": "Picture/Art/26RBS03-021.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -384,7 +384,7 @@
       "decodedRgbaSha256": "789e0192247cf8ff8a973a11aec6c9128205c3dcff2f2974681ad24fc3c45c9d",
       "width": 675,
       "height": 982,
-      "artPath": "Picture/BattleSpirits/26RBS03-022.png",
+      "artPath": "Picture/Art/26RBS03-022.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -399,7 +399,7 @@
       "decodedRgbaSha256": "6ac143dbc9d28799aa806e4bdaa5e2be161bacf8da7f25808e9391af9ca7ad1b",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-023.png",
+      "artPath": "Picture/Art/26RBS03-023.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -414,7 +414,7 @@
       "decodedRgbaSha256": "0bb78875b7af52344f21c3fd903a0dd383b5cf93b67a6e14464b5f1fd20bba92",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-024.png",
+      "artPath": "Picture/Art/26RBS03-024.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -429,7 +429,7 @@
       "decodedRgbaSha256": "bd3523206a899e17c9bd878e353b925703d593f6e432eb045953dd9a15120f9c",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-025.png",
+      "artPath": "Picture/Art/26RBS03-025.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -444,7 +444,7 @@
       "decodedRgbaSha256": "c4f63597728ae3cf45bf7a3b9f58cdabd2d112677cdc00e55315bb209113502d",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-026.png",
+      "artPath": "Picture/Art/26RBS03-026.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -459,7 +459,7 @@
       "decodedRgbaSha256": "9129a4979adf9aa6d4543f7363bfce9743dc90b039738c529c8e5d7f1dd97c51",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-027.png",
+      "artPath": "Picture/Art/26RBS03-027.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -474,7 +474,7 @@
       "decodedRgbaSha256": "553987f3cf300ea53ee606af5c65a140fc4ef2c3f418e903e08d3e87e735e769",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-028.png",
+      "artPath": "Picture/Art/26RBS03-028.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -489,7 +489,7 @@
       "decodedRgbaSha256": "b52c60a2f9f2a172998cc50c79f9696a10650364e07b02d811cc661e9427afb5",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-029.png",
+      "artPath": "Picture/Art/26RBS03-029.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -504,7 +504,7 @@
       "decodedRgbaSha256": "9160afda2d298db37b1285487cbc8014aa16504084756e15fa821bbb0964cc77",
       "width": 675,
       "height": 982,
-      "artPath": "Picture/BattleSpirits/26RBS03-030.png",
+      "artPath": "Picture/Art/26RBS03-030.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -519,7 +519,7 @@
       "decodedRgbaSha256": "34760dd79bb750f9740aa7725a3c1d6159d3829a42caadbc1d7fb6809cde8f63",
       "width": 675,
       "height": 982,
-      "artPath": "Picture/BattleSpirits/26RBS03-031.png",
+      "artPath": "Picture/Art/26RBS03-031.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -534,7 +534,7 @@
       "decodedRgbaSha256": "ab5d85ab262a734a28412723d83fc3416c2bed02001ea967641788361ee61df6",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-032.png",
+      "artPath": "Picture/Art/26RBS03-032.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -549,7 +549,7 @@
       "decodedRgbaSha256": "f494b1855f028cb24d2bfdeff47fcb39efdbc9def67b7abca1a55123b7c97403",
       "width": 675,
       "height": 982,
-      "artPath": "Picture/BattleSpirits/26RBS03-033.png",
+      "artPath": "Picture/Art/26RBS03-033.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -564,7 +564,7 @@
       "decodedRgbaSha256": "b6aa9cc6308bb91c01dc5009358873b2be96ed731bc4aaeb1fcbef412aff129d",
       "width": 675,
       "height": 982,
-      "artPath": "Picture/BattleSpirits/26RBS03-034.png",
+      "artPath": "Picture/Art/26RBS03-034.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -579,7 +579,7 @@
       "decodedRgbaSha256": "b50f1b2c4b021697f7502531c6d447f6b5bfea0294baf72e07135f1842e56e62",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-035.png",
+      "artPath": "Picture/Art/26RBS03-035.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -594,7 +594,7 @@
       "decodedRgbaSha256": "e586b0a17ff6b1f92a6cf6300facae5b32cc7e8025401eb81c203585b00b421d",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-036.png",
+      "artPath": "Picture/Art/26RBS03-036.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -609,7 +609,7 @@
       "decodedRgbaSha256": "74d2015205dbe9cce15e3c28b6846c4a22288793dc885aba3bed786b9b01d60d",
       "width": 675,
       "height": 982,
-      "artPath": "Picture/BattleSpirits/26RBS03-037.png",
+      "artPath": "Picture/Art/26RBS03-037.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -624,7 +624,7 @@
       "decodedRgbaSha256": "4eb197e9e3a2b77a4f58ecfe16bdaec66f2d456f2548e320b1328ef30ce2fb77",
       "width": 675,
       "height": 982,
-      "artPath": "Picture/BattleSpirits/26RBS03-038.png",
+      "artPath": "Picture/Art/26RBS03-038.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -639,7 +639,7 @@
       "decodedRgbaSha256": "2184e87590d9ad97b8b1b188f143cdd65d58a210bef96e40827f4d98ac848161",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-039.png",
+      "artPath": "Picture/Art/26RBS03-039.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -654,7 +654,7 @@
       "decodedRgbaSha256": "83e597e77af7793f40f72ee7e977689d20e6f9322e77ae35bedc94d933b99a96",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-040.png",
+      "artPath": "Picture/Art/26RBS03-040.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -669,7 +669,7 @@
       "decodedRgbaSha256": "9e884bd7cd693812f4f634284f8729a6265f121e04692ac9177c338ae4029f43",
       "width": 675,
       "height": 982,
-      "artPath": "Picture/BattleSpirits/26RBS03-041.png",
+      "artPath": "Picture/Art/26RBS03-041.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -684,7 +684,7 @@
       "decodedRgbaSha256": "cf5e1101caf0701a84d4543abda15ffbee6c0c7858877adaad8677f7f9c347fe",
       "width": 675,
       "height": 982,
-      "artPath": "Picture/BattleSpirits/26RBS03-042.png",
+      "artPath": "Picture/Art/26RBS03-042.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -699,7 +699,7 @@
       "decodedRgbaSha256": "7f4545b76a4fe9a0df6cf3486f3b6299c54cb44ebabc687c15f95149b9424f3b",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-043.png",
+      "artPath": "Picture/Art/26RBS03-043.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -714,7 +714,7 @@
       "decodedRgbaSha256": "c0f05fdf30fdded44339986b4bffb90d684f9495861ed6d8a9527491c0282f60",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-044.png",
+      "artPath": "Picture/Art/26RBS03-044.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -729,7 +729,7 @@
       "decodedRgbaSha256": "b40039b1c752f24462bd948b9c752a6ad00db5a64d2e961b84a5866489176da0",
       "width": 675,
       "height": 982,
-      "artPath": "Picture/BattleSpirits/26RBS03-045.png",
+      "artPath": "Picture/Art/26RBS03-045.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -744,7 +744,7 @@
       "decodedRgbaSha256": "8514f665ba4cf722d3b7f8074a0940d732a43cc9b1659aba8a1b8da8abe55068",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-046.png",
+      "artPath": "Picture/Art/26RBS03-046.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -759,7 +759,7 @@
       "decodedRgbaSha256": "5f80d860de8271e54f78ec4d70d26c58f72aab966f89a59b574f0702bfaa2a1d",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-047.png",
+      "artPath": "Picture/Art/26RBS03-047.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -774,7 +774,7 @@
       "decodedRgbaSha256": "275f010612094c7c510d213da493156833e1890f3ef1e9754ef17f3fa67c0908",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-048.png",
+      "artPath": "Picture/Art/26RBS03-048.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -789,7 +789,7 @@
       "decodedRgbaSha256": "e83600dcc60277cbd170e28a53bc34ea6cf654f8cb6dc4c13fac9230f5cb20ad",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-049.png",
+      "artPath": "Picture/Art/26RBS03-049.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -804,7 +804,7 @@
       "decodedRgbaSha256": "f86449d826752d8f869a1b2bbe4e783e015dc441a26a89e1f3ebb70b9b146fa5",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-050.png",
+      "artPath": "Picture/Art/26RBS03-050.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -819,7 +819,7 @@
       "decodedRgbaSha256": "b9a6d21b72641c6885c717f6ae5bd67b3ce3851b53a7b41e44230afd3bdfcb06",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-051.png",
+      "artPath": "Picture/Art/26RBS03-051.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -834,7 +834,7 @@
       "decodedRgbaSha256": "9ab1310455718e2de3c86c5ce176cb2488174043fd63118f0f3852fcdff4cc44",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-052.png",
+      "artPath": "Picture/Art/26RBS03-052.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -849,7 +849,7 @@
       "decodedRgbaSha256": "ac1e4bae12e23ef051d89db764ec0f22bfbf74976b8968d3a688007f9d9a3f28",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-053.png",
+      "artPath": "Picture/Art/26RBS03-053.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -864,7 +864,7 @@
       "decodedRgbaSha256": "5d05b449e70f0714814b8a905866177809ec10af7f4305fa4507bb7c52800f79",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-054.png",
+      "artPath": "Picture/Art/26RBS03-054.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -879,7 +879,7 @@
       "decodedRgbaSha256": "e256769c3a789c877edb6b1491066859611aef313f87147cdcef0d1e42ed558c",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-055.png",
+      "artPath": "Picture/Art/26RBS03-055.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -894,7 +894,7 @@
       "decodedRgbaSha256": "5332a608f6042a7ed66ab0db914df88c7df8f6b58e90955df9e1cb1c2a9aeacf",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-056.png",
+      "artPath": "Picture/Art/26RBS03-056.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -909,7 +909,7 @@
       "decodedRgbaSha256": "2a6f60560d6222fd76eddf8e96a2ff8efb976a8321c3e53deb6354b4a24efb85",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-057.png",
+      "artPath": "Picture/Art/26RBS03-057.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -924,7 +924,7 @@
       "decodedRgbaSha256": "5d8b841da36a42ba94570cf5335950ebba1cab9660e7311fc8e08d322d554e37",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-058.png",
+      "artPath": "Picture/Art/26RBS03-058.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -939,7 +939,7 @@
       "decodedRgbaSha256": "6def53e733254951327898f041c8225979a18cf8d8b03c57a3169dfaa9f8fef7",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-059.png",
+      "artPath": "Picture/Art/26RBS03-059.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -954,7 +954,7 @@
       "decodedRgbaSha256": "bd805e6ce233378d8421ad99e8490739e6213dabe959a371be41f06c4f016f61",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-060.png",
+      "artPath": "Picture/Art/26RBS03-060.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -969,7 +969,7 @@
       "decodedRgbaSha256": "25fdaf0f0af70c6d57f97573100f45530ac5a83bb73cafd070ddbf747d84c356",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-061.png",
+      "artPath": "Picture/Art/26RBS03-061.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -984,7 +984,7 @@
       "decodedRgbaSha256": "288cc07b17665c295056bfd1f074210d488d710639562b75f727b90592509255",
       "width": 675,
       "height": 982,
-      "artPath": "Picture/BattleSpirits/26RBS03-062.png",
+      "artPath": "Picture/Art/26RBS03-062.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -999,7 +999,7 @@
       "decodedRgbaSha256": "ed58014ea698dd3e4524b63b4e2176c6a47fedda2693194ceeea77a8a15f233e",
       "width": 675,
       "height": 982,
-      "artPath": "Picture/BattleSpirits/26RBS03-063.png",
+      "artPath": "Picture/Art/26RBS03-063.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1014,7 +1014,7 @@
       "decodedRgbaSha256": "cd67327cb807374930e60b64bd0b55b8ac82467eddae4bc770db551a4b8291bb",
       "width": 675,
       "height": 982,
-      "artPath": "Picture/BattleSpirits/26RBS03-064.png",
+      "artPath": "Picture/Art/26RBS03-064.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1029,7 +1029,7 @@
       "decodedRgbaSha256": "47c6db8c0f67f0981b9fcd74109005c8bce7d39dcc8604a1e3b479be17f0d41e",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-065.png",
+      "artPath": "Picture/Art/26RBS03-065.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1044,7 +1044,7 @@
       "decodedRgbaSha256": "6934a7ac9cbbc00519b6a496ab5c61d529626ef528068107014316df43cf79e0",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-066.png",
+      "artPath": "Picture/Art/26RBS03-066.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1059,7 +1059,7 @@
       "decodedRgbaSha256": "cc4f3578df8c3eae9cbcfe4f3ded24d5eaf134870da9ba74fd39c7514e37e4ab",
       "width": 675,
       "height": 982,
-      "artPath": "Picture/BattleSpirits/26RBS03-067.png",
+      "artPath": "Picture/Art/26RBS03-067.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1074,7 +1074,7 @@
       "decodedRgbaSha256": "2f746b77cc3146938991df02768a760deaff414f31621190d3ced5a0ba714a90",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-068.png",
+      "artPath": "Picture/Art/26RBS03-068.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1089,7 +1089,7 @@
       "decodedRgbaSha256": "3bc3e4d6a061ca670e22ee7f64909eb16f0989a1900ae479e00e80042d633ced",
       "width": 675,
       "height": 982,
-      "artPath": "Picture/BattleSpirits/26RBS03-069.png",
+      "artPath": "Picture/Art/26RBS03-069.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1104,7 +1104,7 @@
       "decodedRgbaSha256": "93295fb634c177683bd433e0d9fe3da67284000f460215213bdedc0d9c28de90",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-070.png",
+      "artPath": "Picture/Art/26RBS03-070.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1119,7 +1119,7 @@
       "decodedRgbaSha256": "946a6e93f42e8de2b669f37b87147632a43edf86f36f0f904ccf6e62bd29d3af",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-071.png",
+      "artPath": "Picture/Art/26RBS03-071.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1134,7 +1134,7 @@
       "decodedRgbaSha256": "933181531bd4d38e786c532da6db2a27059ba436aadca0f0362496ff2c44cdca",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-072.png",
+      "artPath": "Picture/Art/26RBS03-072.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1149,7 +1149,7 @@
       "decodedRgbaSha256": "fe6a1b0ddfe82906da29e24b4ca7c9457c803620f001a7f8aa85eb8fbced583e",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-073.png",
+      "artPath": "Picture/Art/26RBS03-073.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1164,7 +1164,7 @@
       "decodedRgbaSha256": "409f388d883881cebe37faa5cc29ae44d6e988366849cfd1e1e4bd3410abd713",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-074.png",
+      "artPath": "Picture/Art/26RBS03-074.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1179,7 +1179,7 @@
       "decodedRgbaSha256": "88b180eb8e5ca940fecb1de6576efb41238aa39af30af001fb82450329da04d6",
       "width": 675,
       "height": 982,
-      "artPath": "Picture/BattleSpirits/26RBS03-075.png",
+      "artPath": "Picture/Art/26RBS03-075.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1194,7 +1194,7 @@
       "decodedRgbaSha256": "593b4a2715dfa58a354c5263dabfa3467d19238d060a211f9794ff4c5eeadb7e",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-076.png",
+      "artPath": "Picture/Art/26RBS03-076.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1209,7 +1209,7 @@
       "decodedRgbaSha256": "8ddef8aab3f49bd216c6a413b5026560f047cbe880764baee80d727426d84ad3",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-077.png",
+      "artPath": "Picture/Art/26RBS03-077.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1224,7 +1224,7 @@
       "decodedRgbaSha256": "bcda30f7fb4bc0a3ac830c406ac888e9a4fcb5d57094f5d41f790a891c3baad2",
       "width": 675,
       "height": 982,
-      "artPath": "Picture/BattleSpirits/26RBS03-078.png",
+      "artPath": "Picture/Art/26RBS03-078.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1239,7 +1239,7 @@
       "decodedRgbaSha256": "87820e6ac6decaf301d1da5e5adeb75b123207218beed870ef05288f72e21799",
       "width": 675,
       "height": 982,
-      "artPath": "Picture/BattleSpirits/26RBS03-079.png",
+      "artPath": "Picture/Art/26RBS03-079.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1254,7 +1254,7 @@
       "decodedRgbaSha256": "ed100672ba7562c7642d235b373448d7cc76e989875216ab3b3d64af3d5d0627",
       "width": 675,
       "height": 982,
-      "artPath": "Picture/BattleSpirits/26RBS03-080.png",
+      "artPath": "Picture/Art/26RBS03-080.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1269,7 +1269,7 @@
       "decodedRgbaSha256": "6f389bcc6aeb964f06d04165b63070cefbb36385ee731ba27d90248dc33fb340",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-081.png",
+      "artPath": "Picture/Art/26RBS03-081.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1284,7 +1284,7 @@
       "decodedRgbaSha256": "c80e40d0a9f8f7fa522f81e6931e37c6e2336e0f2bb1345dbe1bff250e8db360",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-082.png",
+      "artPath": "Picture/Art/26RBS03-082.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1299,7 +1299,7 @@
       "decodedRgbaSha256": "1404522897e252e9ec91786fd802a3236df686516df7feee364316035a90e608",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-083.png",
+      "artPath": "Picture/Art/26RBS03-083.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1314,7 +1314,7 @@
       "decodedRgbaSha256": "10825b661184bb6a7164736a122dd992c94880e02eabe6c9d58fc96c64065d21",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-084.png",
+      "artPath": "Picture/Art/26RBS03-084.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1329,7 +1329,7 @@
       "decodedRgbaSha256": "eb33455b1757d42a67b4b11962739f4d2aa10eb1ea44b0438173cc2796063794",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-085.png",
+      "artPath": "Picture/Art/26RBS03-085.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1344,7 +1344,7 @@
       "decodedRgbaSha256": "c9bb1624baae10d0df4a108e66f79a7f1287d48e941e51733d31ee3d64864c70",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-086.png",
+      "artPath": "Picture/Art/26RBS03-086.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1359,7 +1359,7 @@
       "decodedRgbaSha256": "fd71a4a04af219afa9eeb90e1d2d229cf1467b918c7603d6a8476e587269fdb5",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-087.png",
+      "artPath": "Picture/Art/26RBS03-087.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1374,7 +1374,7 @@
       "decodedRgbaSha256": "8ecaf1ce336f8d7325c1c01215199613ab99ad77392f82a5b952fecd38dc7096",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-088.png",
+      "artPath": "Picture/Art/26RBS03-088.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1389,7 +1389,7 @@
       "decodedRgbaSha256": "b25f089eeb1fcdfcea0e69dab9099ec04133db17a11f69ca6d4399747ceeeb37",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-089.png",
+      "artPath": "Picture/Art/26RBS03-089.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1404,7 +1404,7 @@
       "decodedRgbaSha256": "1599525dee4b1e556ab7f471279829778484757b5797c0a073364382f9581657",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-090.png",
+      "artPath": "Picture/Art/26RBS03-090.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1419,7 +1419,7 @@
       "decodedRgbaSha256": "86fcdec8a078b2af0577f27cb5fc059aa5be9fc9c1686069dab5bc88daf715ba",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-091.png",
+      "artPath": "Picture/Art/26RBS03-091.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1434,7 +1434,7 @@
       "decodedRgbaSha256": "a29a8dacbc740bc91483e0432fdc302b5125aac53de4219096e3d3461a455057",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-092.png",
+      "artPath": "Picture/Art/26RBS03-092.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1449,7 +1449,7 @@
       "decodedRgbaSha256": "36df27fc0f30bd634b5a20cfafd7f88ed3c831e038a8deab10d8ed41da48ea07",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-093.png",
+      "artPath": "Picture/Art/26RBS03-093.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1464,7 +1464,7 @@
       "decodedRgbaSha256": "c73766d28d593911a998b41153cefec90812a1b364856b296033fb71a729a010",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-094.png",
+      "artPath": "Picture/Art/26RBS03-094.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1479,7 +1479,7 @@
       "decodedRgbaSha256": "268d88c532aba8c88c3f32f8d1a6351d890b1b4c7f9f6672f28f77ab4b18961a",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-095.png",
+      "artPath": "Picture/Art/26RBS03-095.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1494,7 +1494,7 @@
       "decodedRgbaSha256": "6a79daf4c654c1975139c5be42c1745d942744a420643f7ae46ba2beda2570dd",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-096.png",
+      "artPath": "Picture/Art/26RBS03-096.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1509,7 +1509,7 @@
       "decodedRgbaSha256": "b73b4f8b97b3f8e69166028b816c6ff68259a3a653010e52b4a9acb48d2875fc",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-097.png",
+      "artPath": "Picture/Art/26RBS03-097.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1524,7 +1524,7 @@
       "decodedRgbaSha256": "b0e61dc8058a24a7ff23169852dc517a0cab1a5c6f3ab240b775021fc0d91adc",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-098.png",
+      "artPath": "Picture/Art/26RBS03-098.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1539,7 +1539,7 @@
       "decodedRgbaSha256": "7f219882b206d5ff9f19fa0e256b57bf9ddcdd34c53d2df003f7513ae2284b7b",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-X01.png",
+      "artPath": "Picture/Art/26RBS03-X01.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1554,7 +1554,7 @@
       "decodedRgbaSha256": "c2b0171b0c3523c45775e0ff64f34949d7a7b65076681aecc9db2e303f3d785c",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-X02.png",
+      "artPath": "Picture/Art/26RBS03-X02.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1569,7 +1569,7 @@
       "decodedRgbaSha256": "a5d8b5a3fdf5d1c469d07fe0c8dac4f1141353b2051e89f551d5eeb1599c8f81",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-X03.png",
+      "artPath": "Picture/Art/26RBS03-X03.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1584,7 +1584,7 @@
       "decodedRgbaSha256": "1a87c2c9e35893391b4855c80892c64eb1e37a9f6fa4c3541f291998490a1fce",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-X04.png",
+      "artPath": "Picture/Art/26RBS03-X04.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1599,7 +1599,7 @@
       "decodedRgbaSha256": "9568b554f694f59998ac548aeac58b0437426bedc00bcff8e44e11ab17d40635",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-X05.png",
+      "artPath": "Picture/Art/26RBS03-X05.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1614,7 +1614,7 @@
       "decodedRgbaSha256": "9471f248dcbaee91af57ea925ba6dc12c9b660a7d90944e550f9dfc7a4f26834",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-X06.png",
+      "artPath": "Picture/Art/26RBS03-X06.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1629,7 +1629,7 @@
       "decodedRgbaSha256": "681409e1e9b135ab2589886498d6be3af19d3e40d553fefe9ce2123718e5b731",
       "width": 675,
       "height": 982,
-      "artPath": "Picture/BattleSpirits/26RBS03-X07.png",
+      "artPath": "Picture/Art/26RBS03-X07.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1644,7 +1644,7 @@
       "decodedRgbaSha256": "8c9aac8019f0465337bfefb68e2275631e4d4c601124eafe0c1a170346f1cbd9",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-X08.png",
+      "artPath": "Picture/Art/26RBS03-X08.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1659,7 +1659,7 @@
       "decodedRgbaSha256": "d80ef9e465a51d486e66d3cb600380ad8231e1112652e8165b42d97574e1d085",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-X09.png",
+      "artPath": "Picture/Art/26RBS03-X09.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1674,7 +1674,7 @@
       "decodedRgbaSha256": "1ea12ac471d7911969566ba76f4ab9ea77aa5481e6706d50d68a1b81523356fa",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-X10.png",
+      "artPath": "Picture/Art/26RBS03-X10.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1689,7 +1689,7 @@
       "decodedRgbaSha256": "0656cabc26eaeff89f3b1eecd7dd8a2fec975474b63efa95c6c593e7363ad6c5",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-X11.png",
+      "artPath": "Picture/Art/26RBS03-X11.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1704,7 +1704,7 @@
       "decodedRgbaSha256": "2a419627452901266659c50fb7d1966bc23a6d6e9617a9872d4035bfb1d0c745",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-X12.png",
+      "artPath": "Picture/Art/26RBS03-X12.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1719,7 +1719,7 @@
       "decodedRgbaSha256": "1ff8a64a15f324817229a688a7e7dd5ae63400ebf494a6b279b60dfa875ad11b",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-X13.png",
+      "artPath": "Picture/Art/26RBS03-X13.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1734,7 +1734,7 @@
       "decodedRgbaSha256": "ea99fe8ae1f2fd11d238961f172c3def1d056eba3cdc57c66b931ba8ea284111",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-X14.png",
+      "artPath": "Picture/Art/26RBS03-X14.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1749,7 +1749,7 @@
       "decodedRgbaSha256": "5abfa2459eb861ea9d9dd2ea5ea7cb34e487f2525858ae36173a6a8e2c606fe4",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/26RBS03-X15.png",
+      "artPath": "Picture/Art/26RBS03-X15.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1764,7 +1764,7 @@
       "decodedRgbaSha256": "eaabeaf87c4c6bed686a045bca2d32859aa86871aceda159018a359a9d01188a",
       "width": 813,
       "height": 1183,
-      "artPath": "Picture/BattleSpirits/26RSD09-001.png",
+      "artPath": "Picture/Art/26RSD09-001.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1779,7 +1779,7 @@
       "decodedRgbaSha256": "01de5f7f2eb6067b32f218e9571b6bcf26a850b8f77d7a6f1665dcc2c65ffd16",
       "width": 813,
       "height": 1184,
-      "artPath": "Picture/BattleSpirits/26RSD09-004.png",
+      "artPath": "Picture/Art/26RSD09-004.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1794,7 +1794,7 @@
       "decodedRgbaSha256": "0a575f56176a4eaf8792bda85cd7234e8cbde8a2b1e2c1e5eecea4a7a9b06823",
       "width": 813,
       "height": 1184,
-      "artPath": "Picture/BattleSpirits/26RSD09-012.png",
+      "artPath": "Picture/Art/26RSD09-012.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1809,7 +1809,7 @@
       "decodedRgbaSha256": "31666bf2e772ca0c359330cce77238250e2bbc6e7fe6c3f77bc7cacc973fe4d4",
       "width": 812,
       "height": 1183,
-      "artPath": "Picture/BattleSpirits/26RSD10-013.png",
+      "artPath": "Picture/Art/26RSD10-013.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1824,7 +1824,7 @@
       "decodedRgbaSha256": "9d8dbbdfd69f8f428762af103ad4f3541279f41f5fd14022ae1d1990f8faf893",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS01-001.png",
+      "artPath": "Picture/Art/BS01-001.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1839,7 +1839,7 @@
       "decodedRgbaSha256": "a46e3e77cc1ec88818f577380178c9a7ff40a42099b554cf8a01e2617a1ba815",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS01-002.png",
+      "artPath": "Picture/Art/BS01-002.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1854,7 +1854,7 @@
       "decodedRgbaSha256": "7aec335edc213f61061cc5403f1374218588d135960ec09b5ca162fab176dc7f",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS01-005.png",
+      "artPath": "Picture/Art/BS01-005.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1869,7 +1869,7 @@
       "decodedRgbaSha256": "af2e18195e5381f93f8e290ded55ee3be2eed1c1fd6a76309e0c3af21c7b28d3",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS01-008.png",
+      "artPath": "Picture/Art/BS01-008.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1884,7 +1884,7 @@
       "decodedRgbaSha256": "67304266ebf138eba44bfc58fc1ab11fce80184176a2ceab5e07b4fb64b5498d",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS01-026.png",
+      "artPath": "Picture/Art/BS01-026.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1899,7 +1899,7 @@
       "decodedRgbaSha256": "6734458e0ea64f9b8e421ac53652e4f224f5d7d18c7f9de23bcf36eca59c7439",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS01-028.png",
+      "artPath": "Picture/Art/BS01-028.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1914,7 +1914,7 @@
       "decodedRgbaSha256": "9b4ce05f52ab0ebd6c76328a0c293c3ff3901892af0f93e3b7abe64c26c1e5d6",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS01-050.png",
+      "artPath": "Picture/Art/BS01-050.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1929,7 +1929,7 @@
       "decodedRgbaSha256": "1fb691d7cffeb8283a7fb3845ba6b2a1df31332c58d262350bbde983a69dffde",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS01-051.png",
+      "artPath": "Picture/Art/BS01-051.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1944,7 +1944,7 @@
       "decodedRgbaSha256": "c96a94f4539007c69be6b3d5c477ade991a09458b9455804d4fdaa95210a0f8a",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS01-054.png",
+      "artPath": "Picture/Art/BS01-054.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1959,7 +1959,7 @@
       "decodedRgbaSha256": "9328e2af0260e1caff11a704dd6a46559a63d7f47481aeeb897546b2a68158b1",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS01-058.png",
+      "artPath": "Picture/Art/BS01-058.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1974,7 +1974,7 @@
       "decodedRgbaSha256": "f3c198e6b73c7ced86d6f2c885879ca13dbf7cd6e66ab12a4087e9f20231ac56",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS01-074.png",
+      "artPath": "Picture/Art/BS01-074.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -1989,7 +1989,7 @@
       "decodedRgbaSha256": "b666c70829188eda40f6188b65d97cc510ca0172bb31ed6d448e2c8a876e529e",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS01-075.png",
+      "artPath": "Picture/Art/BS01-075.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2004,7 +2004,7 @@
       "decodedRgbaSha256": "4a622f08b32a31615c968f2368d6b22938146d2f9f45d7bc5688807415db0e10",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS02-001.png",
+      "artPath": "Picture/Art/BS02-001.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2019,7 +2019,7 @@
       "decodedRgbaSha256": "a426dd11a5c5020424ce1902b8f2b4ecd779fd4aab75ca1ea754f2de9c25294f",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS02-025.png",
+      "artPath": "Picture/Art/BS02-025.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2034,7 +2034,7 @@
       "decodedRgbaSha256": "d471dff7618fa6e24d2eee6adef4db64c229c2e510b7d55c102de1a0d108685b",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS02-049.png",
+      "artPath": "Picture/Art/BS02-049.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2049,7 +2049,7 @@
       "decodedRgbaSha256": "35182fa3bcc753958c933bd796127bdea39f464c003944e81a567440d50ce5d6",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS02-051.png",
+      "artPath": "Picture/Art/BS02-051.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2064,7 +2064,7 @@
       "decodedRgbaSha256": "682e14a1d599b4bc3546b89599df4b878a4bdb747637563a69bf26d590be561a",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS72-077.png",
+      "artPath": "Picture/Art/BS72-077.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2079,7 +2079,7 @@
       "decodedRgbaSha256": "60fd68a7e8401b8947a7bc26ddb052263364b73973f2c61dcd75f029b20de6c1",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS73-076.png",
+      "artPath": "Picture/Art/BS73-076.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2094,7 +2094,7 @@
       "decodedRgbaSha256": "6d5281e32ab721d960ae6b13f9d8b2e150f62f119712b1836a0346e429af096a",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS74-076.png",
+      "artPath": "Picture/Art/BS74-076.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2109,7 +2109,7 @@
       "decodedRgbaSha256": "3bd3db6f48b0781275d72110e1cf67810bc0234f8aeeb072c7acbfb9a8ccd647",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS74-083.png",
+      "artPath": "Picture/Art/BS74-083.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2124,7 +2124,7 @@
       "decodedRgbaSha256": "e7fa755f8e02ae6345128d53ac78089bbf6f3e02d1d97b01d8e5681fc9b1225a",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS75-083.png",
+      "artPath": "Picture/Art/BS75-083.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2139,7 +2139,7 @@
       "decodedRgbaSha256": "2b45a092a72a3719ea20c7d0f6383dd85e76ebeb606e39471f13168b5c9c05db",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS75-085.png",
+      "artPath": "Picture/Art/BS75-085.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2154,7 +2154,7 @@
       "decodedRgbaSha256": "e6b66257dbd90ff7f490e247645e636aa4ed8db4999e2cb9555fc61ffefdbce9",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-001.png",
+      "artPath": "Picture/Art/BS76-001.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2169,7 +2169,7 @@
       "decodedRgbaSha256": "48f724e32bfc07063038c713c4cc4d1f22529308dd88e3ecbf2bebc8b7640737",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-002.png",
+      "artPath": "Picture/Art/BS76-002.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2184,7 +2184,7 @@
       "decodedRgbaSha256": "854b697992d1c0dce601b72a597095c6e4287c4554ca9e4dc6209b2ec87068a7",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-003.png",
+      "artPath": "Picture/Art/BS76-003.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2199,7 +2199,7 @@
       "decodedRgbaSha256": "8098afcf1fed4ead81ee6ecaadc4552c16ed65410304ba06c2bad0792b3c389c",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-004.png",
+      "artPath": "Picture/Art/BS76-004.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2214,7 +2214,7 @@
       "decodedRgbaSha256": "39ab910e0787f4037b8fb24e39c92afe9d057fd47b21f63fe2d8a38d30b164b3",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-005.png",
+      "artPath": "Picture/Art/BS76-005.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2229,7 +2229,7 @@
       "decodedRgbaSha256": "d3decaeceed764b0f4b3f3e26249f1b85945e41c68b1cbc485dd131ef808f191",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-006.png",
+      "artPath": "Picture/Art/BS76-006.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2244,7 +2244,7 @@
       "decodedRgbaSha256": "828726025d36035a8ad1eef60f92a5d03cec13e34d48faaa5e678129662b25ed",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-007.png",
+      "artPath": "Picture/Art/BS76-007.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2259,7 +2259,7 @@
       "decodedRgbaSha256": "11ab14cafe801436c0b216bb16848e6e90e8b621ecc9373f6b4f08571c9691b1",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-008.png",
+      "artPath": "Picture/Art/BS76-008.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2274,7 +2274,7 @@
       "decodedRgbaSha256": "d6fdf2045d5857cd0e3874f58b056fb58297e11527a4599e4e43e2be2e446036",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-009.png",
+      "artPath": "Picture/Art/BS76-009.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2289,7 +2289,7 @@
       "decodedRgbaSha256": "34f7b229e80279a3111828eb8f20e6ece6a0887b4be7ef3bd71cb9fa67fbee09",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-010.png",
+      "artPath": "Picture/Art/BS76-010.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2304,7 +2304,7 @@
       "decodedRgbaSha256": "65d5769b5767c45cf9f02e1e7e7c0a00df656cb46492ecf8b24f9daea8bb6e17",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-011.png",
+      "artPath": "Picture/Art/BS76-011.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2319,7 +2319,7 @@
       "decodedRgbaSha256": "12d93caba2329f11a96c28bee27233a72267d5c669bd80b93911b0ba777146c7",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-012.png",
+      "artPath": "Picture/Art/BS76-012.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2334,7 +2334,7 @@
       "decodedRgbaSha256": "609a30782aed9878d9caef8d18b10ac679da7c4ce725d711525e908c6e04a437",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-013.png",
+      "artPath": "Picture/Art/BS76-013.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2349,7 +2349,7 @@
       "decodedRgbaSha256": "15c741d056f98811e59263d7f1f18b73090093978713ba574b47f3d73363f225",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-014.png",
+      "artPath": "Picture/Art/BS76-014.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2364,7 +2364,7 @@
       "decodedRgbaSha256": "8871352c103723d92cf91ae1ef510be9e4c74e18f9761c0f36fbfa8f53f3ac0c",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-015.png",
+      "artPath": "Picture/Art/BS76-015.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2379,7 +2379,7 @@
       "decodedRgbaSha256": "c36f48f84c69438dc8a23ac81880b0b30f5348a200c662d3cdee89613cdab44e",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-016.png",
+      "artPath": "Picture/Art/BS76-016.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2394,7 +2394,7 @@
       "decodedRgbaSha256": "f909b1b9834bddf3c8e93e1f095822b143b9379d9c1563507f7d340c49929622",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-017.png",
+      "artPath": "Picture/Art/BS76-017.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2409,7 +2409,7 @@
       "decodedRgbaSha256": "9bb1efad6500de053552ee37ea7e34c32c3350080e00ef8c043ebba416e32eac",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-018.png",
+      "artPath": "Picture/Art/BS76-018.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2424,7 +2424,7 @@
       "decodedRgbaSha256": "baacb0ae726b9d4e00fd91d056e4e57176af59459b8f932ada7ac162f7ea2bf8",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-019.png",
+      "artPath": "Picture/Art/BS76-019.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2439,7 +2439,7 @@
       "decodedRgbaSha256": "bfeb8f28e66fd36a1cb6ad8205061a634bd1f7d02628562c88158aeebf919f32",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-020.png",
+      "artPath": "Picture/Art/BS76-020.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2454,7 +2454,7 @@
       "decodedRgbaSha256": "2faa37ea8235bfb99bec19a8874887cf5aa4ad602abaf6536733a511db4ecbc0",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-021.png",
+      "artPath": "Picture/Art/BS76-021.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2469,7 +2469,7 @@
       "decodedRgbaSha256": "fd9126bafcb0e7305c5408ce59a89c40821497cb0a5bb79a7b6f09f8ca1a3f65",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-022.png",
+      "artPath": "Picture/Art/BS76-022.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2484,7 +2484,7 @@
       "decodedRgbaSha256": "a345f169e3d1c5b98824211dfb06c35d46f00ee09d8427ee7b2506d7065e4840",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-023.png",
+      "artPath": "Picture/Art/BS76-023.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2499,7 +2499,7 @@
       "decodedRgbaSha256": "b3196972d82070c0b93065f2035428bcc2d78fa76ee08dd66f4e60e781bf7aa2",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-024.png",
+      "artPath": "Picture/Art/BS76-024.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2514,7 +2514,7 @@
       "decodedRgbaSha256": "e58d488b25c2cb51fc0f3a68e3ec4c0a8a28eb3506d10d03a2770c40425f8e57",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-025.png",
+      "artPath": "Picture/Art/BS76-025.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2529,7 +2529,7 @@
       "decodedRgbaSha256": "2c3737bfa95cbc6e8e2085fff23a02d02d6835107aa2375061113a90a6b3248b",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-026.png",
+      "artPath": "Picture/Art/BS76-026.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2544,7 +2544,7 @@
       "decodedRgbaSha256": "13dbfbd3b33ffc183c1119e0d156d1e3d5bee852edc2412e8ccb08479dcde38e",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-027.png",
+      "artPath": "Picture/Art/BS76-027.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2559,7 +2559,7 @@
       "decodedRgbaSha256": "f813f28a5c84ce90afd099e28375a6f74a609685b7c5e476c50f4b3317cb2bd8",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-028.png",
+      "artPath": "Picture/Art/BS76-028.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2574,7 +2574,7 @@
       "decodedRgbaSha256": "c86ab239cb1378b4cfb2d41c1c55564238d35eeac0edb505baabeb8853fab557",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-029.png",
+      "artPath": "Picture/Art/BS76-029.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2589,7 +2589,7 @@
       "decodedRgbaSha256": "d70ac21a28514051ca12c9d3912af5378158ca78e0ca2c337926e02d1a1d4f93",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-030.png",
+      "artPath": "Picture/Art/BS76-030.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2604,7 +2604,7 @@
       "decodedRgbaSha256": "d37c7b3affe82d1fa37184c9ab8d6585a1caec1f8546f183d157d205ba1783a8",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-031.png",
+      "artPath": "Picture/Art/BS76-031.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2619,7 +2619,7 @@
       "decodedRgbaSha256": "b156ea97e4c3e3dbca14d574cd7906fdb9660b4adee790cf1db5f7988e4c81e6",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-032.png",
+      "artPath": "Picture/Art/BS76-032.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2634,7 +2634,7 @@
       "decodedRgbaSha256": "a654e35f1ebb602088a3a9bb64ab2ee536d6040df29073513d3c6c47692a62ea",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-033.png",
+      "artPath": "Picture/Art/BS76-033.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2649,7 +2649,7 @@
       "decodedRgbaSha256": "43e5b12749c2c3dd1099d0cfd4144dffd4113240eb935d97415a9a65667ae104",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-034.png",
+      "artPath": "Picture/Art/BS76-034.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2664,7 +2664,7 @@
       "decodedRgbaSha256": "e4091e92b8dd60e730d8698e680ba113847ebf2c2d9a44ff168029be39ab739b",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-035.png",
+      "artPath": "Picture/Art/BS76-035.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2679,7 +2679,7 @@
       "decodedRgbaSha256": "e204134bf587e75ce13646c16a7df4b0b0900639211c6d91d5942a3689ae8bc5",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-036.png",
+      "artPath": "Picture/Art/BS76-036.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2694,7 +2694,7 @@
       "decodedRgbaSha256": "69a86bc760ab991c816aa5295e13905d69cb0e60b2c3ba5dc4ac98b20e5a56a4",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-037.png",
+      "artPath": "Picture/Art/BS76-037.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2709,7 +2709,7 @@
       "decodedRgbaSha256": "07b06cdac5ab1fdd04d55ef8bb4e4f4a040b69894be8c7db50ed5bcafa6607b3",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-038.png",
+      "artPath": "Picture/Art/BS76-038.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2724,7 +2724,7 @@
       "decodedRgbaSha256": "60e523fc74422dde384fce1782a244b62326d0bdc24cfbe22abb798bd95bc93f",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-039.png",
+      "artPath": "Picture/Art/BS76-039.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2739,7 +2739,7 @@
       "decodedRgbaSha256": "d77425a6446c52051b292bda5e4cc5e4c48b8c56de9b23caff467d1a6056663f",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-040.png",
+      "artPath": "Picture/Art/BS76-040.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2754,7 +2754,7 @@
       "decodedRgbaSha256": "dca490d6b65e3a3289aa0be5777bee57ef8efc11bb4bceb3eb4f81905dab4efa",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-041.png",
+      "artPath": "Picture/Art/BS76-041.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2769,7 +2769,7 @@
       "decodedRgbaSha256": "eeeb0cce7a259e3a208afdc17ed13146393277322d7a018d709ec701d4ccfdbc",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-042.png",
+      "artPath": "Picture/Art/BS76-042.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2784,7 +2784,7 @@
       "decodedRgbaSha256": "f28f8fe768da2f545714267306d0b0be9cbb15df55a97f9f4e490831daed1d55",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-043.png",
+      "artPath": "Picture/Art/BS76-043.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2799,7 +2799,7 @@
       "decodedRgbaSha256": "cb2941b5e0f3b97444f64482b72f8dbba7d56e9292669133f2689edbba60c116",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-044.png",
+      "artPath": "Picture/Art/BS76-044.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2814,7 +2814,7 @@
       "decodedRgbaSha256": "1fff26af9a8e73c1425c0ba3b5a628665592e556146b18c2178aa3e91d31fdce",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-045.png",
+      "artPath": "Picture/Art/BS76-045.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2829,7 +2829,7 @@
       "decodedRgbaSha256": "700a9254dfebd82bf1309bbabe3862219a5ea1cb71b80993c33027f2529a7600",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-046.png",
+      "artPath": "Picture/Art/BS76-046.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2844,7 +2844,7 @@
       "decodedRgbaSha256": "d5d3eeaf5a4ec3bfc2d41df000b9e37d3254b3430cc429bd8580e3a59000e11a",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-047.png",
+      "artPath": "Picture/Art/BS76-047.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2859,7 +2859,7 @@
       "decodedRgbaSha256": "b1454998c527674a718c2d8c42ff1d0e9f71ab4af8a3b5bc76201bd288f32b2a",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-048.png",
+      "artPath": "Picture/Art/BS76-048.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2874,7 +2874,7 @@
       "decodedRgbaSha256": "be55c64ad81e5bee316bc867bcafb872f7a4faa653298645fa7915af3b8fd0e7",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-049.png",
+      "artPath": "Picture/Art/BS76-049.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2889,7 +2889,7 @@
       "decodedRgbaSha256": "8257f82a42367b5bb6b5dbff520025cfada1055e39cad863796736a98d0ade68",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-050.png",
+      "artPath": "Picture/Art/BS76-050.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2904,7 +2904,7 @@
       "decodedRgbaSha256": "f6f81f43f835f7591704cbcddb6420c42c44cd3d3dc5bf8be3486a8672f4c9a3",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-051.png",
+      "artPath": "Picture/Art/BS76-051.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2919,7 +2919,7 @@
       "decodedRgbaSha256": "a543ddf7ec0e4816886c5449074f0649c49acf84654c6a94a05432aee8c73752",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-052.png",
+      "artPath": "Picture/Art/BS76-052.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2934,7 +2934,7 @@
       "decodedRgbaSha256": "0872a5cba8dc87226ee460058f989f40e5e91447506fc16d78b7d648cd67873a",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-053.png",
+      "artPath": "Picture/Art/BS76-053.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2949,7 +2949,7 @@
       "decodedRgbaSha256": "52896e4ed9a5b9ecc437962e3748fb4f1121eb36d54a019d14a5618af021616a",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-054.png",
+      "artPath": "Picture/Art/BS76-054.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2964,7 +2964,7 @@
       "decodedRgbaSha256": "b34fd18f0fbe7a4c2ade26f17629ff05b957b6bac7b2493c215997edd0976fdb",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-055.png",
+      "artPath": "Picture/Art/BS76-055.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2979,7 +2979,7 @@
       "decodedRgbaSha256": "6c933bb2be5b523353ba9a28cb2aeb0b2e6ce007fd7637357d3a701084e082a7",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-056.png",
+      "artPath": "Picture/Art/BS76-056.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -2994,7 +2994,7 @@
       "decodedRgbaSha256": "b5e3c1f9d1b5ab900a982fa83db2e1820b83638ecaabb014a6ab31364b8a06cb",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-057.png",
+      "artPath": "Picture/Art/BS76-057.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3009,7 +3009,7 @@
       "decodedRgbaSha256": "093b2a72fcf864be3e7b4a89add47e2dc7597cb17410e33c66ff86900afd1f06",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-058.png",
+      "artPath": "Picture/Art/BS76-058.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3024,7 +3024,7 @@
       "decodedRgbaSha256": "71ea0b6666c2bed3809c983f9be824bed5588b4272488aba4c3fb23e44c453b3",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-059.png",
+      "artPath": "Picture/Art/BS76-059.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3039,7 +3039,7 @@
       "decodedRgbaSha256": "8c46370e19c09c047f73315ad1bd55d362a49930619c2303779af49de0a3bdd3",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-060.png",
+      "artPath": "Picture/Art/BS76-060.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3054,7 +3054,7 @@
       "decodedRgbaSha256": "bc2183b157e9c9b0022401bfa9a03f42a357b6112e0f2ae1fc8569b6bec4fdc6",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-061.png",
+      "artPath": "Picture/Art/BS76-061.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3069,7 +3069,7 @@
       "decodedRgbaSha256": "11e2cb0490c55eb81cc63e3147bce48712007bb9fda6a5a171c3b21945497be1",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-062.png",
+      "artPath": "Picture/Art/BS76-062.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3084,7 +3084,7 @@
       "decodedRgbaSha256": "48b593f0ea471de1bae094694b7681b15b84d70525e94d0a31820aa821eb46eb",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-063.png",
+      "artPath": "Picture/Art/BS76-063.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3099,7 +3099,7 @@
       "decodedRgbaSha256": "b95a96bd3a4049e21fef31c9a84efd50f32a4847707c5713173293c14bc4a33a",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-064.png",
+      "artPath": "Picture/Art/BS76-064.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3114,7 +3114,7 @@
       "decodedRgbaSha256": "9cf5f5e37efebeb0e9fe1df77abf6a6d3ab8b03101544247b9f0921bca582f8b",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-065.png",
+      "artPath": "Picture/Art/BS76-065.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3129,7 +3129,7 @@
       "decodedRgbaSha256": "dd34fea5a071513dc1b06869bfe25201ec37fb634ffa0c815cfdfb46fae51f96",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-066.png",
+      "artPath": "Picture/Art/BS76-066.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3144,7 +3144,7 @@
       "decodedRgbaSha256": "ab269b30a5a44d136f8de4764f32335e3aa808e6fe10fbda14138821bc5a37b3",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-067.png",
+      "artPath": "Picture/Art/BS76-067.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3159,7 +3159,7 @@
       "decodedRgbaSha256": "92df8e6b9386873e9484c88a7a53a9e6dc1ecce7aa0db620e3e2ebcbbbf65bcb",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-068.png",
+      "artPath": "Picture/Art/BS76-068.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3174,7 +3174,7 @@
       "decodedRgbaSha256": "184875eb06c9f08e0d6a376798ee8593e4cd2fe1745ee9f4d65939b764651bcb",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-069.png",
+      "artPath": "Picture/Art/BS76-069.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3189,7 +3189,7 @@
       "decodedRgbaSha256": "30de63b2bad547adcb31d4bf00e8b9617dc58230d6d15e8ae1f9dc7ab28a804a",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-070.png",
+      "artPath": "Picture/Art/BS76-070.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3204,7 +3204,7 @@
       "decodedRgbaSha256": "435f6edd1e76635ed5e1ad6deefa0c98f21df486a4ef37fedf4d0914081fa918",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-071.png",
+      "artPath": "Picture/Art/BS76-071.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3219,7 +3219,7 @@
       "decodedRgbaSha256": "7f80af44d56094f97e68b237f00226d09fe84611708a6200f3ccfe72d7f77287",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-072.png",
+      "artPath": "Picture/Art/BS76-072.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3234,7 +3234,7 @@
       "decodedRgbaSha256": "5d73115e7b15dd1d6eddefc23749bd1ebb4beec05cda02ebbcfd966e14cea6c2",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-073.png",
+      "artPath": "Picture/Art/BS76-073.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3249,7 +3249,7 @@
       "decodedRgbaSha256": "47c8ac359a98e39e4b5f6d99ed959b52cdc88a7bb903ac41a230af642d7ea200",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-074.png",
+      "artPath": "Picture/Art/BS76-074.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3264,7 +3264,7 @@
       "decodedRgbaSha256": "cc4819ed8e649024f85d110e3ea60c65a7d1ff83840eb4569fde27b47cb1c36b",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-075.png",
+      "artPath": "Picture/Art/BS76-075.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3279,7 +3279,7 @@
       "decodedRgbaSha256": "363a683fbfe0b2bb7386689ffdab773c16bf953e3db62d530c412bd5e4c6bca4",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-076.png",
+      "artPath": "Picture/Art/BS76-076.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3294,7 +3294,7 @@
       "decodedRgbaSha256": "4f74c861cccecc0386f276558a7d312161f5b19e3c417ec9048a55468527b937",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-077.png",
+      "artPath": "Picture/Art/BS76-077.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3309,7 +3309,7 @@
       "decodedRgbaSha256": "99ab3a3fb746184b610dab0398077414dbe844675acb196218d539243d832a5b",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-078.png",
+      "artPath": "Picture/Art/BS76-078.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3324,7 +3324,7 @@
       "decodedRgbaSha256": "c9ab5ba18f72c999390c9a20659cd2d0abe982b5e1c872e08256facf5489096d",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-079.png",
+      "artPath": "Picture/Art/BS76-079.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3339,7 +3339,7 @@
       "decodedRgbaSha256": "cc91cff951b423b4944d54e437e4cfb10743b3f0562069154daa3bfae7ad8ac0",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-080.png",
+      "artPath": "Picture/Art/BS76-080.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3354,7 +3354,7 @@
       "decodedRgbaSha256": "fb23829e4d75fd60db83e01fdd9979865b8e35c857a6894951ac432e0a24c891",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-081.png",
+      "artPath": "Picture/Art/BS76-081.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3369,7 +3369,7 @@
       "decodedRgbaSha256": "a0a9a0d1d7bf424bd31fe89f65633b577fec8c59972fc49da91221af5912ba4f",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-082.png",
+      "artPath": "Picture/Art/BS76-082.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3384,7 +3384,7 @@
       "decodedRgbaSha256": "8b901aab6b2ce6a23a4ca5beddcedec48ce58638dbb4dbf3dee397ab1e6f1cf2",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-083.png",
+      "artPath": "Picture/Art/BS76-083.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3399,7 +3399,7 @@
       "decodedRgbaSha256": "2d2fc4a33ead3f68fbcc8336400f29be64c4b1d2689300131284b7b96ddc253c",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-084.png",
+      "artPath": "Picture/Art/BS76-084.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3414,7 +3414,7 @@
       "decodedRgbaSha256": "fd4fff15297a7efeb4a5b7c3fe89b21ed0827320c138649f8b70379988a13fd0",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-085.png",
+      "artPath": "Picture/Art/BS76-085.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3429,7 +3429,7 @@
       "decodedRgbaSha256": "e88bf169b7045853b1e322db19698a5c4c9780d20662fa437cd815603349b16f",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-086.png",
+      "artPath": "Picture/Art/BS76-086.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3444,7 +3444,7 @@
       "decodedRgbaSha256": "157e959a5423bd599f9b6a521545c84765c252b56b67aa3f38b9874bec4ce67c",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-087.png",
+      "artPath": "Picture/Art/BS76-087.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3459,7 +3459,7 @@
       "decodedRgbaSha256": "f250f9f5f73cf944e47f89d6a4bfbbfe318efc552bb52f3921e99d2e6bcd248b",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-088.png",
+      "artPath": "Picture/Art/BS76-088.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3474,7 +3474,7 @@
       "decodedRgbaSha256": "567cde2e082518959542b071b6eadfb3fe579fa0f16ea7f4d05275ef44a6bf12",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-089.png",
+      "artPath": "Picture/Art/BS76-089.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3489,7 +3489,7 @@
       "decodedRgbaSha256": "a258ca77ba924a55748175bd8d4a5286054a2c8c8cdc053bc825cb3fefb34748",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-AX01.png",
+      "artPath": "Picture/Art/BS76-AX01.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3504,7 +3504,7 @@
       "decodedRgbaSha256": "3e0c8fbefc1dc97a26095452b5d424177e7b85d2929448846bec3ad606b251c4",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-AX02.png",
+      "artPath": "Picture/Art/BS76-AX02.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3519,7 +3519,7 @@
       "decodedRgbaSha256": "a4507dc164c40484fcef7753b32c6a43ad063ee39f7c077e4b62b6bcdda77988",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-AX03.png",
+      "artPath": "Picture/Art/BS76-AX03.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3534,7 +3534,7 @@
       "decodedRgbaSha256": "a9c23a194c95836377b3a82fedafe6e7cf85f841a05ab2c4cae06f5d6c557101",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-CP01.png",
+      "artPath": "Picture/Art/BS76-CP01.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3549,7 +3549,7 @@
       "decodedRgbaSha256": "8e7419cd32b97e07b674dbe2b317ca0789506fcc3f845478518f04cec2841845",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-CP02.png",
+      "artPath": "Picture/Art/BS76-CP02.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3564,7 +3564,7 @@
       "decodedRgbaSha256": "a9151eb4d51a662c1769ccd50a1c168daedbdcfad3eaaf282ecfe344662bd179",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-CP03.png",
+      "artPath": "Picture/Art/BS76-CP03.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3579,7 +3579,7 @@
       "decodedRgbaSha256": "06ab2031a067499a0c5afc7a5d71ecd5a79c5dc74800d2185238f4a52dbf2a95",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-CP04.png",
+      "artPath": "Picture/Art/BS76-CP04.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3594,7 +3594,7 @@
       "decodedRgbaSha256": "7f12f002e69045886ff03f9c760a9fd6389ee4c0f85db2ea23f324a9b3949f90",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-CP05.png",
+      "artPath": "Picture/Art/BS76-CP05.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3609,7 +3609,7 @@
       "decodedRgbaSha256": "f5b632c8f50becfc1fa158fcb6776fe6a13657d11e5d4c2c067a19f3ca2fb9d2",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-CP06.png",
+      "artPath": "Picture/Art/BS76-CP06.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3624,7 +3624,7 @@
       "decodedRgbaSha256": "6d008de0c01af8ae1769ea1854da2a6bc85e31879def751f54139a6c852ea015",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-CX01.png",
+      "artPath": "Picture/Art/BS76-CX01.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3639,7 +3639,7 @@
       "decodedRgbaSha256": "17113c920cf45043ff877264f407a4506d9aa295da15df0c31a1de5fbd415f2d",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-CX02.png",
+      "artPath": "Picture/Art/BS76-CX02.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3654,7 +3654,7 @@
       "decodedRgbaSha256": "a6114dee7fb36060c30a453c6c9ecb97a1648a28ba4e20342079358fec7a819f",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-CX03.png",
+      "artPath": "Picture/Art/BS76-CX03.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3669,7 +3669,7 @@
       "decodedRgbaSha256": "fbd041eda00e940d773392097bdb4fef6adcfbd6953491709f8c7c50e4cf1cfb",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-T001.png",
+      "artPath": "Picture/Art/BS76-T001.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3684,7 +3684,7 @@
       "decodedRgbaSha256": "679195c18d143bac04d752d4f02e30c62c9e94e5b148d922e339321c7ba6743d",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-X01.png",
+      "artPath": "Picture/Art/BS76-X01.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3699,7 +3699,7 @@
       "decodedRgbaSha256": "855640dc913438a9b7b856400919be0d5f3dd8440f774c376a69173251cbaaff",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-X02.png",
+      "artPath": "Picture/Art/BS76-X02.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3714,7 +3714,7 @@
       "decodedRgbaSha256": "cc73ca8c7027a341763b35add409495611d5d5f15f173b802891581210d6515c",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-X03.png",
+      "artPath": "Picture/Art/BS76-X03.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3729,7 +3729,7 @@
       "decodedRgbaSha256": "b2aa7da30c053554917f9a7a92f81edf4c8756ee147d099f7cc494d578a838cc",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-X04.png",
+      "artPath": "Picture/Art/BS76-X04.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3744,7 +3744,7 @@
       "decodedRgbaSha256": "a861e22c461b98854f4ec78afab939d6bc5c559fdbf008dd1d7427b955a48427",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-X05.png",
+      "artPath": "Picture/Art/BS76-X05.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3759,7 +3759,7 @@
       "decodedRgbaSha256": "434f3a247b011cf50be075120197c876a0f8437997d178e923787ed270616356",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-X06.png",
+      "artPath": "Picture/Art/BS76-X06.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3774,7 +3774,7 @@
       "decodedRgbaSha256": "3ac5e962d6f261d913075a10e66ec33b8e613091b2c3e9672bb427eba4daf5df",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-X07.png",
+      "artPath": "Picture/Art/BS76-X07.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3789,7 +3789,7 @@
       "decodedRgbaSha256": "589dbd2ad2d3d5bb911e8047dc0fd3fcc7ac8c1e2bc0dc41be2de35a55a8acdc",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-X08.png",
+      "artPath": "Picture/Art/BS76-X08.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3804,7 +3804,7 @@
       "decodedRgbaSha256": "e3362184a9ebbcb0ddacc25f6d321d59ff3ee379c75f87b781f0865dac017465",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-X09.png",
+      "artPath": "Picture/Art/BS76-X09.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3819,7 +3819,7 @@
       "decodedRgbaSha256": "72a7d19e622287110cfcdbeb9c7703e4c035213023cc38b6aba7cd526845f143",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-X10.png",
+      "artPath": "Picture/Art/BS76-X10.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3834,7 +3834,7 @@
       "decodedRgbaSha256": "95b3640c0bbbd11ff1817e01556eaaa350f82131ce44f79d5475c8202988bad3",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-X11.png",
+      "artPath": "Picture/Art/BS76-X11.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3849,7 +3849,7 @@
       "decodedRgbaSha256": "d37532fad9f15ffcce1983f69d3be55b0ed8317eb6227c67e23bd55702b1a832",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-X12.png",
+      "artPath": "Picture/Art/BS76-X12.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3864,7 +3864,7 @@
       "decodedRgbaSha256": "f18aad3a4f9de1fd17bb70d7f378591a2ff34575af99346115ef906a5ba859d6",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-X13.png",
+      "artPath": "Picture/Art/BS76-X13.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3879,7 +3879,7 @@
       "decodedRgbaSha256": "f3ff61c4bbdc83cf416092c949e97b4d0eaf265bd08ac20c6b1b2f52254b20a9",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-X14.png",
+      "artPath": "Picture/Art/BS76-X14.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
     },
     {
@@ -3894,8 +3894,95 @@
       "decodedRgbaSha256": "fa8c208f33b73bc66b8e69553df5980e94bc1452ae68ae6230666a2c80c32bc5",
       "width": 675,
       "height": 983,
-      "artPath": "Picture/BattleSpirits/BS76-X15.png",
+      "artPath": "Picture/Art/BS76-X15.png",
       "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes"
+    },
+    {
+      "id": "BS01-X01",
+      "officialDetailUrl": "https://www.battlespirits.com/cardlist/detail_iframe.php?card_no=BS01-X01&card_no2=BS01-X01",
+      "detailHtmlSha256": "adb24e8bb41c82156c0e7ae5764ea03472ad67e5b5d38bd96f2a458938dfb408",
+      "sourceCardNumber": "BS01-X01",
+      "retrievedDate": "2026-10-31",
+      "symbolVerification": "Human inspection of official printed artwork: lower-right symbol, Magic has no symbol; HTML does not contain this field.",
+      "officialImageUrl": "https://www.battlespirits.com/images/cardlist/BS01-X01.webp",
+      "originalWebpSha256": "f1dbab9c341e01e0122294c862e3f352e0fa2526cdd314692a1e460e04c66542",
+      "convertedPngSha256": "6c8b0290d60cae01229c7e2dec78307ec177d8533078fbd16c284487f1275cf5",
+      "decodedRgbaSha256": "8c84ff88f5064625bd27a8019af6709e7f1aa5a789b222f785e750a759d25db3",
+      "width": 675,
+      "height": 983,
+      "artPath": "Picture/Art/BS01-X01.png",
+      "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes",
+      "originalSourceBytes": 110418
+    },
+    {
+      "id": "BS01-097",
+      "officialDetailUrl": "https://www.battlespirits.com/cardlist/detail_iframe.php?card_no=BS01-097&card_no2=BS01-097",
+      "detailHtmlSha256": "3eb8162accc704fdd685747f992999bb41b8a0b2d49f91cead91a6e942d0cf25",
+      "sourceCardNumber": "BS01-097",
+      "retrievedDate": "2026-10-31",
+      "symbolVerification": "Human inspection of official printed artwork: lower-right symbol, Magic has no symbol; HTML does not contain this field.",
+      "officialImageUrl": "https://www.battlespirits.com/images/cardlist/BS01-097.webp",
+      "originalWebpSha256": "16fb50a9cbbcea27f10cfce89f7c9f23dd08ca8106b3c26175495424b35685c2",
+      "convertedPngSha256": "3fb72712aaddfa5f8aca3d20da61a8c6ccef06ea0810420f16790f743e24d9d6",
+      "decodedRgbaSha256": "021740cb0b4bc21c9e11374abe969c321e4b28a571ef3a31373c24f9e4860128",
+      "width": 675,
+      "height": 983,
+      "artPath": "Picture/Art/BS01-097.png",
+      "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes",
+      "originalSourceBytes": 94054
+    },
+    {
+      "id": "BS01-113",
+      "officialDetailUrl": "https://www.battlespirits.com/cardlist/detail_iframe.php?card_no=BS01-113&card_no2=BS01-113",
+      "detailHtmlSha256": "de518a241ff4bd74f02af861416ca1ca542637aa9f5cb848d57bb97ee384103a",
+      "sourceCardNumber": "BS01-113",
+      "retrievedDate": "2026-10-31",
+      "symbolVerification": "Human inspection of official printed artwork: lower-right symbol, Magic has no symbol; HTML does not contain this field.",
+      "officialImageUrl": "https://www.battlespirits.com/images/cardlist/BS01-113.webp",
+      "originalWebpSha256": "31b274443f5753cd4df2554d256209810a8e71836a20b09850599673e28fdb8b",
+      "convertedPngSha256": "761390ed75d46999f5891ec41ea38fb532b779305991632beb0e08491adba931",
+      "decodedRgbaSha256": "b86e392ff816d84f8a021b6904c4a931bdaf9eb657746f70926dbcfc5f2043df",
+      "width": 675,
+      "height": 983,
+      "artPath": "Picture/Art/BS01-113.png",
+      "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes",
+      "originalSourceBytes": 85600
+    },
+    {
+      "id": "BS01-117",
+      "officialDetailUrl": "https://www.battlespirits.com/cardlist/detail_iframe.php?card_no=BS01-117&card_no2=BS01-117",
+      "detailHtmlSha256": "3362c9a8a69a72042c3bd81eb138df1a53a218c0e1c536f3fd315de088b2740c",
+      "sourceCardNumber": "BS01-117",
+      "retrievedDate": "2026-10-31",
+      "symbolVerification": "Human inspection of official printed artwork: lower-right symbol, Magic has no symbol; HTML does not contain this field.",
+      "officialImageUrl": "https://www.battlespirits.com/images/cardlist/BS01-117.webp",
+      "originalWebpSha256": "d6baf541a12686deff6033a543b2b39e224d6263d80ffa8ad95b28c8806d2627",
+      "convertedPngSha256": "f42c1fd6b91cd1ebedeae9951d934c23ecae35494825ab7dc4163375f11043b0",
+      "decodedRgbaSha256": "96543b10f534b263340d9430f8b53d60482cfc6e380421d464f17be66e8721cf",
+      "width": 675,
+      "height": 983,
+      "artPath": "Picture/Art/BS01-117.png",
+      "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes",
+      "originalSourceBytes": 76872
+    },
+    {
+      "id": "BS01-115",
+      "officialDetailUrl": "https://www.battlespirits.com/cardlist/detail_iframe.php?card_no=BS01-115&card_no2=BS01-115",
+      "detailHtmlSha256": "596669567a4c4292699520b7d65b87546da85726f7bb04ca34597bd8aa0f7be4",
+      "sourceCardNumber": "BS01-115",
+      "retrievedDate": "2026-10-31",
+      "symbolVerification": "Human inspection of official printed artwork: lower-right symbol, Magic has no symbol; HTML does not contain this field.",
+      "officialImageUrl": "https://www.battlespirits.com/images/cardlist/BS01-115.webp",
+      "originalWebpSha256": "6e0c5acf05a8522f30276209c4f23bad0a4150718a2b2d3b41d28fba2f41c7c7",
+      "convertedPngSha256": "8aafaead1014ec52857dfa626f4f53e95bb3c5ab2b730d4c759802da5b867634",
+      "decodedRgbaSha256": "c8e53b90d0224b40c6169080b0b187214b9659a2921962fc4a82371b1d12e20f",
+      "width": 675,
+      "height": 983,
+      "artPath": "Picture/Art/BS01-115.png",
+      "conversion": "ImageMagick lossless PNG encoding; exact decoded RGBA equality checked; no resizing, cropping or artwork changes",
+      "originalSourceBytes": 75650
     }
-  ]
+  ],
+  "baseSnapshotDate": "2026-10-30",
+  "supportAdditionsDate": "2026-10-31"
 }

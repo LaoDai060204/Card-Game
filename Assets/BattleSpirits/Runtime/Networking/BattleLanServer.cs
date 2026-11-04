@@ -302,7 +302,8 @@ namespace LaoDai.BattleSpirits.Networking
                     var command = new BattleCommand
                     {
                         action = message.action, index = message.index, source = message.source,
-                        target = message.target, soul = message.soul, redraw = message.redraw
+                        target = message.target, soul = message.soul, redraw = message.redraw,
+                        transfers = message.transfers
                     };
                     // Actor identity comes exclusively from this TCP connection.
                     if (!BattleCommandDispatcher.TryExecute(run.Match, session.Index, command, out var error))

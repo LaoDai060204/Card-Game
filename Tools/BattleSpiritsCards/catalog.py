@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Import, check and validate a pinned official Japanese Battle Spirits catalog.
 
-Only the bundled, verified vanilla starter IDs can remain implemented. Importing
-an official card's text never installs an implementation of its ability.
+Only bundled, verified rule baselines can remain implemented. Importing an
+official card's text never installs an implementation of its ability.
 """
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
@@ -29,6 +29,40 @@ COLORS = {"赤": "Red", "紫": "Purple", "緑": "Green", "白": "White", "黄": 
 COLOR_NUMBERS = {name: number for number, name in enumerate(("Red", "Purple", "Green", "White", "Yellow", "Blue"))}
 TYPES = {"スピリット": "Spirit", "契約スピリット": "Contract Spirit", "アルティメット": "Ultimate", "契約アルティメット": "Contract Ultimate", "ブレイヴ": "Brave", "ネクサス": "Nexus", "契約ネクサス": "Contract Nexus", "マジック": "Magic"}
 ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{1,70}$")
+EFFECT_RULES_PROFILE = "bs01-effects-v1"
+EFFECT_CARD_IDS = {"BS01-X01", "BS01-097", "BS01-113", "BS01-115", "BS01-117"}
+VERIFIED_FIELDS = ("nameJa", "color", "cost", "reductionSymbols", "levels", "effectTextJa",
+                   "symbols", "type", "colors", "reductions", "symbolDetails")
+
+
+def implementation_baseline(root):
+    """Trusted, explicitly reviewed effect definitions; not inferred from text."""
+    path = Path(root) / "Data/BattleSpirits/implemented-cards.json"
+    if not path.is_file():
+        return {}
+    document = json.loads(path.read_text(encoding="utf-8-sig"))
+    if document.get("rulesProfile") != EFFECT_RULES_PROFILE:
+        raise ValueError("Unsupported effect implementation profile")
+    cards = document.get("cards", [])
+    by_id = {card["id"]: card for card in cards}
+    if len(by_id) != len(cards) or not set(by_id).issubset(EFFECT_CARD_IDS):
+        raise ValueError("Unknown or duplicate effect baseline card")
+    for card in cards:
+        if card.get("rulesProfile") != EFFECT_RULES_PROFILE or type(card.get("implemented")) is not bool:
+            raise ValueError("Invalid effect baseline status: " + card["id"])
+        if any(field not in card for field in VERIFIED_FIELDS):
+            raise ValueError("Incomplete effect baseline: " + card["id"])
+    return by_id
+
+
+def verify_implementation(card, baseline):
+    if card.get("rulesProfile") != EFFECT_RULES_PROFILE:
+        raise ValueError("Effect rules profile changed: " + card["id"])
+    if card["implemented"] != baseline["implemented"] or not card["symbolsVerified"]:
+        raise ValueError("Effect implementation status changed: " + card["id"])
+    for key in VERIFIED_FIELDS:
+        if card.get(key) != baseline[key]:
+            raise ValueError("Verified effect data changed: " + card["id"] + " " + key)
 
 
 class Node:
@@ -209,6 +243,7 @@ def parse_detail(source, card_id):
                 label = image.attrs.get("alt", "")
                 if label in COLORS:
                     reductions[COLORS[label]] += 1
+        category = text("カテゴリー")
         levels, raw_levels = [], []
         for level in section.all("div", "bpCoreItem"):
             bp, cores = level.first("span", "bpCoreVal"), level.first("span", "bpCoreLevel")
@@ -217,10 +252,11 @@ def parse_detail(source, card_id):
             raw_levels.append({"bp": bp.text(), "cores": cores.text()})
             if bp.text().isdigit() and cores.text().isdigit():
                 levels.append({"cores": int(cores.text()), "bp": int(bp.text())})
+            elif category == "ネクサス" and bp.text() == "-" and cores.text().isdigit():
+                levels.append({"cores": int(cores.text()), "bp": 0})
         rarity = section.first("span", "cardRarity")
         image = section.first("div", "cardImg")
         image = image.first("img") if image is not None else None
-        category = text("カテゴリー")
         faces.append({"nameJa": name.text(), "type": TYPES.get(category, category), "typeJa": category,
                       "colors": colors, "color": next((COLOR_NUMBERS[c] for c in colors if c in COLOR_NUMBERS), -1),
                       "cost": int(cost_text) if cost_text.isdigit() else -1, "costText": cost_text,
@@ -378,6 +414,7 @@ def import_catalog(args):
     if any(n.attrs.get("data-tags") == "pair" and n.all("li", "cardCol") for n in limits_document.all("div", "js-target")):
         raise ValueError("Official forbidden-pair list changed; explicit pair handling must be reviewed")
     seeds = json.loads((root / "Data/BattleSpirits/starter-cards.json").read_text(encoding="utf-8-sig"))["cards"]
+    effects = implementation_baseline(root)
     requests, set_sources = {}, []
     for product in sets:
         url = HOST + "/cardlist/index.php?search=true&prodid=" + product["productId"]
@@ -390,6 +427,10 @@ def import_catalog(args):
         requests[seed["id"]] = ({"id": seed["id"], "variant": seed["id"], "url": seed["sourceUrl"]},
                                 {"setId": seed["id"].split("-")[0], "setName": "Verified vanilla starter cards",
                                  "releaseDate": "", "format": "Eternal", "released": True}, seed)
+    for baseline in effects.values():
+        requests[baseline["id"]] = ({"id": baseline["id"], "variant": baseline["id"], "url": baseline["sourceUrl"]},
+                                   {"setId": "BS01", "setName": "Verified BS01 effect cards",
+                                    "releaseDate": "", "format": "Eternal", "released": True}, baseline)
 
     def detail(item):
         entry, product, seed = item
@@ -401,12 +442,20 @@ def import_catalog(args):
                      "legalityStatus": "format-confirmed" if product["format"] == "Eternal" else "not-verified",
                      "maxCopies": 3, "implemented": False, "symbols": 0, "symbolDetails": [], "symbolsVerified": False,
                      "sourceUrl": entry["url"], "sourceCardNumber": entry["variant"],
-                     "artPath": "Picture/BattleSpirits/" + entry["id"] + ".png"})
+                     "artPath": "Picture/Art/" + entry["id"] + ".png"})
         matches = [r["maxCopies"] for r in limitations if card["id"] == r["id"] or card["nameJa"] == r["nameJa"]]
         card["maxCopies"] = min(matches) if matches else 3
         card["restrictionSourceUrl"] = limits_url
         card["restrictionVerified"] = product["format"] == "Eternal"
         if seed is not None:
+            if seed["id"] in effects:
+                card.update({"implemented": seed["implemented"], "symbols": seed["symbols"],
+                             "symbolsVerified": True, "symbolDetails": seed["symbolDetails"],
+                             "rulesProfile": EFFECT_RULES_PROFILE})
+                verify_implementation(card, seed)
+                provenance = {"id": card["id"], "officialDetailUrl": entry["url"], "detailHtmlSha256": digest(raw),
+                              "sourceCardNumber": entry["variant"], "retrievedDate": args.as_of}
+                return card, provenance
             for key in ("nameJa", "color", "cost", "reductionSymbols", "levels", "effectTextJa"):
                 if card[key] != seed[key]:
                     raise ValueError(f"Starter {card['id']} changed in official {key}; review its implementation before importing")
@@ -430,6 +479,9 @@ def import_catalog(args):
         seed_path = staged / "Data/BattleSpirits/starter-cards.json"
         seed_path.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(root / "Data/BattleSpirits/starter-cards.json", seed_path)
+        effect_path = root / "Data/BattleSpirits/implemented-cards.json"
+        if effect_path.is_file():
+            shutil.copyfile(effect_path, staged / "Data/BattleSpirits/implemented-cards.json")
         with ThreadPoolExecutor(max_workers=args.workers) as pool:
             original_sizes = list(pool.map(lambda pair: artwork(fetcher, pair[0], pair[1], staged, magick), parsed))
         if sum(original_sizes) > 150_000_000:
@@ -440,9 +492,9 @@ def import_catalog(args):
         manifest = {"asOfDate": args.as_of, "officialProductsUrl": product_url, "productsHtmlSha256": digest(products_raw),
                     "officialCardListUrl": list_url, "cardListHtmlSha256": digest(list_raw), "sets": set_sources,
                     "announcedFutureBoosters": announced, "artworkSourceBytes": sum(original_sizes),
-                    "symbolNote": "Official detail HTML does not expose printed symbol counts. Only the verified starter symbols are implemented; other symbol values are unknown, not inferred.",
+                    "symbolNote": "Official detail HTML does not expose printed symbol counts. Starter and explicit effect baselines use verified printed symbols; other symbol values are unknown, not inferred.",
                     "formatNote": "Standard-labeled cards are catalog entries only. Their Eternal legality has not been verified; eternalLegal=false does not claim they are prohibited.",
-                    "implementationNote": "Importing card data or artwork does not implement an ability. Only verified vanilla starter IDs are enabled.",
+                    "implementationNote": "Importing card data or artwork does not implement an ability. Enabled IDs must match a verified vanilla or explicit effect baseline and the runtime ability registry.",
                     "attribution": "Battle Spirits card artwork © BANDAI / BNP and credited illustrators; original printed notices retained.",
                     "license": "Official third-party card art; no open-source license or redistribution permission is inferred.",
                     "cards": sorted((entry for _, entry in parsed), key=lambda entry: entry["id"])}
@@ -507,6 +559,7 @@ def validate_catalog(root, pixels=False, cache=None, workers=3, report=True):
     limits = json.loads((root / "Data/BattleSpirits/banlist.json").read_text(encoding="utf-8-sig"))
     seed_list = json.loads((root / "Data/BattleSpirits/starter-cards.json").read_text(encoding="utf-8-sig"))["cards"]
     seeds = {card["id"]: card for card in seed_list}
+    effects = implementation_baseline(root)
     provenance = {entry["id"]: entry for entry in sources["cards"]}
     cards = catalog["cards"]
     as_of = date.fromisoformat(catalog["asOfDate"]).isoformat()
@@ -546,13 +599,13 @@ def validate_catalog(root, pixels=False, cache=None, workers=3, report=True):
         if (args.get("card_no") != [card["id"]] or args.get("card_no2") != [card["sourceCardNumber"]]
                 or entry["sourceCardNumber"] != card["sourceCardNumber"]
                 or entry["officialDetailUrl"] != card["sourceUrl"] or entry["officialImageUrl"] != card["imageUrl"]
-                or entry["retrievedDate"] != as_of):
+                or date.fromisoformat(entry["retrievedDate"]).isoformat() > as_of):
             raise ValueError("Card identity/provenance mismatch: " + card["id"])
         require_official_url(card["imageUrl"], card["id"] + " image")
         for name in ("detailHtmlSha256", "originalWebpSha256", "convertedPngSha256", "decodedRgbaSha256"):
             require_hash(entry[name], card["id"] + " " + name)
         path = Path(card["artPath"])
-        if path.parts != ("Picture", "BattleSpirits", card["id"] + ".png") or entry["artPath"] != card["artPath"]:
+        if path.parts != ("Picture", "Art", card["id"] + ".png") or entry["artPath"] != card["artPath"]:
             raise ValueError("Invalid artwork path")
         data = (root / path).read_bytes()
         if digest(data) != entry["convertedPngSha256"]:
@@ -570,7 +623,11 @@ def validate_catalog(root, pixels=False, cache=None, workers=3, report=True):
             raise ValueError("Card restriction differs from the official list: " + card["id"])
         if card["restrictionSourceUrl"] != limits["sourceUrl"] or card["restrictionVerified"] != (card["format"] == "Eternal"):
             raise ValueError("Card restriction provenance is inconsistent")
-        if card["implemented"]:
+        if card["id"] in effects:
+            verify_implementation(card, effects[card["id"]])
+            if card["implemented"]:
+                enabled.add(card["id"])
+        elif card["implemented"]:
             enabled.add(card["id"])
             if card["id"] not in seeds or card["type"] != "Spirit" or card["effectTextJa"] != "-" or not card["symbolsVerified"]:
                 raise ValueError("An unsupported ability was marked implemented")
@@ -583,9 +640,10 @@ def validate_catalog(root, pixels=False, cache=None, workers=3, report=True):
             raise ValueError("Unverified Standard card was promoted into the Eternal implementation")
         if card["releaseDate"] and date.fromisoformat(card["releaseDate"]).isoformat() > as_of:
             raise ValueError("Announced card incorrectly imported as released")
-    if enabled != set(seeds):
+    if enabled != set(seeds) | {cid for cid, baseline in effects.items() if baseline["implemented"]}:
         raise ValueError("Verified starter implementation set changed")
-    result = {"status": "PASS", "asOfDate": catalog["asOfDate"], "cards": len(cards), "implementedVanillaSpirits": len(enabled),
+    result = {"status": "PASS", "asOfDate": catalog["asOfDate"], "cards": len(cards), "implementedVanillaSpirits": len(seeds),
+              "implementedEffectCards": len(enabled - set(seeds)),
               "browseOnlyCards": len(cards) - len(enabled), "artImages": len(provenance),
               "sets": [{"id": p["setId"], "released": p["releaseDate"], "format": p["format"], "cards": p["uniqueCards"]} for p in catalog["latestReleasedSets"]],
               "scope": "Official metadata, artwork checksums and supported-card flags; not Unity Play or full card-ability validation"}

@@ -107,7 +107,7 @@ namespace LaoDai.BattleSpirits.Core
             var all = catalog.Where(c => c != null && !string.IsNullOrWhiteSpace(c.nameJa)).ToArray();
             var limits = all.GroupBy(c => c.nameJa, StringComparer.Ordinal)
                 .ToDictionary(g => g.Key, g => g.Min(c => c.EffectiveCopyLimit), StringComparer.Ordinal);
-            var eligible = all.Where(c => c.IsPlayable).OrderBy(c => c.cost)
+            var eligible = all.Where(c => c.IsPlayable && c.IsSpirit).OrderBy(c => c.cost)
                 .ThenBy(c => c.id, StringComparer.Ordinal).GroupBy(c => c.nameJa, StringComparer.Ordinal)
                 .Select(g => g.First()).ToList();
             if (reverse) eligible.Reverse();

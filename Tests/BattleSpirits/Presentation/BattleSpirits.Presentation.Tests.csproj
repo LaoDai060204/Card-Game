@@ -3,10 +3,14 @@
   <ItemGroup>
     <Compile Include="../../../Assets/BattleSpirits/Runtime/Core/*.cs" />
     <Compile Include="../../../Assets/BattleSpirits/Runtime/Networking/*.cs" />
-    <Compile Include="../../../Assets/BattleSpirits/Runtime/Presentation/*.cs" />
+    <Compile Include="../../../Assets/BattleSpirits/Runtime/Presentation/BattleSpiritsApp.cs" />
+    <Compile Include="../../../Assets/BattleSpirits/Runtime/NativeUI/*.cs" />
+    <Compile Include="../../../Assets/BattleSpirits/Runtime/Integration/*.cs" />
+    <Compile Include="../../../Assets/BattleSpirits/Runtime/Visuals/*.cs" />
+    <Compile Include="../../../Assets/Scripts/Windbot/BattleSpirits/*.cs" />
     <Compile Include="../../../Assets/BattleSpirits/Runtime/BattleSpiritsMode.cs" />
     <Compile Include="../../../Assets/Scripts/MDPro3/UI/ServantUI/MainMenuUI.cs" />
-    <Compile Include="UnityStubs.cs" /><Compile Include="Program.cs" />
+    <Compile Include="UnityStubs.cs" /><Compile Include="NativeStubs.cs" /><Compile Include="Program.cs" />
     <Reference Include="Newtonsoft.Json"><HintPath>$(MSBuildToolsPath)/Newtonsoft.Json.dll</HintPath></Reference>
   </ItemGroup>
 </Project>

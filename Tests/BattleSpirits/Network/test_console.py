@@ -101,7 +101,7 @@ def main():
         for index in range(2):
             peer = Peer(port)
             peers.append(peer)
-            peer.send({"type": "hello", "version": 1, "catalogHash": fingerprint, "name": "Console " + str(index)})
+            peer.send({"type": "hello", "version": 2, "catalogHash": fingerprint, "name": "Console " + str(index)})
             check(peer.until(lambda value: value["type"] == "welcome")["playerIndex"] == index,
                   "Console assigned the wrong seat")
             peer.send({"type": "deck", "deck": deck})

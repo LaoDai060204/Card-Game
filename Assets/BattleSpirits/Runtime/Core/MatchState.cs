@@ -23,6 +23,8 @@ namespace LaoDai.BattleSpirits.Core
         public CardDefinition Card;
         public CorePool Cores = new CorePool();
         public bool Exhausted;
+        public int TurnBpBonus;
+        public int BattleBpBonus;
 
         public int Level
         {
@@ -35,7 +37,8 @@ namespace LaoDai.BattleSpirits.Core
             }
         }
 
-        public int Bp => Level == 0 ? 0 : Card.levels[Level - 1].bp;
+        public int Bp => Level == 0 || !Card.IsSpirit ? 0
+            : (int)Math.Min(int.MaxValue, (long)Card.levels[Level - 1].bp + TurnBpBonus + BattleBpBonus);
     }
 
     [Serializable]

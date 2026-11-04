@@ -49,6 +49,7 @@ namespace LaoDai.BattleSpirits.Core
         public string sourceUrl = string.Empty;
         public string imageUrl = string.Empty;
         public bool implemented;
+        public string rulesProfile = string.Empty;
 
         // Defaults retain compatibility with the previously verified vanilla
         // Spirit catalog. New imports explicitly state their observed metadata.
@@ -70,6 +71,10 @@ namespace LaoDai.BattleSpirits.Core
         public bool symbolsVerified = true;
         public string artPath = string.Empty;
 
+        public bool IsSpirit => string.Equals(type, "Spirit", StringComparison.OrdinalIgnoreCase);
+        public bool IsNexus => string.Equals(type, "Nexus", StringComparison.OrdinalIgnoreCase);
+        public bool IsMagic => string.Equals(type, "Magic", StringComparison.OrdinalIgnoreCase);
+
         public string DisplayName => string.IsNullOrWhiteSpace(nameVi) ? nameJa : nameVi;
 
         // Larger copy exceptions require proof in the trusted server catalog.
@@ -86,12 +91,10 @@ namespace LaoDai.BattleSpirits.Core
             {
                 string effect = (effectTextJa ?? string.Empty).Trim();
                 if (!implemented || !IsEternalEligible || !symbolsVerified
-                    || !string.Equals(type, "Spirit", StringComparison.OrdinalIgnoreCase)
-                    || !(effect.Length == 0 || effect == "-" || effect == "－" || effect == "―")
                     || string.IsNullOrWhiteSpace(id) || string.IsNullOrWhiteSpace(nameJa)
                     || cost < 0 || reductionSymbols < 0 || reductionSymbols > cost
-                    || symbols < 1 || color < CardColor.Red || color > CardColor.Blue
-                    || levels == null || levels.Count == 0
+                    || symbols < 0 || color < CardColor.Red || color > CardColor.Blue
+                    || levels == null
                     || colors == null || colors.Length > 1
                     || reductions == null || reductions.Length > 1
                     || symbolDetails == null || symbolDetails.Length > 1)
@@ -106,6 +109,9 @@ namespace LaoDai.BattleSpirits.Core
                     || !TryGetColor(symbolDetails[0].color, out var symbolColor) || symbolColor != color
                     || symbolDetails[0].count != symbols))
                     return false;
+                if (AbilityRegistry.Contains(id)) return AbilityRegistry.IsRegistered(this);
+                if (!IsSpirit || !string.IsNullOrEmpty(rulesProfile) || symbols < 1 || levels.Count == 0
+                    || !(effect.Length == 0 || effect == "-" || effect == "－" || effect == "―")) return false;
                 int previous = 0;
                 foreach (var level in levels)
                 {
