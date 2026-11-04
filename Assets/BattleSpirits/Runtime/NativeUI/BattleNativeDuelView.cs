@@ -121,6 +121,9 @@ namespace LaoDai.BattleSpirits.NativeUI
                 var options = new List<KeyValuePair<string, Action>>();
                 if (main && card.id == AbilityRegistry.DoubleDraw)
                     options.Add(Choice("Main: rút 2 lá", () => Dispatch("playMagic", index)));
+                if (card.id == AbilityRegistry.AwakenMagic)
+                    options.Add(Choice("Không chuyển Core · rút 1 lá", () => Dispatch("playMagic", index,
+                        transfers: Array.Empty<CoreTransfer>())));
                 foreach (var player in view.players)
                     foreach (var spirit in player.field ?? Array.Empty<SpiritView>())
                     {

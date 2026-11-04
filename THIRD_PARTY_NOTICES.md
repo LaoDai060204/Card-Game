@@ -48,7 +48,30 @@ decoded RGBA pixels; original card numbers, names, effect text and printed
 credits are retained. `Data/BattleSpirits/banlist.json` records the source and
 effective date of observed restrictions.
 
-This branch reuses the existing MDPro3 menu and presentation assets, including
-Master Duel field and Mate assets. Their original notices in this document continue to
-apply. The new Battle Spirits match protocol does not make these assets original
-Battle Spirits creature models.
+This branch reuses the existing MDPro3 screen forms, fonts, UI artwork and
+Master Duel Mate/cosmetic bundles. Their original notices in this document
+continue to apply. Version 0.2.0 replaces the active duel field with procedural
+Battle Spirits zones and uses new card/rules controllers on the original UI
+prefabs. Legacy numeric Yu-Gi-Oh card-face and closeup files removed from this
+branch remain in the main branch and the recorded backups.
+
+## Original procedural visuals and audio in 0.2.0
+
+`Assets/BattleSpirits/Runtime/Visuals` contains newly created field and creature
+geometry plus animation curves. `Tools/BattleSpiritsAssets/render_originals.py`
+and `Source/OriginalSpirits.blend` produce the new menu render and the two boss
+closeups assigned to BS01-X01 and BS01-097. These are original fan-made low-poly
+interpretations, not official BANDAI creature models, extracted commercial
+models, screenshots, or edits of the official card-face illustrations.
+
+`Tools/BattleSpiritsAssets/audio.py` synthesizes the new music and sound effects
+without third-party recordings. The procedural visual/render and sound-bank
+manifests identify the original contributions as CC0-1.0 and record file hashes:
+
+- `Tools/BattleSpiritsAssets/visual-manifest.json`
+- `Sound/BattleSpirits/manifest.json`
+
+That identification applies only to the original contributions described by
+those manifests. It does not change rights in Battle Spirits names, character
+designs or official card artwork, Master Duel assets, the MDPro3 template,
+WindBot, or any other third-party component listed above.

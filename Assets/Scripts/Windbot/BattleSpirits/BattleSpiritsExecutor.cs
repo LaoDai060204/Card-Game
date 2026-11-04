@@ -127,6 +127,8 @@ namespace WindBot.BattleSpirits
                             .OrderByDescending(spirit => spirit.bp).FirstOrDefault();
                         if (target != null)
                             return new BattleCommand { action = "playMagic", index = index, target = target.instanceId };
+                        if (me.deckCount > 1 && view.ownHand.Length <= 3)
+                            return new BattleCommand { action = "playMagic", index = index, transfers = Array.Empty<CoreTransfer>() };
                     }
                 }
             }

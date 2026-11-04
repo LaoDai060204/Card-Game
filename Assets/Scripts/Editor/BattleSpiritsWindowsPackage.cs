@@ -31,7 +31,7 @@ public sealed class BattleSpiritsWindowsPackage : IPostprocessBuildWithReport
         CopyDirectory(Path.Combine(source, "Data/locales"), Path.Combine(output, "Data/locales"));
         CopyDirectory(Path.Combine(source, "Data/BattleSpirits"), Path.Combine(output, "Data/BattleSpirits"),
             path => !path.Split(Path.DirectorySeparatorChar).Any(part => part == "Decks" || part == "Replays"));
-        foreach (string name in new[] { "cards_Lite.json", "cards_Alt.json" })
+        foreach (string name in new[] { "cards_Lite.json", "cards_Alt.json", "DuelLinks_NPC_NAME.json", "DuelLinks_Profile.json" })
             CopyOptional(Path.Combine(source, "Data", name), Path.Combine(output, "Data", name));
         var catalog = JsonConvert.DeserializeObject<CardsDatabase>(File.ReadAllText(Path.Combine(source, BattleSpiritsMode.CatalogPath)));
         if (catalog?.cards == null) throw new BuildFailedException("The Battle Spirits catalog is missing or invalid.");

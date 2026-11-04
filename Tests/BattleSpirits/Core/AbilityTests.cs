@@ -27,6 +27,10 @@ internal static class AbilityTests
         Case("Double Draw Flash changes BP and resets consecutive passes before passing priority", MagicFlash);
         Case("Turn BP effects expire for both owners at end of the current turn", BpExpiry);
         Case("Awaken Magic moves up to three selected post-payment cores and draws one", AwakenMagic);
+        Case("Official Q24490 allows choosing zero Awaken cores while Reserve is nonempty", AwakenZeroCores);
+        Case("Official Q24491 permits Awaken draw-only with empty post-payment Reserve and no Spirit", AwakenEmptyReserveDraw);
+        Case("Manual page14 partial resolution permits targetless Awaken draw-only in Main and Flash", AwakenTargetlessDraw);
+        Case("Targetless Awaken rejects positive transfers and invalid targets before payment", AwakenTargetlessAtomic);
         Case("Illegal Awaken Magic allocation fails before payment or discard", AwakenMagicAtomic);
         Case("Awakening transfers multiple sources and Soul Core atomically before vanish", Awakening);
         Case("Awakening rejects enemy, Nexus, self, duplicate and overdrawn sources atomically", AwakenAtomic);
@@ -138,6 +142,50 @@ internal static class AbilityTests
         Reject(match,0,new BattleCommand{action="playMagic",index=index,target=target.InstanceId,transfers=new[]{new CoreTransfer{normal=3}}});Gift(match,0,10);
         Reject(match,0,new BattleCommand{action="playMagic",index=index,target=target.InstanceId,transfers=new[]{new CoreTransfer{normal=4}}});Reject(match,0,new BattleCommand{action="playMagic",index=index,target=target.InstanceId,transfers=new[]{new CoreTransfer{source=target.InstanceId,normal=1}}});
         var enemy=Place(match,1,Red);Reject(match,0,new BattleCommand{action="playMagic",index=index,target=enemy.InstanceId});
+    }
+    // https://www.battlespirits.com/faq/list.php?freeword=BS01-115&format=eternal
+    // Q24490: choose any 0-3 cores. Q24491: no Reserve cores still allows the draw.
+    // The unconditional clauses resolve as far as possible, per Eternal manual
+    // page14 Q2, rather than the "doing X to do Y" cost condition in its Q5.
+    private static void AwakenZeroCores()
+    {
+        var match=Match();Gift(match,0,10);var target=Place(match,0,Red);var owner=match.State.Players[0];
+        int index=Hand(match,0,AbilityRegistry.AwakenMagic),deck=owner.Deck.Count,cores=owner.Reserve.Total,cost=match.GetSummonCost(0,Get(AbilityRegistry.AwakenMagic));
+        Dispatch(match,0,new BattleCommand{action="playMagic",index=index,target=target.InstanceId,transfers=new[]{new CoreTransfer()}});
+        Equal(1,target.Cores.Total);Equal(cores-cost,owner.Reserve.Total);Equal(deck-1,owner.Deck.Count);Assert(owner.Discard.Contains(AbilityRegistry.AwakenMagic));
+    }
+    private static void AwakenEmptyReserveDraw()
+    {
+        var match=Match();var owner=match.State.Players[0];owner.Reserve.Soul=false;owner.Trash.Soul=true;
+        Equal(3,owner.Reserve.Normal);Equal(0,owner.Field.Count);int index=Hand(match,0,AbilityRegistry.AwakenMagic),deck=owner.Deck.Count,hand=owner.Hand.Count;
+        Dispatch(match,0,new BattleCommand{action="playMagic",index=index,target=-1});
+        Equal(0,owner.Reserve.Total);Equal(3,owner.Trash.Normal);Equal(deck-1,owner.Deck.Count);Equal(hand,owner.Hand.Count);
+        Assert(owner.Discard.Contains(AbilityRegistry.AwakenMagic));Assert(!match.LastEvents.Any(e=>e.Kind=="CoreMoved"));
+    }
+    private static void AwakenTargetlessDraw()
+    {
+        foreach(var transfers in new[]{(CoreTransfer[])null,Array.Empty<CoreTransfer>(),new[]{new CoreTransfer()}})
+        {
+            var match=Match();Gift(match,0,5);var owner=match.State.Players[0];int index=Hand(match,0,AbilityRegistry.AwakenMagic),deck=owner.Deck.Count,cores=owner.Reserve.Total;
+            Dispatch(match,0,new BattleCommand{action="playMagic",index=index,target=-1,transfers=transfers});
+            Equal(cores-3,owner.Reserve.Total);Equal(deck-1,owner.Deck.Count);Equal(0,owner.Field.Count);
+        }
+        var flash=Match();var attacker=Place(flash,1,Red);AttackStep(flash,1);Dispatch(flash,1,new BattleCommand{action="attack",index=attacker.InstanceId});
+        // The defender has no Spirit, but can use Awaken's Flash to draw and
+        // then must give priority to the attacker before either side passes.
+        var defender=flash.State.Players[0];Gift(flash,0,5);int magic=Hand(flash,0,AbilityRegistry.AwakenMagic),before=defender.Deck.Count;
+        Dispatch(flash,0,new BattleCommand{action="playMagic",index=magic,target=-1,transfers=Array.Empty<CoreTransfer>()});
+        Equal(before-1,defender.Deck.Count);Equal(1,flash.DecisionPlayerIndex);Pass(flash);Assert(flash.State.Phase==MatchPhase.FlashBeforeBlock);Pass(flash);Assert(flash.State.Phase==MatchPhase.Block);
+    }
+    private static void AwakenTargetlessAtomic()
+    {
+        var match=Match();Gift(match,0,10);int index=Hand(match,0,AbilityRegistry.AwakenMagic);
+        Reject(match,0,new BattleCommand{action="playMagic",index=index,target=-1,transfers=new[]{new CoreTransfer{normal=1}}});
+        Reject(match,0,new BattleCommand{action="playMagic",index=index,target=-1,transfers=new[]{new CoreTransfer{soul=true}}});
+        Reject(match,0,new BattleCommand{action="playMagic",index=index,target=int.MaxValue,transfers=Array.Empty<CoreTransfer>()});
+        var enemy=Place(match,1,Red);Reject(match,0,new BattleCommand{action="playMagic",index=index,target=enemy.InstanceId,transfers=Array.Empty<CoreTransfer>()});
+        var shortfall=Match();var owner=shortfall.State.Players[0];owner.Trash.Normal+=owner.Reserve.Normal;owner.Reserve.Normal=0;
+        Reject(shortfall,0,new BattleCommand{action="playMagic",index=Hand(shortfall,0,AbilityRegistry.AwakenMagic),target=-1,transfers=Array.Empty<CoreTransfer>()});
     }
     private static void Awakening()
     {

@@ -223,6 +223,13 @@ internal static class Program
             Check(action.transfers.Sum(transfer => transfer.normal + (transfer.soul ? 1 : 0)) == 3,
                 "Awakening did not reach the required Lv3.");
         });
+        Case("Awaken Magic can draw without a Spirit when the Main hand needs cards", () => {
+            var view = View("Main"); view.ownHand = new[] { AbilityRegistry.AwakenMagic };
+            view.players[0].field = Array.Empty<SpiritView>(); view.players[0].reserveNormal = 8;
+            var action = Bot().ChooseAction(view);
+            Check(action.action == "playMagic" && action.target == -1 && action.transfers?.Length == 0,
+                "Awaken draw-only resolution was omitted or asked for a nonexistent Spirit.");
+        });
         Case("Awaken Magic changes a Flash battle through an authoritative legal command", () => {
             var match = FlashFixture(AbilityRegistry.Siegfried, 1, "BS01-008", 3, AbilityRegistry.AwakenMagic, 0, false);
             var command = Bot().ChooseAction(ViewFactory.Create(match, 0));

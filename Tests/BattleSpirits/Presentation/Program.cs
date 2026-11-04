@@ -134,6 +134,7 @@ internal static class Entry
     private static void Setup()
     {
         Cleanup();Time.unscaledTime=0;
+        UnityEngine.EventSystems.EventSystem.current=new UnityEngine.EventSystems.EventSystem();
         Application.dataPath=Path.Combine(temporary,"Assets");
         var canvas=new GameObject("Canvas",typeof(RectTransform),typeof(Canvas)){layer=5};
         canvas.GetComponent<Canvas>().worldCamera=new GameObject("Camera_UI").AddComponent<Camera>();
@@ -243,6 +244,17 @@ internal static class Entry
                 fake.View=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards),0);var screen=Screen(BattleNativeScreen.Duel);
                 var view=Field<BattleNativeDuelView>(screen,"duel");var hand=Field<RectTransform>(view,"hand");Assert(hand.childCount==4,"Own hand not displayed.");
                 Click(screen.transform,"Buttons/ButtonInfo");Assert(fake.Commands.Single().action=="opening","Keep opening did not send BS command.");AssertGeneratedLayers(screen.transform);
+            });
+            Case("Native Magic chooser permits Awaken draw-only without an owned Spirit",()=>{
+                fake.View=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards),0);
+                fake.View.phase="Main";fake.View.decisionPlayer=0;fake.View.ownHand=new[]{AbilityRegistry.AwakenMagic};
+                var screen=Screen(BattleNativeScreen.Duel);var duel=Field<BattleNativeDuelView>(screen,"duel");
+                Call(duel,"PlayHand",0,AbilityRegistry.AwakenMagic);
+                string option="Không chuyển Core · rút 1 lá";
+                Assert(MDPro3.UIManager.Popup.Contains(option),"Draw-only option missing when the field is empty.");
+                var go=new GameObject("PopupChoice",typeof(RectTransform));go.AddComponent<SelectionButton>();go.AddComponent<TextMeshProUGUI>().text=option;
+                UnityEngine.EventSystems.EventSystem.current.currentSelectedGameObject=go;MDPro3.UIManager.PopupSelected.Invoke();
+                var command=fake.Commands.Single();Assert(command.action=="playMagic"&&command.target==-1&&command.transfers?.Length==0,"Draw-only choice requested a nonexistent target or core.");
             });
             Case("Native duel controls close on disconnected state and replay uses step controls",()=>{
                 fake.View=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards),0);var screen=Screen(BattleNativeScreen.Duel);fake.CanSendCommands=false;fake.Refresh();

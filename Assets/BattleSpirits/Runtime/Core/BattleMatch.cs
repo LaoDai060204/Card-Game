@@ -202,8 +202,8 @@ namespace LaoDai.BattleSpirits.Core
             }
             else if (card.id == AbilityRegistry.AwakenMagic)
             {
-                if (target == null || !owner.Field.Contains(target))
-                    return Fail("Awaken cần chọn Spirit của mình.", out error);
+                if (target != null && !owner.Field.Contains(target))
+                    return Fail("Awaken chỉ chuyển core tới Spirit của mình.", out error);
                 if (transfers != null && (transfers.Length > 1 || transfers.Any(t => t == null || t.source != -1 || t.normal < 0 || (long)t.normal + (t.soul ? 1 : 0) > 3)))
                     return Fail("Awaken chỉ chuyển tối đa 3 core từ Reserve.", out error);
             }
@@ -216,8 +216,13 @@ namespace LaoDai.BattleSpirits.Core
             if (card.id == AbilityRegistry.AwakenMagic)
             {
                 chosen = transfers == null
-                    ? new CoreTransfer { normal = Math.Min(3, afterPayment.Normal) }
+                    ? new CoreTransfer { normal = target == null ? 0 : Math.Min(3, afterPayment.Normal) }
                     : transfers.Length == 0 ? new CoreTransfer() : transfers[0];
+                // Official BS01-115 FAQ Q24490/Q24491 permits choosing zero
+                // cores and resolving only the draw. Without a Spirit, skip the
+                // transfer per Eternal manual page14 Q2's partial-resolution rule.
+                if (target == null && (chosen.normal > 0 || chosen.soul))
+                    return Fail("Awaken cần chọn Spirit của mình khi chuyển core.", out error);
                 if (chosen.normal > afterPayment.Normal || chosen.soul && !afterPayment.Soul)
                     return Fail("Core được chọn không còn ở Reserve sau khi trả phí Magic.", out error);
             }

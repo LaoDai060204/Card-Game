@@ -23,6 +23,8 @@ namespace MDPro3
         private static AudioSource se;
         private static AudioSource bgm;
         private static AudioSource voice;
+        private static float battleMusicVolume = 0.7f;
+        private static float battleEffectsVolume = 0.7f;
 
         public const string BGM_MENU_MAIN = "BGM_MENU_01";
 
@@ -32,6 +34,8 @@ namespace MDPro3
             se = seR;
             bgm = bgmR;
             voice = voiceR;
+            battleMusicVolume = Config.GetFloat("BgmVol", 0.7f);
+            battleEffectsVolume = Config.GetFloat("SEVol", 0.7f);
             AudioSettings.OnAudioConfigurationChanged += OnAudioConfigurationChanged;
 
             PlayBGM(BGM_MENU_MAIN);
@@ -53,14 +57,20 @@ namespace MDPro3
         {
             se.volume = vol;
             if (LaoDai.BattleSpirits.BattleSpiritsMode.Enabled)
-                LaoDai.BattleSpirits.Visuals.BattleAudio.SetVolumes(Config.GetFloat("BgmVol", 0.7f), vol);
+            {
+                battleEffectsVolume = vol;
+                LaoDai.BattleSpirits.Visuals.BattleAudio.SetVolumes(battleMusicVolume * currentBGMScale, battleEffectsVolume);
+            }
         }
 
         public static void SetBGMVol(float vol)
         {
             bgm.volume = vol * currentBGMScale;
             if (LaoDai.BattleSpirits.BattleSpiritsMode.Enabled)
-                LaoDai.BattleSpirits.Visuals.BattleAudio.SetVolumes(vol, Config.GetFloat("SEVol", 0.7f));
+            {
+                battleMusicVolume = vol;
+                LaoDai.BattleSpirits.Visuals.BattleAudio.SetVolumes(battleMusicVolume * currentBGMScale, battleEffectsVolume);
+            }
         }
 
         public static void SetVoiceVol(float vol)
@@ -597,8 +607,9 @@ namespace MDPro3
         {
             if (LaoDai.BattleSpirits.BattleSpiritsMode.Enabled)
             {
+                currentBGMScale = volumeScale;
                 LaoDai.BattleSpirits.Visuals.BattleAudio.Configure(Path.GetFullPath(Path.Combine(Application.dataPath, "..")));
-                LaoDai.BattleSpirits.Visuals.BattleAudio.SetVolumes(Config.GetFloat("BgmVol", 0.7f) * volumeScale, Config.GetFloat("SEVol", 0.7f));
+                LaoDai.BattleSpirits.Visuals.BattleAudio.SetVolumes(battleMusicVolume * currentBGMScale, battleEffectsVolume);
                 LaoDai.BattleSpirits.Visuals.BattleAudio.PlayMusic();
                 return;
             }
