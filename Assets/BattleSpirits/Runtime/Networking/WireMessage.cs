@@ -15,6 +15,7 @@ namespace LaoDai.BattleSpirits.Networking
         public string type = string.Empty;
         public int version = Protocol.Version;
         public string catalogHash = string.Empty;
+        public string rulesFormat = "Eternal";
         public string name = string.Empty;
         public string text = string.Empty;
         public int playerIndex = -1;
@@ -33,7 +34,7 @@ namespace LaoDai.BattleSpirits.Networking
 
     public static class Protocol
     {
-        public const int Version = 2;
+        public const int Version = 3;
         public const int DefaultPort = 7777;
         public const int MaxLineBytes = 65536;
         public const int MaxNameLength = 24;
@@ -87,6 +88,7 @@ namespace LaoDai.BattleSpirits.Networking
     [Serializable]
     public sealed class FilteredMatchView
     {
+        public string rulesFormat = "Eternal";
         public int viewer;
         public int activePlayer;
         public int decisionPlayer;
@@ -157,6 +159,7 @@ namespace LaoDai.BattleSpirits.Networking
             return new FilteredMatchView
             {
                 viewer = viewer,
+                rulesFormat = state.Format.ToString(),
                 activePlayer = state.ActivePlayerIndex,
                 decisionPlayer = state.Phase == MatchPhase.GameOver ? -1 : match.DecisionPlayerIndex,
                 turn = state.TurnNumber,

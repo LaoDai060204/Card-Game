@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework>
+    <LangVersion>9.0</LangVersion><ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>disable</Nullable><EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../../Assets/Scripts/MDPro3/ScriptableObjects/BattleCosmeticCatalog.cs" />
+    <Compile Include="Program.cs" />
+    <Reference Include="Newtonsoft.Json"><HintPath>$(MSBuildToolsPath)/Newtonsoft.Json.dll</HintPath></Reference>
+  </ItemGroup>
+</Project>

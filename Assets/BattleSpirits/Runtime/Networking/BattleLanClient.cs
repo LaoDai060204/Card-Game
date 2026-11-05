@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
+using LaoDai.BattleSpirits.Core;
 
 namespace LaoDai.BattleSpirits.Networking
 {
@@ -44,7 +45,8 @@ namespace LaoDai.BattleSpirits.Networking
             get { lock (gate) return current != null && current.Client.Connected; }
         }
 
-        public async Task ConnectAsync(string host, int port, string name, string catalogHash)
+        public async Task ConnectAsync(string host, int port, string name, string catalogHash,
+            BattleRulesFormat rulesFormat = BattleRulesFormat.Eternal)
         {
             if (string.IsNullOrWhiteSpace(host)) throw new ArgumentException("A server address is required.", nameof(host));
             if (port < 1 || port > 65535) throw new ArgumentOutOfRangeException(nameof(port));
@@ -74,7 +76,7 @@ namespace LaoDai.BattleSpirits.Networking
                 await SendOnConnectionAsync(connection, new WireMessage
                 {
                     type = "hello", version = Protocol.Version, name = name,
-                    catalogHash = catalogHash
+                    catalogHash = catalogHash, rulesFormat = rulesFormat.ToString()
                 }).ConfigureAwait(false);
                 _ = ReceiveAsync(connection);
             }

@@ -164,10 +164,12 @@ namespace MDPro3
             title = InterString.Get("正在初始化");
 
             Program.SetRoot();
-            _ = ABLoader.CacheMasterDuelOutDuelBundles();
-            while (!ABLoader.mdCached)
+            bool battle = LaoDai.BattleSpirits.BattleSpiritsMode.Enabled;
+            if (battle) _ = ABLoader.CacheBattleCosmeticsAsync();
+            else _ = ABLoader.CacheMasterDuelOutDuelBundles();
+            while (battle ? !ABLoader.battleCosmeticsCached : !ABLoader.mdCached)
             {
-                progressBar.value = ABLoader.mdCachedProgress;
+                progressBar.value = battle ? ABLoader.battleCosmeticsCacheProgress : ABLoader.mdCachedProgress;
                 yield return null;
             }
 

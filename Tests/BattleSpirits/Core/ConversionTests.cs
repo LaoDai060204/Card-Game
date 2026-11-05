@@ -36,6 +36,7 @@ internal static class ConversionTests
         Case("Concession can finish opening and an ended match rejects further play", Concession);
         Case("Dispatcher drives complete legal deterministic matches", DispatcherMatches);
         AbilityTests.Run(official);
+        StandardRulesTests.Run();
         IndependentAudit.Run(new[] { path });
         Console.WriteLine(JsonSerializer.Serialize(new { result = "PASS", conversionScenarios = cases,
             catalogCards = official.Length, supportedCards = official.Count(c => c.IsPlayable),

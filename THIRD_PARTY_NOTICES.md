@@ -1,6 +1,6 @@
 # Nguồn gốc và thành phần bên thứ ba
 
-**LaoDai Card Game** là bản tùy biến và Việt hóa do **LaoDai060204** duy trì, phát triển từ [MDPro3 của Sherry Chaos](https://code.moenext.com/sherry_chaos/MDPro3) và các cộng tác viên. Mã nền được nhập tại commit `e177cd8d53092ae9249e37b38d3cef0040e41095`.
+**LaoDai Battle Spirits** là bản tùy biến và Việt hóa do **LaoDai060204** duy trì, phát triển từ [MDPro3 của Sherry Chaos](https://code.moenext.com/sherry_chaos/MDPro3) và các cộng tác viên. Mã nền được nhập tại commit `e177cd8d53092ae9249e37b38d3cef0040e41095`.
 
 ## Mã và dữ liệu nền
 
@@ -18,7 +18,7 @@ Danh sách ghi công đầy đủ được giữ trong `Assets/Addressables/Text
 
 ## Tài nguyên trò chơi
 
-Dự án sử dụng tài nguyên từ [Yu-Gi-Oh! Master Duel](https://www.konami.com/yugioh/masterduel/), [Yu-Gi-Oh! Cross Duel](https://www.konami.com/yugioh/crossduel/) và [Yu-Gi-Oh! Duel Links](https://www.konami.com/yugioh/duel_links/). Tên gọi và tài nguyên liên quan thuộc các chủ sở hữu tương ứng.
+Bản template và lịch sử kho từng dùng tài nguyên từ [Yu-Gi-Oh! Master Duel](https://www.konami.com/yugioh/masterduel/), [Yu-Gi-Oh! Cross Duel](https://www.konami.com/yugioh/crossduel/) và [Yu-Gi-Oh! Duel Links](https://www.konami.com/yugioh/duel_links/). Nhánh Standard 0.3.0 đã bỏ đồ họa duel/UI/cut-in, giọng và dữ liệu trò chơi cũ, nhưng giữ **pet và wallpaper Master Duel**, icon/SE_MATE và shader chung cần cho chúng. Tên gọi và tài nguyên giữ lại vẫn thuộc chủ sở hữu tương ứng; việc dọn tệp không xóa lịch sử/ghi công của mã dẫn xuất.
 
 Thông báo gốc trong mục giới thiệu nêu rằng tài nguyên được cung cấp cho việc học tập cá nhân và chia sẻ cộng đồng, không dành cho mục đích thương mại. Bản tùy biến giữ thông báo này.
 
@@ -48,12 +48,20 @@ decoded RGBA pixels; original card numbers, names, effect text and printed
 credits are retained. `Data/BattleSpirits/banlist.json` records the source and
 effective date of observed restrictions.
 
-This branch reuses the existing MDPro3 screen forms, fonts, UI artwork and
-Master Duel Mate/cosmetic bundles. Their original notices in this document
-continue to apply. Version 0.2.0 replaces the active duel field with procedural
-Battle Spirits zones and uses new card/rules controllers on the original UI
-prefabs. Legacy numeric Yu-Gi-Oh card-face and closeup files removed from this
-branch remain in the main branch and the recorded backups.
+Version 0.3.0 retains the MDPro3 screen layouts and generic compatibility code,
+but replaces Master Duel UI graphics with original procedural sprites. Only
+pet/wallpaper assets and their required icons, sound effects and shared shader
+bundle remain as the requested Master Duel cosmetic exception. Serialized
+component names and namespaces needed by these bundles are not renamed merely
+to conceal provenance. Their original notices continue to apply. Legacy
+Yu-Gi-Oh card faces, duel graphics, voices and unused game databases removed from
+this branch remain in main/history and the recorded backups.
+
+The retained Source Han Sans font is an independent Adobe open-source typeface,
+licensed under the [SIL Open Font License 1.1](Assets/Fonts/SourceHanSans-OFL.txt),
+not original artwork by this project. Keep its copyright/license with redistributed
+font files. Game-specific font/glyph assets that were removed do not transfer
+their rights to the replacement UI.
 
 ## Original procedural visuals and audio in 0.2.0
 
@@ -75,3 +83,12 @@ That identification applies only to the original contributions described by
 those manifests. It does not change rights in Battle Spirits names, character
 designs or official card artwork, Master Duel assets, the MDPro3 template,
 WindBot, or any other third-party component listed above.
+
+## Original UI skin in 0.3.0
+
+The three panel/button/clear PNG sprites under `Assets/Texture/GUI_Used` were
+created procedurally for this project. `Documentation/master-duel-art-replacement.json`
+records their hashes, dimensions and CC0-1.0 identification. This applies only to
+those new graphics, not to the retained template code, fonts, pet/wallpaper assets
+or official Battle Spirits card faces. Cleanup manifests document which
+resources were removed without changing ownership of retained third-party work.

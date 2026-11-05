@@ -31,6 +31,8 @@ TYPES = {"スピリット": "Spirit", "契約スピリット": "Contract Spirit"
 ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{1,70}$")
 EFFECT_RULES_PROFILE = "bs01-effects-v1"
 EFFECT_CARD_IDS = {"BS01-X01", "BS01-097", "BS01-113", "BS01-115", "BS01-117"}
+STANDARD_BASELINE_FILE = "standard-starter-cards.json"
+STANDARD_RULES_PROFILE = "standard-block-a-vanilla-v1"
 VERIFIED_FIELDS = ("nameJa", "color", "cost", "reductionSymbols", "levels", "effectTextJa",
                    "symbols", "type", "colors", "reductions", "symbolDetails")
 
@@ -63,6 +65,49 @@ def verify_implementation(card, baseline):
     for key in VERIFIED_FIELDS:
         if card.get(key) != baseline[key]:
             raise ValueError("Verified effect data changed: " + card["id"] + " " + key)
+
+
+def standard_blocks(source):
+    """Read printed block icons, never infer eligibility from the set's year."""
+    result = set()
+    for section in Document(source).root.all("section", "detailCol"):
+        for block in section.all("dl", "detailColList"):
+            term, description = block.first("dt"), block.first("dd")
+            if term is not None and description is not None and term.text() == "ブロックアイコン":
+                result.update(re.findall(r"<([A-Z])>", description.text()))
+    return sorted(result)
+
+
+def standard_baseline(root):
+    """Reviewed effectless Standard prints with individually inspected symbols."""
+    path = Path(root) / "Data/BattleSpirits" / STANDARD_BASELINE_FILE
+    if not path.is_file():
+        return {}
+    document = json.loads(path.read_text(encoding="utf-8-sig"))
+    if document.get("rulesProfile") != STANDARD_RULES_PROFILE:
+        raise ValueError("Unsupported Standard implementation profile")
+    cards = document.get("cards", [])
+    by_id = {card["id"]: card for card in cards}
+    if not cards or len(cards) != len(by_id):
+        raise ValueError("Empty or duplicate Standard baseline")
+    for card in cards:
+        if (card.get("type") != "Spirit" or card.get("effectTextJa") != "-"
+                or card.get("format") != "Standard" or card.get("standardBlock") != "A"
+                or card.get("standardLegal") is not True or card.get("standardLegalityVerified") is not True
+                or card.get("implemented") is not True or card.get("symbolsVerified") is not True
+                or card.get("rulesProfile", "") or any(field not in card for field in VERIFIED_FIELDS)):
+            raise ValueError("Invalid verified Standard vanilla: " + card["id"])
+    return by_id
+
+
+def verify_standard_implementation(card, baseline):
+    for key in (*VERIFIED_FIELDS, "standardBlock", "standardLegal", "standardLegalityVerified", "format"):
+        if card.get(key) != baseline.get(key):
+            raise ValueError("Verified Standard data changed: " + card["id"] + " " + key)
+    if card.get("implemented") is not True or card.get("symbolsVerified") is not True or card.get("rulesProfile", ""):
+        raise ValueError("Verified Standard implementation changed: " + card["id"])
+    if card.get("superUnleash", False) != baseline.get("superUnleash", False):
+        raise ValueError("Verified Standard Super Unleash icon changed: " + card["id"])
 
 
 class Node:
@@ -244,7 +289,7 @@ def parse_detail(source, card_id):
                 if label in COLORS:
                     reductions[COLORS[label]] += 1
         category = text("カテゴリー")
-        levels, raw_levels = [], []
+        levels, raw_levels, super_unleash = [], [], False
         for level in section.all("div", "bpCoreItem"):
             bp, cores = level.first("span", "bpCoreVal"), level.first("span", "bpCoreLevel")
             if bp is None or cores is None:
@@ -252,6 +297,13 @@ def parse_detail(source, card_id):
             raw_levels.append({"bp": bp.text(), "cores": cores.text()})
             if bp.text().isdigit() and cores.text().isdigit():
                 levels.append({"cores": int(cores.text()), "bp": int(bp.text())})
+            elif (bp.text().isdigit() and re.fullmatch(r"\d+/", cores.text())
+                    and any(image.attrs.get("src", "").endswith("/ico_soulcore.png") for image in cores.all("img"))
+                    and len(raw_levels) == 2):
+                # Printed 《Super Unleash》 is an alternate Lv2 threshold, not
+                # effect text and not a universal rule for all Soul Core cards.
+                levels.append({"cores": int(cores.text()[:-1]), "bp": int(bp.text())})
+                super_unleash = True
             elif category == "ネクサス" and bp.text() == "-" and cores.text().isdigit():
                 levels.append({"cores": int(cores.text()), "bp": 0})
         rarity = section.first("span", "cardRarity")
@@ -265,6 +317,8 @@ def parse_detail(source, card_id):
                       "families": [x.strip() for x in re.split(r"[・/／]", text("系統")) if x.strip() and x.strip() != "-"],
                       "effectTextJa": text("能力・効果"), "rarity": rarity.text() if rarity else "",
                       "imageUrl": urljoin(HOST, image.attrs["src"]) if image else ""})
+        if super_unleash:
+            faces[-1]["superUnleash"] = True
     if not faces or not faces[0]["nameJa"] or not faces[0]["imageUrl"]:
         raise ValueError("Incomplete official card detail: " + card_id)
     card = dict(faces[0])
@@ -415,6 +469,9 @@ def import_catalog(args):
         raise ValueError("Official forbidden-pair list changed; explicit pair handling must be reviewed")
     seeds = json.loads((root / "Data/BattleSpirits/starter-cards.json").read_text(encoding="utf-8-sig"))["cards"]
     effects = implementation_baseline(root)
+    standard = standard_baseline(root)
+    if standard and not "2026-04-01" <= args.as_of <= "2027-03-31":
+        raise ValueError("Review Standard block rotation before importing outside the verified block-A season")
     requests, set_sources = {}, []
     for product in sets:
         url = HOST + "/cardlist/index.php?search=true&prodid=" + product["productId"]
@@ -431,6 +488,9 @@ def import_catalog(args):
         requests[baseline["id"]] = ({"id": baseline["id"], "variant": baseline["id"], "url": baseline["sourceUrl"]},
                                    {"setId": "BS01", "setName": "Verified BS01 effect cards",
                                     "releaseDate": "", "format": "Eternal", "released": True}, baseline)
+    for baseline in standard.values():
+        requests[baseline["id"]] = ({"id": baseline["id"], "variant": baseline["sourceCardNumber"], "url": baseline["sourceUrl"]},
+                                   {key: baseline[key] for key in ("setId", "setName", "releaseDate", "format", "released")}, baseline)
 
     def detail(item):
         entry, product, seed = item
@@ -448,6 +508,18 @@ def import_catalog(args):
         card["restrictionSourceUrl"] = limits_url
         card["restrictionVerified"] = product["format"] == "Eternal"
         if seed is not None:
+            if seed["id"] in standard:
+                if standard_blocks(raw.decode("utf-8")) != ["A"]:
+                    raise ValueError("Printed Standard block changed: " + card["id"])
+                card.update({"implemented": True, "symbols": seed["symbols"], "symbolsVerified": True,
+                             "symbolDetails": seed["symbolDetails"], "standardBlock": "A", "standardLegal": True,
+                             "standardLegalityVerified": True, "standardVerifiedDate": args.as_of,
+                             "legalityStatus": "standard-confirmed", "restrictionVerified": True})
+                verify_standard_implementation(card, seed)
+                provenance = {"id": card["id"], "officialDetailUrl": entry["url"], "detailHtmlSha256": digest(raw),
+                              "sourceCardNumber": entry["variant"], "retrievedDate": args.as_of,
+                              "standardBlockVerified": "A", "standardVerificationDate": args.as_of}
+                return card, provenance
             if seed["id"] in effects:
                 card.update({"implemented": seed["implemented"], "symbols": seed["symbols"],
                              "symbolsVerified": True, "symbolDetails": seed["symbolDetails"],
@@ -482,18 +554,21 @@ def import_catalog(args):
         effect_path = root / "Data/BattleSpirits/implemented-cards.json"
         if effect_path.is_file():
             shutil.copyfile(effect_path, staged / "Data/BattleSpirits/implemented-cards.json")
+        if standard:
+            shutil.copyfile(root / "Data/BattleSpirits" / STANDARD_BASELINE_FILE,
+                            staged / "Data/BattleSpirits" / STANDARD_BASELINE_FILE)
         with ThreadPoolExecutor(max_workers=args.workers) as pool:
             original_sizes = list(pool.map(lambda pair: artwork(fetcher, pair[0], pair[1], staged, magick), parsed))
         if sum(original_sizes) > 150_000_000:
             raise ValueError("Artwork import exceeded the documented 150 MB source limit")
         cards = sorted((card for card, _ in parsed), key=lambda card: (not card["implemented"], card["setId"], card["id"]))
-        catalog = {"schemaVersion": 1, "asOfDate": args.as_of, "ruleset": "Japanese Battle Spirits Eternal",
+        catalog = {"schemaVersion": 1, "asOfDate": args.as_of, "ruleset": "Japanese Battle Spirits Standard" if standard else "Japanese Battle Spirits Eternal",
                    "latestReleasedSets": set_sources, "announcedFutureBoosters": announced, "cards": cards}
         manifest = {"asOfDate": args.as_of, "officialProductsUrl": product_url, "productsHtmlSha256": digest(products_raw),
                     "officialCardListUrl": list_url, "cardListHtmlSha256": digest(list_raw), "sets": set_sources,
                     "announcedFutureBoosters": announced, "artworkSourceBytes": sum(original_sizes),
                     "symbolNote": "Official detail HTML does not expose printed symbol counts. Starter and explicit effect baselines use verified printed symbols; other symbol values are unknown, not inferred.",
-                    "formatNote": "Standard-labeled cards are catalog entries only. Their Eternal legality has not been verified; eternalLegal=false does not claim they are prohibited.",
+                    "formatNote": "Only explicitly reviewed block-A vanilla prints are enabled for Standard. Other Standard entries remain browse-only; Eternal legality is separately recorded and is not inferred from their year.",
                     "implementationNote": "Importing card data or artwork does not implement an ability. Enabled IDs must match a verified vanilla or explicit effect baseline and the runtime ability registry.",
                     "attribution": "Battle Spirits card artwork © BANDAI / BNP and credited illustrators; original printed notices retained.",
                     "license": "Official third-party card art; no open-source license or redistribution permission is inferred.",
@@ -560,9 +635,12 @@ def validate_catalog(root, pixels=False, cache=None, workers=3, report=True):
     seed_list = json.loads((root / "Data/BattleSpirits/starter-cards.json").read_text(encoding="utf-8-sig"))["cards"]
     seeds = {card["id"]: card for card in seed_list}
     effects = implementation_baseline(root)
+    standard = standard_baseline(root)
     provenance = {entry["id"]: entry for entry in sources["cards"]}
     cards = catalog["cards"]
     as_of = date.fromisoformat(catalog["asOfDate"]).isoformat()
+    if standard and not "2026-04-01" <= as_of <= "2027-03-31":
+        raise ValueError("Standard baseline is outside its verified block-A season")
     if not cards or len(seeds) != len(seed_list) or not seeds:
         raise ValueError("Empty catalog or duplicate starter IDs")
     if len({c["id"] for c in cards}) != len(cards) or len(provenance) != len(sources["cards"]) or {c["id"] for c in cards} != set(provenance):
@@ -621,9 +699,17 @@ def validate_catalog(root, pixels=False, cache=None, workers=3, report=True):
                            if card["id"] == r["id"] or card["nameJa"] == r["nameJa"]]
         if card["maxCopies"] != (min(matching_limits) if matching_limits else 3):
             raise ValueError("Card restriction differs from the official list: " + card["id"])
-        if card["restrictionSourceUrl"] != limits["sourceUrl"] or card["restrictionVerified"] != (card["format"] == "Eternal"):
+        if card["restrictionSourceUrl"] != limits["sourceUrl"] or card["restrictionVerified"] != (card["format"] == "Eternal" or card["id"] in standard):
             raise ValueError("Card restriction provenance is inconsistent")
-        if card["id"] in effects:
+        if card["id"] in standard:
+            verify_standard_implementation(card, standard[card["id"]])
+            if (card.get("legalityStatus") != "standard-confirmed" or card.get("eternalLegal")
+                    or entry.get("standardBlockVerified") != "A"
+                    or entry.get("standardVerificationDate") != card.get("standardVerifiedDate")
+                    or not "2026-04-01" <= card.get("standardVerifiedDate", "") <= as_of):
+                raise ValueError("Standard format provenance changed: " + card["id"])
+            enabled.add(card["id"])
+        elif card["id"] in effects:
             verify_implementation(card, effects[card["id"]])
             if card["implemented"]:
                 enabled.add(card["id"])
@@ -636,14 +722,17 @@ def validate_catalog(root, pixels=False, cache=None, workers=3, report=True):
                     raise ValueError("Verified starter data changed: " + card["id"] + " " + key)
         elif card["symbolsVerified"] or card["symbols"] != 0 or card["symbolDetails"]:
             raise ValueError("Unknown printed symbols were inferred for a browse-only card")
-        if card["format"] == "Standard" and (card["implemented"] or card["legalityStatus"] != "not-verified" or card["eternalLegal"]):
-            raise ValueError("Unverified Standard card was promoted into the Eternal implementation")
+        if card["format"] == "Standard" and card["id"] not in standard and (card["implemented"] or card["legalityStatus"] != "not-verified" or card["eternalLegal"]
+                or card.get("standardLegal") or card.get("standardLegalityVerified")):
+            raise ValueError("An unverified Standard card was promoted into an implementation")
         if card["releaseDate"] and date.fromisoformat(card["releaseDate"]).isoformat() > as_of:
             raise ValueError("Announced card incorrectly imported as released")
-    if enabled != set(seeds) | {cid for cid, baseline in effects.items() if baseline["implemented"]}:
+    if enabled != set(seeds) | set(standard) | {cid for cid, baseline in effects.items() if baseline["implemented"]}:
         raise ValueError("Verified starter implementation set changed")
-    result = {"status": "PASS", "asOfDate": catalog["asOfDate"], "cards": len(cards), "implementedVanillaSpirits": len(seeds),
-              "implementedEffectCards": len(enabled - set(seeds)),
+    keyword_count = sum(card.get("superUnleash", False) for card in standard.values())
+    result = {"status": "PASS", "asOfDate": catalog["asOfDate"], "cards": len(cards), "implementedVanillaSpirits": len(seeds) + len(standard) - keyword_count,
+              "implementedEffectCards": len(enabled - set(seeds) - set(standard)), "standardPlayableCards": len(standard),
+              "standardSuperUnleashCards": keyword_count,
               "browseOnlyCards": len(cards) - len(enabled), "artImages": len(provenance),
               "sets": [{"id": p["setId"], "released": p["releaseDate"], "format": p["format"], "cards": p["uniqueCards"]} for p in catalog["latestReleasedSets"]],
               "scope": "Official metadata, artwork checksums and supported-card flags; not Unity Play or full card-ability validation"}
@@ -659,6 +748,8 @@ def observed_changes(bundled, observed):
     keys = list(observed)
     if "faces" not in keys:
         keys.append("faces")
+    if bundled.get("superUnleash") and "superUnleash" not in keys:
+        keys.append("superUnleash")
     return {key: {"bundled": bundled.get(key), "official": observed.get(key)}
             for key in keys if bundled.get(key) != observed.get(key)}
 

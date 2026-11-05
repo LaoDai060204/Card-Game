@@ -63,7 +63,11 @@ internal static class Entry
     }
     private static async Task Join(Peer peer, int port, string name, params Peer[] others)
     {
-        await peer.Client.ConnectAsync("127.0.0.1", port, name, hash);
+        await JoinFormat(peer, port, name, BattleRulesFormat.Eternal, others);
+    }
+    private static async Task JoinFormat(Peer peer, int port, string name, BattleRulesFormat format, params Peer[] others)
+    {
+        await peer.Client.ConnectAsync("127.0.0.1", port, name, hash, format);
         await Until(() => peer.Seat >= 0, new[] { peer }.Concat(others).ToArray());
     }
     private static async Task ExpectError(Peer peer, WireMessage command, params Peer[] others)
@@ -72,10 +76,11 @@ internal static class Entry
         await peer.Client.SendAsync(command);
         await Until(() => peer.Count("error") > previous, new[] { peer }.Concat(others).ToArray());
     }
-    private static async Task StartMatch(Peer a, Peer b)
+    private static async Task StartMatch(Peer a, Peer b, string[][] selectedDecks = null)
     {
-        await a.Client.SendAsync(new WireMessage { type = "deck", deck = decks[0] });
-        await b.Client.SendAsync(new WireMessage { type = "deck", deck = decks[1] });
+        var matchDecks = selectedDecks ?? decks;
+        await a.Client.SendAsync(new WireMessage { type = "deck", deck = matchDecks[0] });
+        await b.Client.SendAsync(new WireMessage { type = "deck", deck = matchDecks[1] });
         await Until(() => a.Lobby != null && a.Lobby.All(player => player.deckCount == 40), a, b);
         await a.Client.SendAsync(new WireMessage { type = "ready", ready = true });
         await b.Client.SendAsync(new WireMessage { type = "ready", ready = true });
@@ -96,7 +101,7 @@ internal static class Entry
         networkActions++;
         return accepted;
     }
-    private static async Task PlayCompleteMatch(Peer a, Peer b)
+    private static async Task PlayCompleteMatch(Peer a, Peer b, bool requireSecondMain = false)
     {
         var peers = new[] { a, b };
         int actions = 0;
@@ -114,6 +119,7 @@ internal static class Entry
                         if (await Action(peer, other, new WireMessage { action = "summon", index = i })) break;
                     Require(await Action(peer, other, new WireMessage { action = view.turn == 1 ? "endTurn" : "attackStep" }), "Main transition rejected.");
                     continue;
+                case "SecondMain": command = new WireMessage { action = "endTurn" }; break;
                 case "Attack":
                     var attacker = peer.State.players[peer.Seat].field.FirstOrDefault(spirit => !spirit.exhausted);
                     command = attacker == null ? new WireMessage { action = "endTurn" }
@@ -131,6 +137,8 @@ internal static class Entry
         var events = a.Messages.Where(message => message.view != null).SelectMany(message => message.view.events).ToArray();
         Require(events.Any(item => item.kind == "Summoned") && events.Any(item => item.kind == "Attacked")
             && events.Any(item => item.kind == "LifeLost"), "Actual battle events did not traverse TCP.");
+        if (requireSecondMain)
+            Require(a.Messages.Any(message => message.view?.phase == "SecondMain"), "Standard match never transmitted Second Main.");
     }
     private static async Task RawWrite(NetworkStream stream, string line)
     { byte[] bytes = Encoding.UTF8.GetBytes(line + "\n"); await stream.WriteAsync(bytes, 0, bytes.Length); }
@@ -139,6 +147,105 @@ internal static class Entry
         var read = reader.ReadLineAsync();
         if (await Task.WhenAny(read, Task.Delay(milliseconds)) != read) throw new TimeoutException("Raw TCP read timed out.");
         return await read;
+    }
+
+    private static async Task StandardRegression()
+    {
+        var format = BattleRulesFormat.Standard;
+        var standardDecks = StarterDecks.CreatePair(cards, format).Select(deck => deck.cards).ToArray();
+        Require(standardDecks.All(deck => deck.Length == 40 && DeckValidator.Validate(cards, deck, format: format).IsValid),
+            "The official Standard catalog could not provide two supported legal decks.");
+        using (var server = new BattleLanServer(cards, format))
+        {
+            server.Start(0);
+            using (var mismatch = new Peer())
+            {
+                await mismatch.Client.ConnectAsync("127.0.0.1", server.Port, "Eternal mismatch", hash);
+                await Until(() => mismatch.Count("error") > 0 && mismatch.Count("disconnected") > 0, mismatch);
+                Require(mismatch.Seat < 0 && mismatch.State == null, "Eternal client received Standard identity or private state.");
+            }
+            Pass("Standard rejects an Eternal hello before welcome or private state");
+            await Task.Delay(20);
+            using (var raw = new TcpClient())
+            {
+                await raw.ConnectAsync("127.0.0.1", server.Port);
+                var stream = raw.GetStream();
+                using (var reader = new StreamReader(stream, new UTF8Encoding(false), false, 4096, true))
+                {
+                    await RawWrite(stream, Protocol.Encode(new WireMessage { type = "hello", name = "Old protocol",
+                        catalogHash = hash, rulesFormat = "Standard", version = 2 }));
+                    Require(Protocol.Decode(await ReadLine(reader)).type == "error", "Protocol 2 entered a protocol 3 Standard room.");
+                    Require(await ReadLine(reader) == null, "Old protocol connection was not closed.");
+                }
+            }
+            Pass("Protocol 2 is rejected even when catalog and Standard format match");
+            await Task.Delay(20);
+            using (var a = new Peer())
+            using (var b = new Peer())
+            {
+                await JoinFormat(a, server.Port, "Standard Đỏ", format);
+                await JoinFormat(b, server.Port, "Standard Xanh", format, a);
+                foreach (var peer in new[] { a, b })
+                    Require(peer.Messages.Single(message => message.type == "welcome").rulesFormat == "Standard",
+                        "Welcome omitted the negotiated Standard format.");
+                await ExpectError(a, new WireMessage { type = "deck", deck = decks[0] }, b);
+                Require(a.Lobby[0].deckCount == 0, "Rejected BS01/Eternal deck changed the Standard room selection.");
+                Pass("Standard authority rejects a supported Eternal BS01 deck without changing lobby selection");
+                await StartMatch(a, b, standardDecks);
+                foreach (var peer in new[] { a, b })
+                {
+                    var packet = peer.Messages.Last(message => message.type == "state");
+                    Require(packet.rulesFormat == "Standard" && packet.view.rulesFormat == "Standard",
+                        "Standard packet/view format is inconsistent.");
+                    Require(packet.view.viewer == peer.Seat && packet.view.ownHand.Length == 4,
+                        "Standard opening hand was not filtered to its owner.");
+                    var json = JObject.FromObject(packet);
+                    Require(!json.Descendants().OfType<JProperty>().Any(property => property.Name.IndexOf("seed", StringComparison.OrdinalIgnoreCase) >= 0),
+                        "Standard snapshot leaked its shuffle seed.");
+                    foreach (var player in (JArray)json["view"]["players"])
+                        Require(player["hand"] == null && player["deck"] == null, "Standard public players leaked private card lists.");
+                }
+                Pass("Two legal Block A decks start with protocol 3 Standard snapshots and private-hand filtering");
+                var peers = new[] { a, b };
+                while (a.State.phase == "Opening")
+                {
+                    int decision = a.State.decisionPlayer;
+                    Require(await Action(peers[decision], peers[1 - decision], new WireMessage { action = "opening" }),
+                        "Standard opening confirmation failed.");
+                }
+                int first = a.State.decisionPlayer;
+                Require(a.State.turn == 1 && a.State.phase == "Main", "Standard did not begin at first Main.");
+                await ExpectError(peers[first], new WireMessage { type = "action", action = "secondMain" }, peers[1 - first]);
+                Require(await Action(peers[first], peers[1 - first], new WireMessage { action = "endTurn" }), "First Standard turn could not end.");
+                int next = a.State.decisionPlayer;
+                Require(a.State.turn == 2 && a.State.phase == "Main", "First turn incorrectly entered Second Main.");
+                Require(await Action(peers[next], peers[1 - next], new WireMessage { action = "attackStep" }), "Second-turn Attack was rejected.");
+                Require(await Action(peers[next], peers[1 - next], new WireMessage { action = "secondMain" }), "Second Main action failed over TCP.");
+                Require(a.State.phase == "SecondMain" && b.State.phase == "SecondMain"
+                    && a.State.rulesFormat == "Standard" && a.State.activePlayer == next,
+                    "Clients disagreed about authoritative Second Main.");
+                await ExpectError(peers[next], new WireMessage { type = "action", action = "attackStep" }, peers[1 - next]);
+                Require(await Action(peers[next], peers[1 - next], new WireMessage { action = "endTurn", rulesFormat = "Eternal" }),
+                    "Second Main could not end.");
+                Require(a.State.phase == "Main" && a.State.turn == 3 && a.State.rulesFormat == "Standard",
+                    "An action payload changed the server's negotiated format or bypassed turn order.");
+                Pass("Second Main traverses TCP, first-turn exceptions hold, and action payloads cannot switch the negotiated rules");
+                await PlayCompleteMatch(a, b, requireSecondMain: true);
+                Require(a.Messages.Where(message => message.type == "state")
+                    .All(message => message.rulesFormat == "Standard" && message.view.rulesFormat == "Standard"),
+                    "A later Standard snapshot reverted to Eternal.");
+                Pass("A full authoritative Standard match traverses Second Main, summon, attack, Flash and Life-loss to a shared winner");
+            }
+        }
+        using (var eternal = new BattleLanServer(cards))
+        using (var mismatch = new Peer())
+        {
+            eternal.Start(0);
+            await mismatch.Client.ConnectAsync("127.0.0.1", eternal.Port, "Standard mismatch", hash, format);
+            await Until(() => mismatch.Count("error") > 0 && mismatch.Count("disconnected") > 0, mismatch);
+            Require(mismatch.Seat < 0 && mismatch.State == null, "Standard client entered an Eternal room.");
+        }
+        Pass("Eternal compatibility rooms also reject Standard clients before welcome");
     }
 
     public static async Task<int> Main(string[] args)
@@ -261,11 +368,15 @@ internal static class Entry
         }
         await ClientBackpressureRegression.Run(cards);
         Pass("A fresh connection recovers from previous receive backpressure without stale callbacks");
+        int eternalScenarios = scenarios;
+        await StandardRegression();
+        int standardScenarios = scenarios - eternalScenarios;
         string runtimeFramework = typeof(BattleLanServer).Assembly
             .GetCustomAttributes(typeof(System.Runtime.Versioning.TargetFrameworkAttribute), false)
             .Cast<System.Runtime.Versioning.TargetFrameworkAttribute>().Single().FrameworkName;
         Require(runtimeFramework == ".NETStandard,Version=v2.1", "Production runtime was not compiled against .NET Standard 2.1.");
         Console.WriteLine(JsonConvert.SerializeObject(new { status = "PASS", scenarios, networkActions, actualTcp = true,
+            eternalScenarios, standardScenarios, protocolVersion = Protocol.Version,
             catalogCards = cards.Length, runtimeFramework,
             unityPlayTested = false, windowsLanTested = false, scope = "Production code on Linux loopback; no Unity or Internet deployment" }));
         return 0;

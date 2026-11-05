@@ -30,6 +30,13 @@ namespace LaoDai.BattleSpirits.NativeUI
             BattleNativeWidgets.Active(root, "DuelErrorLog", false);
             BattleNativeWidgets.Active(root, "InputField (TMP)", false);
             BattleNativeWidgets.Active(root, "CardDescription", false);
+            foreach (var node in root.GetComponentsInChildren<Transform>(true))
+            {
+                if (node.name == "LP" && node.GetComponent<TextMeshProUGUI>() is TextMeshProUGUI lifeLabel)
+                    lifeLabel.text = "LIFE";
+                if (node.name.IndexOf("Avatar", StringComparison.OrdinalIgnoreCase) >= 0)
+                    node.gameObject.SetActive(false);
+            }
             var background = BattleNativeWidgets.Rect(root, "BS_Field"); BattleNativeWidgets.Place(background, 0, 0, 1, 1);
             background.SetAsFirstSibling(); backdrop = background.gameObject.AddComponent<RawImage>(); backdrop.raycastTarget = false;
             session.AttachField(backdrop);
@@ -113,7 +120,7 @@ namespace LaoDai.BattleSpirits.NativeUI
         {
             Inspect(id); var view = session.View;
             if (!CanAct(view) || !cards.TryGetValue(id, out var card)) return;
-            bool main = view.phase == "Main";
+            bool main = view.phase == "Main" || view.phase == "SecondMain";
             bool flash = view.phase == "FlashBeforeBlock" || view.phase == "FlashAfterBlock";
             if (string.Equals(card.type, "Magic", StringComparison.OrdinalIgnoreCase))
             {
@@ -198,12 +205,16 @@ namespace LaoDai.BattleSpirits.NativeUI
                     break;
                 case "Main":
                     SetButton("ButtonInfo", "TẤN CÔNG", () => Dispatch("attackStep"), view.turn > 1);
+                    SetButton("ButtonLog", view.rulesFormat == "Standard" && view.turn > 1 ? "MAIN 2" : "KẾT THÚC LƯỢT", () => Dispatch("endTurn"));
+                    SetButton("ButtonAttachedEffect", "CHUYỂN CORE", CoreMenu);
+                    break;
+                case "SecondMain":
                     SetButton("ButtonLog", "KẾT THÚC LƯỢT", () => Dispatch("endTurn"));
                     SetButton("ButtonAttachedEffect", "CHUYỂN CORE", CoreMenu);
                     break;
                 case "Attack":
                     SetButton("ButtonInfo", "TẤN CÔNG", () => Dispatch("attack", selectedSpirit), HasSelected());
-                    SetButton("ButtonLog", "KẾT THÚC LƯỢT", () => Dispatch("endTurn"));
+                    SetButton("ButtonLog", view.rulesFormat == "Standard" ? "MAIN 2" : "KẾT THÚC LƯỢT", () => Dispatch("endTurn"));
                     break;
                 case "Block":
                     SetButton("ButtonInfo", "CHẶN", () => Dispatch("block", selectedSpirit), HasSelected());
@@ -302,8 +313,15 @@ namespace LaoDai.BattleSpirits.NativeUI
         {
             var target = BattleNativeWidgets.Find(root, "Buttons/" + name); if (target == null) return;
             target.gameObject.SetActive(true); BattleNativeWidgets.Bind(root, "Buttons/" + name, action);
-            var text = target.GetComponentInChildren<TextMeshProUGUI>(true) ?? BattleNativeWidgets.Text(target, "BS_ActionLabel", label, 15);
-            text.text = label; text.richText = false;
+            foreach (var old in target.GetComponentsInChildren<TextMeshProUGUI>(true))
+                if (old.gameObject.name != "BS_ActionLabel") old.gameObject.SetActive(false);
+            var text = BattleNativeWidgets.Component<TextMeshProUGUI>(target, "BS_ActionLabel")
+                ?? BattleNativeWidgets.Text(target, "BS_ActionLabel", label, 16);
+            text.gameObject.SetActive(true); text.text = label; text.richText = false;
+            var face = target.GetComponent<Image>() ?? target.gameObject.AddComponent<Image>();
+            face.sprite = null; face.material = null;
+            face.color = new Color(0.025f, 0.13f, 0.19f, 0.98f); face.raycastTarget = true;
+            var button = target.GetComponent<Button>(); if (button != null) button.targetGraphic = face;
             BattleNativeWidgets.Interactable(root, "Buttons/" + name, enabled);
         }
         private void Dispatch(string action, int index = 0, int source = -1, int target = -1, bool soul = false, CoreTransfer[] transfers = null)
@@ -317,6 +335,7 @@ namespace LaoDai.BattleSpirits.NativeUI
             {
                 case "Opening": return "CHỌN BÀI MỞ ĐẦU";
                 case "Main": return "MAIN STEP";
+                case "SecondMain": return "SECOND MAIN STEP";
                 case "Attack": return "ATTACK STEP";
                 case "Block": return "CHỌN CHẶN";
                 case "FlashBeforeBlock": case "FlashAfterBlock": return "FLASH TIMING";

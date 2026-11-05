@@ -1,4 +1,5 @@
 using DG.Tweening;
+using System;
 using System.IO;
 using System.Collections;
 using System.Collections.Generic;
@@ -30,6 +31,7 @@ namespace MDPro3.Servant
         private float clickInTime;
         private bool clickInLeft;
         private bool clickInRight;
+        private int mateLoadGeneration;
 
         #region Servant
 
@@ -41,7 +43,7 @@ namespace MDPro3.Servant
             returnServant = Program.instance.menu;
             base.Initialize();
             targetCamera = Program.instance.camera_.cameraDuelOverlay2D;
-            LoadSeData();
+            if (!LaoDai.BattleSpirits.BattleSpiritsMode.Enabled) LoadSeData();
         }
 
         protected override void ApplyShowArrangement(int preDepth)
@@ -58,13 +60,12 @@ namespace MDPro3.Servant
 
         protected override void ApplyHideArrangement(int preDepth)
         {
+            CancelMateLoad();
             base.ApplyHideArrangement(preDepth);
             CameraManager.DuelOverlay2DMinus();
             Program.instance.camera_.light.SetActive(false);
             Program.instance.camera_.light.transform.GetChild(0).localEulerAngles = new Vector3(96f, -28f, -40f);
             Program.instance.camera_.light.transform.GetChild(1).localEulerAngles = new Vector3(-15f, -45f, 0f);
-            if (mate != null)
-                Destroy(mate.gameObject);
             AudioManager.ResetSESource();
             AudioManager.PlaySE("SE_MENU_CANCEL");
             AudioManager.PlayBGM(AudioManager.BGM_MENU_MAIN);
@@ -203,26 +204,67 @@ namespace MDPro3.Servant
 
         public void ViewMate(int code)
         {
-            if (mate != null)
-            {
-                if (mate.code == code)
-                    return;
-                else
-                    Destroy(mate.gameObject);
-            }
-            _ = LoadMateAsync(code);
+            if (!showing || code <= 0 || mate != null && mate.code == code) return;
+            CancelMateLoad();
+            _ = LoadMateAsync(code, mateLoadGeneration);
         }
 
-        private async UniTask LoadMateAsync(int code)
+        private void CancelMateLoad()
         {
-            mate = await ABLoader.LoadMateAsync(code);
-            Tools.ChangeLayer(mate.gameObject, targetCamera.gameObject.layer);
-            await UniTask.WaitForSeconds(0.1f);
-            AudioManager.ResetSESource();
-            mate.gameObject.SetActive(true);
-            mate.Play(Mate.MateAction.Entry);
-            mate.ActiveCamera(Mate.MateAction.Entry, targetCamera.gameObject.layer);
-            CameraReset();
+            mateLoadGeneration++;
+            clickInLeft = clickInRight = false;
+            if (mate != null) Destroy(mate.gameObject);
+            mate = null;
+        }
+
+        private bool OwnsMateLoad(int generation)
+            => this != null && showing && isActiveAndEnabled && generation == mateLoadGeneration;
+
+        private void OnDisable() => CancelMateLoad();
+        private void OnDestroy() => CancelMateLoad();
+
+        private async UniTask LoadMateAsync(int code, int generation)
+        {
+            Mate loaded = null;
+            try
+            {
+                loaded = await ABLoader.LoadMateAsync(code);
+                if (!OwnsMateLoad(generation)) return;
+                if (loaded == null)
+                { MessageManager.Cast("Không tải được đồng hành này; kiểm tra bundle pet đã cài."); return; }
+                loaded.gameObject.SetActive(false);
+                Tools.ChangeLayer(loaded.gameObject, targetCamera.gameObject.layer);
+                await UniTask.WaitForSeconds(0.1f);
+                if (!OwnsMateLoad(generation) || loaded == null) return;
+
+                mate = loaded;
+                loaded = null; // The visible viewer now owns the instance.
+                AudioManager.ResetSESource();
+                mate.gameObject.SetActive(true);
+                mate.Play(Mate.MateAction.Entry);
+                mate.ActiveCamera(Mate.MateAction.Entry, targetCamera.gameObject.layer);
+                CameraReset();
+                if (LaoDai.BattleSpirits.BattleSpiritsMode.Enabled)
+                {
+                    Config.Set("BattleSpiritsMate0", code.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                    Config.Save();
+                    MessageManager.Cast("Đã chọn đồng hành cho phía của bạn.");
+                }
+            }
+            catch (Exception error)
+            {
+                if (OwnsMateLoad(generation))
+                {
+                    Debug.LogWarning("Retained pet could not load: " + error.Message);
+                    MessageManager.Cast("Không tải được đồng hành này.");
+                }
+            }
+            finally
+            {
+                // A newer selection or leaving the viewer invalidates this
+                // instance even if its bundle request finishes afterwards.
+                if (loaded != null) Destroy(loaded.gameObject);
+            }
         }
 
         #region CrossDuel Se Label Data

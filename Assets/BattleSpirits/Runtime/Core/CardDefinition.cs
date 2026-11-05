@@ -4,6 +4,7 @@ using System.Collections.Generic;
 namespace LaoDai.BattleSpirits.Core
 {
     public enum CardColor { Red, Purple, Green, White, Yellow, Blue }
+    public enum BattleRulesFormat { Eternal, Standard }
 
     [Serializable]
     public sealed class CardsDatabase
@@ -62,6 +63,14 @@ namespace LaoDai.BattleSpirits.Core
         public string format = "Eternal";
         public bool released = true;
         public bool eternalLegal = true;
+        // Standard 2026/27 admits alphabetic block A only. These fields must be
+        // verified against the printed card; a set name is not a block icon.
+        public string standardBlock = string.Empty;
+        public bool standardLegal;
+        public bool standardLegalityVerified;
+        // Printed Lv2 alternative cost (normal cores / Soul Core), not a
+        // universal property of all Standard Spirits. Parser verifies the icon.
+        public bool superUnleash;
         public int maxCopies = 3;
         public string restrictionSourceUrl = string.Empty;
         public bool restrictionVerified;
@@ -85,42 +94,51 @@ namespace LaoDai.BattleSpirits.Core
             && (string.Equals(format, "Eternal", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(format, "Both", StringComparison.OrdinalIgnoreCase));
 
-        public bool IsPlayable
+        public bool IsStandardEligible => released && maxCopies > 0 && standardLegal
+            && standardLegalityVerified && standardBlock == "A"
+            && (string.Equals(format, "Standard", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(format, "Both", StringComparison.OrdinalIgnoreCase));
+
+        public bool IsEligibleFor(BattleRulesFormat rulesFormat) => rulesFormat == BattleRulesFormat.Standard
+            ? IsStandardEligible : rulesFormat == BattleRulesFormat.Eternal && IsEternalEligible;
+
+        public bool IsPlayable => IsPlayableFor(BattleRulesFormat.Eternal);
+
+        public bool IsPlayableFor(BattleRulesFormat rulesFormat)
         {
-            get
+            string effect = (effectTextJa ?? string.Empty).Trim();
+            if (!implemented || !IsEligibleFor(rulesFormat) || !symbolsVerified
+                || string.IsNullOrWhiteSpace(id) || string.IsNullOrWhiteSpace(nameJa)
+                || cost < 0 || reductionSymbols < 0 || reductionSymbols > cost
+                || symbols < 0 || color < CardColor.Red || color > CardColor.Blue
+                || levels == null
+                || colors == null || colors.Length > 1
+                || reductions == null || reductions.Length > 1
+                || symbolDetails == null || symbolDetails.Length > 1)
+                return false;
+            if (colors.Length == 1 && (!TryGetColor(colors[0], out var printedColor) || printedColor != color))
+                return false;
+            if (reductions.Length == 1 && (reductions[0] == null
+                || !TryGetColor(reductions[0].color, out var reductionColor) || reductionColor != color
+                || reductions[0].count != reductionSymbols))
+                return false;
+            if (symbolDetails.Length == 1 && (symbolDetails[0] == null
+                || !TryGetColor(symbolDetails[0].color, out var symbolColor) || symbolColor != color
+                || symbolDetails[0].count != symbols))
+                return false;
+            if (superUnleash && (rulesFormat != BattleRulesFormat.Standard || !IsSpirit || levels.Count != 2))
+                return false;
+            if (AbilityRegistry.Contains(id)) return AbilityRegistry.IsRegistered(this);
+            if (!IsSpirit || !string.IsNullOrEmpty(rulesProfile) || symbols < 1 || levels.Count == 0
+                || !(effect.Length == 0 || effect == "-" || effect == "－" || effect == "―")) return false;
+            int previous = 0;
+            foreach (var level in levels)
             {
-                string effect = (effectTextJa ?? string.Empty).Trim();
-                if (!implemented || !IsEternalEligible || !symbolsVerified
-                    || string.IsNullOrWhiteSpace(id) || string.IsNullOrWhiteSpace(nameJa)
-                    || cost < 0 || reductionSymbols < 0 || reductionSymbols > cost
-                    || symbols < 0 || color < CardColor.Red || color > CardColor.Blue
-                    || levels == null
-                    || colors == null || colors.Length > 1
-                    || reductions == null || reductions.Length > 1
-                    || symbolDetails == null || symbolDetails.Length > 1)
+                if (level == null || level.cores <= previous || level.bp < 0)
                     return false;
-                if (colors.Length == 1 && (!TryGetColor(colors[0], out var printedColor) || printedColor != color))
-                    return false;
-                if (reductions.Length == 1 && (reductions[0] == null
-                    || !TryGetColor(reductions[0].color, out var reductionColor) || reductionColor != color
-                    || reductions[0].count != reductionSymbols))
-                    return false;
-                if (symbolDetails.Length == 1 && (symbolDetails[0] == null
-                    || !TryGetColor(symbolDetails[0].color, out var symbolColor) || symbolColor != color
-                    || symbolDetails[0].count != symbols))
-                    return false;
-                if (AbilityRegistry.Contains(id)) return AbilityRegistry.IsRegistered(this);
-                if (!IsSpirit || !string.IsNullOrEmpty(rulesProfile) || symbols < 1 || levels.Count == 0
-                    || !(effect.Length == 0 || effect == "-" || effect == "－" || effect == "―")) return false;
-                int previous = 0;
-                foreach (var level in levels)
-                {
-                    if (level == null || level.cores <= previous || level.bp < 0)
-                        return false;
-                    previous = level.cores;
-                }
-                return true;
+                previous = level.cores;
             }
+            return true;
         }
 
         private static bool TryGetColor(string value, out CardColor parsed)

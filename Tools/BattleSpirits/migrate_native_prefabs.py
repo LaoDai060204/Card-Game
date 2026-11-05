@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Replace Yu-Gi-Oh controllers in the original screen assets without rebuilding their layout.
 
-The original prefab GUIDs, GameObjects, transforms, sprites, fonts and material
-references are retained. Run with --write only after preserving the current
+The original prefab GUIDs, GameObjects and transforms are retained. A separately
+reviewed art replacement manifest replaces legacy sprites/fonts/materials.
+Run with --write only after preserving the current
 working version as required by AGENTS.md. Default mode verifies the migration.
 """
 from __future__ import annotations
@@ -233,8 +234,11 @@ def verify_visuals(path, source, migrated, removed):
         require(not local_references.intersection(removed), "Dangling removed component reference in " + path)
         for match in re.finditer(r"m_PersistentCalls:\n\s+m_Calls:([^\n]*)", block.body):
             require(match[1].strip() == "[]", "Legacy persistent callback survived in " + path)
+    # Artwork may change only by the explicit replacement manifest; layout is
+    # still compared to the untouched template above.
+    from replace_master_duel_art import reskin_text
     asset_values = r"(?m)^\s*(?:m_Sprite|m_FontAsset|m_fontAsset|m_Material|m_sharedMaterial|m_Texture|m_Font|m_fontMaterial):.*$"
-    require(re.findall(asset_values, source) == re.findall(asset_values, migrated), "Changed original sprite/font/material references: " + path)
+    require(re.findall(asset_values, reskin_text(source)) == re.findall(asset_values, migrated), "Unreviewed sprite/font/material references: " + path)
 
 
 def execute(write, base):
@@ -246,6 +250,8 @@ def execute(write, base):
     for path in PATHS:
         source = original(path, base)
         expected, removed, actions = migrate(path, source, script_paths, removed_by_guid)
+        from replace_master_duel_art import reskin_text
+        expected = reskin_text(expected)
         verify_visuals(path, source, expected, removed)
         target = ROOT / path
         if write:
@@ -261,7 +267,8 @@ def execute(write, base):
         migrated_by_guid[guid_for(path)] = (path, actual)
     return {"status": "PASS", "base": base, "nativeControllerGuid": CONTROLLER,
             "prefabs": reports, "originalLayoutPreserved": True,
-            "originalSpritesFontsMaterialsPreserved": True,
+            "originalSpritesFontsMaterialsPreserved": False,
+            "artReplacedByExplicitManifest": True,
             "legacyCallbacksCleared": True, "unityEditorPlayTested": False}, paths_manifest
 
 

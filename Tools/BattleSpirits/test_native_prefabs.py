@@ -6,6 +6,7 @@ import re
 import unittest
 
 import migrate_native_prefabs as migration
+from replace_master_duel_art import reskin_text
 
 
 class NativePrefabReplacementTests(unittest.TestCase):
@@ -20,6 +21,7 @@ class NativePrefabReplacementTests(unittest.TestCase):
             source = migration.original(path, migration.BASE)
             actual = (migration.ROOT / path).read_text()
             expected, removed, actions = migration.migrate(path, source, cls.script_paths, cls.removed_by_guid)
+            expected = reskin_text(expected)
             cls.original[path] = source
             cls.migrated[path] = actual
             cls.removed[path] = removed
@@ -33,7 +35,7 @@ class NativePrefabReplacementTests(unittest.TestCase):
                 after = (migration.ROOT / (path + ".meta")).read_text()
                 self.assertEqual(before, after)
 
-    def test_original_hierarchy_geometry_and_art_references_are_preserved(self):
+    def test_original_hierarchy_geometry_and_explicit_replacement_art_are_preserved(self):
         for path in migration.PATHS:
             with self.subTest(path=path):
                 migration.verify_visuals(path, self.original[path], self.migrated[path], self.removed[path])

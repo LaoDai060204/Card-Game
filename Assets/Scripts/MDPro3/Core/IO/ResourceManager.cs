@@ -17,6 +17,12 @@ namespace MDPro3.IO
         private static FileGroupConfig fileGroups;
         public static async UniTask InitializeAsync(Action onBackground = null, Action onMainThread = null)
         {
+            if (LaoDai.BattleSpirits.BattleSpiritsMode.Enabled)
+            {
+                onBackground?.Invoke();
+                onMainThread?.Invoke();
+                return;
+            }
             fileGroups = Json.LoadFromFile<FileGroupConfig>(FileGroupConfig.SavePath);
 #if DEVELOPMENT_BUILD || UNITY_EDITOR
             if (FileManager.DebugEnabled)

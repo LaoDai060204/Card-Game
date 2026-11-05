@@ -17,26 +17,28 @@ namespace WindBot.BattleSpirits
     /// <summary>WindBot deck registration for the supported Battle Spirits card pool.</summary>
     public static class BattleSpiritsBotProfiles
     {
-        public static BattleSpiritsBotProfile[] Create(IReadOnlyList<CardDefinition> catalog)
+        public static BattleSpiritsBotProfile[] Create(IReadOnlyList<CardDefinition> catalog,
+            BattleRulesFormat format = BattleRulesFormat.Eternal)
         {
             if (catalog == null) throw new ArgumentNullException(nameof(catalog));
             return new[] {
                 Profile(catalog, "training", "Luyện tập — Xung kích", BotDifficulty.Easy,
-                    "WindBot luyện tập: triệu hồi đơn giản, tấn công và chặn để làm quen luật Eternal."),
+                    "WindBot luyện tập: triệu hồi đơn giản, tấn công và chặn để làm quen luật " + format + ".", format),
                 Profile(catalog, "guardian", "Chiến thuật — Giữ sân", BotDifficulty.Normal,
-                    "WindBot cân đối Core, nâng Level/BP và chọn Spirit chặn có lợi."),
+                    "WindBot cân đối Core, nâng Level/BP và chọn Spirit chặn có lợi.", format),
                 Profile(catalog, "boss", "Thử thách — Boss", BotDifficulty.Hard,
-                    "WindBot ưu tiên Spirit mạnh và thẻ boss đã có hiệu ứng được hỗ trợ.")
+                    "WindBot ưu tiên Spirit mạnh trong nhóm thẻ đã được hỗ trợ.", format)
             };
         }
 
         private static BattleSpiritsBotProfile Profile(IReadOnlyList<CardDefinition> catalog,
-            string id, string name, BotDifficulty difficulty, string description)
+            string id, string name, BotDifficulty difficulty, string description, BattleRulesFormat format)
         {
-            var limits = catalog.Where(card => card != null && !string.IsNullOrEmpty(card.nameJa))
+            var limits = catalog.Where(card => card != null && !string.IsNullOrEmpty(card.nameJa)
+                && (format == BattleRulesFormat.Eternal || IsStandardPrinting(card)))
                 .GroupBy(card => card.nameJa, StringComparer.Ordinal)
                 .ToDictionary(group => group.Key, group => group.Min(card => card.EffectiveCopyLimit), StringComparer.Ordinal);
-            var ordered = catalog.Where(card => card != null && card.IsPlayable)
+            var ordered = catalog.Where(card => card != null && card.IsPlayableFor(format))
                 .GroupBy(card => card.nameJa, StringComparer.Ordinal)
                 .Select(group => group.OrderBy(card => card.id, StringComparer.Ordinal).First())
                 .OrderByDescending(card => Score(card, difficulty)).ThenBy(card => card.id, StringComparer.Ordinal).ToArray();
@@ -52,21 +54,26 @@ namespace WindBot.BattleSpirits
             }
             // Deck-specific registration mirrors WindBot's named executor/deck
             // profiles. Only catalog cards whose abilities are enabled enter.
-            if (difficulty == BotDifficulty.Normal)
+            if (format == BattleRulesFormat.Eternal && difficulty == BotDifficulty.Normal)
             { Add(AbilityRegistry.Valkyrius, 1); Add(AbilityRegistry.SilverWorld, 2); Add(AbilityRegistry.DoubleDraw, 2); }
-            if (difficulty == BotDifficulty.Hard)
+            if (format == BattleRulesFormat.Eternal && difficulty == BotDifficulty.Hard)
             { Add(AbilityRegistry.Siegfried, 3); Add(AbilityRegistry.AwakenMagic, 3); Add(AbilityRegistry.DoubleDraw, 3); Add(AbilityRegistry.Valkyrius, 1); }
             foreach (var card in ordered)
             {
                 counts.TryGetValue(card.nameJa, out int current);
                 Add(card.id, limits[card.nameJa] - current);
             }
-            var deck = new DeckDefinition { name = name, cards = ids.ToArray() };
-            var validation = DeckValidator.Validate(catalog, deck.cards);
+            var deck = new DeckDefinition { name = name, format = format.ToString(), cards = ids.ToArray() };
+            var validation = DeckValidator.Validate(catalog, deck.cards, format: format);
             if (!validation.IsValid) throw new ArgumentException("WindBot deck " + id + ": " + validation.Summary);
             return new BattleSpiritsBotProfile { Id = id, Name = name, Description = description,
                 Difficulty = difficulty, Deck = deck };
         }
+
+        private static bool IsStandardPrinting(CardDefinition card) => card.standardLegalityVerified
+            && card.standardBlock == "A"
+            && (string.Equals(card.format, "Standard", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(card.format, "Both", StringComparison.OrdinalIgnoreCase));
 
         private static double Score(CardDefinition card, BotDifficulty difficulty)
         {

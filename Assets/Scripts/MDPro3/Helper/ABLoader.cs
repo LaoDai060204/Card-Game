@@ -23,6 +23,10 @@ namespace MDPro3
         private static readonly SemaphoreSlim protectorSemaphoreSlim = new(1, 1);
         private static readonly SemaphoreSlim frameSemaphoreSlim = new(1, 1);
 
+        private static FileInfo[] BundleFiles(DirectoryInfo directory) => !directory.Exists
+            ? Array.Empty<FileInfo>()
+            : directory.GetFiles("*").Where(file => BattleCosmeticCatalog.IsBundleFile(file.FullName)).ToArray();
+
         public static async UniTask<AssetBundle> CacheFromFileAsync(string path)
         {
             return await AssetBundle.LoadFromFileAsync(path);
@@ -40,6 +44,7 @@ namespace MDPro3
 
             AssetBundle ab;
             ab = AssetBundle.LoadFromFile(Program.root + path);
+            if (ab == null) return null;
             var assets = ab.LoadAllAssets();
             foreach (UnityEngine.Object asset in assets)
             {
@@ -71,6 +76,7 @@ namespace MDPro3
             }
 
             AssetBundle ab = await AssetBundle.LoadFromFileAsync(Program.root + path);
+            if (ab == null) return null;
 
             var expectedName = Path.GetFileName(path);
             if (!string.IsNullOrEmpty(expectedName))
@@ -122,13 +128,14 @@ namespace MDPro3
 #if !UNITY_EDITOR && UNITY_STANDALONE_WIN
             dir = new DirectoryInfo(Path.Combine(Application.dataPath, Program.root + path));
 #endif
-            FileInfo[] files = dir.GetFiles("*");
+            FileInfo[] files = BundleFiles(dir);
             List<AssetBundle> bundles = new();
             for (int i = 0; i < files.Length; i++)
             {
                 try
                 {
-                    bundles.Add(AssetBundle.LoadFromFile(files[i].FullName));
+                    var bundle = AssetBundle.LoadFromFile(files[i].FullName);
+                    if (bundle != null) bundles.Add(bundle);
                 }
                 catch (Exception ex)
                 {
@@ -164,14 +171,14 @@ namespace MDPro3
                 if (returnValue != null)
                     return UnityEngine.Object.Instantiate(returnValue);
                 else
-                    return UnityEngine.Object.Instantiate(loadedPrefabs[0]);
+                    return loadedPrefabs.Count == 0 ? null : UnityEngine.Object.Instantiate(loadedPrefabs[0]);
             }
             else
             {
                 if (returnValue != null)
                     return returnValue;
                 else
-                    return loadedPrefabs[0];
+                    return loadedPrefabs.Count == 0 ? null : loadedPrefabs[0];
             }
         }
 
@@ -181,10 +188,13 @@ namespace MDPro3
 #if !UNITY_EDITOR && UNITY_STANDALONE_WIN
             dir = new DirectoryInfo(Path.Combine(Application.dataPath, Program.root + path));
 #endif
-            FileInfo[] files = dir.GetFiles("*");
+            FileInfo[] files = BundleFiles(dir);
             List<AssetBundle> bundles = new();
             for (int i = 0; i < files.Length; i++)
-                bundles.Add(AssetBundle.LoadFromFile(files[i].FullName));
+            {
+                var bundle = AssetBundle.LoadFromFile(files[i].FullName);
+                if (bundle != null) bundles.Add(bundle);
+            }
 
             var go = new GameObject(Path.GetFileName(path));
             foreach(var bundle in bundles)
@@ -226,13 +236,14 @@ namespace MDPro3
                 Debug.LogError($"[LoadFromFolderAsync]: Path [{dir.FullName}] does not exist.");
                 return null;
             }
-            FileInfo[] files = dir.GetFiles("*");
+            FileInfo[] files = BundleFiles(dir);
             List<AssetBundle> bundles = new();
             for (int i = 0; i < files.Length; i++)
             {
                 try
                 {
-                    bundles.Add(await AssetBundle.LoadFromFileAsync(files[i].FullName));
+                    var bundle = await AssetBundle.LoadFromFileAsync(files[i].FullName);
+                    if (bundle != null) bundles.Add(bundle);
                 }
                 catch (Exception ex)
                 {
@@ -277,14 +288,14 @@ namespace MDPro3
                 if(returnValue != null)
                     return UnityEngine.Object.Instantiate(returnValue);
                 else
-                    return UnityEngine.Object.Instantiate(allPrefabs[0]);
+                    return allPrefabs.Count == 0 ? null : UnityEngine.Object.Instantiate(allPrefabs[0]);
             }
             else
             {
                 if (returnValue != null)
                     return returnValue;
                 else
-                    return allPrefabs[0];
+                    return allPrefabs.Count == 0 ? null : allPrefabs[0];
             }
         }
 
@@ -297,13 +308,14 @@ namespace MDPro3
             dir = new DirectoryInfo(Path.Combine(Application.dataPath, Program.root + path));
 #endif
 
-            FileInfo[] files = dir.GetFiles("*");
+            FileInfo[] files = BundleFiles(dir);
             List<AssetBundle> bundles = new();
             for (int i = 0; i < files.Length; i++)
             {
                 try
                 {
-                    bundles.Add(await AssetBundle.LoadFromFileAsync(files[i].FullName));
+                    var bundle = await AssetBundle.LoadFromFileAsync(files[i].FullName);
+                    if (bundle != null) bundles.Add(bundle);
                 }
                 catch (Exception ex)
                 {
@@ -499,6 +511,7 @@ namespace MDPro3
 
         public static async UniTask<Mate> LoadMateAsync(int code)
         {
+            if (Program.items == null) return null;
             Items.Item item = new();
             foreach (var mate in Program.items.mates)
             {
@@ -558,15 +571,18 @@ namespace MDPro3
             }
             else
             {
+                if (item.id == 0 && LaoDai.BattleSpirits.BattleSpiritsMode.Enabled) return null;
                 var matePath = Program.items.GetAssetPath(code.ToString(), Items.ItemType.Mate);
+                if (string.IsNullOrWhiteSpace(matePath)) return null;
 
                 GameObject mateGo;
                 if (matePath.EndsWith("_Folder"))
                     mateGo = await LoadFromFolderAsync<CharacterCollision>("MasterDuel/" + matePath.Replace("_Folder", string.Empty), false, true);
                 else
                     mateGo = await LoadFromFileAsync("MasterDuel/" + matePath, false, true);
-                returnValue = mateGo.AddComponent<Mate>();
+                if (mateGo != null) returnValue = mateGo.AddComponent<Mate>();
             }
+            if (returnValue == null) return null;
             returnValue.type = type;
             returnValue.code = code;
             return returnValue;
@@ -583,6 +599,29 @@ namespace MDPro3
         private static AssetBundle mdBundleMaterials;
         private static AssetBundle mdBundleSprites;
         private static AssetBundle mdBundleTextures;
+
+        public static bool battleCosmeticsCached;
+        public static float battleCosmeticsCacheProgress;
+        private static AssetBundle battleCosmeticShaders;
+
+        public static async UniTask CacheBattleCosmeticsAsync()
+        {
+            if (battleCosmeticsCached) return;
+            battleCosmeticsCacheProgress = 0f;
+            string shaders = Path.Combine(Program.root, "MasterDuel", BattleCosmeticCatalog.SharedShader);
+            try
+            {
+                // This shared shader dependency belongs to retained pet and
+                // wallpaper bundles. No Master Duel UI/duel bundle is loaded.
+                if (File.Exists(shaders)) battleCosmeticShaders = await CacheFromFileAsync(shaders);
+            }
+            catch (Exception error)
+            {
+                Debug.LogWarning("Retained cosmetics shaders could not load: " + error.Message);
+            }
+            battleCosmeticsCacheProgress = 1f;
+            battleCosmeticsCached = true;
+        }
 
         public static async UniTask CacheMasterDuelOutDuelBundles()
         {

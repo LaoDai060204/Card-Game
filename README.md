@@ -1,93 +1,85 @@
-# LaoDai Battle Spirits — Eternal 0.2.0
+# LaoDai Battle Spirits — Standard 0.3.0
 
-Bản chuyển đổi trực tiếp từ **Card-Game/MDPro3** sang **Battle Spirits Nhật, thể thức Eternal**, giao diện tiếng Việt, Unity **6000.0.24f1**. Các prefab màn hình gốc được giữ bố cục và tài nguyên giao diện; controller, dữ liệu thẻ, bộ bài, Solo và trận đấu bên trong được thay bằng hệ thống Battle Spirits. Lớp giao diện chèn thêm của bản 0.1.0 đã được bỏ.
+Bản chuyển đổi từ **Card-Game/MDPro3** sang **Battle Spirits Nhật — Standard**, giao diện tiếng Việt, Unity **6000.0.24f1**. Theo lựa chọn của chủ dự án, bản này giữ bố cục các màn hình, thay đồ họa Master Duel bằng UI mới và chỉ giữ pet, wallpaper cùng những phụ thuộc cần để các tài nguyên đó hoạt động. Lớp ứng dụng overlay của bản 0.1.0 đã bỏ.
 
-Bản này có **Solo đấu với WindBot**, tạo/tham gia phòng LAN hoặc IP trực tiếp, xây/lưu bộ bài, xem thử hoạt cảnh boss và replay Solo. Danh mục có **261 thẻ chính thức**, trong đó **21 thẻ đã hỗ trợ chơi tự động**; **240 thẻ còn lại chỉ để tra cứu**. Đây chưa phải triển khai đầy đủ mọi thẻ và hiệu ứng Eternal. Xem [phạm vi luật](Documentation/BATTLE_SPIRITS_SCOPE.md).
+Có **Solo đấu WindBot**, bộ bài, phòng LAN/IP trực tiếp, replay Solo và xem thử hoạt cảnh. Danh mục gồm **270 thẻ chính thức**; **19 thẻ Standard chơi được**: 16 Spirit không hiệu ứng và ba Spirit có Super Unleash đã triển khai. **251 thẻ khác không dùng trong trận Standard hiện tại**, gồm 21 thẻ Eternal đã có code tương thích. Đây chưa phải triển khai đầy đủ mọi thẻ và hiệu ứng Standard. Xem [phạm vi luật](Documentation/BATTLE_SPIRITS_SCOPE.md).
 
-Nhánh phát triển là `battle-spirits-mdpro3-ui`. Bản Card-Game/Yu-Gi-Oh cũ vẫn ở `main`.
+Nhánh phát triển: `battle-spirits-mdpro3-ui`. Bản Card-Game/Yu-Gi-Oh cũ được giữ trên `main`.
 
 ## Cập nhật và mở dự án
 
-Đóng Unity trước khi chuyển nhánh. Lệnh stash giữ các chỉnh sửa và tệp chưa được Git theo dõi; dữ liệu cá nhân nằm trong `.gitignore` vẫn cần sao lưu riêng nếu muốn di chuyển hoặc xóa chúng.
+Đóng Unity trước khi cập nhật. Stash giữ chỉnh sửa và tệp chưa được Git theo dõi; dữ liệu cá nhân bị `.gitignore` loại trừ cần sao lưu riêng trước khi di chuyển hoặc xóa.
 
 ```bash
-git stash push -u -m "backup-before-native-battle-spirits-update"
+git stash push -u -m "backup-before-standard-0.3-update"
 git fetch origin
 git switch battle-spirits-mdpro3-ui
 git pull --ff-only origin battle-spirits-mdpro3-ui
 ```
 
-1. Mở thư mục dự án bằng **Unity 6000.0.24f1**, nền tảng Windows.
-2. Giữ `Data`, `Picture`, `Platforms` và `Sound` cùng cấp với `Assets`.
-3. Mở **Window → Asset Management → Addressables → Groups**; khi chạy từ source, chọn **Play Mode Script → Use Asset Database** để dùng các prefab vừa sửa.
-4. Mở `Assets/Scenes/Boot.unity`, nhấn Play; tên phiên bản trong menu là **0.2.0**.
-5. Vào **Bộ bài** để chọn bộ bài, **Đấu với máy** để chơi Solo, hoặc **Hoạt cảnh** để xem thử boss.
+1. Mở thư mục dự án bằng **Unity 6000.0.24f1**, nền tảng Windows x64.
+2. Giữ `Data`, `Picture`, `Platforms`, `Sound` cùng cấp với `Assets`.
+3. Vào **Window → Asset Management → Addressables → Groups**, chọn **Play Mode Script → Use Asset Database** khi chạy từ source để dùng prefab mới.
+4. Mở `Assets/Scenes/Boot.unity`, nhấn Play. Menu phải hiện **0.3.0**.
+5. Vào **Bộ bài** chọn bộ Standard mẫu, rồi **Đấu với máy**. Sau khi chọn **GIỮ 4 LÁ**, đến Main thì bấm lá trên tay để triệu hồi; chưa có thao tác kéo thả.
 
-**Các kiểm tra mã, dữ liệu và TCP đã chạy; môi trường phát triển chưa chạy Play/render/build trực tiếp trong Windows Unity.** Khi thử Editor, kiểm tra font, kích thước chữ, ảnh, thao tác chuột và việc quay lại/chơi ván tiếp theo. [Báo cáo kiểm tra](Documentation/BATTLE_SPIRITS_VALIDATION.md) ghi rõ giới hạn này.
+**Mã, dữ liệu, UI stand-in và TCP đã được kiểm tra; chưa chạy Play/render/build trong Unity Windows thật.** Xem [báo cáo kiểm tra](Documentation/BATTLE_SPIRITS_VALIDATION.md).
 
-## Màn hình và tài nguyên được thay
+## Giao diện và tài nguyên
 
-- **DeckEditorUI, SoloSelectorUI, OnlineServantUI, RoomServantUI, OcgCoreUI** dùng controller mới ngay trên prefab gốc. Không tạo một Canvas ứng dụng khác phủ lên menu.
-- Form bộ bài giữ vùng chi tiết thẻ, bộ sưu tập và danh sách deck. Extra/Side của Yu-Gi-Oh được ẩn. Tìm theo tên, mã, hệ, nội dung hiệu ứng, loại hoặc bộ; hỗ trợ `cost:6` và `bp:6000`, lọc màu/trạng thái và sắp xếp.
-- Ảnh mặt thẻ Battle Spirits nằm trực tiếp trong **`Picture/Art/{mã-thẻ}.png`**. Hai ảnh closeup tự dựng nằm trong **`Picture/Closeup`**. Bộ 26.141 ảnh Art/Closeup Yu-Gi-Oh dạng tên số đã bỏ khỏi nhánh này; bản gốc còn trên `main` và backup. [Chi tiết thay ảnh](Documentation/battle-spirits-image-replacement.json).
-- Field dùng hình học mới với vùng Life, Reserve, Trash, Deck, Spirit và Nexus. Spirit có Core/Soul Core và hoạt ảnh theo sự kiện trận đấu. Pet Master Duel được giữ làm yếu tố trang trí.
-- Hai boss **BS01-X01** và **BS01-097** có model 3D kiểu low-poly và ảnh closeup **tự dựng**, không phải model chính thức của BANDAI. Các Spirit khác dùng hình học thay thế theo màu; chưa có model riêng cho từng thẻ.
-- Menu **Hoạt cảnh** mở màn xem thử bằng form bàn đấu gốc, cho bấm triệu hồi, tấn công, phòng thủ và chiến thắng; màn xem thử không gửi lệnh vào trận thật.
-- Nhạc nền và tám hiệu ứng WAV mới được tổng hợp tại `Sound/BattleSpirits`. Xem [nguồn và cách tạo lại tài nguyên](Tools/BattleSpiritsAssets/README.md).
+- Các form **DeckEditorUI, SoloSelectorUI, OnlineServantUI, RoomServantUI, OcgCoreUI** và ba Parts giữ hierarchy, vị trí và kích thước control. Đồ họa UI cũ được thay bằng ba sprite panel/button/clear tự tạo; không thêm Canvas ứng dụng phủ lên menu.
+- Deck giữ vùng bộ sưu tập, chi tiết và danh sách bài. Extra/Side được ẩn. Tìm theo mã/tên/hệ/hiệu ứng/loại/bộ, hoặc `cost:6`, `bp:6000`; có lọc màu, trạng thái và sắp xếp. Thẻ ngoài pool Standard bị từ chối khi thêm vào deck; thẻ chưa hỗ trợ bị từ chối lúc bắt đầu trận tự động.
+- Mặt thẻ nằm ở `Picture/Art/{mã-thẻ}.png`. Field và Spirit dùng hình học mới; có vùng Life, Reserve, Trash, Deck, Spirit/Nexus và Core/Soul Core. Không có model riêng cho mọi thẻ.
+- Pet và wallpaper được giữ: danh mục độc lập có **108 pet, 149 wallpaper**. Chọn pet ở **Đồng hành**, chọn wallpaper ở **Cài đặt → Hình nền**. Giữ bundle Mate, Wallpaper, shader chung bắt buộc và âm thanh `SE_MATE`; bootstrap không còn đọc CDB/CID hay danh mục nhân vật Yu-Gi-Oh để lấy tên chúng.
+- Model low-poly/closeup tự dựng của **BS01-X01** và **BS01-097** còn ở **Hoạt cảnh** để xem thử. Hai thẻ đó thuộc Eternal, **không vào deck Standard**. Đây không phải model chính thức của BANDAI.
+- Nhạc nền và tám cue WAV mới ở `Sound/BattleSpirits`. Xem [nguồn tài nguyên tự tạo](Tools/BattleSpiritsAssets/README.md).
 
-## Thẻ, bộ bài và Solo
+Các thư mục cũ được giữ bằng `.gitkeep` khi rỗng. Manifest ghi chính xác từng đợt dọn dữ liệu:
 
-Dữ liệu thẻ được đối chiếu ngày **31/10/2026**. Hai đợt mới đã nhập là [BS76 — 永皇の輝き](https://www.battlespirits.com/product/booster/booster-76.php), phát hành 30/05/2026, và [26RBS03 — 絶界の覇者](https://www.battlespirits.com/product/booster/booster-26rbs03.php), phát hành 17/10/2026. Nhóm 26RBS03 thuộc Standard và chưa được mặc định xác nhận hợp lệ trong Eternal. Danh mục này không bao gồm toàn bộ lịch sử thẻ Battle Spirits.
+- [Cut-in và giọng nhân vật cũ](Documentation/master-duel-initial-cleanup.json).
+- [Bundle/âm thanh ngoài pet, wallpaper và phụ thuộc cần giữ](Documentation/master-duel-external-cleanup.json).
+- [Đồ họa, font game cũ và tham chiếu UI được thay](Documentation/master-duel-art-replacement.json).
+- [CDB/CID, voice và dữ liệu Yu-Gi-Oh không còn dùng](Documentation/master-duel-data-cleanup.json).
 
-Lượt kiểm tra booster mới nhất ngày **04/11/2026** vẫn xác nhận BS76 cho Eternal và 26RBS03 cho Standard. Mốc này là kiểm tra danh sách đợt phát hành; ngày đối chiếu dữ liệu thẻ ở trên vẫn là 31/10/2026.
+Mã template tổng quát, thư viện và các tên lớp/namespace cần tương thích với bundle vẫn được giữ. Việc giữ những định danh đó không đưa gameplay hay đồ họa duel Master Duel trở lại game.
 
-21 thẻ chơi được gồm 16 Spirit không hiệu ứng và năm thẻ có code riêng đã đối chiếu thông số/văn bản gốc:
+## Luật, thẻ và Solo
 
-| Mã | Thẻ | Phần xử lý chính |
-| --- | --- | --- |
-| BS01-X01 | 龍皇ジークフリード | Awaken; hiệu ứng bị phá hủy ở Lv3 |
-| BS01-097 | 飛龍ヴァルキュリウス | Tăng BP khi chặn |
-| BS01-113 | 侵食されゆく銀世界 | Nexus; hồi Core từ Trash và hiệu ứng Lv2 |
-| BS01-115 | アウェイクン | Chuyển tối đa 3 Core từ Reserve và rút bài; có thể chọn 0 Core |
-| BS01-117 | ダブルドロー | Main rút bài hoặc Flash tăng BP |
+Bản này dùng **Standard Official Rules/Manual v1.0** được cung cấp trong ba PDF. Pool được xác minh cho mùa **01/04/2026–31/03/2027: block A**. Thứ tự lượt gồm **Main → Attack → Second Main → End**; người đi trước bỏ Core, Attack và Second Main ở lượt đầu. Second Main cho phát triển sân/chuyển Core, không cho tấn công lần nữa. [Đối chiếu PDF và Floor Rules](Documentation/BATTLE_SPIRITS_RULE_SOURCES.md).
 
-Bộ bài Eternal ít nhất 40 lá, giới hạn theo tên gốc tiếng Nhật và danh sách hạn chế/ngoại lệ đã xác minh. Lưu bằng JSON tại `Data/BattleSpirits/Decks`; các bộ mẫu 40 lá nằm trong `Data/BattleSpirits/StarterDecks`. Thẻ chưa có hiệu ứng được hỗ trợ sẽ bị từ chối khi bắt đầu trận tự động.
+19 thẻ Standard đã kiểm tra thuộc 26RBS01/02/03. Ba thẻ Super Unleash là `26RBS03-052`, `26RBS03-061`, `26RBS03-071`: Soul Core cho Lv2 chỉ trên các bản in đã xác minh có biểu tượng đó. Không áp dụng Soul Core → Lv2 cho mọi Spirit. Soul Magic, Succession và các hiệu ứng chưa lập trình vẫn bị khóa khỏi trận tự động.
 
-**Đấu với máy** dùng executor Battle Spirits mới trong cấu trúc WindBot. Ba bộ mẫu có mức Luyện tập, Giữ sân và Boss; bot quyết định từ tay bài của chính nó và thông tin công khai, được điều phối theo frame. Solo không dùng luật hoặc gói tin Yu-Gi-Oh để giả lập Battle Spirits. Đây là AI heuristic cho nhóm thẻ đã hỗ trợ, chưa phải AI hiểu mọi thẻ Eternal.
+Deck ít nhất 40 lá, tối đa ba lá cùng tên theo pool/hạn chế đã xác minh. Ba bộ mẫu tại `Data/BattleSpirits/StarterDecks` được xuất từ API profile WindBot Standard thực tế. Deck cá nhân lưu ở `Data/BattleSpirits/Decks`; replay Solo hoàn tất ở `Data/BattleSpirits/Replays`. Deck/replay cá nhân không được Git theo dõi. Bản replay 0.2.0/Eternal không được coi là replay Standard 0.3.0.
 
-Trận Solo hoàn tất được lưu tại `Data/BattleSpirits/Replays`. **Lịch sử trận** mở lại theo danh mục/phiên bản phù hợp và cho xem từng thao tác. Thư mục deck/replay cá nhân được bỏ qua trong Git.
+AI chỉ nhận tay bài của nó và thông tin công khai. Có ba mức ưu tiên, xử lý cả Second Main và Super Unleash được hỗ trợ. Đây là AI heuristic cho pool hiện có, chưa hiểu toàn bộ thẻ Standard.
 
-Nguồn chính thức, checksum ảnh/HTML và ngày truy cập nằm trong `Data/BattleSpirits/card-sources.json`; danh sách hạn chế ở `banlist.json`. `implemented-cards.json` và registry code khóa nhóm hiệu ứng đã kiểm tra.
+Danh mục được mở rộng và đối chiếu Standard ngày **04/11/2026**; ngày truy cập gốc của từng thẻ được giữ trong `card-sources.json`. Có BS76 Eternal, 26RBS03 Standard và các baseline đã kiểm tra; không bao gồm toàn bộ lịch sử thẻ. [Công cụ thẻ](Tools/BattleSpiritsCards/README.md) ghi nguồn, checksum, banlist và cách nhập lại.
 
 ```bash
 python Tools/BattleSpiritsCards/catalog.py validate
 python Tools/BattleSpiritsCards/catalog.py check
 ```
 
-Xem [công cụ thẻ](Tools/BattleSpiritsCards/README.md) trước khi import. Cập nhật ảnh hoặc văn bản không tự làm một hiệu ứng mới trở thành chơi được.
+## LAN và IP trực tiếp
 
-## LAN và kết nối IP
+Vào **Chơi mạng**. Một máy tạo phòng TCP **7777**; máy khác nhập IP và cổng, chọn deck rồi bấm **Sẵn sàng**. Chủ phòng bắt đầu khi cả hai sẵn sàng. Hai client cần cùng **Standard, danh mục và giao thức 3**; server từ chối khác thể thức hoặc bản giao thức cũ.
 
-Vào **Chơi mạng**. Một máy tạo phòng TCP **7777**; máy khác nhập IP LAN của máy chủ và đúng cổng. Trong phòng, chọn deck hợp lệ, bấm **Sẵn sàng**; người ở vị trí chủ phòng bắt đầu trận. Hai client cần cùng danh mục và giao thức **phiên bản 2**.
+- Hai client cùng máy: `127.0.0.1`.
+- Hai máy cùng router: dùng IPv4 LAN của máy tạo phòng, cho phép game/Unity qua Windows Firewall trên mạng riêng.
+- IP Internet trực tiếp cần server/cổng truy cập được; chưa có MyCard, ghép trận, xếp hạng, tự mở cổng hoặc reconnect tiếp tục trận.
 
-- Thử hai client cùng máy: dùng `127.0.0.1`.
-- Thử từ máy khác cùng router: dùng IPv4 LAN của máy tạo phòng và cho phép Unity/game qua Windows Firewall trên mạng riêng.
-- Kết nối Internet trực tiếp cần địa chỉ/cổng server truy cập được. Bản này chưa có tài khoản/ghép trận MyCard, xếp hạng, tự mở cổng router hoặc reconnect tiếp tục trận.
-
-Server C# kiểm tra người gửi, deck và luật; chỉ gửi tay bài của người nhận cùng trạng thái công khai. Có thể chạy [server console](Tools/BattleSpiritsServer/README.md) ngoài Unity. **Cổng 7911/YgoServer thuộc bản Yu-Gi-Oh cũ; bản Battle Spirits này dùng 7777.**
+Server kiểm tra deck, actor và luật; snapshot chỉ có tay bài của người nhận cùng thông tin công khai. Có thể dùng [server console](Tools/BattleSpiritsServer/README.md); mặc định là Standard. Floor Rules của giải đấu không tự bật đồng hồ hay hình phạt trong Solo/LAN.
 
 ## Build Windows
 
-Cài Windows Build Support phù hợp Editor; với cấu hình IL2CPP hiện tại cần công cụ C++ và Windows SDK. Chọn **File → Build Profiles → Windows**, build vào một thư mục riêng, ví dụ `Builds/Windows`, và dùng Addressables mới từ các prefab hiện tại.
+Cài Windows Build Support đúng Editor. Với cấu hình IL2CPP cần công cụ C++ và Windows SDK. Build vào **thư mục đầu ra mới/rỗng**, ví dụ `Builds/Windows`, với Addressables được build mới từ source hiện tại. Allowlist chép tài nguyên cần dùng nhưng không tự xóa tệp cũ còn trong một bản build trước.
 
-`BattleSpiritsWindowsPackage` có bước đóng gói sau build để chép dữ liệu Battle Spirits, ảnh được danh mục tham chiếu, closeup/nhạc mới và bundle UI/Mate còn dùng. Bundle Windows được đặt tại `<tên-game>_Data/StandaloneWindows64/MasterDuel`; `Data`, `Picture`, `Sound` nằm cạnh `.exe`. Cấu hình cá nhân, đăng nhập, deck/replay tự tạo không được lấy từ máy phát triển để đóng gói.
+Bước hậu xử lý `BattleSpiritsWindowsPackage` chép dữ liệu Battle Spirits, UI translations, `Settings.json`, ảnh/âm thanh mới và allowlist **Mate + Wallpaper + shader dùng chung**. Không đóng gói toàn bộ Master Duel hoặc dữ liệu CDB/CID/nhân vật cũ. Bundle giữ đường dẫn `<tên-game>_Data/StandaloneWindows64/MasterDuel` để tương thích với pet/wallpaper; `Data`, `Picture`, `Sound` nằm cạnh `.exe`. Cấu hình cá nhân, đăng nhập và deck/replay tự tạo không được lấy để đóng gói.
 
-Bước đóng gói này chưa được xác minh bằng một Windows build thực tế. Sau build cần mở game độc lập, kiểm tra tài nguyên rồi gửi **toàn bộ thư mục bản build** cho người chơi khác; họ không cần cài Unity.
+**Bước build này chưa được thực thi trong Windows Unity.** Cần thử game độc lập và gửi toàn bộ thư mục build cho người khác; họ không cần Unity.
 
-## Nguồn và bản cũ
+## Nguồn và bản sao lưu
 
-Template: [MDPro3 của Sherry Chaos](https://code.moenext.com/sherry_chaos/MDPro3), được tùy biến bởi LaoDai060204. Thông tin bản template được giữ tại [MDPRO3_TEMPLATE.md](Documentation/MDPRO3_TEMPLATE.md); [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) giữ ghi công và thông báo của các thành phần dùng lại.
+Template: [MDPro3 của Sherry Chaos](https://code.moenext.com/sherry_chaos/MDPro3), tùy biến bởi LaoDai060204. Giữ [thông tin template](Documentation/MDPRO3_TEMPLATE.md) và [ghi công/giấy phép](THIRD_PARTY_NOTICES.md). Artwork và văn bản thẻ Battle Spirits thuộc các chủ sở hữu, lấy từ [website chính thức](https://www.battlespirits.com/cardlist/). Đây là dự án cộng đồng độc lập.
 
-Ảnh mặt thẻ và văn bản Battle Spirits lấy từ [website chính thức](https://www.battlespirits.com/cardlist/), giữ quyền của các chủ sở hữu. Model, render closeup/menu và sound bank mới có manifest riêng, phân biệt với tài nguyên chính thức. Đây là dự án cộng đồng độc lập.
-
-Bản trước thay thế trực tiếp được giữ tại `backup/2026-10-31-before-native-battle-spirits-replacement` (`9d1d1055`). Snapshot công việc trước kiểm tra cuối được giữ tại `backup/2026-11-04-native-replacement-wip` (`88d80baa`). Không force-push hoặc ghi đè các nhánh backup.
+Backup trước đợt đổi Standard/dọn Master Duel: **`backup/2026-11-04-before-master-duel-cleanup` → `c70747a0`**. Các backup 0.1/0.2 trước đó và `main` được giữ, không force-push hay ghi đè.

@@ -11,7 +11,7 @@ using UnityEditor.Build.Reporting;
 using UnityEngine;
 
 // Unity does not copy the template's external runtime folders into a build.
-// Package the active BS data/art and the retained UI/Mate bundles explicitly.
+// Package active BS data/art and only the retained pet/wallpaper dependencies.
 public sealed class BattleSpiritsWindowsPackage : IPostprocessBuildWithReport
 {
     public int callbackOrder => 1000;
@@ -28,11 +28,11 @@ public sealed class BattleSpiritsWindowsPackage : IPostprocessBuildWithReport
                     || output.StartsWith(Path.Combine(source, name) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)))
             throw new BuildFailedException("Choose a separate Windows build output directory, such as Builds/Windows.");
 
-        CopyDirectory(Path.Combine(source, "Data/locales"), Path.Combine(output, "Data/locales"));
+        foreach (string locale in Directory.EnumerateDirectories(Path.Combine(source, "Data/locales")))
+            CopyOptional(Path.Combine(locale, "translation.conf"), Path.Combine(output, "Data/locales", Path.GetFileName(locale), "translation.conf"));
+        CopyRelative(source, output, "Data/Settings.json");
         CopyDirectory(Path.Combine(source, "Data/BattleSpirits"), Path.Combine(output, "Data/BattleSpirits"),
             path => !path.Split(Path.DirectorySeparatorChar).Any(part => part == "Decks" || part == "Replays"));
-        foreach (string name in new[] { "cards_Lite.json", "cards_Alt.json", "DuelLinks_NPC_NAME.json", "DuelLinks_Profile.json" })
-            CopyOptional(Path.Combine(source, "Data", name), Path.Combine(output, "Data", name));
         var catalog = JsonConvert.DeserializeObject<CardsDatabase>(File.ReadAllText(Path.Combine(source, BattleSpiritsMode.CatalogPath)));
         if (catalog?.cards == null) throw new BuildFailedException("The Battle Spirits catalog is missing or invalid.");
         foreach (var card in catalog.cards)
@@ -42,11 +42,17 @@ public sealed class BattleSpiritsWindowsPackage : IPostprocessBuildWithReport
         }
         CopyRelative(source, output, "Picture/Art/bs-menu.png");
         CopyDirectory(Path.Combine(source, "Sound/BattleSpirits"), Path.Combine(output, "Sound/BattleSpirits"));
-        CopyDirectory(Path.Combine(source, "Platforms/StandaloneWindows64/MasterDuel"),
-            Path.Combine(data, "StandaloneWindows64/MasterDuel"));
+        string cosmeticSource = Path.Combine(source, "Platforms/StandaloneWindows64/MasterDuel");
+        foreach (string directory in MDPro3.BattleCosmeticCatalog.BundleDirectories)
+            if (!Directory.Exists(Path.Combine(cosmeticSource, directory)))
+                throw new BuildFailedException("Missing retained cosmetic directory: " + directory);
+        if (!File.Exists(Path.Combine(cosmeticSource, MDPro3.BattleCosmeticCatalog.SharedShader)))
+            throw new BuildFailedException("Missing retained pet/wallpaper shared shaders.");
+        foreach (string file in MDPro3.BattleCosmeticCatalog.RetainedFiles(cosmeticSource))
+            CopyFile(file, Path.Combine(data, "StandaloneWindows64/MasterDuel", Path.GetRelativePath(cosmeticSource, file)));
         // Data/config.conf and personal decks/logins/replays are deliberately
         // created locally by the game, never copied from the developer's PC.
-        Debug.Log("Battle Spirits Windows package: native screens, official BS card faces, original boss art/audio and retained UI/Mate bundles copied.");
+        Debug.Log("Battle Spirits Windows package: native screens, BS data/art/audio, retained pet/wallpaper bundles and their shared shader dependency copied.");
     }
 
     private static void CopyRelative(string root, string output, string relative)
@@ -72,7 +78,8 @@ public sealed class BattleSpiritsWindowsPackage : IPostprocessBuildWithReport
         if (!Directory.Exists(source)) throw new BuildFailedException("Missing runtime directory: " + source);
         foreach (string file in Directory.EnumerateFiles(source, "*", SearchOption.AllDirectories))
         {
-            if (file.EndsWith(".meta", StringComparison.OrdinalIgnoreCase) || (include != null && !include(file))) continue;
+            if (Path.GetFileName(file).StartsWith(".", StringComparison.Ordinal) || file.EndsWith(".meta", StringComparison.OrdinalIgnoreCase)
+                || file.EndsWith(".manifest", StringComparison.OrdinalIgnoreCase) || (include != null && !include(file))) continue;
             CopyFile(file, Path.Combine(target, Path.GetRelativePath(source, file)));
         }
     }

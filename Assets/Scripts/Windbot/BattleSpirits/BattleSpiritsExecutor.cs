@@ -18,6 +18,7 @@ namespace WindBot.BattleSpirits
         public const int MaximumZoneCards = 256;
         private readonly Dictionary<string, CardDefinition> catalog;
         private readonly Random random;
+        private BattleRulesFormat rulesFormat;
         public BotDifficulty Difficulty { get; }
         public int LastInspectionCount { get; private set; }
 
@@ -35,6 +36,9 @@ namespace WindBot.BattleSpirits
         {
             LastInspectionCount = 0;
             if (!CanDecide(view)) return null;
+            if (string.IsNullOrEmpty(view.rulesFormat) || view.rulesFormat == "Eternal") rulesFormat = BattleRulesFormat.Eternal;
+            else if (view.rulesFormat == "Standard") rulesFormat = BattleRulesFormat.Standard;
+            else return null;
             var me = view.players.First(player => player.playerIndex == view.viewer);
             var opponent = view.players.First(player => player.playerIndex != view.viewer);
             switch (view.phase)
@@ -42,6 +46,7 @@ namespace WindBot.BattleSpirits
                 case "Opening":
                     return new BattleCommand { action = "opening", redraw = ShouldRedraw(view, me) };
                 case "Main":
+                case "SecondMain":
                     return ChooseMain(view, me, opponent);
                 case "Attack":
                     return ChooseAttack(view, me, opponent);
@@ -112,7 +117,7 @@ namespace WindBot.BattleSpirits
                 for (int index = 0; index < view.ownHand.Length; index++)
                 {
                     LastInspectionCount++;
-                    if (!TryCard(view.ownHand[index], out var card) || !card.IsPlayable
+                    if (!TryCard(view.ownHand[index], out var card) || !card.IsPlayableFor(rulesFormat)
                         || !string.Equals(card.type, "Magic", StringComparison.OrdinalIgnoreCase)) continue;
                     int cost = Math.Max(0, card.cost - Math.Min(card.reductionSymbols, reductions[(int)card.color]));
                     if (cost > Reserve(me)) continue;
@@ -139,6 +144,7 @@ namespace WindBot.BattleSpirits
             if (Reserve(me) > 0 && Difficulty != BotDifficulty.Easy)
             {
                 SpiritView target = null;
+                bool targetSoul = false;
                 double best = double.NegativeInfinity;
                 int opposingBp = opponent.field.Where(other => !other.exhausted)
                     .Select(other => BlockingBp(other)).DefaultIfEmpty(0).Max();
@@ -149,7 +155,13 @@ namespace WindBot.BattleSpirits
                     if (!TryCard(spirit.cardId, out var card) || !IsPermanent(card)) continue;
                     int total = Cores(spirit);
                     var next = card.levels.FirstOrDefault(level => level.cores > total);
-                    if (next == null || next.cores - total > Reserve(me)) continue;
+                    bool useSoul = rulesFormat == BattleRulesFormat.Standard && card.superUnleash
+                        && !spirit.soulCore && me.reserveSoul && spirit.level < 2 && card.levels.Count >= 2;
+                    // Printed Super Unleash alone makes one Soul Core enough
+                    // for Lv2. Ordinary Spirits retain their printed thresholds.
+                    if (useSoul) next = card.levels[1];
+                    int required = useSoul ? 1 : next == null ? int.MaxValue : next.cores - total;
+                    if (next == null || required > Reserve(me)) continue;
                     if (card.IsNexus)
                     {
                         // Silver World's second level matters when defending
@@ -158,19 +170,19 @@ namespace WindBot.BattleSpirits
                         if (card.id != AbilityRegistry.SilverWorld
                             || me.field.Count(item => IsAttackingSpirit(item)) < 2) continue;
                         double nexusScore = 1500.0 / (next.cores - total);
-                        if (nexusScore > best) { best = nexusScore; target = spirit; }
+                        if (nexusScore > best) { best = nexusScore; target = spirit; targetSoul = false; }
                         continue;
                     }
                     if (next.bp <= spirit.bp) continue;
-                    double score = (next.bp - spirit.bp) / (double)(next.cores - total);
+                    double score = (next.bp - spirit.bp) / (double)required;
                     if (spirit.bp <= opposingBp && next.bp > opposingBp) score += 10000;
-                    if (score > best) { best = score; target = spirit; }
+                    if (score > best) { best = score; target = spirit; targetSoul = useSoul; }
                 }
                 if (target != null)
                     return new BattleCommand { action = "moveCore", source = -1,
-                        target = target.instanceId, soul = me.reserveNormal == 0 && me.reserveSoul };
+                        target = target.instanceId, soul = targetSoul || me.reserveNormal == 0 && me.reserveSoul };
             }
-            return new BattleCommand { action = view.turn <= 1 ? "endTurn" : "attackStep" };
+            return new BattleCommand { action = view.turn <= 1 || view.phase == "SecondMain" ? "endTurn" : "attackStep" };
         }
 
         private BattleCommand ChooseAttack(FilteredMatchView view, PublicPlayerView me, PublicPlayerView opponent)
@@ -299,7 +311,7 @@ namespace WindBot.BattleSpirits
             for (int index = 0; index < view.ownHand.Length; index++)
             {
                 LastInspectionCount++;
-                if (!TryCard(view.ownHand[index], out var card) || !card.IsPlayable || !card.IsMagic) continue;
+                if (!TryCard(view.ownHand[index], out var card) || !card.IsPlayableFor(rulesFormat) || !card.IsMagic) continue;
                 int cost = Math.Max(0, card.cost - Math.Min(redSymbols, card.reductionSymbols));
                 if (Reserve(me) < cost) continue;
                 if (card.id == AbilityRegistry.AwakenMagic)
@@ -324,9 +336,9 @@ namespace WindBot.BattleSpirits
             return id != null && catalog.TryGetValue(id, out card);
         }
 
-        private static bool IsSpirit(CardDefinition card) => card.IsPlayable
+        private bool IsSpirit(CardDefinition card) => card.IsPlayableFor(rulesFormat)
             && string.Equals(card.type, "Spirit", StringComparison.OrdinalIgnoreCase);
-        private static bool IsPermanent(CardDefinition card) => card.IsPlayable
+        private bool IsPermanent(CardDefinition card) => card.IsPlayableFor(rulesFormat)
             && (string.Equals(card.type, "Spirit", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(card.type, "Nexus", StringComparison.OrdinalIgnoreCase));
         private bool IsAttackingSpirit(SpiritView spirit) => TryCard(spirit.cardId, out var card) && IsSpirit(card);

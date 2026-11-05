@@ -53,6 +53,13 @@ namespace MDPro3
         public void Change(int id)
         {
             Destroy(back);
+            if (LaoDai.BattleSpirits.BattleSpiritsMode.Enabled)
+            {
+                // The Battle Spirits screens/field render their own background.
+                // Master Duel menu backgrounds are outside retained wallpapers.
+                back = null;
+                return;
+            }
 
             if (id == 0)
             {

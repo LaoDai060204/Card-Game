@@ -24,6 +24,52 @@ def product(code, title, year, month, day):
 
 
 class CatalogTests(unittest.TestCase):
+    def test_standard_block_is_read_from_the_printed_icon_field(self):
+        source = (HERE / "Fixtures/standard-26rbs01-003-detail.html").read_text()
+        self.assertEqual(["A"], catalog.standard_blocks(source))
+        self.assertEqual([], catalog.standard_blocks('<h2>26RBS03 block A</h2>'))
+        self.assertEqual([], catalog.standard_blocks((HERE / "Fixtures/vanilla-detail.html").read_text()))
+
+    def test_standard_normal_spirit_does_not_gain_super_unleash(self):
+        source = (HERE / "Fixtures/standard-26rbs01-003-detail.html").read_text()
+        card = catalog.parse_detail(source, "26RBS01-003")
+        self.assertEqual([{"cores": 1, "bp": 4000}, {"cores": 2, "bp": 6000}], card["levels"])
+        self.assertEqual("-", card["effectTextJa"])
+        self.assertFalse(card.get("superUnleash", False))
+
+    def test_standard_soul_icon_preserves_normal_lv2_threshold_and_keyword(self):
+        for cid, cores, bp in (("26RBS03-052", 3, 7000), ("26RBS03-061", 4, 5000), ("26RBS03-071", 4, 10000)):
+            with self.subTest(card=cid):
+                source = (HERE / ("Fixtures/standard-" + cid.lower() + "-detail.html")).read_text()
+                card = catalog.parse_detail(source, cid)
+                self.assertTrue(card["superUnleash"])
+                self.assertEqual({"cores": cores, "bp": bp}, card["levels"][1])
+                self.assertEqual(str(cores) + "/", card["levelsRaw"][1]["cores"])
+                self.assertEqual("-", card["effectTextJa"])
+
+    def test_a_slash_without_the_official_soul_icon_does_not_create_a_keyword(self):
+        source = (HERE / "Fixtures/standard-26rbs03-052-detail.html").read_text()
+        source = source.replace("ico_soulcore.png", "unrelated_icon.png")
+        card = catalog.parse_detail(source, "26RBS03-052")
+        self.assertFalse(card.get("superUnleash", False))
+        self.assertEqual(1, len(card["levels"]))
+
+    def test_standard_baseline_pins_keyword_block_and_printed_data(self):
+        baseline = catalog.standard_baseline(HERE.parents[1])["26RBS03-052"]
+        catalog.verify_standard_implementation(baseline, baseline)
+        for field, value in (("cost", 0), ("standardBlock", "B"), ("standardLegal", False),
+                             ("superUnleash", False), ("effectTextJa", "invented effect")):
+            changed = copy.deepcopy(baseline)
+            changed[field] = value
+            with self.subTest(field=field), self.assertRaises(ValueError):
+                catalog.verify_standard_implementation(changed, baseline)
+
+    def test_update_report_detects_removed_standard_soul_icon(self):
+        observed = {"nameJa": "Same", "effectTextJa": "-"}
+        report = catalog.observed_changes(dict(observed, superUnleash=True), observed)
+        self.assertEqual({"superUnleash"}, set(report))
+        self.assertIsNone(report["superUnleash"]["official"])
+
     def test_selected_boss_stats_are_read_from_official_source(self):
         card = catalog.parse_detail((HERE / "Fixtures/bs01-x01-detail.html").read_text(), "BS01-X01")
         self.assertEqual("龍皇ジークフリード", card["nameJa"])

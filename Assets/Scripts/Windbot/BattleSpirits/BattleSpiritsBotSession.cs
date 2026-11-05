@@ -76,6 +76,7 @@ namespace WindBot.BattleSpirits
             {
                 case "Opening": return new BattleCommand { action = "opening" };
                 case "Main":
+                case "SecondMain":
                 case "Attack": return new BattleCommand { action = "endTurn" };
                 case "FlashBeforeBlock":
                 case "FlashAfterBlock": return new BattleCommand { action = "passFlash" };
@@ -89,6 +90,7 @@ namespace WindBot.BattleSpirits
             var text = new StringBuilder();
             text.Append(view.viewer).Append('|').Append(view.decisionPlayer).Append('|')
                 .Append(view.activePlayer).Append('|').Append(view.turn).Append('|').Append(view.phase)
+                .Append('|').Append(view.rulesFormat)
                 .Append('|').Append(view.attacker).Append('|').Append(view.blocker).Append('|').Append(view.flashPlayer);
             foreach (string card in view.ownHand) text.Append('|').Append(card?.Length ?? 0).Append(':').Append(card);
             foreach (var player in view.players)

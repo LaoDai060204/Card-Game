@@ -48,7 +48,7 @@ internal static class Entry
         public readonly List<WireMessage> Commands=new List<WireMessage>();
         public DeckDefinition Saved;
         public event Action Changed;
-        public FakeSession(IReadOnlyList<CardDefinition> cards){Cards=cards;Decks=StarterDecks.CreatePair(cards);SelectedDeck=Decks[0];}
+        public FakeSession(IReadOnlyList<CardDefinition> cards){Cards=cards;Decks=StarterDecks.CreatePair(cards, BattleRulesFormat.Standard);SelectedDeck=Decks[0];}
         public void SelectDeck(DeckDefinition deck){SelectedDeck=deck;Changed?.Invoke();}
         public bool SaveDeck(DeckDefinition deck,out string error){Saved=deck;error="";return true;}
         public void StartSolo(DeckDefinition player,DeckDefinition opponent){SoloStarts++;}
@@ -219,7 +219,7 @@ internal static class Entry
             });
             Case("Original deck add action enforces same-name copy cap",()=>{
                 var screen=Screen(BattleNativeScreen.Deck);var view=Field<BattleNativeDeckView>(screen,"deck");
-                Click(screen.transform,"DeckEditHeader/Root/Header/ButtonChangeSide");Call(view,"Select",catalog.cards.First(card=>card.IsPlayable));
+                Click(screen.transform,"DeckEditHeader/Root/Header/ButtonChangeSide");Call(view,"Select",catalog.cards.First(card=>card.IsPlayableFor(BattleRulesFormat.Standard)));
                 for(int i=0;i<4;i++)Click(screen.transform,"CardDetailView/Root/Window/Content/DescriptionArea/MenuAreaRoot/MenuArea/CardGroup/AddCardButton");
                 Assert(Field<List<string>>(view,"deck").Count==3,"Copy limit not enforced.");
             });
@@ -228,6 +228,13 @@ internal static class Entry
                 Assert(screen.GetComponentsInChildren<Transform>(true).Any(node=>node.name.StartsWith("BS_Row_")),"No original Solo list rows.");
                 Click(screen.transform,"ButtonDeck");Click(screen.transform,"ButtonPlay");Assert(fake.SoloStarts==1,"Solo button did not call BS session.");
                 AssertGeneratedLayers(screen.transform);
+            });
+            Case("Standard deck form refuses Eternal-only BS01 cards",()=>{
+                var screen=Screen(BattleNativeScreen.Deck);var view=Field<BattleNativeDeckView>(screen,"deck");
+                Click(screen.transform,"DeckEditHeader/Root/Header/ButtonChangeSide");
+                Call(view,"Select",catalog.cards.Single(card=>card.id=="BS01-X01"));
+                Click(screen.transform,"CardDetailView/Root/Window/Content/DescriptionArea/MenuAreaRoot/MenuArea/CardGroup/AddCardButton");
+                Assert(Field<List<string>>(view,"deck").Count==0,"Eternal-only boss added to Standard deck.");
             });
             Case("Original online inputs send direct IP and port to Battle Spirits",()=>{
                 var screen=Screen(BattleNativeScreen.Online);
@@ -256,6 +263,15 @@ internal static class Entry
                 UnityEngine.EventSystems.EventSystem.current.currentSelectedGameObject=go;MDPro3.UIManager.PopupSelected.Invoke();
                 var command=fake.Commands.Single();Assert(command.action=="playMagic"&&command.target==-1&&command.transfers?.Length==0,"Draw-only choice requested a nonexistent target or core.");
             });
+            Case("Standard Second Main permits summon and end without another Attack",()=>{
+                fake.View=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);
+                fake.View.phase="SecondMain";fake.View.rulesFormat="Standard";fake.View.turn=3;fake.View.decisionPlayer=0;
+                string id=catalog.cards.First(card=>card.IsPlayableFor(BattleRulesFormat.Standard)).id;fake.View.ownHand=new[]{id};
+                var screen=Screen(BattleNativeScreen.Duel);var duel=Field<BattleNativeDuelView>(screen,"duel");
+                Assert(!Find(screen.transform,"Buttons/ButtonInfo").gameObject.activeSelf,"Second Main exposes Attack button.");
+                Call(duel,"PlayHand",0,id);Assert(fake.Commands.Last().action=="summon","Second Main did not allow summon.");
+                Click(screen.transform,"Buttons/ButtonLog");Assert(fake.Commands.Last().action=="endTurn","Second Main did not end turn.");
+            });
             Case("Native duel controls close on disconnected state and replay uses step controls",()=>{
                 fake.View=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards),0);var screen=Screen(BattleNativeScreen.Duel);fake.CanSendCommands=false;fake.Refresh();
                 Assert(Find(screen.transform,"Buttons/ButtonInfo").GetComponentInChildren<TextMeshProUGUI>(true).text=="QUAY LẠI",
@@ -271,16 +287,16 @@ internal static class Entry
                 menu.OnSolo();Assert(((BattleNativeServant)program.currentServant).Screen==BattleNativeScreen.Solo,"Solo menu uses old overlay.");
                 menu.OnDeck();Assert(((BattleNativeServant)program.currentServant).Screen==BattleNativeScreen.Deck,"Deck route not native.");
                 menu.OnOnline();Assert(((BattleNativeServant)program.currentServant).Screen==BattleNativeScreen.Online,"Online route not native.");
-                menu.OnPuzzle();Assert(MDPro3.UIManager.Popup?.First()=="BATTLE SPIRITS — ETERNAL","Rules popup not native.");
+                menu.OnPuzzle();Assert(MDPro3.UIManager.Popup?.First()=="BATTLE SPIRITS — STANDARD","Rules popup not native.");
             });
             Case("Session save/load preserves deck IDs and rejects path/format mistakes",()=>{
-                var session=BattleNativeSession.Ensure();var deck=StarterDecks.Create(catalog.cards,"../CON:Battle/Deck");
+                var session=BattleNativeSession.Ensure();var deck=StarterDecks.Create(catalog.cards,"../CON:Battle/Deck", BattleRulesFormat.Standard);
                 Assert(session.SaveDeck(deck,out string error),"Valid BS deck save failed: "+error);
                 Assert(Directory.GetFiles(Path.Combine(temporary,"Data/BattleSpirits/Decks"),"*.json").Length>0,"No saved BS deck.");
                 Assert(!session.SaveDeck(new DeckDefinition{name="Short",cards=new[]{"BS01-X01"}},out error),"Undersized deck accepted.");
             });
             Case("Actual Solo session runs WindBot on filtered views and records complete match",()=>{
-                var session=BattleNativeSession.Ensure();var pair=StarterDecks.CreatePair(catalog.cards);session.StartSolo(pair[0],pair[1]);Assert(session.View?.viewer==0&&session.Seat==0,"Human own-view not fixed.");
+                var session=BattleNativeSession.Ensure();var pair=StarterDecks.CreatePair(catalog.cards, BattleRulesFormat.Standard);session.StartSolo(pair[0],pair[1]);Assert(session.View?.viewer==0&&session.Seat==0,"Human own-view not fixed.");
                 session.Send(new WireMessage{type="action",action="opening"});
                 Pump(()=>session.View.phase=="Main",()=>{Time.unscaledTime+=0.5f;Call(session,"Update");});
                 Assert(session.View.players[1].handCount==4,"AI opening did not complete.");
@@ -288,7 +304,7 @@ internal static class Entry
                 Assert(session.ReplayFiles().Length>0,"Completed Solo not saved.");
             });
             Case("Actual replay reconstructs commands and disables live action authority",()=>{
-                var session=BattleNativeSession.Ensure();var existing=session.ReplayFiles();var pair=StarterDecks.CreatePair(catalog.cards);session.StartSolo(pair[0],pair[1]);session.Send(new WireMessage{type="action",action="concede"});
+                var session=BattleNativeSession.Ensure();var existing=session.ReplayFiles();var pair=StarterDecks.CreatePair(catalog.cards, BattleRulesFormat.Standard);session.StartSolo(pair[0],pair[1]);session.Send(new WireMessage{type="action",action="concede"});
                 string file=session.ReplayFiles().Except(existing).Single();session.LoadReplay(file,0);Assert(session.IsReplay&&!session.CanSendCommands,"Replay retained command authority.");
                 session.StepReplay(1);Assert(session.View.winner==1,"Recorded concession replay diverged.");
             });
@@ -328,7 +344,7 @@ internal static class Entry
                 Assert(image.texture==textures["BS01-X01"]&&image.texture!=textures["closeup:BS01-X01"],"Official card face replaced by a cached closeup.");
             });
             Case("Corrupt future replay commands are rejected before replacing a live Solo",()=>{
-                var session=BattleNativeSession.Ensure();var pair=StarterDecks.CreatePair(catalog.cards);session.StartSolo(pair[0],pair[1]);session.Send(new WireMessage{type="action",action="concede"});
+                var session=BattleNativeSession.Ensure();var pair=StarterDecks.CreatePair(catalog.cards, BattleRulesFormat.Standard);session.StartSolo(pair[0],pair[1]);session.Send(new WireMessage{type="action",action="concede"});
                 var saved=Newtonsoft.Json.Linq.JObject.Parse(File.ReadAllText(session.ReplayFiles().First()));
                 saved["actions"]=new Newtonsoft.Json.Linq.JArray(new Newtonsoft.Json.Linq.JObject { ["actor"]=0,["command"]=new Newtonsoft.Json.Linq.JObject { ["action"]="invented-command" } });
                 string bad=Path.Combine(temporary,"bad-replay.json");File.WriteAllText(bad,saved.ToString());

@@ -30,6 +30,12 @@ namespace MDPro3
         {
             instance = this;
             base.Initialize();
+            if (LaoDai.BattleSpirits.BattleSpiritsMode.Enabled)
+            {
+                container = ScriptableObject.CreateInstance<TextureContainer>();
+                loaded = true;
+                return;
+            }
             var handle = Addressables.LoadAssetAsync<TextureContainer>("ScriptableObjects/TextureContainer.asset");
             handle.Completed += (result) =>
             {
@@ -42,6 +48,14 @@ namespace MDPro3
         private async UniTask LoadMaterials()
         {
             await UniTask.WaitUntil(() => container != null);
+
+            if (LaoDai.BattleSpirits.BattleSpiritsMode.Enabled)
+            {
+                // Battle Spirits uses its own UGUI skin and materials. Pet and
+                // wallpaper shaders are cached by ABLoader independently.
+                loaded = true;
+                return;
+            }
 
             commonShopButtonMat = await ABLoader.LoadMaterialAsync("MasterDuel/Material/GUI_CommonShopButton_N", default);
             SetCommonShopButtonMaterial(commonShopButtonMat);

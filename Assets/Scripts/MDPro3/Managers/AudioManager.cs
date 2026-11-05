@@ -210,7 +210,7 @@ namespace MDPro3
             if (string.IsNullOrEmpty(path))
                 return;
 
-            if (LaoDai.BattleSpirits.BattleSpiritsMode.Enabled)
+            if (LaoDai.BattleSpirits.BattleSpiritsMode.Enabled && !BattleCosmeticCatalog.IsPetSoundLabel(path))
             {
                 // Keep the template's call sites while replacing their active audio.
                 var cue = path.IndexOf("ATTACK", StringComparison.OrdinalIgnoreCase) >= 0 ? "attack"

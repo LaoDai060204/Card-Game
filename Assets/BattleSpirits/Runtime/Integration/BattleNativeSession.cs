@@ -59,6 +59,7 @@ namespace LaoDai.BattleSpirits.Integration
         {
             public int schema = Protocol.Version;
             public string catalogHash;
+            public string rulesFormat = BattleSpiritsMode.RulesFormat.ToString();
             public int seed;
             public string[] names;
             public DeckDefinition[] decks;
@@ -87,7 +88,7 @@ namespace LaoDai.BattleSpirits.Integration
                 ReloadDecks();
                 SelectedDeck = decks[0];
                 Initialized = true;
-                SetStatus("Battle Spirits Eternal — " + Cards.Count + " thẻ, " + Cards.Count(card => card.IsPlayable) + " thẻ đã hỗ trợ.");
+                SetStatus("Battle Spirits Standard — " + Cards.Count + " thẻ, " + Cards.Count(card => card.IsPlayableFor(BattleSpiritsMode.RulesFormat)) + " thẻ Standard đã hỗ trợ.");
             }
             catch (Exception error) when (error is IOException || error is UnauthorizedAccessException || error is JsonException || error is ArgumentException)
             {
@@ -107,12 +108,13 @@ namespace LaoDai.BattleSpirits.Integration
                         try
                         {
                             var deck = JsonConvert.DeserializeObject<DeckDefinition>(File.ReadAllText(path));
-                            if (deck?.cards != null && DeckValidator.Validate(Cards, deck.cards, false).IsValid) decks.Add(deck);
+                            if (deck?.cards != null && deck.format == BattleSpiritsMode.RulesFormat.ToString()
+                                && DeckValidator.Validate(Cards, deck.cards, false, BattleSpiritsMode.RulesFormat).IsValid) decks.Add(deck);
                         }
                         catch (Exception error) when (error is IOException || error is JsonException || error is UnauthorizedAccessException)
                         { Debug.LogWarning("Battle Spirits deck: " + error.Message); }
-            if (decks.Count == 0) decks.AddRange(StarterDecks.CreatePair(Cards));
-            foreach (var profile in BattleSpiritsBotProfiles.Create(Cards))
+            if (decks.Count == 0) decks.AddRange(StarterDecks.CreatePair(Cards, BattleSpiritsMode.RulesFormat));
+            foreach (var profile in BattleSpiritsBotProfiles.Create(Cards, BattleSpiritsMode.RulesFormat))
                 if (!decks.Any(deck => deck.name == profile.Deck.name)) decks.Add(profile.Deck);
         }
 
@@ -130,13 +132,13 @@ namespace LaoDai.BattleSpirits.Integration
         {
             error = string.Empty;
             if (deck?.cards == null) { error = "Bộ bài trống."; return false; }
-            var validation = DeckValidator.Validate(Cards, deck.cards, false);
+            var validation = DeckValidator.Validate(Cards, deck.cards, false, BattleSpiritsMode.RulesFormat);
             if (!validation.IsValid) { error = validation.Summary; return false; }
             try
             {
                 string title = string.IsNullOrWhiteSpace(deck.name) ? "Bộ bài Battle Spirits" : deck.name.Trim();
                 if (title.Length > 80) title = title.Substring(0, 80);
-                deck = new DeckDefinition { name = title, cards = deck.cards.ToArray() };
+                deck = new DeckDefinition { name = title, format = BattleSpiritsMode.RulesFormat.ToString(), cards = deck.cards.ToArray() };
                 string safe = string.Concat(title.Select(c => c < 32 || "<>:\"/\\|?*".IndexOf(c) >= 0 ? '_' : c)).Trim(' ', '.');
                 if (safe.Length == 0) safe = "deck";
                 // Prefix also prevents Windows reserved names such as CON.
@@ -157,8 +159,8 @@ namespace LaoDai.BattleSpirits.Integration
             try
             {
                 int seed = Environment.TickCount;
-                var profile = BattleSpiritsBotProfiles.Create(Cards).FirstOrDefault(item => item.Deck.name == opponentDeck.name);
-                match = BattleMatch.Create(Cards, playerDeck.cards, opponentDeck.cards, seed);
+                var profile = BattleSpiritsBotProfiles.Create(Cards, BattleSpiritsMode.RulesFormat).FirstOrDefault(item => item.Deck.name == opponentDeck.name);
+                match = BattleMatch.Create(Cards, playerDeck.cards, opponentDeck.cards, seed, format: BattleSpiritsMode.RulesFormat);
                 match.State.Players[0].Name = Config.Get("BattleSpiritsPlayerName", "Người chơi");
                 match.State.Players[1].Name = profile?.Name ?? "WindBot Battle Spirits";
                 bot = new BattleSpiritsBotSession(1, new BattleSpiritsExecutor(Cards, profile?.Difficulty ?? BotDifficulty.Normal, seed ^ 7911), 0.4);
@@ -175,7 +177,7 @@ namespace LaoDai.BattleSpirits.Integration
 
         private bool ValidDeck(DeckDefinition deck)
         {
-            var result = DeckValidator.Validate(Cards, deck?.cards);
+            var result = DeckValidator.Validate(Cards, deck?.cards, true, BattleSpiritsMode.RulesFormat);
             if (!result.IsValid) SetStatus(result.Summary);
             return result.IsValid;
         }
@@ -195,9 +197,9 @@ namespace LaoDai.BattleSpirits.Integration
             connection.MessageReceived += Receive;
             try
             {
-                if (hostHere) { server = new BattleLanServer(Cards); server.Start(port); }
+                if (hostHere) { server = new BattleLanServer(Cards, BattleSpiritsMode.RulesFormat); server.Start(port); }
                 SetStatus("Đang kết nối Battle Spirits...");
-                await connection.ConnectAsync(address.Trim(), port, name.Trim(), CatalogFingerprint.Compute(Cards));
+                await connection.ConnectAsync(address.Trim(), port, name.Trim(), CatalogFingerprint.Compute(Cards), BattleSpiritsMode.RulesFormat);
                 if (this == null || generation != connectionGeneration || client != connection) return;
                 Config.Set("BattleSpiritsPlayerName", name.Trim()); Config.Save();
                 SetStatus(hostHere ? "Đã tạo phòng Battle Spirits TCP " + port + "." : "Đã kết nối phòng.");
@@ -250,6 +252,10 @@ namespace LaoDai.BattleSpirits.Integration
 
         private void Receive(WireMessage message)
         {
+            if ((message.type == "welcome" || message.type == "lobby" || message.type == "state")
+                && (message.version != Protocol.Version || message.rulesFormat != BattleSpiritsMode.RulesFormat.ToString()
+                    || message.type == "state" && message.view?.rulesFormat != BattleSpiritsMode.RulesFormat.ToString()))
+            { Disconnect(); SetStatus("Máy chủ gửi thể thức hoặc phiên bản không phù hợp với Standard hiện tại."); return; }
             switch (message.type)
             {
                 case "welcome":
@@ -396,7 +402,8 @@ namespace LaoDai.BattleSpirits.Integration
                 var saved = JsonConvert.DeserializeObject<MatchRecord>(File.ReadAllText(path));
                 if (saved?.decks?.Length != 2 || saved.names?.Length != 2 || saved.actions == null
                     || saved.actions.Count > 10000
-                    || saved.schema != Protocol.Version || saved.catalogHash != CatalogFingerprint.Compute(Cards))
+                    || saved.schema != Protocol.Version || saved.catalogHash != CatalogFingerprint.Compute(Cards)
+                    || saved.rulesFormat != BattleSpiritsMode.RulesFormat.ToString())
                     throw new InvalidDataException("Lịch sử không phù hợp phiên bản luật/danh mục hiện tại.");
                 // Reject an invalid later action before discarding the current
                 // session, even when playback is requested from step zero.
@@ -452,7 +459,7 @@ namespace LaoDai.BattleSpirits.Integration
 
         private BattleMatch RebuildReplay(MatchRecord saved, int count)
         {
-            var result = BattleMatch.Create(Cards, saved.decks[0].cards, saved.decks[1].cards, saved.seed);
+            var result = BattleMatch.Create(Cards, saved.decks[0].cards, saved.decks[1].cards, saved.seed, format: BattleSpiritsMode.RulesFormat);
             for (int i = 0; i < 2; i++) result.State.Players[i].Name = saved.names[i];
             for (int i = 0; i < count; i++)
             {

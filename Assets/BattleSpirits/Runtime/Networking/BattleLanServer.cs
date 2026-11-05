@@ -93,6 +93,7 @@ namespace LaoDai.BattleSpirits.Networking
         private readonly object lifecycleGate = new object();
         private readonly IReadOnlyList<CardDefinition> catalog;
         private readonly string catalogHash;
+        private readonly BattleRulesFormat rulesFormat;
         private Run current;
 
         public event Action<string> Diagnostic;
@@ -100,9 +101,11 @@ namespace LaoDai.BattleSpirits.Networking
         public string CatalogHash => catalogHash;
         public bool IsRunning { get { lock (lifecycleGate) return current != null; } }
 
-        public BattleLanServer(IReadOnlyList<CardDefinition> catalog)
+        public BattleLanServer(IReadOnlyList<CardDefinition> catalog, BattleRulesFormat rulesFormat = BattleRulesFormat.Eternal)
         {
             this.catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
+            if (!Enum.IsDefined(typeof(BattleRulesFormat), rulesFormat)) throw new ArgumentOutOfRangeException(nameof(rulesFormat));
+            this.rulesFormat = rulesFormat;
             catalogHash = CatalogFingerprint.Compute(catalog);
         }
 
@@ -238,9 +241,10 @@ namespace LaoDai.BattleSpirits.Networking
             if (!session.Hello)
             {
                 if (message.type != "hello" || message.version != Protocol.Version
-                    || !string.Equals(message.catalogHash, catalogHash, StringComparison.Ordinal))
+                    || !string.Equals(message.catalogHash, catalogHash, StringComparison.Ordinal)
+                    || !string.Equals(message.rulesFormat, rulesFormat.ToString(), StringComparison.Ordinal))
                 {
-                    Error(session, "Phiên bản hoặc dữ liệu thẻ khác máy chủ. Hãy cập nhật cùng bản game.", true);
+                    Error(session, "Phiên bản, thể thức hoặc dữ liệu thẻ khác máy chủ. Hãy cập nhật cùng bản game.", true);
                     return;
                 }
                 var name = (message.name ?? string.Empty).Trim();
@@ -260,7 +264,7 @@ namespace LaoDai.BattleSpirits.Networking
                 }
                 session.Name = name;
                 session.Hello = true;
-                session.Queue(new WireMessage { type = "welcome", playerIndex = session.Index, catalogHash = catalogHash });
+                session.Queue(new WireMessage { type = "welcome", playerIndex = session.Index, catalogHash = catalogHash, rulesFormat = rulesFormat.ToString() });
                 BroadcastLobby(run);
                 return;
             }
@@ -270,7 +274,7 @@ namespace LaoDai.BattleSpirits.Networking
             {
                 case "deck":
                     if (playing) { Error(session, "Không thể đổi bộ bài khi trận đấu đang diễn ra."); return; }
-                    var validation = DeckValidator.Validate(catalog, message.deck, true);
+                    var validation = DeckValidator.Validate(catalog, message.deck, true, rulesFormat);
                     if (!validation.IsValid) { Error(session, string.Join("\n", validation.Errors)); return; }
                     session.Deck = (string[])message.deck.Clone();
                     session.Ready = false;
@@ -278,7 +282,7 @@ namespace LaoDai.BattleSpirits.Networking
                     break;
                 case "ready":
                     if (playing) { Error(session, "Trận đấu đã bắt đầu."); return; }
-                    if (message.ready && !DeckValidator.Validate(catalog, session.Deck, true).IsValid)
+                    if (message.ready && !DeckValidator.Validate(catalog, session.Deck, true, rulesFormat).IsValid)
                     { Error(session, "Chọn bộ bài hợp lệ trước khi sẵn sàng."); return; }
                     session.Ready = message.ready;
                     BroadcastLobby(run);
@@ -291,7 +295,7 @@ namespace LaoDai.BattleSpirits.Networking
                     var bytes = new byte[8];
                     using (var random = RandomNumberGenerator.Create()) random.GetBytes(bytes);
                     run.Match = BattleMatch.Create(catalog, run.Sessions[0].Deck, run.Sessions[1].Deck,
-                        BitConverter.ToInt32(bytes, 0), bytes[4] & 1);
+                        BitConverter.ToInt32(bytes, 0), bytes[4] & 1, format: rulesFormat);
                     run.MatchParticipants = (Session[])run.Sessions.Clone();
                     for (int i = 0; i < 2; i++) run.Match.State.Players[i].Name = run.Sessions[i].Name;
                     BroadcastState(run);
@@ -333,7 +337,7 @@ namespace LaoDai.BattleSpirits.Networking
         private static void Error(Session session, string text, bool close = false)
         { session.Queue(new WireMessage { type = "error", text = text }, close); }
 
-        private static void BroadcastLobby(Run run)
+        private void BroadcastLobby(Run run)
         {
             var players = run.Sessions.Select((session, index) => new LobbyPlayerView
             {
@@ -343,7 +347,7 @@ namespace LaoDai.BattleSpirits.Networking
             }).ToArray();
             foreach (var session in run.Sessions)
                 if (session != null && session.Hello)
-                    session.Queue(new WireMessage { type = "lobby", players = players });
+                    session.Queue(new WireMessage { type = "lobby", players = players, rulesFormat = rulesFormat.ToString() });
         }
 
         private static void BroadcastState(Run run)
@@ -353,7 +357,7 @@ namespace LaoDai.BattleSpirits.Networking
             {
                 var session = run.Sessions[index];
                 if (session != null && session.Hello && ReferenceEquals(run.MatchParticipants[index], session))
-                    session.Queue(new WireMessage { type = "state", view = ViewFactory.Create(run.Match, index) });
+                    session.Queue(new WireMessage { type = "state", view = ViewFactory.Create(run.Match, index), rulesFormat = run.Match.State.Format.ToString() });
             }
         }
 

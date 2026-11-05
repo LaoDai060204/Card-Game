@@ -5,7 +5,7 @@ namespace LaoDai.BattleSpirits.Core
 {
     public enum MatchPhase
     {
-        Opening, Main, Attack, FlashBeforeBlock, Block, FlashAfterBlock, GameOver
+        Opening, Main, Attack, FlashBeforeBlock, Block, FlashAfterBlock, GameOver, SecondMain
     }
 
     [Serializable]
@@ -33,6 +33,10 @@ namespace LaoDai.BattleSpirits.Core
                 int level = 0;
                 for (int i = 0; i < Card.levels.Count; i++)
                     if (Cores.Total >= Card.levels[i].cores) level = i + 1;
+                // Standard comprehensive rules 12-2-1-1: only a printed
+                // Super Unleash Spirit treats a Soul Core as enough for Lv2.
+                if (Cores.Soul && Card.superUnleash && Card.IsPlayableFor(BattleRulesFormat.Standard))
+                    level = Math.Max(2, level);
                 return level;
             }
         }
@@ -60,6 +64,7 @@ namespace LaoDai.BattleSpirits.Core
     [Serializable]
     public sealed class MatchState
     {
+        public string Format = "Eternal";
         public PlayerState[] Players = Array.Empty<PlayerState>();
         public int ActivePlayerIndex;
         public int TurnNumber;

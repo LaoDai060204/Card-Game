@@ -67,7 +67,8 @@ namespace MDPro3
 
             try
             {
-                currentWallpaper = Config.Get("Wallpaper", Program.items.wallpapers[0].id.ToString());
+                currentWallpaper = Config.Get("Wallpaper", LaoDai.BattleSpirits.BattleSpiritsMode.Enabled
+                    ? Items.BATTLE_DEFAULT_WALLPAPER : Program.items.wallpapers[0].id.ToString());
                 ChangeWallpaper(currentWallpaper);
                 InitializeLanguage();
             }
@@ -131,8 +132,11 @@ namespace MDPro3
         public static void InitializeLanguage()
         {
             InterString.Initialize();
-            StringHelper.Initialize();
-            CardsManager.Initialize();
+            if (!LaoDai.BattleSpirits.BattleSpiritsMode.Enabled)
+            {
+                StringHelper.Initialize();
+                CardsManager.Initialize();
+            }
             Program.items.Initialize();
 
             UIManager instance = Program.instance.ui_;
@@ -190,7 +194,7 @@ namespace MDPro3
                 }
             }
 
-            CardImageLoader.ClearCache();
+            if (!LaoDai.BattleSpirits.BattleSpiritsMode.Enabled) CardImageLoader.ClearCache();
             Program.instance.UnloadUnusedAssets();
 
             InitializeLanguage();
@@ -198,8 +202,11 @@ namespace MDPro3
             if (!LaoDai.BattleSpirits.BattleSpiritsMode.Enabled) Program.instance.cutin.LoadCutins();
             Program.instance.mate.LoadMates();
             if (!LaoDai.BattleSpirits.BattleSpiritsMode.Enabled) Program.instance.solo.LoadBots();
-            Program.instance.character.LoadCharacters();
-            Program.instance.setting.RefreshCharacterName();
+            if (!LaoDai.BattleSpirits.BattleSpiritsMode.Enabled)
+            {
+                Program.instance.character.LoadCharacters();
+                Program.instance.setting.RefreshCharacterName();
+            }
 
             SystemEvent.CallLanguageChangeEvent();
             SystemEvent.CallVideoCardConfigChangeEvent();
@@ -225,16 +232,20 @@ namespace MDPro3
 
         public Transform ChangeWallpaper(string path)
         {
+            currentWallpaper = path;
             if (wallpaper.transform.childCount > 0)
                 Destroy(wallpaper.transform.GetChild(0).gameObject);
             if (LaoDai.BattleSpirits.BattleSpiritsMode.Enabled)
             {
+                if (path == Items.CODE_NONE.ToString()) return null;
                 var go = new GameObject("BattleSpiritsWallpaper", typeof(RectTransform), typeof(RawImage));
                 go.layer = wallpaper.gameObject.layer;
                 var rect = go.GetComponent<RectTransform>(); rect.SetParent(wallpaper.transform, false);
                 rect.anchorMin = Vector2.zero; rect.anchorMax = Vector2.one;
                 rect.offsetMin = Vector2.zero; rect.offsetMax = Vector2.zero;
                 go.AddComponent<LaoDai.BattleSpirits.Integration.BattleMenuWallpaper>().Load(go.GetComponent<RawImage>());
+                string cosmeticPath = Program.items.GetWallpaperPath(path);
+                if (!string.IsNullOrEmpty(cosmeticPath)) _ = LoadBattleWallpaperAsync(cosmeticPath, rect);
                 return rect;
             }
             if (path == Items.CODE_NONE.ToString())
@@ -258,6 +269,41 @@ namespace MDPro3
             foreach (ParticleSystem p in front.GetComponentsInChildren<ParticleSystem>(true))
                 p.Play();
             return front;
+        }
+
+        private async UniTask LoadBattleWallpaperAsync(string cosmeticPath, Transform parent)
+        {
+            GameObject front = null;
+            try
+            {
+                bool standardFront = cosmeticPath.StartsWith("Wallpaper/Front", StringComparison.OrdinalIgnoreCase);
+                front = await ABLoader.LoadFromFolderAsync<RectTransform>("MasterDuel/" +
+                    (standardFront ? cosmeticPath : "Wallpaper/Front0002"), false, true);
+                if (front == null) return;
+                if (!standardFront)
+                {
+                    var overlay = await ABLoader.LoadFromFileAsync("MasterDuel/" + cosmeticPath, false, true);
+                    if (overlay == null) { Destroy(front); return; }
+                    if (front.transform.childCount > 1) Destroy(front.transform.GetChild(1).gameObject);
+                    overlay.transform.SetParent(front.transform, false);
+                }
+                if (this == null || parent == null) { Destroy(front); return; }
+                front.transform.SetParent(parent, false);
+                foreach (var child in front.GetComponentsInChildren<Transform>(true)) child.gameObject.layer = wallpaper.gameObject.layer;
+                for (int i = 0; i < front.transform.childCount; i++)
+                    if (front.transform.GetChild(i).GetComponent<RectLoopMoveY>() == null)
+                        front.transform.GetChild(i).gameObject.AddComponent<RectLoopMoveY>();
+                foreach (var particle in front.GetComponentsInChildren<ParticleSystem>(true)) particle.Play();
+                var fallback = parent.GetComponent<LaoDai.BattleSpirits.Integration.BattleMenuWallpaper>();
+                if (fallback != null) Destroy(fallback);
+                var image = parent.GetComponent<RawImage>();
+                if (image != null) Destroy(image);
+            }
+            catch (Exception error)
+            {
+                if (front != null) Destroy(front);
+                if (this != null && parent != null) Debug.LogWarning("Retained wallpaper could not load; using Battle Spirits artwork: " + error.Message);
+            }
         }
 
         public static void ShowWallpaper(float time)

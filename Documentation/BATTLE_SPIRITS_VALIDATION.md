@@ -1,35 +1,42 @@
-# Kiểm tra bản thay thế trực tiếp 0.2.0
+# Kiểm tra Standard 0.3.0 và dọn tài nguyên Master Duel
 
-Ngày tổng hợp **04/11/2026**. Unity mục tiêu **6000.0.24f1**, Windows x64; nhánh `battle-spirits-mdpro3-ui`. Snapshot trước kiểm tra cuối: `88d80baa`, đã lưu ở `backup/2026-11-04-native-replacement-wip`. `main` giữ Card-Game/Yu-Gi-Oh tại `db9007d1`.
+Ngày tổng hợp **05/11/2026**. Unity mục tiêu **6000.0.24f1**, Windows x64; nhánh `battle-spirits-mdpro3-ui`. Backup trước đợt này: **`backup/2026-11-04-before-master-duel-cleanup` → `c70747a0`**. `main` giữ bản Card-Game/Yu-Gi-Oh.
 
 | Phần kiểm tra | Kết quả |
 | --- | --- |
-| Core | 62 tình huống: 15 gốc + 19 chuyển đổi + 28 hiệu ứng; 96 trận mô phỏng và 24 cặp dispatcher cùng seed |
+| Core Standard | 17 tình huống mới và 12 trận Standard hoàn chỉnh, gồm Second Main/lượt đầu/pool A/copy limit/Super Unleash |
+| Core tương thích | 62 tình huống cũ: 15 gốc + 19 chuyển đổi + 28 hiệu ứng; 96 trận mô phỏng và 24 cặp dispatcher cùng seed |
 | Audit engine độc lập | 100 trận, 8.853 trạng thái, 79.677 thao tác thử |
-| WindBot Battle Spirits | 24 tình huống, 81 trận hoàn chỉnh, 4.793 thao tác authority; Normal thắng 40/40 trước baseline chọn lệnh hợp lệ ngẫu nhiên |
-| TCP thực với 261 thẻ | 16 tình huống, 48 thao tác trong lượt chạy này; có trận hoàn chỉnh giữa hai client loopback Linux |
-| Server console thực | 5 tình huống, hai client TCP, mở đầu/nhận thua và dừng Ctrl+C |
-| Native UI/session | 21 luồng production, fixture từ prefab thật, Unity API được thay bằng stand-in kiểm soát |
-| Prefab gốc | 9 kiểm tra hierarchy/geometry/art/GUID, controller mới và gỡ callback cũ cho năm màn + ba Parts |
-| Parser/dữ liệu | 24 tình huống; 261 bản ghi/ảnh, 16 vanilla + 5 thẻ hiệu ứng được bật, 240 tra cứu |
+| WindBot | 30 tình huống, 101 trận hoàn chỉnh: 81 Eternal + 20 Standard; 5.984 thao tác authority |
+| TCP thực | 23 tình huống: 16 Eternal + 7 Standard; 104 thao tác trong lượt chạy đã ghi nhận, có trận hoàn chỉnh giữa hai client loopback Linux |
+| Server console thực | 10 tình huống; mặc định Standard và tùy chọn Eternal, hai client thực cho mỗi host, Ctrl+C dừng đúng |
+| Native UI/session | 23 luồng production; fixture prefab thật, Unity API được thay bằng stand-in kiểm soát |
+| Prefab/UI art | 9 kiểm tra hierarchy/geometry/GUID/controller và 9 kiểm tra closure/import cho skin mới |
+| Parser/dữ liệu | 30 tình huống; 270 bản ghi/ảnh; 19 thẻ Standard hỗ trợ, BS01 không lọt vào deck Standard |
+| Catalog cosmetic production | 12 tình huống; 108 pet, 149 wallpaper; allowlist 647 bundle: 184 Mate + 462 Wallpaper + 1 shader chung |
 | Chuyển động/âm thanh thuần | 24 tình huống, 4.080 mẫu chuyển động; 9 WAV được kiểm tra hash/PCM/duration/headroom/DC/đầu-cuối |
-| Dự án/metadata | 40 GUID tài nguyên chuyển đổi duy nhất; 9 source project dùng tham chiếu tương đối |
-| Tài nguyên render | Checksum của source `.blend` và ba PNG đúng manifest; kích thước PNG đúng |
-| Cú pháp production | 33 tệp production thay đổi trong Assets so với `9d1d1055`, C# 9, ba profile Editor/Windows, Editor/Android và standalone Windows; không có lỗi cú pháp |
+| Dự án/metadata | 40 GUID trong cây BattleSpirits duy nhất; 10 source project dùng tham chiếu tương đối |
+| Tài nguyên render | Checksum `.blend` và ba PNG đúng manifest; kích thước PNG đúng |
+| Cú pháp production | 31 tệp C# mới/thay đổi trong Assets so với `c70747a0`, ba profile C# 9; 0 lỗi cú pháp |
 
-Các con số trên mô tả những harness đã chạy, không phải số tính năng đầy đủ của Battle Spirits. Chi tiết phạm vi thẻ ở [BATTLE_SPIRITS_SCOPE.md](BATTLE_SPIRITS_SCOPE.md).
+Các số trên mô tả harness đã chạy, không phải số tính năng đầy đủ của Standard. Core, Networking và executor AI nhắm **.NET Standard 2.1/C# 9**; test/console dùng SDK .NET 10 ngoài Unity. Người mở game trong Unity không cần SDK .NET 10.
 
-Số thao tác TCP là số đo của lượt chạy ngày 04/11/2026 và có thể đổi theo seed/xáo bài. Kiểm tra danh sách booster mới nhất cùng ngày vẫn trả BS76 (Eternal) và 26RBS03 (Standard); dữ liệu/ảnh thẻ gốc giữ ngày đối chiếu 31/10/2026.
+Lượt Roslyn đã phân tích 31 tệp production C# mới/thay đổi trong Assets so với `c70747a0` trên ba profile Editor/Windows, Editor/Android và standalone Windows, với 0 lỗi cú pháp. Đây chỉ là phân tích cú pháp, **không phải biên dịch API Unity**. Các luồng UI production được biên dịch với stand-in cũng không thay thế Editor thật.
 
-Core, Networking và executor WindBot nhắm **.NET Standard 2.1/C# 9**. Các test/server console dùng SDK .NET 10 bên ngoài Unity. Người mở game trong Unity không cần SDK .NET 10.
+TCP action count có thể đổi theo seed/xáo bài. Kết quả 40/40 của AI trước baseline chọn lệnh hợp lệ ngẫu nhiên thuộc kiểm tra Eternal có kiểm soát; không được quảng bá là năng lực thi đấu Standard.
 
-Lượt Roslyn ba profile chỉ phân tích cú pháp các tệp C# đã nêu, không biên dịch API Unity. Việc biên dịch luồng native production bên dưới dùng stand-in và cũng không thay thế biên dịch trong Editor thật.
+## Phạm vi kiểm tra tài nguyên
 
-Harness native biên dịch controller màn hình, session, Core/Network, WindBot và Visuals production. Nó dùng metadata prefab thật để kiểm tra tìm control/binding, tìm thẻ/phân trang, deck, Solo, lobby, lệnh mở đầu, replay, preview boss, quyền thao tác khi ngắt kết nối, vòng đời render target và ownership giữa ảnh mặt thẻ/closeup. UnityEngine, TMP, Addressables, tải bundle và thiết bị được thay bằng API kiểm soát. Bài này không xác nhận pixel, shader, font, kích thước chữ, chuột/gamepad hoặc AudioSource trong Editor thật.
+- [Manifest cut-in/voice](master-duel-initial-cleanup.json): 64.509 tệp, 4.589.665.895 byte.
+- [Manifest external](master-duel-external-cleanup.json): 2.686 tệp bổ sung, 1.865.808.352 byte; pet/wallpaper/shader được so hash trước-sau.
+- [Manifest art](master-duel-art-replacement.json): 10.508 asset, 1.676.343.210 byte **không tính `.meta`**; map tham chiếu UI sang skin mới, kiểm tra không còn GUID đã xóa trong Assets.
+- [Manifest data](master-duel-data-cleanup.json): 3.648 tệp, 256.724.684 byte; giữ BattleSpirits, `Settings.json`, UI translations và cấu trúc thư mục.
 
-Model/menu/closeup mới đã được dựng và render bằng **Blender 4.3.2/Cycles CPU**, có manifest ảnh và source `.blend`. Đây là kiểm tra tài nguyên tạo ra; render Blender không thay thế render Unity. Các đường cong động và WAV được kiểm tra riêng, chưa kiểm tra phát âm thanh thật trên Windows.
+Các số theo manifest có đơn vị khác nhau; không cộng số asset với số tệp Git hoặc `.meta` thành một tổng sai. Những đợt dọn trên chỉ mô tả tài nguyên/dữ liệu; mã template/namespace tương thích cần cho generic UI và pet/wallpaper vẫn được giữ.
 
-Các lỗi được xử lý trong đợt ghép: đường dẫn Filter/Host không trùng tên GO thật; callback của SelectionToggle; spinner cũ; authority UI sau mất kết nối; render target của form Duel được cache qua ván mới; ảnh tải muộn; replay hỏng ở thao tác phía sau; số học đồng hồ chuyển động rất lớn. Core có kiểm tra tiếp tục Flash khi Spirit biến mất và trao đổi Soul/Core đồng thời.
+Harness native kiểm tra binding từ metadata prefab thật, bộ sưu tập/deck, Solo, lobby, opening, Second Main, chặn thẻ Eternal ở form Standard, replay, preview, quyền khi ngắt mạng, render-target lifecycle và ảnh tải muộn. UnityEngine, TMP, Addressables, tải bundle và thiết bị được thay bằng API kiểm soát. Test cosmetic biên dịch helper production và kiểm tra catalog/path/allowlist; **không giải mã hoặc render bundle bằng Unity**.
+
+Model/menu/closeup đã render bằng Blender 4.3.2/Cycles CPU. Kiểm tra đường cong/PCM độc lập không xác nhận shader, font, chuột/gamepad, AudioSource hoặc giao diện pixel trong Unity Windows.
 
 ## Chạy lại
 
@@ -38,6 +45,7 @@ Từ thư mục gốc:
 ```bash
 python Tools/BattleSpirits/validate_conversion.py
 python Tools/BattleSpirits/test_native_prefabs.py
+python Tools/BattleSpirits/test_ui_art_cleanup.py
 python Tools/BattleSpiritsCards/catalog.py validate
 python -m unittest discover -s Tools/BattleSpiritsCards -p 'test_*.py'
 dotnet run --project Tests/BattleSpirits/Core/BattleSpirits.Core.Tests.csproj -c Release -- Data/BattleSpirits/cards.json
@@ -45,18 +53,19 @@ dotnet run --project Tests/BattleSpirits/AI/BattleSpirits.AI.Tests.csproj -c Rel
 dotnet run --project Tests/BattleSpirits/Network/BattleSpirits.Network.Tests.csproj -c Release -- Data/BattleSpirits/cards.json
 python Tests/BattleSpirits/Network/test_console.py --dotnet /path/to/dotnet
 dotnet run --project Tests/BattleSpirits/Presentation/BattleSpirits.Presentation.Tests.csproj -c Release -- /path/to/Card-Game
+dotnet run --project Tests/BattleSpirits/Cosmetics/BattleSpirits.Cosmetics.Tests.csproj -c Release -- /path/to/Card-Game
 dotnet run --project Tests/BattleSpirits/Visuals/BattleSpirits.Visuals.Tests.csproj -c Release -- /path/to/Card-Game
 ```
 
-Thay các đường dẫn mẫu bằng đường dẫn trên máy. Pixel đối chiếu WebP/PNG có thể kiểm tra thêm bằng `catalog.py validate --pixels` khi có cache nguồn và ImageMagick; kết quả đó không được gộp thành kiểm tra Unity.
+Thay đường dẫn mẫu bằng đường dẫn trên máy. `catalog.py validate --pixels` kiểm tra decoded pixel nếu có ImageMagick; cache WebP nguồn cho phép kiểm tra thêm equality nguồn/PNG. Không gộp kết quả đó thành kiểm tra Unity.
 
 ## Cần kiểm tra bằng Windows Unity
 
-1. Mở Boot bằng đúng Editor, Addressables **Use Asset Database**. Kiểm tra menu, bản 0.2.0, Bộ bài và các bộ lọc/ảnh/font trong form gốc.
-2. Chơi Solo bằng ba bộ mẫu; kiểm tra lựa chọn Main/Flash, Magic, chuyển Core/Soul, Nexus, thắng/thua và phản hồi AI.
-3. Về menu, mở lại Solo, chơi ván tiếp theo; kiểm tra field/pet, render target và âm thanh không bị mất hoặc lặp.
-4. Mở Hoạt cảnh, xem cả hai boss; mở Lịch sử và tiến/lùi replay.
-5. Chạy hai client TCP 7777 cùng máy, rồi hai máy Windows cùng LAN. Kiểm tra chọn deck, sẵn sàng, trận hoàn chỉnh, mất kết nối và tạo ván mới.
-6. Build vào thư mục riêng, dùng bundle Addressables mới. Kiểm tra bước đóng gói tài nguyên và chạy độc lập bản Windows trước khi chia sẻ.
+1. Mở Boot đúng Editor, Addressables **Use Asset Database**. Kiểm tra menu 0.3.0, bố cục giữ nguyên, skin/font mới, các form và nhãn nút.
+2. Chọn một trong ba bộ Standard. Giữ/đổi tay đầu, triệu hồi bằng click, Core/Soul, Super Unleash, Main → Attack → Second Main → End; lượt đầu không có Core/Attack/Second Main.
+3. Về menu rồi chơi ván tiếp; kiểm tra field/pet và âm thanh không mất hoặc lặp. Thử chọn pet và **Cài đặt → Hình nền**, quay lại menu và khởi động lại để kiểm tra lựa chọn được giữ.
+4. Hoạt cảnh vẫn xem hai boss BS01 nhưng không cho đưa chúng vào deck Standard. Lịch sử cho tiến/lùi replay Standard cùng version/catalog.
+5. Chạy hai client TCP 7777 cùng máy rồi hai máy Windows cùng LAN; kiểm tra sẵn sàng, trận hoàn chỉnh, mất mạng, tạo phòng mới và sai phiên bản/format.
+6. Build bằng Addressables mới vào thư mục đầu ra mới/rỗng; copy allowlist không tự dọn tệp tồn từ build cũ. Kiểm tra đóng gói allowlist và chạy độc lập trên máy sạch trước khi chia sẻ.
 
-**Chưa chạy Editor Play, render Unity, Windows build, LAN hai máy Windows hoặc triển khai Internet công khai trong môi trường này.**
+**Chưa chạy Editor Play, render/audio Unity, Windows build, LAN hai máy Windows hoặc triển khai Internet công khai trong môi trường này.**

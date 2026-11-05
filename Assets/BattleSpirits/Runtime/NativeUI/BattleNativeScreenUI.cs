@@ -80,7 +80,7 @@ namespace LaoDai.BattleSpirits.NativeUI
         }
         private void RefreshSoloChoices()
         {
-            var playable = session.Decks.Where(item => DeckValidator.Validate(session.Cards, item.cards).IsValid).ToArray();
+            var playable = session.Decks.Where(item => DeckValidator.Validate(session.Cards, item.cards, true, BattleSpiritsMode.RulesFormat).IsValid).ToArray();
             string signature = string.Join("\n", playable.Select(item => item.name + ":" + string.Join(",", item.cards)));
             if (signature == soloDeckSet) return;
             soloDeckSet = signature;
@@ -109,11 +109,11 @@ namespace LaoDai.BattleSpirits.NativeUI
         {
             BattleNativeWidgets.Label(transform, "ButtonDeck", "BẠN: " + (session.SelectedDeck?.name ?? "Chưa chọn bộ bài") + " · bấm để đổi");
             BattleNativeWidgets.Active(transform, "ButtonDeck", true);
-            BattleNativeWidgets.Label(transform, "Text_Overview", (opponent?.name ?? "Chọn đối thủ") + "\n\nWindBot điều khiển đối thủ theo luật Battle Spirits Eternal.\n" + (opponent?.cards.Length ?? 0) + " lá.\n\nChọn bộ bài của bạn bên dưới rồi bấm ĐẤU VỚI MÁY.");
+            BattleNativeWidgets.Label(transform, "Text_Overview", (opponent?.name ?? "Chọn đối thủ") + "\n\nWindBot điều khiển đối thủ theo luật Battle Spirits Standard.\n" + (opponent?.cards.Length ?? 0) + " lá.\n\nChọn bộ bài của bạn bên dưới rồi bấm ĐẤU VỚI MÁY.");
         }
         private void CyclePlayerDeck()
         {
-            var choices = session.Decks.Where(item => DeckValidator.Validate(session.Cards, item.cards).IsValid).ToArray();
+            var choices = session.Decks.Where(item => DeckValidator.Validate(session.Cards, item.cards, true, BattleSpiritsMode.RulesFormat).IsValid).ToArray();
             if (choices.Length == 0) return;
             int current = Array.FindIndex(choices, item => item.name == session.SelectedDeck?.name
                 && item.cards.SequenceEqual(session.SelectedDeck.cards));

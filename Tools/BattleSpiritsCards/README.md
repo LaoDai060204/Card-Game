@@ -1,6 +1,6 @@
 # Official Battle Spirits card catalog
 
-The bundled snapshot was checked on **31 October 2026** against the Japanese official [product list](https://www.battlespirits.com/product/), [card list](https://www.battlespirits.com/cardlist/) and [Eternal restriction list](https://www.battlespirits.com/rule/limited.php).
+The active format is **Japanese Battle Spirits Standard**, using the supplied Standard v1.0 PDFs and the block-A season **1 April 2026–31 March 2027**. The catalog was extended on **4 November 2026** against the Japanese official [product list](https://www.battlespirits.com/product/), [card list](https://www.battlespirits.com/cardlist/) and [restriction list linked by the Standard manual](https://www.battlespirits.com/rule/limited.php). Original per-card access dates remain in the source manifest.
 
 | Included source | Release date | Distinct printed card IDs |
 | --- | --- | --- |
@@ -8,21 +8,25 @@ The bundled snapshot was checked on **31 October 2026** against the Japanese off
 | 26RBS03 — 絶界の覇者, Standard | 2026-10-17 | 117 |
 | Previously verified vanilla Spirit starter cards | Historical BS01/BS02 cards | 16 |
 | Explicit BS01 boss / Nexus / Magic baselines | Historical BS01 cards | 5 |
+| Supported Standard prints from 26RBS01 | 2026-04-18 | 4 |
+| Supported Standard prints from 26RBS02 | 2026-07-18 | 5 |
 
-The replacement catalog contains **261 cards and 261 PNG images**: 16 verified vanilla Spirits, five explicitly reviewed BS01 effect definitions, and 240 newer browse-only cards. Five classic cards (BS01-X01, BS01-097, BS01-113, BS01-115 and BS01-117) use the pinned `bs01-effects-v1` runtime profile; they are enabled only after the matching runtime ability implementation and tests are complete. `implemented` is never inferred from an effect description. The newer 240 cards remain browse-only until their actual abilities have been implemented.
+The catalog contains **270 official cards and 270 PNG images**. The active **19-card Standard pool** contains 16 Spirits with no printed ability and three Spirits with the explicitly supported **Super Unleash** Lv2 alternative: `26RBS03-052`, `26RBS03-061`, `26RBS03-071`. All 19 original faces were individually inspected for block A and their single printed color symbol; official HTML verifies block, stats and the alternate Soul Core threshold. Three supplied Standard decks have 40 cards and respect the three-per-name limit.
 
-The Standard entries have `legalityStatus: "not-verified"` and `eternalLegal: false`. This records that their Eternal legality has not been verified; it does not assert that every such card is prohibited. Announced BS77 (2026-11-21) and 26RBS04 (2027-01-23) are recorded as upcoming products, not imported as released cards.
+The 21 historical supported BS01/BS02 cards remain **Eternal-only compatibility data** and cannot enter an active Standard match. Another 230 cards have no implemented rules in either format; in total **251 catalog entries cannot be played in the active Standard format**. `implemented` never substitutes for format eligibility or actual rules code. Unreviewed Standard entries retain `legalityStatus: "not-verified"`; their Eternal legality is separately unknown. Announced BS77 (2026-11-21) and 26RBS04 (2027-01-23) remain upcoming products.
 
 ## Files
 
 - `Data/BattleSpirits/cards.json`: official IDs, Japanese names/effects, observed stats, release/format metadata and local artwork paths. Alternate illustrations are deduplicated by printed card ID; multi-face observations remain in the raw catalog's `faces` field.
 - `Data/BattleSpirits/card-sources.json`: product/card HTML hashes, original artwork URLs, WebP hashes, bundled PNG hashes, dimensions and decoded RGBA hashes.
-- `Data/BattleSpirits/banlist.json`: the official Eternal restrictions effective **2026-09-01**, including restriction provenance. Cards are matched by ID and original Japanese name.
+- `Data/BattleSpirits/banlist.json`: the official restriction list effective **2026-09-01**, fetched again on **2026-11-04**. Both current official format manuals link to this page. Cards are matched by ID and original Japanese name within the applicable format.
 - `Data/BattleSpirits/starter-cards.json`: the baseline of verified vanilla cards. Updating official data does not silently change this implementation baseline.
 - `Data/BattleSpirits/implemented-cards.json`: exact official stat/effect baselines, printed-symbol observations and the approved runtime rules profile for the five additional cards. Changing a data flag cannot substitute for the runtime registry.
+- `Data/BattleSpirits/standard-starter-cards.json`: the reviewed 19-card block-A baseline, printed symbols, normal Core level thresholds and the three explicit `superUnleash` flags. This is not inferred from a set ID or empty effect text.
+- `Data/BattleSpirits/StarterDecks/*.json`: the three actual 40-card Standard recipes generated from the production AI profile API.
 - `Picture/Art/BS*.png` and `Picture/Art/26RBS*.png`: Unity-compatible, lossless format conversions of official WebP images. Import verifies exact decoded RGBA equality; the artwork is not resized, cropped or redrawn. Original notices on the cards remain intact.
 
-The original printed symbol counts are not exposed by the inspected card-detail HTML. The 240 latest-release entries therefore keep their symbol counts unknown and remain browse-only. The starter symbols are preserved from their verified baseline. The five explicit effect cards were inspected in the official printed artwork: Siegfried has one red symbol, Valkyrious and the Nexus have one white symbol each, and both Magic cards have no symbol. The Nexus has Lv1 at zero cores and Lv2 at four cores; its printed BP dash is represented as zero with the raw observation retained.
+Printed symbol counts are not exposed by the inspected detail HTML. Unreviewed cards therefore keep their symbols unknown. Standard starter symbols are preserved from individual original-image inspection. The three Super Unleash cards keep their ordinary Lv2 thresholds (3, 4 and 4 normal Cores respectively) and additionally permit Lv2 with a Soul Core; this is **not** a universal rule for other Spirits. HTML fixtures pin the Soul Core icon, which older parsing had omitted from the Lv2 thresholds.
 
 ## Commands
 
@@ -54,20 +58,20 @@ python Tools/BattleSpiritsCards/catalog.py import --refresh
 python Tools/BattleSpiritsCards/catalog.py validate --pixels
 ```
 
-An import fetches the latest released booster in each format plus the verified vanilla and explicit-effect baselines. It needs Internet access and ImageMagick for WebP-to-PNG conversion. It stages and validates the complete snapshot before replacing bundled metadata or artwork, and restores replaced files if publication fails. Retained artwork from older snapshots is not deleted automatically. Use Git backups to retain older catalog versions and decks built with them.
+An import fetches the latest released booster in each format plus all reviewed Eternal and Standard baselines, including the nine supported prints from older Standard sets. It needs Internet access and ImageMagick for WebP-to-PNG conversion. It stages and validates the complete snapshot before replacing bundled metadata or artwork, and restores replaced files if publication fails. Retained artwork from older snapshots is not deleted automatically. Use Git backups to retain older catalog versions and decks built with them.
 
-The importer fails for changed starter or explicit-effect stats/effects, malformed source pages, changed forbidden-pair restrictions, future restriction lists, or artwork that does not preserve pixels. Review such changes before modifying an implementation. New abilities never become playable merely because a new snapshot is imported.
+The importer fails for changed starter stats/effects, Standard block/keyword changes, imports outside the verified block-A season, malformed source pages, changed forbidden-pair restrictions, future restriction lists, or artwork that does not preserve pixels. Review such changes before modifying an implementation. Soul Magic, Succession and other text effects remain unsupported; new abilities never become playable merely because a snapshot is imported.
 
 `--as-of YYYY-MM-DD` selects the Japanese calendar date used to classify releases; the default is today's date in Japan. It does not retrieve a historical version of the official website. `--workers` accepts 1–4; `--cache` selects the response-cache folder.
 
 ## Rights and verification scope
 
-Names, artwork and card text belong to BANDAI/BNP and the credited owners/illustrators. The source manifest does not infer an open-source artwork license or redistribution permission. These tools verify source data, packaged images and supported-card flags; they do not establish complete Eternal card behavior or substitute for Unity Play/build testing.
+Names, artwork and card text belong to BANDAI/BNP and the credited owners/illustrators. The source manifest does not infer an open-source artwork license or redistribution permission. These tools verify source data, packaged images and supported-card flags; they do not establish complete Standard/Eternal behavior or substitute for Unity Play/build testing.
 
 ## Active template resource replacement
 
-The active native template now resolves Battle Spirits card faces through each catalog entry's `artPath` in the existing `Picture/Art` directory. The separate `Picture/BattleSpirits` folder has been removed. Existing Yu-Gi-Oh artwork is kept as inactive backup content; it is not offered by the Battle Spirits catalog or native search. Original full printed Battle Spirits card faces remain byte-for-byte converted official artwork.
+The native forms resolve Battle Spirits faces through each catalog entry's `artPath` in the existing `Picture/Art` directory. The separate `Picture/BattleSpirits` folder has been removed. Old numeric Yu-Gi-Oh artwork was removed from this branch and remains in Git backups and `main`. Original printed Battle Spirits faces retain exact decoded official artwork pixels.
 
 `Picture/Closeup/BS01-X01.png` and `BS01-097.png`, when present, are original fan-made renders from the project's procedural 3D boss models. Their provenance is separate from official card artwork; they are not official transparent cutouts and do not imply a full set of per-card models.
 
-The 240-card regular-booster snapshot was imported on 30 October; product release selection and the Eternal restriction page were checked again on 31 October when the five classic effect cards were added. Per-card retrieval dates are retained rather than rewritten to suggest every older card was fetched again.
+The original regular-booster snapshot was imported in October. On 4 November, Standard records were reviewed against their current HTML, nine supported prints from 26RBS01/02 were added, and all 19 supported Standard prints were individually inspected. Existing old source dates are preserved unless the specific record was fetched again. Supporting-set metadata identifies the older sets as partial supported-card imports, not complete set imports.

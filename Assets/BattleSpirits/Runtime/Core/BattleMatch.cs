@@ -5,7 +5,7 @@ using System.Linq;
 namespace LaoDai.BattleSpirits.Core
 {
     /// <summary>
-    /// A deterministic, Unity-independent Japanese Eternal rules engine. The
+    /// A deterministic, Unity-independent Japanese Battle Spirits rules engine. The
     /// explicit AbilityRegistry is the boundary for reviewed card implementations.
     /// Official rule references are recorded in Documentation/RULES_AND_SCOPE.md.
     /// </summary>
@@ -20,6 +20,7 @@ namespace LaoDai.BattleSpirits.Core
         private readonly int[] originalDeckSizes = new int[2];
 
         public MatchState State { get; }
+        public BattleRulesFormat RulesFormat { get; }
         public List<BattleEvent> LastEvents { get; } = new List<BattleEvent>();
         public List<string> Log { get; } = new List<string>();
         public event Action<BattleEvent> EventEmitted;
@@ -41,9 +42,12 @@ namespace LaoDai.BattleSpirits.Core
 
         private BattleMatch(IReadOnlyList<CardDefinition> definitions,
             IReadOnlyList<string> deck0, IReadOnlyList<string> deck1,
-            int seed, int firstPlayerIndex, bool validateDecks)
+            int seed, int firstPlayerIndex, bool validateDecks, BattleRulesFormat format)
         {
             if (definitions == null) throw new ArgumentNullException(nameof(definitions));
+            if (format != BattleRulesFormat.Eternal && format != BattleRulesFormat.Standard)
+                throw new ArgumentOutOfRangeException(nameof(format));
+            RulesFormat = format;
             if (firstPlayerIndex < 0 || firstPlayerIndex > 1)
                 throw new ArgumentOutOfRangeException(nameof(firstPlayerIndex));
             cards = new Dictionary<string, CardDefinition>(StringComparer.Ordinal);
@@ -59,6 +63,7 @@ namespace LaoDai.BattleSpirits.Core
             firstPlayer = firstPlayerIndex;
             State = new MatchState
             {
+                Format = format.ToString(),
                 ActivePlayerIndex = firstPlayer,
                 Players = new[]
                 {
@@ -75,21 +80,24 @@ namespace LaoDai.BattleSpirits.Core
                 Shuffle(State.Players[player].Deck);
                 for (int i = 0; i < 4; i++) Draw(player);
             }
-            AddLog("Eternal v17.1 · Spirit, Nexus và Magic có hồ sơ luật đã kiểm chứng.");
+            AddLog((format == BattleRulesFormat.Standard ? "Standard v1.0 · Block A (2026/27)" : "Eternal v17.1")
+                + " · Chỉ sử dụng thẻ có hồ sơ luật đã kiểm chứng.");
             AddLog("Chọn giữ hoặc đổi toàn bộ 4 lá bài mở đầu, mỗi người một lần.");
         }
 
-        public static BattleMatch CreateDefault(IReadOnlyList<CardDefinition> cards, int seed = 2026, int firstPlayer = 0)
+        public static BattleMatch CreateDefault(IReadOnlyList<CardDefinition> cards, int seed = 2026, int firstPlayer = 0,
+            BattleRulesFormat format = BattleRulesFormat.Eternal)
         {
-            var decks = StarterDecks.CreatePair(cards);
-            return Create(cards, decks[0].cards, decks[1].cards, seed, firstPlayer);
+            var decks = StarterDecks.CreatePair(cards, format);
+            return Create(cards, decks[0].cards, decks[1].cards, seed, firstPlayer, format: format);
         }
 
         public static BattleMatch Create(IReadOnlyList<CardDefinition> cards,
             IReadOnlyList<string> deck0, IReadOnlyList<string> deck1,
-            int seed = 2026, int firstPlayer = 0, bool validateDecks = true)
+            int seed = 2026, int firstPlayer = 0, bool validateDecks = true,
+            BattleRulesFormat format = BattleRulesFormat.Eternal)
         {
-            return new BattleMatch(cards, deck0, deck1, seed, firstPlayer, validateDecks);
+            return new BattleMatch(cards, deck0, deck1, seed, firstPlayer, validateDecks, format);
         }
 
         public CardDefinition GetCard(string id)
@@ -141,7 +149,7 @@ namespace LaoDai.BattleSpirits.Core
         public bool TrySummon(int player, int handIndex, out string error)
         {
             BeginAction();
-            if (!RequireTurn(player, MatchPhase.Main, out error)) return false;
+            if (!RequireMainTurn(player, out error)) return false;
             var owner = State.Players[player];
             if (handIndex < 0 || handIndex >= owner.Hand.Count)
                 return Fail("Lá bài đã chọn không còn trên tay.", out error);
@@ -187,7 +195,7 @@ namespace LaoDai.BattleSpirits.Core
             if (handIndex < 0 || handIndex >= owner.Hand.Count)
                 return Fail("Lá Magic không còn trên tay.", out error);
             var card = GetCard(owner.Hand[handIndex]);
-            if (!card.IsMagic || !card.IsPlayable)
+            if (!card.IsMagic || !card.IsPlayableFor(RulesFormat))
                 return Fail("Hiệu ứng Magic chưa được triển khai.", out error);
             bool flashWindow = IsFlashPhase(State.Phase);
             var target = targetId < 0 ? null : FindSpirit(targetId);
@@ -305,7 +313,7 @@ namespace LaoDai.BattleSpirits.Core
 
         private bool RequireAbilityWindow(int player, out string error)
         {
-            if (player < 0 || player > 1 || !((State.Phase == MatchPhase.Main && player == State.ActivePlayerIndex)
+            if (player < 0 || player > 1 || !((IsMainPhase(State.Phase) && player == State.ActivePlayerIndex)
                 || (IsFlashPhase(State.Phase) && player == State.FlashPlayerIndex)))
                 return Fail("Hiệu ứng chỉ được sử dụng trong Main của mình hoặc khi có quyền Flash.", out error);
             error = string.Empty;
@@ -313,6 +321,8 @@ namespace LaoDai.BattleSpirits.Core
         }
 
         private static bool IsFlashPhase(MatchPhase phase) => phase == MatchPhase.FlashBeforeBlock || phase == MatchPhase.FlashAfterBlock;
+        private bool IsMainPhase(MatchPhase phase) => phase == MatchPhase.Main
+            || RulesFormat == BattleRulesFormat.Standard && phase == MatchPhase.SecondMain;
         private static bool IsAttackPhase(MatchPhase phase) => phase == MatchPhase.Attack || phase == MatchPhase.Block || IsFlashPhase(phase);
         private static long AvailableCores(PlayerState owner) => owner.Reserve.Total + owner.Field.Sum(s => (long)s.Cores.Total);
 
@@ -364,7 +374,7 @@ namespace LaoDai.BattleSpirits.Core
         public bool TryMoveCore(int player, int fromSpiritId, int toSpiritId, bool soul, out string error)
         {
             BeginAction();
-            if (!RequireTurn(player, MatchPhase.Main, out error)) return false;
+            if (!RequireMainTurn(player, out error)) return false;
             if (fromSpiritId == toSpiritId)
                 return Fail("Chọn hai vị trí core khác nhau.", out error);
             var owner = State.Players[player];
@@ -390,7 +400,7 @@ namespace LaoDai.BattleSpirits.Core
         public bool TrySwapCore(int player, int fromSpiritId, int toSpiritId, bool sourceSoul, out string error)
         {
             BeginAction();
-            if (!RequireTurn(player, MatchPhase.Main, out error)) return false;
+            if (!RequireMainTurn(player, out error)) return false;
             if (fromSpiritId == toSpiritId)
                 return Fail("Chọn hai vị trí core khác nhau.", out error);
             var owner = State.Players[player];
@@ -421,6 +431,12 @@ namespace LaoDai.BattleSpirits.Core
             if (!RequireTurn(player, MatchPhase.Main, out error)) return false;
             if (State.TurnNumber == 1)
                 return Fail("Người đi trước bỏ qua Attack Step ở lượt đầu.", out error);
+            EnterAttackStep(player);
+            return Success(out error);
+        }
+
+        private void EnterAttackStep(int player)
+        {
             State.Phase = MatchPhase.Attack;
             var defender = State.Players[1 - player];
             if (defender.Trash.Total > 0 && defender.Field.Any(n => n.Card.id == AbilityRegistry.SilverWorld && n.Level > 0))
@@ -431,7 +447,26 @@ namespace LaoDai.BattleSpirits.Core
                 AddLog("侵食されゆく銀世界: lấy core từ Trash về Reserve ở đầu Attack Step của đối phương.");
             }
             AddLog(State.Players[player].Name + " vào Attack Step.");
+        }
+
+        // Standard comprehensive rules 7-8: after Attack, repeat the allowed
+        // Main actions once. Eternal has no Second Main, and Turn1 skips it.
+        public bool TryBeginSecondMain(int player, out string error)
+        {
+            BeginAction();
+            if (RulesFormat != BattleRulesFormat.Standard || State.TurnNumber == 1)
+                return Fail("Second Main chỉ có trong Standard sau lượt đầu của người đi trước.", out error);
+            if (!RequireTurn(player, MatchPhase.Attack, out error)) return false;
+            EnterSecondMain(player);
             return Success(out error);
+        }
+
+        private void EnterSecondMain(int player)
+        {
+            ClearBattle();
+            State.Phase = MatchPhase.SecondMain;
+            AddLog(State.Players[player].Name + " vào Second Main Step.");
+            Emit("SecondMainStarted", player);
         }
 
         public bool TryAttack(int player, int spiritId, out string error)
@@ -511,8 +546,17 @@ namespace LaoDai.BattleSpirits.Core
         public bool TryEndTurn(int player, out string error)
         {
             BeginAction();
-            if (player != State.ActivePlayerIndex || (State.Phase != MatchPhase.Main && State.Phase != MatchPhase.Attack))
+            if (player != State.ActivePlayerIndex || (State.Phase != MatchPhase.Main && State.Phase != MatchPhase.Attack
+                && !(RulesFormat == BattleRulesFormat.Standard && State.Phase == MatchPhase.SecondMain)))
                 return Fail("Chỉ kết thúc lượt sau khi xử lý xong trận đánh hiện tại.", out error);
+            if (RulesFormat == BattleRulesFormat.Standard && State.TurnNumber > 1 && State.Phase != MatchPhase.SecondMain)
+            {
+                // Passing Main also passes through Attack's start triggers;
+                // never skip them when the UI requests an early end of turn.
+                if (State.Phase == MatchPhase.Main) EnterAttackStep(player);
+                EnterSecondMain(player);
+                return Success(out error);
+            }
             AddLog(State.Players[player].Name + " kết thúc lượt.");
             StartTurn(1 - player);
             return Success(out error);
@@ -575,7 +619,8 @@ namespace LaoDai.BattleSpirits.Core
                 owner.CoreGains++;
                 AddLog("Core Step: nhận 1 core từ Void.");
             }
-            else AddLog("Lượt đầu của người đi trước: bỏ qua Core Step và Attack Step.");
+            else AddLog("Lượt đầu của người đi trước: bỏ qua Core Step, Attack Step"
+                + (RulesFormat == BattleRulesFormat.Standard ? " và Second Main Step." : "."));
             Draw(player);
             AddLog("Draw Step: rút 1 lá.");
             Transfer(owner.Trash, owner.Reserve, owner.Trash.Total);
@@ -665,6 +710,14 @@ namespace LaoDai.BattleSpirits.Core
             return true;
         }
 
+        private bool RequireMainTurn(int player, out string error)
+        {
+            if (player < 0 || player > 1 || State.ActivePlayerIndex != player || !IsMainPhase(State.Phase))
+                return Fail("Hành động này chỉ thực hiện được trong Main Step của mình.", out error);
+            error = string.Empty;
+            return true;
+        }
+
         private void Draw(int player)
         {
             var owner = State.Players[player];
@@ -732,10 +785,10 @@ namespace LaoDai.BattleSpirits.Core
         {
             if (deck == null) throw new ArgumentNullException(nameof(deck));
             if (deck.Count < 4 || (validateSizeAndCopies && deck.Count < 40))
-                throw new ArgumentException("Bộ bài Eternal cần ít nhất 40 lá.");
+                throw new ArgumentException("Bộ bài " + RulesFormat + " cần ít nhất 40 lá.");
             if (validateSizeAndCopies)
             {
-                var validation = DeckValidator.Validate(cards.Values.ToArray(), deck);
+                var validation = DeckValidator.Validate(cards.Values.ToArray(), deck, format: RulesFormat);
                 if (!validation.IsValid)
                     throw new ArgumentException(string.Join("\n", validation.Errors));
                 return;
@@ -755,9 +808,9 @@ namespace LaoDai.BattleSpirits.Core
             // Deck validation separately requires a fully supported card.
         }
 
-        private static bool IsSupportedVanilla(CardDefinition card)
+        private bool IsSupportedVanilla(CardDefinition card)
         {
-            return card != null && card.IsPlayable;
+            return card != null && card.IsPlayableFor(RulesFormat);
         }
 
         private static void CheckPool(CorePool pool)

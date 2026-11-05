@@ -43,6 +43,7 @@ namespace LaoDai.BattleSpirits.Core
                 case "moveCore": return match.TryMoveCore(actor, command.source, command.target, command.soul, out error);
                 case "swapCore": return match.TrySwapCore(actor, command.source, command.target, command.soul, out error);
                 case "attackStep": return match.TryBeginAttackStep(actor, out error);
+                case "secondMain": return match.TryBeginSecondMain(actor, out error);
                 case "attack": return match.TryAttack(actor, command.index, out error);
                 case "passFlash": return match.TryPassFlash(actor, out error);
                 case "block": return match.TryBlock(actor, command.index, out error);

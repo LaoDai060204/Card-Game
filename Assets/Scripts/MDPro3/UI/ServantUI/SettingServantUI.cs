@@ -575,6 +575,8 @@ namespace MDPro3.UI.ServantUI
             if (LaoDai.BattleSpirits.BattleSpiritsMode.Enabled)
             {
                 InitializeLanguage();
+                ButtonBackground.SetClickEvent(OnBattleWallpaperClicked);
+                ButtonBackground.SetButtonText("HÌNH NỀN");
                 ConfigureBattleSpiritsSettings();
                 return;
             }
@@ -690,10 +692,31 @@ namespace MDPro3.UI.ServantUI
             {
                 "ToggleDuel", "ToggleWatch", "ToggleReplay", "TogglePort", "ToggleExpansions",
                 "ButtonRetry", "ButtonSurrender", "ButtonCheckDecks", "Voice", "SyncDeck",
-                "Background", "BgmBy", "CardStyle", "VideoCard", "CardLanguage"
+                "BgmBy", "CardStyle", "VideoCard", "CardLanguage"
             };
             foreach (var item in GetComponentsInChildren<Transform>(true))
                 if (hidden.Contains(item.name)) item.gameObject.SetActive(false);
+            var code = Config.Get("Wallpaper", Items.BATTLE_DEFAULT_WALLPAPER);
+            string label = "Battle Spirits";
+            foreach (var wallpaper in Program.items.wallpapers)
+                if (wallpaper.id.ToString() == code) { label = wallpaper.name; break; }
+            ButtonBackground.SetModeText(label);
+        }
+
+        private void OnBattleWallpaperClicked()
+        {
+            var choices = new Dictionary<string, string> { { "Battle Spirits", Items.BATTLE_DEFAULT_WALLPAPER } };
+            foreach (var wallpaper in Program.items.wallpapers)
+                choices[wallpaper.name + " · " + wallpaper.id] = wallpaper.id.ToString();
+            var selections = new List<string> { "CHỌN HÌNH NỀN", "Các wallpaper được giữ lại; không ảnh hưởng luật trận đấu." };
+            selections.AddRange(choices.Keys);
+            UIManager.ShowPopupSelection(selections, () => {
+                var selected = EventSystem.current?.currentSelectedGameObject?.GetComponent<SelectionButton>();
+                if (selected == null || !choices.TryGetValue(selected.GetButtonText(), out var code)) return;
+                Config.Set("Wallpaper", code); Config.Save();
+                Program.instance.ui_.ChangeWallpaper(code);
+                ConfigureBattleSpiritsSettings();
+            }, null);
         }
 
         protected override void HideEvent()

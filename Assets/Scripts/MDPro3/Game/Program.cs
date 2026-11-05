@@ -133,9 +133,13 @@ namespace MDPro3
 
             Screen.sleepTimeout = SleepTimeout.NeverSleep;
 
-            await ResourceManager.InitializeAsync();
-            if(!ABLoader.mdCached)
-                await ABLoader.CacheMasterDuelOutDuelBundles();
+            if (LaoDai.BattleSpirits.BattleSpiritsMode.Enabled)
+                await ABLoader.CacheBattleCosmeticsAsync();
+            else
+            {
+                await ResourceManager.InitializeAsync();
+                if (!ABLoader.mdCached) await ABLoader.CacheMasterDuelOutDuelBundles();
+            }
 
             if(items == null)
             {
@@ -255,6 +259,13 @@ namespace MDPro3
 
         private async UniTask InitializeForDataChangeAsync(Action delegation)
         {
+            if (LaoDai.BattleSpirits.BattleSpiritsMode.Enabled)
+            {
+                UIManager.InitializeLanguage();
+                delegation?.Invoke();
+                UIManager.HideLoading();
+                return;
+            }
             await ResourceManager.InitializeAsync();
             await BanlistManager.InitializeAsync();
             if (!LaoDai.BattleSpirits.BattleSpiritsMode.Enabled)
@@ -291,7 +302,6 @@ namespace MDPro3
                 // Only the retained general settings and cosmetic viewers use
                 // legacy servants. Gameplay screens register their native adapters.
                 servants.Add(setting); servants.Add(menu); servants.Add(mate);
-                servants.Add(appearance); servants.Add(character);
                 foreach (var servant in servants) servant.Initialize();
                 return;
             }
@@ -478,6 +488,7 @@ namespace MDPro3
             Running = false;
             Config.Save();
             ClearCache();
+            if (LaoDai.BattleSpirits.BattleSpiritsMode.Enabled) return;
             YgoServer.StopServer();
             FileManager.Dispose();
             try

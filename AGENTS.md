@@ -28,9 +28,12 @@ commit generated Unity caches such as `Library`, `Temp`, or `Logs`.
 
 - This branch retains the MDPro3 menu, appearance assets and Windows bundles,
   and targets **Unity 6000.0.24f1**, as selected by the owner.
-- Gameplay is **Japanese Battle Spirits Eternal**, with Vietnamese UI. Do not
-  silently substitute Saga or Standard rules, or imply that a Standard-only
-  catalog entry is legal in Eternal.
+- Gameplay is **Japanese Battle Spirits Standard**, with Vietnamese UI, as
+  confirmed by the owner on 2026-11-04 using the supplied Standard v1.0 PDFs.
+  Keep the separately tested Eternal engine compatibility explicit. Block A is
+  the verified Standard pool through 2027-03-31; old BS01 cards are not Standard.
+- Keep screen layout, replace Master Duel graphics, and retain only pet and
+  wallpaper resources plus dependencies required for those retained cosmetics.
 - New rules live in `Assets/BattleSpirits/Runtime/Core`, without Unity objects.
   Keep C# 9 and Unity's .NET Standard 2.1 API compatibility.
 - Network clients receive filtered player views. Never send the opponent's hand,

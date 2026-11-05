@@ -112,6 +112,8 @@ namespace MDPro3
         public const string PATH_ICON_RANDOM = "Menu-Random";
         public const string PATH_ICON_SAME = "Menu-Same";
         public const string PATH_ICON_DIY = "Menu-DIY";
+        public const string BATTLE_DEFAULT_WALLPAPER = BattleCosmeticCatalog.DefaultWallpaper;
+        public const string BATTLE_COSMETICS_PATH = BattleCosmeticCatalog.RelativePath;
 
         public static bool initialized = false;
         private static string language = string.Empty;
@@ -130,6 +132,11 @@ namespace MDPro3
 
         public void Initialize()
         {
+            if (LaoDai.BattleSpirits.BattleSpiritsMode.Enabled)
+            {
+                InitializeBattleCosmetics();
+                return;
+            }
             if (!initialized)
             {
                 instance = this;
@@ -154,6 +161,58 @@ namespace MDPro3
                 language = currentLanguage;
                 Load();
             }
+        }
+
+        // The retained pet/wallpaper list is independent of Yu-Gi-Oh card IDs,
+        // CDB databases, item-description dumps and character data.
+        private void InitializeBattleCosmetics()
+        {
+            instance = this;
+            if (!initialized || kinds == null)
+            {
+                if (File.Exists(BATTLE_COSMETICS_PATH))
+                {
+                    var catalog = BattleCosmeticCatalog.Load(BATTLE_COSMETICS_PATH, Path.Combine(Program.root, "MasterDuel"));
+                    mates = BattleItems(catalog.mates, "Mate/");
+                    wallpapers = BattleItems(catalog.wallpapers, "Wallpaper/");
+                }
+                else
+                {
+                    // Older checkouts can still open using the serialized
+                    // cosmetic subset, without loading a card database.
+                    mates = (mates ?? new List<Item>()).FindAll(item => AvailableBattleCosmetic(item.path, "Mate/") && !item.notReady);
+                    wallpapers = (wallpapers ?? new List<Item>()).FindAll(item => AvailableBattleCosmetic(item.path, "Wallpaper/") && !item.notReady);
+                }
+                faces = new(); frames = new(); protectors = new(); mats = new();
+                graves = new(); stands = new(); cases = new();
+                kinds = new List<List<Item>> { wallpapers, mates };
+                initialized = true;
+            }
+            names.Clear(); descriptions.Clear(); categories.Clear();
+            foreach (var kind in kinds)
+                foreach (var item in kind)
+                    names[item.id] = string.IsNullOrWhiteSpace(item.m_name)
+                        ? (kind == mates ? "Pet " : "Wallpaper ") + item.id : item.m_name;
+        }
+
+        private static List<Item> BattleItems(List<BattleCosmeticEntry> source, string prefix)
+        {
+            var result = new List<Item>();
+            foreach (var entry in source ?? new List<BattleCosmeticEntry>())
+                if (entry != null && AvailableBattleCosmetic(entry.path, prefix))
+                    result.Add(new Item { id = entry.id, m_name = entry.name, path = entry.path,
+                        m_description = prefix == "Mate/" ? "Companion cosmetic" : "Menu wallpaper" });
+            return result;
+        }
+
+        private static bool AvailableBattleCosmetic(string path, string prefix)
+        {
+            try
+            {
+                string fullPath = BattleCosmeticCatalog.ResolveBundlePath(Path.Combine(Program.root, "MasterDuel"), path, prefix);
+                return File.Exists(fullPath) || Directory.Exists(fullPath);
+            }
+            catch (InvalidDataException) { return false; }
         }
 
         private void Load()
@@ -251,7 +310,7 @@ namespace MDPro3
                 else
                     returnValue = mName;
             }
-            return Cid2Ydk.ReplaceWithCardName(returnValue);
+            return LaoDai.BattleSpirits.BattleSpiritsMode.Enabled ? returnValue : Cid2Ydk.ReplaceWithCardName(returnValue);
         }
 
         private string GetDescription(int code)
@@ -260,7 +319,7 @@ namespace MDPro3
             if (string.IsNullOrEmpty(returnValue))
                 return STRING_NULL;
             returnValue = ReplaceWithCategory(returnValue);
-            return Cid2Ydk.ReplaceWithCardName(returnValue);
+            return LaoDai.BattleSpirits.BattleSpiritsMode.Enabled ? returnValue : Cid2Ydk.ReplaceWithCardName(returnValue);
         }
 
         private string ReplaceWithCategory(string text)
@@ -281,6 +340,11 @@ namespace MDPro3
 
         public Item GetRandomItem(ItemType type)
         {
+            if (LaoDai.BattleSpirits.BattleSpiritsMode.Enabled)
+            {
+                var available = type == ItemType.Mate ? mates : type == ItemType.Wallpaper ? wallpapers : null;
+                return available == null || available.Count == 0 ? default : available[UnityEngine.Random.Range(0, available.Count)];
+            }
             var result = type switch
             {
                 ItemType.Wallpaper => wallpapers[UnityEngine.Random.Range(0, wallpapers.Count)],
@@ -311,6 +375,7 @@ namespace MDPro3
             foreach (var item in wallpapers)
                 if (item.id.ToString() == code)
                     return item.path;
+            if (LaoDai.BattleSpirits.BattleSpiritsMode.Enabled) return string.Empty;
             return DEFAULT_WALLPAPER_PATH;
         }
 
@@ -338,6 +403,14 @@ namespace MDPro3
 
         public string GetAssetPath(string code, ItemType type, int player = 0)
         {
+            if (LaoDai.BattleSpirits.BattleSpiritsMode.Enabled)
+            {
+                var source = type == ItemType.Mate ? mates : type == ItemType.Wallpaper ? wallpapers : null;
+                if (source == null || source.Count == 0) return string.Empty;
+                if (code == CODE_RANDOM.ToString()) return GetRandomItem(type).path;
+                foreach (var cosmetic in source) if (cosmetic.id.ToString() == code) return cosmetic.path;
+                return type == ItemType.Mate ? source[0].path : string.Empty;
+            }
             if(code == CODE_RANDOM.ToString())
             {
                 var item = GetRandomItem(type);

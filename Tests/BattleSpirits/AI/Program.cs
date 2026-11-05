@@ -176,6 +176,51 @@ internal static class Program
             var view = View("Main"); view.turn = 1;
             Check(Bot().ChooseAction(view).action == "endTurn", "First-turn attack proposed.");
         });
+        Case("Second Main permits development but never starts another Attack Step", () => {
+            var view = View("SecondMain"); view.rulesFormat = "Standard";
+            var cheap = database.cards.Where(card => card.IsPlayableFor(BattleRulesFormat.Standard) && card.IsSpirit
+                && card.levels.Count > 0 && card.cost + card.levels[0].cores <= 4)
+                .OrderBy(card => card.cost).ThenBy(card => card.id, StringComparer.Ordinal).First();
+            view.ownHand = new[] { cheap.id };
+            Check(Bot().ChooseAction(view).action == "summon", "Affordable Second Main summon ignored.");
+            view.ownHand = Array.Empty<string>(); view.players[0].reserveNormal = 0; view.players[0].reserveSoul = false;
+            Check(Bot().ChooseAction(view).action == "endTurn", "Second Main attempted another attack or stalled.");
+        });
+        Case("Standard bot uses a single Soul Core for printed Super Unleash Lv2 only", () => {
+            var card = database.cards.Single(item => item.id == "26RBS03-061");
+            Check(card.superUnleash && card.IsPlayableFor(BattleRulesFormat.Standard), "Missing verified Super Unleash fixture.");
+            var view = View("SecondMain"); view.rulesFormat = "Standard";
+            view.players[0].field = new[] { Spirit(card.id, 42, card.levels[0].bp) };
+            view.players[0].reserveNormal = 1; view.players[0].reserveSoul = true;
+            var command = Bot().ChooseAction(view);
+            Check(command.action == "moveCore" && command.target == 42 && command.soul,
+                "Bot ignored the keyword-specific Soul upgrade despite insufficient ordinary cores.");
+            view.players[0].field[0].soulCore = true;
+            view.players[0].field[0].level = 2;
+            view.players[0].field[0].bp = card.levels[1].bp;
+            view.players[0].reserveSoul = false;
+            Check(Bot().ChooseAction(view).action == "endTurn", "Bot kept allocating ordinary cores to an existing Soul Lv2.");
+            var ordinary = database.cards.First(item => item.IsPlayableFor(BattleRulesFormat.Standard) && item.IsSpirit
+                && !item.superUnleash && item.levels.Count > 1 && item.levels[1].cores - item.levels[0].cores > 1);
+            view.players[0].field = new[] { Spirit(ordinary.id, 43, ordinary.levels[0].bp, ordinary.levels[0].cores) };
+            view.players[0].reserveNormal = 0; view.players[0].reserveSoul = true;
+            Check(Bot().ChooseAction(view).action == "endTurn", "Ordinary Spirit incorrectly received the keyword-only Soul upgrade.");
+        });
+        Case("Standard decisions do not propose Eternal-only cards or unknown formats", () => {
+            var view = View("Main"); view.rulesFormat = "Standard"; view.ownHand = new[] { "BS01-001" };
+            Check(Bot().ChooseAction(view).action == "attackStep", "Eternal-only card proposed in Standard.");
+            view.rulesFormat = "NotAFormat";
+            Check(Bot().ChooseAction(view) == null, "Unknown rules format was silently substituted.");
+            view.rulesFormat = "1";
+            Check(Bot().ChooseAction(view) == null, "Numeric enum substituted for a named format.");
+        });
+        Case("Second Main rejection fallback ends the turn without a retry loop", () => {
+            var view = View("SecondMain"); view.rulesFormat = "Standard";
+            var session = new BattleSpiritsBotSession(0, Bot(), 0);
+            session.ReportRejectedAction();
+            Check(session.TryPoll(view, 0, out var command) && command.action == "endTurn", "Second Main fallback stalled.");
+            Check(!session.TryPoll(view, 1, out _), "Rejected Second Main state retried repeatedly.");
+        });
         Case("Defender chooses a winning blocker or sacrifices to prevent lethal", () => {
             var view = View("Block", 1); view.attacker = 11;
             view.players[0].field = new[] { Spirit("BS01-001", 11, 2000) };
@@ -321,6 +366,56 @@ internal static class Program
             Check(match.State.Phase == MatchPhase.GameOver, "Polled session stalled."); completeMatches++;
             for (int actor = 0; actor < 2; actor++)
                 Check(!sessions[actor].TryPoll(ViewFactory.Create(match, actor), time + 1, out _), "AI acted after GameOver.");
+        });
+        Case("Standard profile limits ignore Eternal-only restrictions but honor banned Standard same-name printings", () => {
+            var baseline = BattleSpiritsBotProfiles.Create(database.cards, BattleRulesFormat.Standard);
+            string chosenId = baseline[0].Deck.cards[0];
+            string chosenName = database.cards.Single(card => card.id == chosenId).nameJa;
+            var eternalRestriction = new CardDefinition { id = "TEST-ETERNAL-BAN", nameJa = chosenName,
+                format = "Eternal", maxCopies = 0, eternalLegal = false };
+            var mixed = database.cards.Concat(new[] { eternalRestriction }).ToArray();
+            var ignored = BattleSpiritsBotProfiles.Create(mixed, BattleRulesFormat.Standard);
+            for (int profile = 0; profile < baseline.Length; profile++)
+                Check(ignored[profile].Deck.cards.SequenceEqual(baseline[profile].Deck.cards),
+                    "Eternal-only restriction leaked into Standard name limit.");
+            var standardRestriction = new CardDefinition { id = "TEST-STANDARD-BAN", nameJa = chosenName,
+                format = "Standard", standardBlock = "A", standardLegalityVerified = true,
+                standardLegal = false, maxCopies = 0 };
+            var banned = BattleSpiritsBotProfiles.Create(mixed.Concat(new[] { standardRestriction }).ToArray(), BattleRulesFormat.Standard);
+            Check(banned.All(profile => profile.Deck.cards.All(id => database.cards.Single(card => card.id == id).nameJa != chosenName)),
+                "Unbanned alternate printing bypassed a Standard same-name ban.");
+        });
+        Case("Standard profiles use only verified block-A cards and complete twenty legal bot duels", () => {
+            var profiles = BattleSpiritsBotProfiles.Create(database.cards, BattleRulesFormat.Standard);
+            Check(profiles.Length == 3 && profiles.All(profile => profile.Deck.cards.Length == 40
+                && profile.Deck.format == "Standard"), "Missing forty-card Standard profiles or format metadata.");
+            foreach (var profile in profiles)
+            {
+                Check(DeckValidator.Validate(database.cards, profile.Deck.cards, format: BattleRulesFormat.Standard).IsValid,
+                    "Invalid Standard bot deck: " + profile.Id);
+                Check(profile.Deck.cards.All(id => database.cards.Single(card => card.id == id).IsStandardEligible),
+                    "Eternal-only or unverified card entered Standard profile.");
+            }
+            Check(profiles.Select(profile => string.Join(",", profile.Deck.cards)).Distinct().Count() == 3,
+                "Standard difficulty profiles do not have distinct recipes.");
+            int secondMainVisits = 0;
+            for (int seed = 0; seed < 20; seed++)
+            {
+                var match = BattleMatch.Create(database.cards, profiles[seed % 3].Deck.cards,
+                    profiles[(seed + 1) % 3].Deck.cards, seed + 1000, seed % 2, format: BattleRulesFormat.Standard);
+                var bots = new[] { Bot(profiles[seed % 3].Difficulty, seed), Bot(profiles[(seed + 1) % 3].Difficulty, seed + 1) };
+                for (int step = 0; step < 3000 && match.State.Phase != MatchPhase.GameOver; step++)
+                {
+                    int actor = match.DecisionPlayerIndex;
+                    var view = ViewFactory.Create(match, actor);
+                    Check(view.rulesFormat == "Standard", "Filtered match view lost the actual Standard format.");
+                    if (view.phase == "SecondMain") secondMainVisits++;
+                    Execute(match, bots[actor].ChooseAction(view));
+                }
+                Check(match.State.Phase == MatchPhase.GameOver, "Standard AI match stalled at seed " + seed);
+                completeMatches++;
+            }
+            Check(secondMainVisits >= 20, "Full Standard matches never entered Second Main.");
         });
         Console.WriteLine(JsonConvert.SerializeObject(new { status = "PASS", scenarios = cases, completeMatches,
             authoritativeActions = totalActions, elapsedMilliseconds = watch.ElapsedMilliseconds,

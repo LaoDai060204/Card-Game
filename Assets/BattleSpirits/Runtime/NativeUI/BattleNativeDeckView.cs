@@ -43,7 +43,7 @@ namespace LaoDai.BattleSpirits.NativeUI
             if (deckTemplate != null) deckTemplate.gameObject.SetActive(false);
             BattleNativeWidgets.Grid(collection, 5); BattleNativeWidgets.Grid(deckContent, 6, 92, 138);
             search = BattleNativeWidgets.Input(root, Collection + "/FilterAndSortArea/UpperArea/InputField", string.Empty);
-            name = BattleNativeWidgets.Input(root, Deck + "/HeaderArea/NameAreaGroup/InputField", session.SelectedDeck?.name ?? "Battle Spirits Eternal");
+            name = BattleNativeWidgets.Input(root, Deck + "/HeaderArea/NameAreaGroup/InputField", session.SelectedDeck?.name ?? "Battle Spirits Standard");
             if (search != null) search.onValueChanged.AddListener(_ => { page = 0; RenderCollection(); });
             BattleNativeWidgets.Bind(root, Header + "/ButtonBack", BattleNativeNavigation.ReturnToMenu);
             BattleNativeWidgets.Bind(root, Header + "/ButtonSave", () => Save(), "LƯU");
@@ -106,7 +106,7 @@ namespace LaoDai.BattleSpirits.NativeUI
             if (signature == loadedDeck) return;
             loadedDeck = signature;
             deck.Clear(); deck.AddRange(session.SelectedDeck?.cards ?? Array.Empty<string>());
-            if (name != null) name.SetTextWithoutNotify(session.SelectedDeck?.name ?? "Battle Spirits Eternal");
+            if (name != null) name.SetTextWithoutNotify(session.SelectedDeck?.name ?? "Battle Spirits Standard");
             RenderDeck();
         }
         private void CycleColor()
@@ -123,8 +123,8 @@ namespace LaoDai.BattleSpirits.NativeUI
             IEnumerable<CardDefinition> values = session.Cards;
             if (query.Length > 0) values = values.Where(card => Matches(card, query));
             if (color >= 0) values = values.Where(card => card.color == (CardColor)color);
-            if (support == 1) values = values.Where(card => card.IsPlayable);
-            if (support == 2) values = values.Where(card => card.IsEternalEligible);
+            if (support == 1) values = values.Where(card => card.IsPlayableFor(BattleSpiritsMode.RulesFormat));
+            if (support == 2) values = values.Where(card => card.IsEligibleFor(BattleSpiritsMode.RulesFormat));
             values = sort == 1 ? values.OrderBy(card => card.cost).ThenBy(card => card.id, StringComparer.Ordinal)
                 : sort == 2 ? values.OrderBy(card => card.DisplayName, StringComparer.Ordinal)
                 : values.OrderByDescending(card => card.releaseDate, StringComparer.Ordinal).ThenBy(card => card.id, StringComparer.Ordinal);
@@ -150,7 +150,9 @@ namespace LaoDai.BattleSpirits.NativeUI
             BattleNativeWidgets.Label(detail, "TextCardName", card.DisplayName);
             BattleNativeWidgets.Label(detail, "TextCardNumValueTMP", card.id);
             BattleNativeWidgets.Label(detail, "TextDescriptionItemTMP", "HIỆU ỨNG / " + card.type);
-            BattleNativeWidgets.Label(detail, "TextDescriptionValueTMP", card.effectTextJa + "\n\n" + card.setName + "\n" + (card.IsPlayable ? "Đã hỗ trợ trong trận" : "Chỉ tra cứu; hiệu ứng chưa triển khai"));
+            string status = !card.IsEligibleFor(BattleSpiritsMode.RulesFormat) ? "Ngoài pool Standard hoặc chưa xác minh hợp lệ"
+                : card.IsPlayableFor(BattleSpiritsMode.RulesFormat) ? "Standard · đã hỗ trợ trong trận" : "Standard · chỉ tra cứu; hiệu ứng chưa triển khai";
+            BattleNativeWidgets.Label(detail, "TextDescriptionValueTMP", card.effectTextJa + "\n\n" + card.setName + "\n" + status);
             BattleNativeWidgets.Label(detail, "TextLevelTMP", "Cost " + card.cost + " / ↓" + card.reductionSymbols);
             BattleNativeWidgets.Label(detail, "TextAtkTMP", string.Join(" / ", (card.levels ?? new List<CardLevel>()).Select(level => level.bp)) + " BP");
             BattleNativeWidgets.Label(detail, "TextDefTMP", "Symbol " + card.symbols);
@@ -160,7 +162,10 @@ namespace LaoDai.BattleSpirits.NativeUI
         private void Add()
         {
             if (selected == null) return;
-            int limit = session.Cards.Where(card => card.nameJa == selected.nameJa).Min(card => card.EffectiveCopyLimit);
+            if (!selected.IsEligibleFor(BattleSpiritsMode.RulesFormat))
+            { MessageManager.Cast("Thẻ này không thuộc pool Standard đã xác minh."); return; }
+            int limit = session.Cards.Where(card => card.nameJa == selected.nameJa && card.standardBlock == "A"
+                && card.standardLegalityVerified && (card.format == "Standard" || card.format == "Both")).Min(card => card.EffectiveCopyLimit);
             if (deck.Count(id => cards.TryGetValue(id, out var card) && card.nameJa == selected.nameJa) >= limit)
             { MessageManager.Cast("Tối đa " + limit + " lá cùng tên."); return; }
             deck.Add(selected.id); RenderDeck();
@@ -180,7 +185,7 @@ namespace LaoDai.BattleSpirits.NativeUI
         }
         private bool Save()
         {
-            var definition = new DeckDefinition { name = string.IsNullOrWhiteSpace(name?.text) ? "Battle Spirits Eternal" : name.text.Trim(), cards = deck.ToArray() };
+            var definition = new DeckDefinition { name = string.IsNullOrWhiteSpace(name?.text) ? "Battle Spirits Standard" : name.text.Trim(), format = BattleSpiritsMode.RulesFormat.ToString(), cards = deck.ToArray() };
             if (!session.SaveDeck(definition, out var error)) { MessageManager.Cast(error); return false; }
             session.SelectDeck(definition); loadedDeck = Signature(definition); MessageManager.Cast("Đã lưu " + definition.name); return true;
         }

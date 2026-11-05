@@ -41,6 +41,7 @@ namespace MDPro3
         [RuntimeInitializeOnLoadMethod]
         public static async UniTask LoadCardMaterials()
         {
+            if (LaoDai.BattleSpirits.BattleSpiritsMode.Enabled) return;
             await UniTask.WaitUntil(() => TextureManager.loaded && TextureManager.container != null);
 
             cardMatNormalUI = ABLoader.LoadMasterDuelMaterial("NormalStyleUI");

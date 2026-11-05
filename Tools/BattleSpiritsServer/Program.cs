@@ -14,17 +14,18 @@ internal static class Entry
         Console.OutputEncoding = new UTF8Encoding(false);
         string catalogPath = "Data/BattleSpirits/cards.json";
         int port = Protocol.DefaultPort;
+        BattleRulesFormat format = BattleRulesFormat.Standard;
         for (int index = 0; index < args.Length; index++)
         {
             string option = args[index];
             if (option == "--help" || option == "-h")
             {
-                Console.WriteLine("Battle Spirits Japanese Eternal server");
-                Console.WriteLine("Usage: dotnet run --project Tools/BattleSpiritsServer -c Release -- [--catalog PATH] [--port PORT]");
-                Console.WriteLine("Defaults: --catalog Data/BattleSpirits/cards.json --port 7777");
+                Console.WriteLine("Battle Spirits Japanese Standard / Eternal server");
+                Console.WriteLine("Usage: dotnet run --project Tools/BattleSpiritsServer -c Release -- [--catalog PATH] [--port PORT] [--format Standard|Eternal]");
+                Console.WriteLine("Defaults: --catalog Data/BattleSpirits/cards.json --port 7777 --format Standard");
                 Console.WriteLine("Run from the repository root, or specify an absolute catalog path.");
                 Console.WriteLine("The server listens on all IPv4 interfaces. Port 0 selects a free port.");
-                Console.WriteLine("Press Ctrl+C to stop. Both game clients need the same catalog and protocol version.");
+                Console.WriteLine("Press Ctrl+C to stop. Both clients need the same format, catalog and protocol version " + Protocol.Version + ".");
                 return 0;
             }
             if (option == "--catalog" && index + 1 < args.Length)
@@ -32,6 +33,8 @@ internal static class Entry
             else if (option == "--port" && index + 1 < args.Length
                 && int.TryParse(args[++index], out int selectedPort) && selectedPort >= 0 && selectedPort <= 65535)
                 port = selectedPort;
+            else if (option == "--format" && index + 1 < args.Length && TryFormat(args[++index], out var selectedFormat))
+                format = selectedFormat;
             else
             {
                 Console.Error.WriteLine("Invalid option or value: " + option + ". Use --help for usage.");
@@ -46,10 +49,11 @@ internal static class Entry
             if (catalog == null || catalog.Length == 0)
                 throw new InvalidDataException("The card catalog is empty.");
             // Fail before accepting clients if the catalog cannot provide a legal
-            // supported deck. Imported ability cards remain browse-only.
-            StarterDecks.CreatePair(catalog);
+            // supported deck for the selected format. Imported ability text
+            // alone does not make a card supported by the rules engine.
+            StarterDecks.CreatePair(catalog, format);
             var stopped = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-            using (var server = new BattleLanServer(catalog))
+            using (var server = new BattleLanServer(catalog, format))
             {
                 ConsoleCancelEventHandler cancel = (_, eventArgs) =>
                 {
@@ -63,9 +67,10 @@ internal static class Entry
                 try
                 {
                     server.Start(port);
-                    Console.WriteLine("Ruleset: Japanese Battle Spirits Eternal");
+                    Console.WriteLine("Ruleset: Japanese Battle Spirits " + format);
+                    Console.WriteLine("Protocol: " + Protocol.Version);
                     Console.WriteLine("Catalog: " + Path.GetFullPath(catalogPath));
-                    Console.WriteLine("Cards: " + catalog.Length + "; playable: " + catalog.Count(card => card != null && card.IsPlayable));
+                    Console.WriteLine("Cards: " + catalog.Length + "; playable in " + format + ": " + catalog.Count(card => card != null && card.IsPlayableFor(format)));
                     Console.WriteLine("Catalog hash: " + server.CatalogHash);
                     Console.WriteLine("Ready on TCP port " + server.Port + ". Press Ctrl+C to stop.");
                     await stopped.Task.ConfigureAwait(false);
@@ -87,5 +92,15 @@ internal static class Entry
             Console.Error.WriteLine("Unable to start Battle Spirits server: " + error.Message);
             return 1;
         }
+    }
+
+    private static bool TryFormat(string text, out BattleRulesFormat format)
+    {
+        if (string.Equals(text, "Standard", StringComparison.OrdinalIgnoreCase))
+        { format = BattleRulesFormat.Standard; return true; }
+        if (string.Equals(text, "Eternal", StringComparison.OrdinalIgnoreCase))
+        { format = BattleRulesFormat.Eternal; return true; }
+        format = default;
+        return false;
     }
 }
