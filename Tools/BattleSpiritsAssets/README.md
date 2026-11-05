@@ -1,17 +1,23 @@
 # Tài nguyên Battle Spirits tự tạo
 
-Nhóm này tạo field, hình học Spirit/boss, hoạt ảnh và sound bank cho bản thay thế trực tiếp. Mặt thẻ chính thức được quản lý riêng bởi [công cụ thẻ](../BattleSpiritsCards/README.md).
+Nhóm này chứa sân, mã trình diễn thẻ và sound bank cho bản thay thế trực tiếp. Từ 0.4.0, quái trên sân dùng ảnh minh họa của đúng lá bài, thay các model chung trước đây. Mặt thẻ chính thức được quản lý riêng bởi [công cụ thẻ](../BattleSpiritsCards/README.md).
 
 | Tài nguyên | Vị trí |
 | --- | --- |
-| Geometry field/Spirit/boss trong Unity | `Assets/BattleSpirits/Runtime/Visuals/BattleSpiritGeometry.cs`, `BattleFieldVisuals.cs` |
+| Sân và bố trí thẻ trong Unity | `Assets/BattleSpirits/Runtime/Visuals/BattleFieldVisuals.cs` |
+| Mặt thẻ trên sân + ảnh minh họa nổi | `Assets/BattleSpirits/Runtime/Visuals/BattleCardFigure.cs` |
+| Trình diễn triệu hồi trên UI bàn đấu | `Assets/BattleSpirits/Runtime/NativeUI/BattleSummonPresentation.cs` |
+| Đường cong trình diễn triệu hồi | `Assets/BattleSpirits/Runtime/Visuals/BattleSummonMotion.cs` |
+| Hình học sân và nguồn model cũ | `Assets/BattleSpirits/Runtime/Visuals/BattleSpiritGeometry.cs` |
 | Đường cong triệu hồi/tấn công/chặn/nhận đòn/phá hủy/thắng-thua | `Assets/BattleSpirits/Runtime/Visuals/BattleVisualMotion.cs` |
 | Render menu | `Picture/Art/bs-menu.png` |
 | Closeup hai boss | `Picture/Closeup/BS01-X01.png`, `Picture/Closeup/BS01-097.png` |
 | Scene Blender có mesh và keyframe | `Tools/BattleSpiritsAssets/Source/OriginalSpirits.blend` |
 | Nhạc/SFX PCM16 | `Sound/BattleSpirits/*.wav` |
 
-Hai model boss là **diễn giải fan-made kiểu low-poly** gắn với mã thẻ, không phải model chính thức của BANDAI hay bản trích từ game thương mại. Các Spirit khác dùng geometry thay thế theo màu. Runtime Unity dùng mã C# để dựng model và chạy đường cong; không cần Blender để mở/chơi game. Tệp `.blend` nằm ngoài Assets để tránh yêu cầu Blender khi Unity import.
+Mặt thẻ nằm ngang trên sân; vùng minh họa của cùng ảnh được lấy bằng UV và hiển thị nổi hướng về camera. Mã renderer giữ tỷ lệ artwork và mượn texture từ cache của session, không ghi lại hoặc sửa PNG nguồn. Vùng ảnh nổi **vẫn có nền minh họa**, không phải ảnh quái đã tách nền. Trình diễn triệu hồi khoảng 1,95 giây có quét sáng, phóng to/xoay thẻ, nâng ảnh và đưa thẻ về sân; xem [cách hoạt động và thử trong Editor](../../Documentation/BATTLE_SPIRITS_SUMMON_PRESENTATION.md).
+
+Hai model boss cũ là **diễn giải fan-made kiểu low-poly**, không phải model chính thức của BANDAI hay bản trích từ game thương mại. Source geometry, render và `.blend` vẫn được lưu, nhưng không được dùng làm quái trên sân trong 0.4.0. Tệp `.blend` nằm ngoài Assets để tránh yêu cầu Blender khi Unity import; mở/chơi game không cần Blender.
 
 `visual-manifest.json` ghi checksum của hai PNG RGBA 1024×1024, menu 1920×1080 và scene `.blend`. Ảnh được render từ geometry gốc bằng Blender 4.3.2/Cycles CPU, không phải chỉnh sửa artwork mặt thẻ chính thức. Scene có keyframe chuyển động cánh/triệu hồi; đường cong runtime Unity là mã riêng, không tự import các action Blender.
 
@@ -28,7 +34,7 @@ python Tools/BattleSpiritsAssets/audio.py
 blender --background --python Tools/BattleSpiritsAssets/render_originals.py -- --project /path/to/Card-Game --samples 72
 ```
 
-Lệnh render ghi lại PNG, `.blend` và manifest; hình học runtime nằm trong C# nên khi đổi mẫu cần đồng bộ cả hai phần nếu muốn chúng giống nhau. Chạy kiểm tra dữ liệu/chuyển động:
+Lệnh render ghi lại các PNG menu/closeup, `.blend` và manifest cũ; nó không tạo ảnh minh họa nổi mới cho thẻ và không thay PNG artwork chính thức. Chạy kiểm tra dữ liệu/chuyển động:
 
 ```bash
 dotnet run --project Tests/BattleSpirits/Visuals/BattleSpirits.Visuals.Tests.csproj -c Release -- /path/to/Card-Game

@@ -53,7 +53,13 @@ namespace LaoDai.BattleSpirits.NativeUI
             if (screen == BattleNativeScreen.Solo) RefreshSoloChoices();
             Refresh();
         }
-        private void OnDestroy() { if (session != null) session.Changed -= Refresh; }
+        protected override void OnDestroy()
+        {
+            if (session != null) session.Changed -= Refresh;
+            duel?.Dispose();
+            base.OnDestroy();
+        }
+        protected override void HideEvent() { duel?.SuspendPresentation(); base.HideEvent(); }
         private void Refresh()
         {
             if (session == null || !gameObject.activeInHierarchy) return;

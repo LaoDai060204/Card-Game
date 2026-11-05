@@ -9,7 +9,7 @@ using LaoDai.BattleSpirits.Visuals;
 
 internal static class Program
 {
-    private static int passed, failed, samples;
+    private static int passed, failed, samples, summonSamples;
     private static void Assert(bool condition, string message)
     { if (!condition) throw new Exception(message); }
     private static void Near(float actual, float expected, float tolerance = 0.00001f)
@@ -45,6 +45,16 @@ internal static class Program
         foreach (float number in new[] { value.height, value.scale, value.advance, value.tilt, value.wing, value.glow })
             Assert(!float.IsNaN(number) && !float.IsInfinity(number), "Animation sample is not finite.");
         samples++;
+    }
+    private static float[] SummonValues(BattleSummonSample value) => new[] {
+        value.backdropAlpha,value.cardAlpha,value.cardScale,value.cardFlipY,value.cardTilt,
+        value.illustrationAlpha,value.illustrationScale,value.illustrationRise,value.flashAlpha,
+        value.sweep,value.glow,value.nameAlpha,value.landing
+    };
+    private static void Finite(BattleSummonSample value)
+    {
+        Assert(SummonValues(value).All(number=>!float.IsNaN(number)&&!float.IsInfinity(number)),"Summon sample is not finite.");
+        summonSamples++;
     }
     public static int Main(string[] arguments)
     {
@@ -91,6 +101,51 @@ internal static class Program
             foreach (BattleVisualPose pose in Enum.GetValues(typeof(BattleVisualPose)))
                 foreach (float input in new[] { float.MaxValue, float.MinValue, 1e20f })
                     Finite(BattleVisualMotion.Sample(pose, float.MaxValue, input));
+        });
+        Case("Summon presentation reveals artwork before landing on the field",()=>{
+            var start=BattleSummonMotion.Sample(0);var reveal=BattleSummonMotion.Sample(1);var landed=BattleSummonMotion.Sample(BattleSummonMotion.Duration);
+            Finite(start);Finite(reveal);Finite(landed);
+            Near(start.illustrationAlpha,0);Near(start.landing,0);Near(start.cardScale,0.18f);
+            Assert(reveal.cardAlpha>0.99f&&reveal.illustrationAlpha>0.99f&&reveal.nameAlpha>0.99f,"Face and illustration never become fully visible.");
+            Near(reveal.landing,0);Near(landed.landing,1);Near(landed.cardAlpha,0);Near(landed.illustrationAlpha,0);Near(landed.backdropAlpha,0);
+        });
+        Case("Summon landing fits the projected card without double foreshortening",()=>{
+            foreach(float projectedPixels in new[]{67f,102f})
+            {
+                BattleSummonMotion.GetLanding(96f/1600,projectedPixels/900,1600f/900,675f/983,out float height,out float tilt);
+                Near(height*900,96f/(675f/983));
+                Near((float)(height*900*Math.Cos(tilt*Math.PI/180)),projectedPixels);
+                Assert(tilt>=0&&tilt<90,"Landing tilt outside visible range.");
+            }
+            BattleSummonMotion.GetLanding(float.NaN,0.1f,float.PositiveInfinity,0,out float invalidHeight,out float invalidTilt);
+            Near(invalidHeight,0);Near(invalidTilt,0);
+            BattleSummonMotion.GetLanding(0.1f,0.1f,float.NaN,float.NaN,out float fallbackHeight,out float fallbackTilt);
+            Assert(!float.IsNaN(fallbackHeight)&&!float.IsInfinity(fallbackHeight)&&!float.IsNaN(fallbackTilt),"Invalid layout did not use finite defaults.");
+        });
+        Case("Summon presentation remains bounded across its complete timeline",()=>{
+            for(int frame=0;frame<=500;frame++)
+            {
+                var value=BattleSummonMotion.Sample(-1+frame*0.01f);Finite(value);
+                foreach(float alpha in new[]{value.backdropAlpha,value.cardAlpha,value.illustrationAlpha,value.flashAlpha,value.glow,value.nameAlpha,value.landing,value.sweep,value.illustrationRise})
+                    Assert(alpha>=-0.00001f&&alpha<=1.00001f,"Summon opacity/progress escapes [0,1].");
+                Assert(value.cardScale>=0.179f&&value.cardScale<=1.036f&&value.illustrationScale>=0.879f&&value.illustrationScale<=1.026f,"Summon scale grows outside its layout.");
+                Assert(Math.Abs(value.cardFlipY)<=82.001f&&Math.Abs(value.cardTilt)<=12.001f,"Summon rotation exceeds intended turn.");
+            }
+        });
+        Case("Summon sampling is independent of previous frames or viewing order",()=>{
+            var before=SummonValues(BattleSummonMotion.Sample(0.95f));
+            foreach(float time in new[]{100f,0f,0.2f,1.7f,-10f,0.95f}) Finite(BattleSummonMotion.Sample(time));
+            var after=SummonValues(BattleSummonMotion.Sample(0.95f));
+            for(int index=0;index<before.Length;index++) Near(before[index],after[index]);
+        });
+        Case("Summon invalid and extreme clocks resolve to finite safe endpoints",()=>{
+            var start=SummonValues(BattleSummonMotion.Sample(0));var end=SummonValues(BattleSummonMotion.Sample(BattleSummonMotion.Duration));
+            foreach(float time in new[]{float.NaN,float.NegativeInfinity,float.MinValue,float.PositiveInfinity,float.MaxValue})
+            {
+                var value=BattleSummonMotion.Sample(time);Finite(value);
+                var expected=float.IsPositiveInfinity(time)||time==float.MaxValue?end:start;
+                var actual=SummonValues(value);for(int index=0;index<actual.Length;index++) Near(actual[index],expected[index]);
+            }
         });
         Case("PCM16 signed samples decode correctly", () => {
             var wave = PcmWave.Read(Wave(new byte[] { 0, 0, 255, 127, 0, 128, 255, 255 }));
@@ -145,7 +200,7 @@ internal static class Program
                 Near(wave.samples[0], 0); Near(wave.samples[wave.samples.Length - 1], 0);
             });
         }
-        Console.WriteLine("RESULT " + passed + " passed, " + failed + " failed; " + samples + " animation samples. Pure production curves/PCM only; no Unity audio playback or rendering.");
+        Console.WriteLine("RESULT " + passed + " passed, " + failed + " failed; " + samples + " animation samples; " + summonSamples + " summon samples. Pure production curves/PCM only; no Unity audio playback or rendering.");
         return failed == 0 ? 0 : 1;
     }
 }

@@ -1,4 +1,4 @@
-# Luật và phạm vi Battle Spirits Standard 0.3.0
+# Luật và phạm vi Battle Spirits Standard 0.4.0
 
 Unity **6000.0.24f1**, Windows x64, giao diện tiếng Việt. Chủ dự án đã chọn **Standard theo các PDF được cung cấp**, giữ bố cục UI và thay đồ họa Master Duel, ngoại trừ pet/wallpaper cùng phụ thuộc cần giữ. Bản cập nhật này không đổi sang Saga. Core vẫn có chế độ Eternal riêng để kiểm tra tương thích; UI và Solo/LAN mặc định dùng Standard rõ ràng.
 
@@ -40,7 +40,9 @@ Executor WindBot nhận `FilteredMatchView`, chỉ có tay bot và thông tin c�
 
 Server TCP dùng cùng Core, cổng **7777**, giao thức **3**. Hello/welcome/state mang thể thức; server từ chối sai format, protocol và danh mục. Actor lấy từ kết nối, không từ payload. Snapshot không gửi tay đối thủ/thứ tự deck/seed. Client mới sau mất kết nối vào lobby mới, không nhận tay của phiên cũ.
 
-Field/model và WAV mới do dự án tự tạo. Các Spirit dùng hình học thay thế theo màu; hai model BS01 low-poly vẫn chỉ là diễn giải fan-made. Pet trang trí không quyết định luật.
+Sân và WAV mới do dự án tự tạo. Từ 0.4.0, Spirit hiện mặt thẻ trên sân và một mặt phẳng ảnh minh họa nổi hướng về camera, lấy đúng artwork của lá đó; không dùng hình quái chung theo màu. Ảnh nổi là vùng minh họa có nền được lấy bằng UV từ ảnh mặt thẻ nguyên gốc, không phải cutout trong suốt hay model 3D chính thức. Hai nguồn model BS01 low-poly/closeup trước đây vẫn được lưu như tài nguyên lịch sử.
+
+Triệu hồi/đặt Nexus kích hoạt trình diễn khoảng 1,95 giây trên UI bàn đấu hiện có: nền tối, quét sáng, mặt thẻ xoay/phóng to, ảnh minh họa nâng lên và lá bài hạ về vị trí trên sân. Nút **BỎ QUA** kết thúc phần trình diễn. Việc hiển thị không thay đổi luật, giao thức hay danh mục; trong khi trình diễn chỉ tạm chặn thao tác và lượt polling bot cục bộ, server LAN vẫn tiếp tục xử lý authority. Pet trang trí không quyết định luật. Xem [phần trình diễn triệu hồi](BATTLE_SPIRITS_SUMMON_PRESENTATION.md).
 
 ## Giới hạn còn lại
 
@@ -49,4 +51,4 @@ Field/model và WAV mới do dự án tự tạo. Các Spirit dùng hình học 
 - Nguồn Core trả phí được chọn tự động; giảm phí được chốt trước khi trả. Triệu hồi đặt Core tối thiểu rồi điều chỉnh ở Main; chưa có UI chọn mọi tổ hợp nguồn Core/Level trong một bước trả phí.
 - Chưa có MyCard/account/ghép trận/xếp hạng, tự mở cổng, reconnect tiếp tục trận hoặc replay online đầy đủ.
 - Floor Rules là quản lý giải đấu. Chưa áp dụng timer/penalty/tiebreak của giải vào Solo/LAN; không coi khuyến nghị 30 phút là luật bắt buộc.
-- Chưa có model chính thức riêng cho từng lá, chưa có kéo thả đặt bài. **Chưa kiểm tra Play/render/build Windows Unity, LAN hai máy Windows hoặc Internet công khai trong môi trường này.**
+- Ảnh nổi giữ nền minh họa trong artwork; chưa có bộ cutout trong suốt riêng cho từng quái hay model chính thức riêng cho từng lá. Chưa có kéo thả đặt bài. **Chưa kiểm tra Play/render/build Windows Unity, LAN hai máy Windows hoặc Internet công khai trong môi trường này.**

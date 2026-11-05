@@ -34,7 +34,11 @@ namespace UnityEngine
         }
         public static GameObject CreatePrimitive(PrimitiveType type) => new GameObject(type.ToString(),typeof(MeshRenderer),typeof(MeshFilter),typeof(Collider));
     }
-    public partial class Transform { public Vector3 eulerAngles; }
+    public partial class Transform {
+  public Vector3 eulerAngles;
+  public Vector3 TransformPoint(Vector3 value){var scaled=new Vector3(value.x*localScale.x,value.y*localScale.y,value.z*localScale.z);var local=localPosition+localRotation*scaled;return parent==null?local:parent.TransformPoint(local);}
+  public Vector3 InverseTransformPoint(Vector3 value){var local=parent==null?value:parent.InverseTransformPoint(value);var rotated=Quaternion.Inverse(localRotation)*(local-localPosition);return new Vector3(localScale.x==0?0:rotated.x/localScale.x,localScale.y==0?0:rotated.y/localScale.y,localScale.z==0?0:rotated.z/localScale.z);}
+ }
     public partial struct Vector3
     {
         public static Vector3 up=>new Vector3(0,1,0);
@@ -51,18 +55,18 @@ namespace UnityEngine
         public static float Sin(float value)=>(float)Math.Sin(value);
         public static float Cos(float value)=>(float)Math.Cos(value);
     }
-    public static class Time { public static float unscaledTime; }
+    public static class Time { public static float unscaledTime,unscaledDeltaTime=1f/60; }
     public class CanvasGroup:Behaviour { public float alpha=1; public bool blocksRaycasts=true,interactable=true; }
     public class Font:Object { public Material material=new Material(); }
     public enum TextAlignment { Left,Center,Right }
     public class TextMesh:Component {public string text;public Font font;public int fontSize;public float characterSize;public TextAnchor anchor;public TextAlignment alignment;public Color color;}
     public enum PrimitiveType { Cube,Sphere,Cylinder }
     public class Shader:Object {public static Shader Find(string name)=>new Shader{name=name};}
-    public class Renderer:Component {public Material sharedMaterial;public void SetPropertyBlock(MaterialPropertyBlock block){} }
+    public class Renderer:Component {public bool enabled=true;public Material sharedMaterial;public void SetPropertyBlock(MaterialPropertyBlock block){} }
     public class MeshRenderer:Renderer { }
     public class Collider:Component { }
     public class MeshFilter:Component {public Mesh sharedMesh;}
-    public class Mesh:Object {public Vector3[] vertices;public int[] triangles;public void RecalculateNormals(){}public void RecalculateBounds(){} }
+    public class Mesh:Object {public Vector3[] vertices;public Vector2[] uv;public int[] triangles;public void RecalculateNormals(){}public void RecalculateBounds(){} }
     public class MaterialPropertyBlock {public void SetFloat(string name,float value){} }
     public static class Resources {public static T Load<T>(string path)where T:Object,new()=>new T();public static T GetBuiltinResource<T>(string path)where T:Object,new()=>new T();}
     public class AudioClip:Object {public float[] data;public static AudioClip Create(string name,int count,int channels,int sampleRate,bool stream)=>new AudioClip{name=name,data=new float[count*channels]};public void SetData(float[] samples,int offset)=>Array.Copy(samples,0,data,offset,samples.Length);}
@@ -111,5 +115,8 @@ namespace MDPro3.UI.ServantUI
     {
         public UnityEngine.RectTransform Root=>transform.Find("Root") as UnityEngine.RectTransform??transform as UnityEngine.RectTransform;
         public virtual void ShowEvent(){}
+        protected virtual void HideEvent(){}
+        protected virtual void OnDestroy(){}
+        internal void InvokeHideEvent()=>HideEvent();
     }
 }

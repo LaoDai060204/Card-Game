@@ -17,7 +17,7 @@ namespace LaoDai.BattleSpirits.Integration
 {
     // Session controller only. All views are the original template's ServantUI
     // prefabs; this class never creates a Canvas or places a menu overlay.
-    public sealed class BattleNativeSession : MonoBehaviour, IBattleNativeSession, IBattleNativeReplaySession, IBattleNativePortraitSession, IBattleNativePreviewSession
+    public sealed class BattleNativeSession : MonoBehaviour, IBattleNativeSession, IBattleNativeReplaySession, IBattleNativePortraitSession, IBattleNativePreviewSession, IBattleNativePresentationSession
     {
         private static BattleNativeSession instance;
         private string root;
@@ -48,11 +48,28 @@ namespace LaoDai.BattleSpirits.Integration
         public string Status { get; private set; } = string.Empty;
         public int Seat { get; private set; } = -1;
         public bool IsConnected => client?.IsConnected == true;
-        public bool CanSendCommands => replay == null && View != null && View.winner < 0
+        public bool CanSendCommands => !IsPresentationBusy && replay == null && View != null && View.winner < 0
             && (match != null || client?.IsConnected == true);
         public bool IsReady => Players.Any(player => player.playerIndex == Seat && player.ready);
         public bool IsPreview { get; private set; }
         public event Action Changed;
+        public event Action<PublicBattleEvent> PresentationEvent;
+        public event Action PresentationReset;
+        public bool IsPresentationBusy { get; private set; }
+
+        public void SetPresentationBusy(bool busy)
+        {
+            if (IsPresentationBusy == busy) return;
+            IsPresentationBusy = busy;
+            Notify();
+        }
+
+        public bool TryGetCardViewport(int instanceId, out Rect bounds)
+        {
+            foreach (var field in fields)
+                if (field != null && !field.IsDisposed && field.TryGetCardViewport(instanceId, out bounds)) return true;
+            bounds = default; return false;
+        }
 
         [Serializable] private sealed class RecordedAction { public int actor; public BattleCommand command; }
         [Serializable] private sealed class MatchRecord
@@ -214,6 +231,8 @@ namespace LaoDai.BattleSpirits.Integration
         public void Send(WireMessage message)
         {
             if (message == null) return;
+            if (IsPresentationBusy && message.action != "concede")
+            { SetStatus("Đợi hoạt ảnh triệu hồi hoàn tất."); return; }
             if (replay != null) { SetStatus("Đang xem lại, không gửi thao tác trận đấu."); return; }
             if (match != null)
             {
@@ -269,11 +288,13 @@ namespace LaoDai.BattleSpirits.Integration
                     ApplyView(message.view); break;
                 case "chat": SetStatus(message.name + ": " + message.text); break;
                 case "error": SetStatus(message.text); break;
-                case "disconnected": SetStatus(message.text); Notify(); break;
+                case "disconnected":
+                    PresentationReset?.Invoke(); SetPresentationBusy(false);
+                    SetStatus(message.text); Notify(); break;
             }
         }
 
-        private void ApplyView(FilteredMatchView view)
+        private void ApplyView(FilteredMatchView view, bool animatePresentation = true)
         {
             View = view;
             fields.RemoveAll(field => field == null);
@@ -283,6 +304,8 @@ namespace LaoDai.BattleSpirits.Integration
                 foreach (var item in view.events ?? Array.Empty<PublicBattleEvent>()) field.PlayEvent(item);
             }
             Notify();
+            if (animatePresentation)
+                foreach (var item in view.events ?? Array.Empty<PublicBattleEvent>()) PresentationEvent?.Invoke(item);
         }
 
         public void AttachField(RawImage image)
@@ -296,6 +319,7 @@ namespace LaoDai.BattleSpirits.Integration
                 field = previous != null && !previous.IsDisposed ? previous : image.gameObject.AddComponent<BattleFieldVisuals>();
             }
             if (!fields.Contains(field)) fields.Add(field);
+            field.SetArtworkProvider(LoadArt);
             field.Load(image);
             field.SetCatalog(Cards);
             if (View != null) field.Render(View);
@@ -304,7 +328,7 @@ namespace LaoDai.BattleSpirits.Integration
         private void Update()
         {
             client?.Pump();
-            if (match != null && bot != null && !bot.IsCancelled && match.State.WinnerIndex < 0
+            if (!IsPresentationBusy && match != null && bot != null && !bot.IsCancelled && match.State.WinnerIndex < 0
                 && bot.TryPoll(ViewFactory.Create(match, 1), Time.unscaledTime, out var action)) Execute(1, action, true);
             PruneArt();
         }
@@ -366,6 +390,8 @@ namespace LaoDai.BattleSpirits.Integration
 
         public void Disconnect()
         {
+            IsPresentationBusy = false;
+            PresentationReset?.Invoke();
             connectionGeneration++; connecting = false;
             IsPreview = false;
             bot?.Cancel(); bot = null; match = null; replay = null; record = null;
@@ -419,7 +445,7 @@ namespace LaoDai.BattleSpirits.Integration
             if (replay == null) return;
             int previous = replayStep;
             replayStep = (int)Math.Max(0L, Math.Min(replay.actions.Count, (long)replayStep + delta));
-            try { RenderReplay(); }
+            try { RenderReplay(delta > 0 && replayStep == previous + 1); }
             catch (Exception error) { replayStep = previous; SetStatus("Không đọc được thao tác lịch sử: " + error.Message); }
         }
 
@@ -435,11 +461,11 @@ namespace LaoDai.BattleSpirits.Integration
                 players = new[] {
                     new PublicPlayerView { playerIndex = 0, name = card.DisplayName, life = 5, reserveNormal = 3, reserveSoul = true,
                         field = new[] { new SpiritView { instanceId = 1, cardId = card.id, level = card.levels.Count, bp = level.bp, normalCores = level.cores } } },
-                    new PublicPlayerView { playerIndex = 1, name = "Xem trước model tự tạo", life = 5, reserveNormal = 3 }
+                    new PublicPlayerView { playerIndex = 1, name = "Xem trước hoạt ảnh thẻ", life = 5, reserveNormal = 3 }
                 } };
             BattleNativeNavigation.Open(BattleNativeScreen.Duel);
             ApplyView(View);
-            SetStatus("Model và hoạt cảnh tự tạo; bấm các nút bên phải để xem thử.");
+            SetStatus("Hoạt ảnh dùng artwork của lá bài; bấm TRIỆU HỒI để xem cách thẻ xuất hiện trên sân.");
         }
 
         public void PlayPreview(string eventKind)
@@ -448,12 +474,13 @@ namespace LaoDai.BattleSpirits.Integration
             var card = View.players[0].field[0];
             foreach (var field in fields.Where(item => item != null && !item.IsDisposed))
                 field.PlayEvent(new PublicBattleEvent { kind = eventKind, actor = 0, spiritId = 1, cardId = card.cardId });
+            PresentationEvent?.Invoke(new PublicBattleEvent { kind = eventKind, actor = 0, spiritId = 1, cardId = card.cardId });
         }
 
-        private void RenderReplay()
+        private void RenderReplay(bool animatePresentation = false)
         {
             var replayMatch = RebuildReplay(replay, replayStep);
-            ApplyView(ViewFactory.Create(replayMatch, 0));
+            ApplyView(ViewFactory.Create(replayMatch, 0), animatePresentation);
             SetStatus("Xem lại thao tác " + replayStep + "/" + replay.actions.Count + ".");
         }
 

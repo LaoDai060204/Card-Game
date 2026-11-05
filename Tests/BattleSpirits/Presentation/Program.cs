@@ -29,7 +29,7 @@ internal static class Entry
         public void Drain(){while(work.TryDequeue(out var action))action();}
     }
     private sealed class FixtureNode {public string path="";public string[] components=Array.Empty<string>();public int layer=5;public bool active=true;}
-    private sealed class FakeSession:IBattleNativeSession,IBattleNativeReplaySession
+    private sealed class FakeSession:IBattleNativeSession,IBattleNativeReplaySession,IBattleNativePresentationSession
     {
         public IReadOnlyList<CardDefinition> Cards{get;set;}
         public IReadOnlyList<DeckDefinition> Decks{get;set;}
@@ -40,7 +40,11 @@ internal static class Entry
         public int Seat{get;set;}=-1;
         public bool IsConnected{get;set;}
         public bool IsReady{get;set;}
-        public bool CanSendCommands{get;set;}=true;
+        private bool commandsAllowed=true;public bool CanSendCommands{get=>commandsAllowed&&!IsPresentationBusy;set=>commandsAllowed=value;}
+        public bool IsPresentationBusy{get;private set;}
+        public readonly Dictionary<int,Rect> Bounds=new Dictionary<int,Rect>();
+        public readonly Dictionary<string,Texture2D> ArtTextures=new Dictionary<string,Texture2D>();
+        public bool MissingArtwork;
         public bool IsReplay{get;set;}
         public int ReplayDelta,Hosts,Joins,Starts,ReadyRequests,SoloStarts,Disconnected;
         public string HostName,JoinAddress;public int Port;
@@ -48,6 +52,11 @@ internal static class Entry
         public readonly List<WireMessage> Commands=new List<WireMessage>();
         public DeckDefinition Saved;
         public event Action Changed;
+        public event Action<PublicBattleEvent> PresentationEvent;
+        public event Action PresentationReset;
+        public void SetPresentationBusy(bool busy){if(IsPresentationBusy==busy)return;IsPresentationBusy=busy;Changed?.Invoke();}
+        public bool TryGetCardViewport(int id,out Rect bounds)=>Bounds.TryGetValue(id,out bounds);
+        public void Emit(PublicBattleEvent value)=>PresentationEvent?.Invoke(value);
         public FakeSession(IReadOnlyList<CardDefinition> cards){Cards=cards;Decks=StarterDecks.CreatePair(cards, BattleRulesFormat.Standard);SelectedDeck=Decks[0];}
         public void SelectDeck(DeckDefinition deck){SelectedDeck=deck;Changed?.Invoke();}
         public bool SaveDeck(DeckDefinition deck,out string error){Saved=deck;error="";return true;}
@@ -57,9 +66,9 @@ internal static class Entry
         public void SetReady(bool ready){ReadyRequests++;IsReady=ready;}
         public void StartOnline(){Starts++;}
         public void Send(WireMessage command)=>Commands.Add(command);
-        public void LoadArt(string id,RawImage image){RequestedArt.Add(id);image.texture=Texture2D.blackTexture;}
+        public void LoadArt(string id,RawImage image){RequestedArt.Add(id);if(MissingArtwork){image.texture=Texture2D.blackTexture;return;}if(!ArtTextures.TryGetValue(id,out var texture)||texture==null){texture=new Texture2D(675,983,TextureFormat.RGBA32,false){name="Face:"+id};ArtTextures[id]=texture;}image.texture=texture;}
         public void AttachField(RawImage image){image.texture=Texture2D.blackTexture;}
-        public void Disconnect(){Disconnected++;IsConnected=false;View=null;}
+        public void Disconnect(){Disconnected++;IsConnected=false;View=null;PresentationReset?.Invoke();SetPresentationBusy(false);}
         public void StepReplay(int delta)=>ReplayDelta+=delta;
         public void Refresh()=>Changed?.Invoke();
     }
@@ -151,6 +160,11 @@ internal static class Entry
         fake=new FakeSession(catalog.cards);BattleNativeNavigation.Session=fake;
         BattleAudio.Configure(temporary);
     }
+    private static void TickPresentation(float delta)
+    {
+        Time.unscaledTime+=delta;Time.unscaledDeltaTime=delta;
+        foreach(var component in GameObject.All.Where(go=>!go.destroyed&&go.activeInHierarchy).SelectMany(go=>go.GetComponents<BattleSummonPresentation>()).ToArray()) component.Tick(delta);
+    }
     private static void Case(string name,Action test){Setup();test();Context.Drain();passed++;Console.WriteLine("PASS "+name);}
     private static void Pump(Func<bool> done,Action tick=null)
     {
@@ -174,6 +188,24 @@ internal static class Entry
         using var child=Process.Start(start);string output=child.StandardOutput.ReadToEnd(),error=child.StandardError.ReadToEnd();child.WaitForExit();
         Assert(child.ExitCode==0,"Prefab fixture export failed: "+error);fixtures=JsonConvert.DeserializeObject<Dictionary<string,FixtureNode[]>>(output);
     }
+    private sealed class FixtureAction{public int actor;public BattleCommand command;}
+    private static BattleMatch SummonedFixture(out int seed,out DeckDefinition[] decks,out List<FixtureAction> actions)
+    {
+        decks=StarterDecks.CreatePair(catalog.cards,BattleRulesFormat.Standard);
+        var definitions=catalog.cards.ToDictionary(card=>card.id,StringComparer.Ordinal);
+        for(seed=1;seed<=100;seed++)
+        {
+            var match=BattleMatch.Create(catalog.cards,decks[0].cards,decks[1].cards,seed,format:BattleRulesFormat.Standard);
+            actions=new List<FixtureAction>{new FixtureAction{actor=0,command=new BattleCommand{action="opening"}},new FixtureAction{actor=1,command=new BattleCommand{action="opening"}}};
+            foreach(var action in actions)Assert(BattleCommandDispatcher.TryExecute(match,action.actor,action.command,out _),"Deterministic fixture opening failed.");
+            var player=match.State.Players[0];int available=player.Reserve.Normal+(player.Reserve.Soul?1:0);
+            int index=player.Hand.FindIndex(id=>definitions[id].IsSpirit&&definitions[id].cost+definitions[id].levels[0].cores<=available);
+            if(index<0)continue;
+            var summon=new FixtureAction{actor=0,command=new BattleCommand{action="summon",index=index}};
+            Assert(BattleCommandDispatcher.TryExecute(match,0,summon.command,out string error),"Legal fixture summon failed: "+error);actions.Add(summon);return match;
+        }
+        throw new Exception("No legal deterministic summon fixture could be created.");
+    }
     public static int Main(string[] args)
     {
         SynchronizationContext.SetSynchronizationContext(Context);
@@ -184,6 +216,10 @@ internal static class Entry
         File.WriteAllText(Path.Combine(temporary,"Data/BattleSpirits/cards.json"),JsonConvert.SerializeObject(catalog));
         Directory.CreateDirectory(Path.Combine(temporary,"Sound/BattleSpirits"));
         foreach(string wave in Directory.GetFiles(Path.Combine(sourceRoot,"Sound/BattleSpirits"),"*.wav"))File.Copy(wave,Path.Combine(temporary,"Sound/BattleSpirits",Path.GetFileName(wave)));
+        foreach(var card in catalog.cards.Where(card=>card.IsPlayableFor(BattleRulesFormat.Standard)))
+        {
+            string target=Path.Combine(temporary,card.artPath);Directory.CreateDirectory(Path.GetDirectoryName(target));File.Copy(Path.Combine(sourceRoot,card.artPath),target,true);
+        }
         try
         {
             Case("Native navigation registers original prefab Servants without another Canvas",()=>{
@@ -298,7 +334,7 @@ internal static class Entry
             Case("Actual Solo session runs WindBot on filtered views and records complete match",()=>{
                 var session=BattleNativeSession.Ensure();var pair=StarterDecks.CreatePair(catalog.cards, BattleRulesFormat.Standard);session.StartSolo(pair[0],pair[1]);Assert(session.View?.viewer==0&&session.Seat==0,"Human own-view not fixed.");
                 session.Send(new WireMessage{type="action",action="opening"});
-                Pump(()=>session.View.phase=="Main",()=>{Time.unscaledTime+=0.5f;Call(session,"Update");});
+                Pump(()=>session.View.phase=="Main",()=>{TickPresentation(0.5f);Call(session,"Update");});
                 Assert(session.View.players[1].handCount==4,"AI opening did not complete.");
                 session.Send(new WireMessage{type="action",action="concede"});Assert(session.View.winner==1,"Solo concession did not complete.");
                 Assert(session.ReplayFiles().Length>0,"Completed Solo not saved.");
@@ -315,6 +351,115 @@ internal static class Entry
                 session.Disconnect();Assert(texture.released&&field.IsDisposed&&image.texture==null,"Field render target not cleaned.");
                 session.AttachField(image);Assert(go.GetComponents<BattleFieldVisuals>().Any(value=>!value.IsDisposed&&value.IsLoaded),"Cached native form cannot create next field.");
             });
+            Case("Summon presentation uses the exact card face and matching illustration once",()=>{
+                fake.View=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);
+                var screen=Screen(BattleNativeScreen.Duel);var presentation=screen.GetComponentInChildren<BattleSummonPresentation>(true);
+                string id=catalog.cards.First(card=>card.IsPlayableFor(BattleRulesFormat.Standard)).id;
+                var action=new PublicBattleEvent{kind="Summoned",actor=0,spiritId=101,cardId=id};fake.Emit(action);
+                Assert(presentation.IsPlaying&&fake.IsPresentationBusy&&!fake.CanSendCommands,"Presentation did not hold local controls.");
+                var face=Field<RawImage>(presentation,"cardArt");var illustration=Field<RawImage>(presentation,"illustrationArt");
+                Assert(face.texture==fake.ArtTextures[id]&&illustration.texture==face.texture,"Summon substituted a different card/artwork.");
+                var crop=BattleFieldVisuals.GetIllustrationUv(id);Assert(illustration.uvRect.x==crop.x&&illustration.uvRect.y==crop.y&&illustration.uvRect.width==crop.width&&illustration.uvRect.height==crop.height,"Illustration included the wrong printed region.");
+                fake.Emit(action);fake.Refresh();Assert(presentation.PendingCount==0,"Duplicate event/status redraw queued a second summon.");
+                TickPresentation(0.25f);TickPresentation(0.25f);
+                float expected=face.texture.width*crop.width/(face.texture.height*crop.height);
+                Assert(Math.Abs(illustration.GetComponent<AspectRatioFitter>().aspectRatio-expected)<0.00001f,"Illustration is stretched to the full-card aspect.");
+                for(int frame=0;frame<10;frame++)TickPresentation(0.25f);
+                Assert(!presentation.IsPlaying&&!fake.IsPresentationBusy&&fake.CanSendCommands,"Summon did not release local controls.");
+                Assert(GameObject.All.Count(go=>!go.destroyed&&go.GetComponent<Canvas>()!=null)==1,"Summon created another Canvas.");
+            });
+            Case("Summon queue is bounded and never issues gameplay commands",()=>{
+                fake.View=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);
+                var screen=Screen(BattleNativeScreen.Duel);var presentation=screen.GetComponentInChildren<BattleSummonPresentation>(true);
+                string id=catalog.cards.First(card=>card.IsPlayableFor(BattleRulesFormat.Standard)).id;
+                fake.Emit(new PublicBattleEvent{kind="GameWon",cardId=id});fake.Emit(new PublicBattleEvent{kind="Summoned",cardId="unknown-id"});Assert(!presentation.IsPlaying,"Non-summon or unknown card started a presentation.");
+                for(int index=1;index<=20;index++)fake.Emit(new PublicBattleEvent{kind="Summoned",actor=index%2,spiritId=index,cardId=id});
+                Assert(presentation.IsPlaying&&presentation.PendingCount<=4,"A burst of network events grew an unbounded queue.");
+                for(int frame=0;frame<60;frame++)TickPresentation(0.25f);
+                Assert(!presentation.IsPlaying&&presentation.PendingCount==0&&!fake.IsPresentationBusy,"A bounded queue could not drain.");
+                Assert(fake.Commands.Count==0,"Visual queue sent a rules/network action.");
+            });
+            Case("Actual received summon snapshot emits once while status rerenders remain silent",()=>{
+                var match=SummonedFixture(out _,out _,out _);var session=BattleNativeSession.Ensure();int count=0;
+                session.PresentationEvent+=item=>{if(item.kind=="Summoned")count++;};
+                var snapshot=ViewFactory.Create(match,0);Call(session,"Receive",new WireMessage{type="state",rulesFormat="Standard",view=snapshot});
+                var presentation=program.currentServant.servantUI.GetComponentInChildren<BattleSummonPresentation>(true);
+                Assert(count==1&&presentation.IsPlaying&&session.IsPresentationBusy,"Actual network snapshot did not forward its summon.");
+                Call(session,"Notify");Call(session,"Notify");Assert(count==1&&presentation.PendingCount==0,"Status-only notifications replayed the previous summon.");
+                string id=snapshot.events.Single(item=>item.kind=="Summoned").cardId;
+                Pump(()=>Field<RawImage>(presentation,"cardArt").texture!=null&&Field<RawImage>(presentation,"cardArt").texture!=Texture2D.blackTexture);
+                Assert(Field<RawImage>(presentation,"cardArt").texture==Field<Dictionary<string,Texture2D>>(session,"textures")[id],"Actual session loaded a different face for its summon.");
+                presentation.Clear();Assert(!session.IsPresentationBusy,"Actual session retained busy state after clearing presentation.");
+            });
+            Case("Replay seeking is silent and stepping forward presents its accepted summon once",()=>{
+                SummonedFixture(out int seed,out DeckDefinition[] decks,out List<FixtureAction> actions);
+                var session=BattleNativeSession.Ensure();int count=0;session.PresentationEvent+=item=>{if(item.kind=="Summoned")count++;};
+                string path=Path.Combine(temporary,"summoned-fixture-replay.json");
+                File.WriteAllText(path,JsonConvert.SerializeObject(new{schema=Protocol.Version,catalogHash=CatalogFingerprint.Compute(catalog.cards),rulesFormat="Standard",seed,names=new[]{"Fixture0","Fixture1"},decks,actions}));
+                session.LoadReplay(path,actions.Count);var presentation=program.currentServant.servantUI.GetComponentInChildren<BattleSummonPresentation>(true);
+                Assert(session.IsReplay&&count==0&&!presentation.IsPlaying,"Seeking to an old summon started a new cinematic.");
+                session.StepReplay(-1);Assert(count==0,"Backward seek replayed an old summon.");session.StepReplay(1);
+                Assert(count==1&&presentation.IsPlaying&&!session.CanSendCommands,"Forward replay either lost its summon or obtained live gameplay authority.");
+                session.Disconnect();Assert(!presentation.IsPlaying&&!session.IsPresentationBusy,"Leaving replay retained queued presentation.");
+            });
+            Case("Missing artwork, skip, hiding and disconnect release summon ownership",()=>{
+                fake.View=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);
+                fake.MissingArtwork=true;var screen=Screen(BattleNativeScreen.Duel);var presentation=screen.GetComponentInChildren<BattleSummonPresentation>(true);
+                string id=catalog.cards.First(card=>card.IsPlayableFor(BattleRulesFormat.Standard)).id;
+                var action=new PublicBattleEvent{kind="Summoned",actor=0,spiritId=9,cardId=id};fake.Emit(action);TickPresentation(0.25f);
+                Assert(Field<RawImage>(presentation,"cardArt").color.a==0,"Black loading sentinel was presented as card art.");
+                for(int frame=0;frame<8;frame++)TickPresentation(0.25f);
+                Assert(!presentation.IsPlaying&&!fake.IsPresentationBusy,"Missing artwork held the UI indefinitely.");
+                fake.MissingArtwork=false;fake.Emit(action);Click(screen.transform,"BS_SummonPresentation/BS_SkipSummon");Assert(!presentation.IsPlaying&&fake.CanSendCommands,"Skip did not release controls.");
+                fake.Emit(action);screen.gameObject.SetActive(false);Assert(!presentation.IsPlaying&&!fake.IsPresentationBusy,"Hiding the native form retained summon ownership.");
+                screen.gameObject.SetActive(true);fake.Emit(action);fake.Disconnect();Assert(!presentation.IsPlaying&&!fake.IsPresentationBusy,"Disconnected room retained a summon.");
+                var borrowed=fake.ArtTextures[id];presentation.Dispose();Assert(borrowed!=null,"Disposing a presentation destroyed cached artwork.");
+            });
+            Case("Field card and floating illustration share each public card's own artwork",()=>{
+                var output=new GameObject("CardField",typeof(RectTransform)).AddComponent<RawImage>();var field=output.gameObject.AddComponent<BattleFieldVisuals>();
+                field.SetCatalog(catalog.cards);field.SetArtworkProvider(fake.LoadArt);field.Load(output);
+                var ids=catalog.cards.Where(card=>card.IsPlayableFor(BattleRulesFormat.Standard)).Take(3).Select(card=>card.id).ToArray();
+                var snapshot=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);snapshot.ownHand=new[]{ids[2]};
+                snapshot.players[0].field=new[]{new SpiritView{instanceId=10,cardId=ids[0],normalCores=1}};
+                snapshot.players[1].field=new[]{new SpiritView{instanceId=20,cardId=ids[1],normalCores=1}};field.Render(snapshot);
+                var units=(System.Collections.IDictionary)Field<object>(field,"units");Assert(units.Count==2,"Public field did not create both players' figures.");
+                foreach(int instance in new[]{10,20})
+                {
+                    string id=instance==10?ids[0]:ids[1];var figure=Field<object>(units[instance],"figure");
+                    Assert(figure.GetType().Name=="BattleCardFigure","Generic monster model still used for a field card.");
+                    Assert(Field<Material>(figure,"cardMaterial").mainTexture==fake.ArtTextures[id]&&Field<Material>(figure,"illustrationMaterial").mainTexture==fake.ArtTextures[id],"Floor card and floating artwork use the wrong card ID.");
+                    var uv=Field<Material>(figure,"illustrationMaterial").Vectors["_UvRect"];var expected=BattleFieldVisuals.GetIllustrationUv(id);
+                    Assert(uv.x==expected.x&&uv.y==expected.y&&uv.z==expected.width&&uv.w==expected.height,"Field illustration has incorrect texture coordinates.");
+                }
+                Assert(fake.RequestedArt.SequenceEqual(ids.Take(2)),"Field requested a hand/private card rather than public units.");
+            });
+            Case("Field viewport bounds follow the printed card and exhausted orientation",()=>{
+                var output=new GameObject("BoundsField",typeof(RectTransform)).AddComponent<RawImage>();var field=output.gameObject.AddComponent<BattleFieldVisuals>();field.SetArtworkProvider(fake.LoadArt);field.Load(output);
+                string id=catalog.cards.First(card=>card.IsPlayableFor(BattleRulesFormat.Standard)).id;
+                var snapshot=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);snapshot.players[0].field=new[]{new SpiritView{instanceId=11,cardId=id}};field.Render(snapshot);
+                Assert(field.TryGetCardViewport(11,out Rect ready)&&ready.width>0&&ready.height>0&&ready.xMin>=0&&ready.yMin>=0&&ready.xMax<=1&&ready.yMax<=1,"Projected card bounds are invalid.");
+                snapshot.players[0].field[0].exhausted=true;field.Render(snapshot);Assert(field.TryGetCardViewport(11,out Rect exhausted)&&exhausted.width>ready.width&&exhausted.height<ready.height,"Exhausted card bounds did not turn with the card.");
+                snapshot.players[0].field=Array.Empty<SpiritView>();field.Render(snapshot);Assert(!field.TryGetCardViewport(11,out _),"Removed card remains clickable.");
+            });
+            Case("Native field selection uses transparent projected targets without duplicate faces",()=>{
+                fake.View=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);fake.View.phase="Main";fake.View.decisionPlayer=0;
+                string id=catalog.cards.First(card=>card.IsPlayableFor(BattleRulesFormat.Standard)).id;fake.View.players[0].field=new[]{new SpiritView{instanceId=21,cardId=id}};fake.Bounds[21]=new Rect(0.2f,0.3f,0.15f,0.12f);
+                var screen=Screen(BattleNativeScreen.Duel);var target=Find(screen.transform,"BS_FieldCard_21");var rect=(RectTransform)target;
+                Assert(rect.anchorMin.x==0.2f&&rect.anchorMin.y==0.3f&&Math.Abs(rect.anchorMax.x-0.35f)<0.00001f&&Math.Abs(rect.anchorMax.y-0.42f)<0.00001f,"Click target does not match the rendered card.");
+                Assert(target.GetComponent<Image>().color.a==0&&target.GetComponentsInChildren<RawImage>(true).Length==0,"Another opaque card face obscures the field artwork.");
+                Click(screen.transform,"BS_FieldCard_21");Assert(Field<int>(Field<BattleNativeDuelView>(screen,"duel"),"selectedSpirit")==21,"Projected card target did not select the correct Spirit.");
+            });
+            Case("Figure disposal retains shared textures and a cached card can reload evicted artwork",()=>{
+                var output=new GameObject("OwnershipField",typeof(RectTransform)).AddComponent<RawImage>();var field=output.gameObject.AddComponent<BattleFieldVisuals>();field.SetArtworkProvider(fake.LoadArt);field.Load(output);
+                string id=catalog.cards.First(card=>card.IsPlayableFor(BattleRulesFormat.Standard)).id;var snapshot=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);
+                snapshot.players[0].field=new[]{new SpiritView{instanceId=31,cardId=id},new SpiritView{instanceId=32,cardId=id}};field.Render(snapshot);
+                var units=(System.Collections.IDictionary)Field<object>(field,"units");var first=Field<object>(units[31],"figure");var second=Field<object>(units[32],"figure");var texture=fake.ArtTextures[id];
+                snapshot.players[0].field=snapshot.players[0].field.Skip(1).ToArray();field.Render(snapshot);Time.unscaledTime+=2;Call(field,"Update");
+                Assert(Field<GameObject>(first,"root")==null&&Field<RawImage>(first,"artwork")==null&&texture!=null,"Removing one copy leaked its resources or destroyed shared artwork.");
+                int requests=fake.RequestedArt.Count;Object.Destroy(texture);Call(field,"Update");
+                Assert(fake.RequestedArt.Count==requests+1&&fake.ArtTextures[id]!=null&&Field<Material>(second,"cardMaterial").mainTexture==fake.ArtTextures[id],"A returned field did not reload evicted borrowed artwork exactly once.");
+                field.Dispose();Assert(fake.ArtTextures[id]!=null&&Field<GameObject>(second,"root")==null,"Disposing field destroyed the session texture or leaked the last figure.");
+            });
             Case("Delayed artwork completion cannot overwrite a newer card selection",()=>{
                 var session=BattleNativeSession.Ensure();var image=new GameObject("Preview",typeof(RectTransform)).AddComponent<RawImage>();
                 var newer=new Texture2D(1,1,TextureFormat.RGBA32,false);image.texture=newer;
@@ -328,7 +473,7 @@ internal static class Entry
                 var session=BattleNativeSession.Ensure();session.StartBossPreview("BS01-X01");
                 Assert(session.IsPreview&&!session.CanSendCommands&&session.View.players[0].field.Single().cardId=="BS01-X01","Boss preview entered a live match.");
                 var screen=(BattleNativeScreenUI)program.currentServant.servantUI;
-                Click(screen.transform,"Buttons/ButtonInfo");Click(screen.transform,"Buttons/ButtonTiming");
+                Click(screen.transform,"Buttons/ButtonInfo");for(int frame=0;frame<10;frame++)TickPresentation(0.25f);Click(screen.transform,"Buttons/ButtonTiming");
                 Assert(session.IsPreview&&session.View.phase=="XEM HOẠT CẢNH","Preview playback changed game rules.");
                 Click(screen.transform,"Buttons/ButtonLog");Assert(!session.IsPreview&&program.currentServant==program.menu,"Preview did not release its native screen.");
             });

@@ -53,7 +53,7 @@ namespace LaoDai.BattleSpirits.Presentation
             var session = BattleNativeSession.Ensure();
             var bosses = session.Cards.Where(card => card.id == "BS01-X01" || card.id == "BS01-097")
                 .ToDictionary(card => card.id + " · " + card.DisplayName, card => card.id, StringComparer.Ordinal);
-            var selections = new List<string> { "HOẠT CẢNH BOSS", "Model tự tạo để xem thử; hai thẻ BS01 này thuộc Eternal, không dùng trong deck Standard." };
+            var selections = new List<string> { "HOẠT ẢNH TRIỆU HỒI", "Xem hiệu ứng và artwork lá bài. Hai thẻ BS01 này thuộc Eternal, không dùng trong deck Standard." };
             selections.AddRange(bosses.Keys);
             UIManager.ShowPopupSelection(selections, () =>
             {

@@ -22,6 +22,8 @@ namespace LaoDai.BattleSpirits.NativeUI
         private TextMeshProUGUI phase;
         private int selectedSpirit = -1;
         private RawImage backdrop;
+        private BattleSummonPresentation summonPresentation;
+        private IBattleNativePresentationSession presentationSession;
         internal BattleNativeDuelView(Transform root, IBattleNativeSession session)
         { this.root = root; this.session = session; cards = session.Cards.ToDictionary(card => card.id, StringComparer.Ordinal); }
         internal void Build()
@@ -41,11 +43,29 @@ namespace LaoDai.BattleSpirits.NativeUI
             background.SetAsFirstSibling(); backdrop = background.gameObject.AddComponent<RawImage>(); backdrop.raycastTarget = false;
             session.AttachField(backdrop);
             hand = BattleNativeWidgets.Rect(root, "BS_Hand"); BattleNativeWidgets.Place(hand, 0.17f, 0.005f, 0.83f, 0.20f);
-            field0 = BattleNativeWidgets.Rect(root, "BS_OwnField"); BattleNativeWidgets.Place(field0, 0.22f, 0.24f, 0.80f, 0.43f);
-            field1 = BattleNativeWidgets.Rect(root, "BS_OpponentField"); BattleNativeWidgets.Place(field1, 0.22f, 0.58f, 0.80f, 0.77f);
+            field0 = BattleNativeWidgets.Rect(root, "BS_OwnField"); BattleNativeWidgets.Place(field0, 0, 0, 1, 1);
+            field1 = BattleNativeWidgets.Rect(root, "BS_OpponentField"); BattleNativeWidgets.Place(field1, 0, 0, 1, 1);
             phase = BattleNativeWidgets.Text(root, "BS_Phase", string.Empty, 25); BattleNativeWidgets.Place(phase.rectTransform, 0.25f, 0.45f, 0.74f, 0.56f);
             SetButton("ButtonSetting", "NHẬN THUA", () => session.Send(new WireMessage { type = "action", action = "concede" }));
+            summonPresentation = root.gameObject.AddComponent<BattleSummonPresentation>();
+            summonPresentation.Configure(session);
+            presentationSession = session as IBattleNativePresentationSession;
+            if (presentationSession != null)
+            {
+                presentationSession.PresentationEvent += summonPresentation.Enqueue;
+                presentationSession.PresentationReset += summonPresentation.Clear;
+            }
             Render();
+        }
+        internal void SuspendPresentation() => summonPresentation?.Clear();
+        internal void Dispose()
+        {
+            if (presentationSession != null && summonPresentation != null)
+            {
+                presentationSession.PresentationEvent -= summonPresentation.Enqueue;
+                presentationSession.PresentationReset -= summonPresentation.Clear;
+            }
+            summonPresentation?.Dispose();
         }
         internal void ResumeVisuals()
         {
@@ -54,7 +74,8 @@ namespace LaoDai.BattleSpirits.NativeUI
         }
         internal void Render()
         {
-            var view = session.View; if (view == null || view.players == null || view.players.Length != 2) return;
+            var view = session.View;
+            if (view == null || view.players == null || view.players.Length != 2) { summonPresentation?.Clear(); return; }
             var own = view.players.First(player => player.playerIndex == view.viewer);
             var opponent = view.players.First(player => player.playerIndex != view.viewer);
             BattleNativeWidgets.Label(root, "LP0/TextPlayer0LP", own.life.ToString());
@@ -90,12 +111,21 @@ namespace LaoDai.BattleSpirits.NativeUI
             for (int i = 0; i < count; i++)
             {
                 var spirit = player.field[i];
-                var button = BattleNativeWidgets.Card(container, spirit.cardId, () => {
+                var button = BattleNativeWidgets.Button(container, "BS_FieldCard_" + spirit.instanceId, string.Empty, () => {
                     Inspect(spirit.cardId);
                     if (own) { selectedSpirit = spirit.instanceId; Actions(session.View); }
-                }, session);
-                float width = Math.Min(0.145f, 1f / Math.Max(1, count));
-                BattleNativeWidgets.Place(button.transform as RectTransform, i * width, 0, (i + 1) * width - 0.005f, 1);
+                });
+                button.GetComponent<Image>().color = Color.clear;
+                if (presentationSession != null && presentationSession.TryGetCardViewport(spirit.instanceId, out Rect bounds))
+                    BattleNativeWidgets.Place(button.transform as RectTransform, bounds.xMin, bounds.yMin, bounds.xMax, bounds.yMax);
+                else
+                {
+                    // Controlled-test/early-loading fallback. Real field units
+                    // use their projected card bounds, with no duplicate faces.
+                    float width = Math.Min(0.105f, 0.58f / Math.Max(1, count));
+                    BattleNativeWidgets.Place(button.transform as RectTransform, 0.22f + i * width,
+                        own ? 0.28f : 0.62f, 0.22f + (i + 1) * width - 0.005f, own ? 0.41f : 0.75f);
+                }
                 bool nexus = cards.TryGetValue(spirit.cardId, out var definition) && definition.IsNexus;
                 var info = BattleNativeWidgets.Text(button.transform, "BS_Stats", (nexus ? "Nexus Lv" + spirit.level : "Lv" + spirit.level + " · " + spirit.bp + " BP") + "\n" + spirit.normalCores + (spirit.soulCore ? " + ◆" : "") + (spirit.exhausted ? " · MỆT" : ""), 15);
                 BattleNativeWidgets.Place(info.rectTransform, 0, 0, 1, 0.25f);
@@ -174,6 +204,7 @@ namespace LaoDai.BattleSpirits.NativeUI
         {
             if (view == null) return;
             foreach (var name in new[] { "ButtonInfo", "ButtonTiming", "ButtonAttachedEffect", "ButtonLog", "ButtonSetting" }) BattleNativeWidgets.Active(root, "Buttons/" + name, false);
+            if (presentationSession?.IsPresentationBusy == true) return;
             if (session is IBattleNativePreviewSession preview && preview.IsPreview)
             {
                 SetButton("ButtonInfo", "TRIỆU HỒI", () => preview.PlayPreview("Summoned"));

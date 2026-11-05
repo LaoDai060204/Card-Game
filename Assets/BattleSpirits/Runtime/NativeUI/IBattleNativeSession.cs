@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using LaoDai.BattleSpirits.Core;
 using LaoDai.BattleSpirits.Networking;
+using UnityEngine;
 using UnityEngine.UI;
 
 namespace LaoDai.BattleSpirits.NativeUI
@@ -23,6 +24,17 @@ namespace LaoDai.BattleSpirits.NativeUI
     {
         bool IsPreview { get; }
         void PlayPreview(string eventKind);
+    }
+
+    // Optional local presentation state. It never changes network authority or
+    // enters a public match snapshot; views only delay local input/AI polling.
+    public interface IBattleNativePresentationSession
+    {
+        event Action<PublicBattleEvent> PresentationEvent;
+        event Action PresentationReset;
+        bool IsPresentationBusy { get; }
+        void SetPresentationBusy(bool busy);
+        bool TryGetCardViewport(int instanceId, out Rect bounds);
     }
 
     // The original prefab views only consume the public/own-player snapshot.
