@@ -4,6 +4,7 @@ using MDPro3.Duel.YGOSharp;
 using MDPro3.IO;
 using MDPro3.Servant;
 using MDPro3.Utility;
+using LaoDai.BattleSpirits.Visuals;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -577,6 +578,8 @@ namespace MDPro3.UI.ServantUI
                 InitializeLanguage();
                 ButtonBackground.SetClickEvent(OnBattleWallpaperClicked);
                 ButtonBackground.SetButtonText("HÌNH NỀN");
+                ButtonCardStyle.SetClickEvent(OnBattleCoreSkinClicked);
+                ButtonCardStyle.SetButtonText("NGOẠI HÌNH NGỌC CORE");
                 ConfigureBattleSpiritsSettings();
                 return;
             }
@@ -692,15 +695,40 @@ namespace MDPro3.UI.ServantUI
             {
                 "ToggleDuel", "ToggleWatch", "ToggleReplay", "TogglePort", "ToggleExpansions",
                 "ButtonRetry", "ButtonSurrender", "ButtonCheckDecks", "Voice", "SyncDeck",
-                "BgmBy", "CardStyle", "VideoCard", "CardLanguage"
+                "BgmBy", "VideoCard", "CardLanguage"
             };
             foreach (var item in GetComponentsInChildren<Transform>(true))
                 if (hidden.Contains(item.name)) item.gameObject.SetActive(false);
+            ButtonCardStyle.gameObject.SetActive(true);
+            ButtonCardStyle.SetButtonText("NGOẠI HÌNH NGỌC CORE");
             var code = Config.Get("Wallpaper", Items.BATTLE_DEFAULT_WALLPAPER);
             string label = "Battle Spirits";
             foreach (var wallpaper in Program.items.wallpapers)
                 if (wallpaper.id.ToString() == code) { label = wallpaper.name; break; }
             ButtonBackground.SetModeText(label);
+            ButtonCardStyle.SetModeText(CoreSkinName(BattleTheme.NormalizeCoreSkin(Config.Get(BattleTheme.CoreSkinConfig, BattleTheme.DefaultCoreSkin))));
+        }
+
+        private static string CoreSkinName(string style) => style switch
+        {
+            "Purple" => "Tím", "Green" => "Lục", "Yellow" => "Vàng", "White" => "Trắng", _ => "Xanh dương (mặc định)"
+        };
+
+        private void OnBattleCoreSkinClicked()
+        {
+            var styles = new[] { "Blue", "Purple", "Green", "Yellow", "White" };
+            var selections = new List<string> { "NGOẠI HÌNH NGỌC CORE", "Chỉ đổi màu Core thường. Soul Core luôn đỏ; số Core và luật chơi giữ nguyên." };
+            foreach (var style in styles) selections.Add(CoreSkinName(style));
+            UIManager.ShowPopupSelection(selections, () => {
+                var selected = EventSystem.current?.currentSelectedGameObject?.GetComponent<SelectionButton>();
+                if (selected == null) return;
+                foreach (var style in styles)
+                    if (CoreSkinName(style) == selected.GetButtonText())
+                    {
+                        Config.Set(BattleTheme.CoreSkinConfig, style); Config.Save();
+                        ConfigureBattleSpiritsSettings(); break;
+                    }
+            }, null);
         }
 
         private void OnBattleWallpaperClicked()
@@ -990,6 +1018,7 @@ namespace MDPro3.UI.ServantUI
             value = value.Length > 4 ? value.Substring(0, 4) : value;
             ButtonScale.SetModeText(value);
             Program.instance.camera_.urpAsset.renderScale = float.Parse(value);
+            CameraManager.EnsureBattleUiResolution();
         }
         public static float GetScale()
         {

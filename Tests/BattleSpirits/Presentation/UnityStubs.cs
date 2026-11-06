@@ -33,7 +33,7 @@ namespace UnityEngine {
  public class Material:Object{public Material(){}public Material(Shader shader){}public Texture mainTexture;public readonly Dictionary<string,Texture> Textures=new Dictionary<string,Texture>();public readonly Dictionary<string,Vector4> Vectors=new Dictionary<string,Vector4>();public readonly Dictionary<string,float> Floats=new Dictionary<string,float>();public readonly Dictionary<string,Color> Colors=new Dictionary<string,Color>();public void SetColor(string n,Color c)=>Colors[n]=c;public void SetFloat(string n,float f)=>Floats[n]=f;public void SetTexture(string n,Texture t){Textures[n]=t;if(n=="_MainTex"||n=="_BaseMap")mainTexture=t;}public void SetVector(string n,Vector4 v)=>Vectors[n]=v;}
  public enum SpriteMeshType{FullRect}
  public class Sprite:Object{public Texture2D texture;public Rect rect;public Vector4 border;public static Sprite Create(Texture2D texture,Rect rect,Vector2 pivot,float pixelsPerUnit,uint extrude,SpriteMeshType meshType,Vector4 border)=>new Sprite{texture=texture,rect=rect,border=border};}
- public class Texture:Object{public int width{get;protected set;}public int height{get;protected set;}public string sourcePath;}
+ public class Texture:Object{public int width{get;protected set;}public int height{get;protected set;}public string sourcePath;public FilterMode filterMode=FilterMode.Bilinear;public TextureWrapMode wrapMode=TextureWrapMode.Repeat;public int anisoLevel=1;}
  public enum TextureFormat{RGBA32}public class Texture2D:Texture{
   public static readonly Texture2D blackTexture=new Texture2D(1,1,TextureFormat.RGBA32,false);
   public Texture2D(int width,int height,TextureFormat format,bool mipmap){this.width=width;this.height=height;}
@@ -49,8 +49,8 @@ namespace UnityEngine {
    }return false;
   }
  }
- public enum CameraClearFlags{SolidColor}public enum FilterMode{Bilinear}public enum RenderTextureFormat{ARGB32}public enum LightType{Directional}public enum LightShadows{None}
- public class RenderTexture:Texture{public bool released,created;public FilterMode filterMode;public int antiAliasing;public RenderTexture(int a,int b,int c,RenderTextureFormat d){width=a;height=b;}public void Create()=>created=true;public void Release()=>released=true;}
+ public enum CameraClearFlags{SolidColor}public enum FilterMode{Point,Bilinear,Trilinear}public enum TextureWrapMode{Repeat,Clamp}public enum RenderTextureFormat{ARGB32}public enum LightType{Directional}public enum LightShadows{None}
+ public class RenderTexture:Texture{public bool released,created;public int antiAliasing;public RenderTexture(int a,int b,int c,RenderTextureFormat d){width=a;height=b;}public void Create()=>created=true;public void Release()=>released=true;}
  public class Camera:Behaviour{public float fieldOfView,nearClipPlane,farClipPlane;public int cullingMask;public CameraClearFlags clearFlags;public Color backgroundColor;public bool allowHDR,allowMSAA;public RenderTexture targetTexture;public Vector3 WorldToViewportPoint(Vector3 point){var local=transform.InverseTransformPoint(point);double half=Math.Tan(fieldOfView*Math.PI/360);float aspect=targetTexture==null?16f/9:targetTexture.width/(float)targetTexture.height;return new Vector3(0.5f+(float)(local.x/(local.z*half*aspect))*0.5f,0.5f+(float)(local.y/(local.z*half))*0.5f,local.z);}}
  public class Light:Behaviour{public LightType type;public Color color;public float intensity;public LightShadows shadows;public int cullingMask;}
  [Flags] public enum AdditionalCanvasShaderChannels{None=0,TexCoord1=1,TexCoord2=2,TexCoord3=4,Normal=8,Tangent=16}

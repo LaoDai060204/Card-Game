@@ -143,7 +143,7 @@ internal static class Entry
     }
     private static void Setup()
     {
-        Cleanup();Time.unscaledTime=0;
+        Cleanup();Time.unscaledTime=0;MDPro3.Config.Values.Clear();
         UnityEngine.EventSystems.EventSystem.current=new UnityEngine.EventSystems.EventSystem();
         Application.dataPath=Path.Combine(temporary,"Assets");
         var canvas=new GameObject("Canvas",typeof(RectTransform),typeof(Canvas)){layer=5};
@@ -271,6 +271,31 @@ internal static class Entry
                     foreach(var node in cards){string id=node.name.Substring("BS_Card_".Length);var card=catalog.cards.Single(card=>card.id==id);
                         Assert(query=="Magic"?card.type=="Magic":query=="cost:4"?card.cost==4:query=="bp:10000"?card.levels.Any(level=>level.bp>=10000):id==query,"Native BS search returned incompatible card.");}
                 }
+            });
+            Case("Real card loading preserves original resolution and fits hand artwork without stretching",()=>{
+                const string id="26RBS02-002";
+                var session=BattleNativeSession.Ensure();var host=new GameObject("FullResolutionHand",typeof(RectTransform));
+                var button=BattleNativeWidgets.Card(host.transform,id,()=>{},session);
+                var image=button.GetComponentsInChildren<RawImage>(true).Single();var fitter=image.GetComponent<AspectRatioFitter>();
+                Assert(image.transform.parent.name=="BS_CardArtworkSlot"&&fitter!=null&&fitter.aspectMode==AspectRatioFitter.AspectMode.FitInParent,"Hand card still fills a wide button rectangle instead of preserving its face ratio.");
+                Pump(()=>image.texture!=null&&image.texture!=Texture2D.blackTexture);
+                var texture=(Texture2D)image.texture;
+                Assert(texture.width==813&&texture.height==1184,"Runtime artwork was reduced below the verified original PNG dimensions.");
+                Assert(texture.filterMode==FilterMode.Bilinear&&texture.wrapMode==TextureWrapMode.Clamp&&texture.anisoLevel==8,"Artwork filtering can pixelate the source or bleed neighboring edges.");
+                Assert(Math.Abs(fitter.aspectRatio-813f/1184)<0.000001f,"The fitted hand image uses a guessed or stretched aspect rather than the loaded original.");
+                Assert(button.targetGraphic==image&&image.raycastTarget,"Preserving the face ratio removed card click input.");
+            });
+            Case("Cached artwork refreshes full-face and illustration aspect ratios from the same original texture",()=>{
+                const string id="26RBS02-002";var session=BattleNativeSession.Ensure();
+                var first=new GameObject("WarmArtwork",typeof(RectTransform)).AddComponent<RawImage>();session.LoadArt(id,first);
+                Pump(()=>first.texture!=null&&first.texture!=Texture2D.blackTexture);
+                var cached=new GameObject("CachedCrop",typeof(RectTransform)).AddComponent<RawImage>();cached.uvRect=new Rect(0.13f,0.51f,0.79f,0.44f);
+                var cropFit=cached.gameObject.AddComponent<AspectRatioFitter>();cropFit.aspectMode=AspectRatioFitter.AspectMode.FitInParent;cropFit.aspectRatio=1;
+                session.LoadArt(id,cached);
+                Assert(cached.texture==first.texture&&Math.Abs(cropFit.aspectRatio-813f*0.79f/(1184*0.44f))<0.000001f,"Cache reuse kept a stale full-card aspect for the cropped illustration.");
+                var fullHost=new GameObject("CachedHand",typeof(RectTransform));var button=BattleNativeWidgets.Card(fullHost.transform,id,()=>{},session);
+                var full=button.GetComponentsInChildren<RawImage>(true).Single();
+                Assert(full.texture==first.texture&&Math.Abs(full.GetComponent<AspectRatioFitter>().aspectRatio-813f/1184)<0.000001f,"An immediate cache hit arrives before hand layout knows the original dimensions.");
             });
             Case("Deck details and filters show the matching Battle Spirits color symbol and Standard labels",()=>{
                 var screen=Screen(BattleNativeScreen.Deck);var view=Field<BattleNativeDeckView>(screen,"deck");
@@ -505,6 +530,53 @@ internal static class Entry
                 var ownedMaterials=materials.ToArray();var ownedMeshes=meshes.ToArray();field.Dispose();
                 Assert(ownedMaterials.All(material=>material==null)&&ownedMeshes.All(mesh=>mesh==null),"Field-owned style resources leaked after disposal.");
                 Assert(back!=null&&mat!=null&&BattleTheme.CardBack==back&&BattleTheme.PlaymatStandard==mat,"Closing a field destroyed shared Resources artwork.");
+            });
+            Case("Life, Reserve, Trash and Spirit Cores display camera-facing blue and red gem artwork",()=>{
+                var output=new GameObject("CoreGemField",typeof(RectTransform)).AddComponent<RawImage>();
+                var field=output.gameObject.AddComponent<BattleFieldVisuals>();field.SetArtworkProvider(fake.LoadArt);field.Load(output);
+                var snapshot=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);
+                string id=catalog.cards.First(card=>card.IsPlayableFor(BattleRulesFormat.Standard)).id;
+                snapshot.players[0].life=5;snapshot.players[0].reserveNormal=3;snapshot.players[0].reserveSoul=true;snapshot.players[0].trashNormal=2;
+                snapshot.players[0].field=new[]{new SpiritView{instanceId=81,cardId=id,normalCores=2}};
+                snapshot.players[1].life=4;snapshot.players[1].reserveNormal=4;snapshot.players[1].reserveSoul=false;snapshot.players[1].trashNormal=1;
+                snapshot.players[1].field=new[]{new SpiritView{instanceId=82,cardId=id,normalCores=1,soulCore=true}};
+                string before=JsonConvert.SerializeObject(snapshot);field.Render(snapshot);
+                var stage=Field<GameObject>(field,"stage");var normal=Field<Material>(field,"normalGemMaterial");var soul=Field<Material>(field,"soulGemMaterial");
+                var gems=stage.GetComponentsInChildren<MeshRenderer>(true).Where(item=>new[]{"Core","SoulCore","SpiritCore","SpiritSoulCore"}.Contains(item.name)).ToArray();
+                Assert(gems.Count(item=>item.name=="Core"||item.name=="SpiritCore")==22&&gems.Count(item=>item.name=="SoulCore"||item.name=="SpiritSoulCore")==2,"Gem rendering changed public Core quantities.");
+                Assert(normal.mainTexture==BattleTheme.ColorIcon(CardColor.Blue)&&soul.mainTexture==BattleTheme.ColorIcon(CardColor.Red),"Default Core and Soul use chips or another card color instead of the provided gem artwork.");
+                var mesh=Field<Mesh>(field,"skinQuad");var camera=Field<Camera>(field,"camera");
+                foreach(var gem in gems)
+                {
+                    bool isSoul=gem.name=="SoulCore"||gem.name=="SpiritSoulCore";
+                    Assert(gem.sharedMaterial==(isSoul?soul:normal)&&gem.GetComponent<MeshFilter>().sharedMesh==mesh,"Core marker is still an untextured sphere or creates a per-gem mesh/material.");
+                    var center=camera.WorldToViewportPoint(gem.transform.TransformPoint(Vector3.zero));
+                    var right=camera.WorldToViewportPoint(gem.transform.TransformPoint(new Vector3(0.5f,0,0)));
+                    var top=camera.WorldToViewportPoint(gem.transform.TransformPoint(new Vector3(0,0,0.5f)));
+                    Assert(right.x>center.x&&top.y>center.y&&Math.Abs(right.y-center.y)<0.002f&&Math.Abs(top.x-center.x)<0.002f,"Gem artwork is mirrored, flat on the table, or faces away from the camera.");
+                }
+                Assert(JsonConvert.SerializeObject(snapshot)==before,"Displaying gems mutated public match data.");
+            });
+            Case("Core skins change only normal gem artwork while Soul and match state remain unchanged",()=>{
+                var output=new GameObject("CosmeticCoreField",typeof(RectTransform)).AddComponent<RawImage>();
+                var field=output.gameObject.AddComponent<BattleFieldVisuals>();field.SetArtworkProvider(fake.LoadArt);field.Load(output);
+                var snapshot=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);field.Render(snapshot);
+                string state=JsonConvert.SerializeObject(snapshot);var normal=Field<Material>(field,"normalGemMaterial");var soul=Field<Material>(field,"soulGemMaterial");
+                var materials=Field<List<Material>>(field,"materials");var meshes=Field<List<Mesh>>(field,"meshes");int materialCount=materials.Count,meshCount=meshes.Count;
+                var soulTexture=soul.mainTexture;
+                foreach(string name in new[]{"Blue","Purple","Green","Yellow","White","purple","Red","not-a-skin",""})
+                {
+                    MDPro3.Config.Set(BattleTheme.CoreSkinConfig,name);Call(field,"Update");field.Render(snapshot);
+                    string canonical=BattleTheme.NormalizeCoreSkin(name);
+                    Assert(normal.mainTexture==Resources.Load<Texture2D>("BattleSpirits/Skin/Color"+canonical),"Cosmetic Core selection did not update existing markers.");
+                    Assert(soul.mainTexture==soulTexture&&soulTexture==BattleTheme.ColorIcon(CardColor.Red),"Changing ordinary Core skin recolored the unique Soul Core.");
+                    Assert(materials.Count==materialCount&&meshes.Count==meshCount,"Changing Core appearance allocated unbounded field resources.");
+                    Assert(JsonConvert.SerializeObject(snapshot)==state&&fake.Commands.Count==0,"A local skin setting changed match state or sent a command.");
+                }
+                Assert(BattleTheme.NormalizeCoreSkin("Red")=="Blue"&&BattleTheme.NormalizeCoreSkin(null)=="Blue","Invalid/default ordinary Core style can impersonate the red Soul Core.");
+                var owned=materials.ToArray();var blue=BattleTheme.ColorIcon(CardColor.Blue);field.Dispose();
+                Assert(owned.All(item=>item==null)&&Field<Material>(field,"normalGemMaterial")==null&&Field<Material>(field,"soulGemMaterial")==null,"Core material ownership leaked on field disposal.");
+                Assert(blue!=null&&soulTexture!=null,"Disposing Core markers destroyed shared source gem images.");
             });
             Case("Field viewport bounds follow the printed card and exhausted orientation",()=>{
                 var output=new GameObject("BoundsField",typeof(RectTransform)).AddComponent<RawImage>();var field=output.gameObject.AddComponent<BattleFieldVisuals>();field.SetArtworkProvider(fake.LoadArt);field.Load(output);

@@ -1,4 +1,6 @@
-# Giao diện và màu sắc — Standard 0.5.0
+# Giao diện và màu sắc — Standard 0.5.1
+
+Bổ sung 0.5.1: ảnh ngọc xanh/đỏ được dùng cho Core trong Life/Reserve/Trash và trên Spirit; bốn màu khác là ngoại hình Core thường. [Ngọc Core và ảnh thẻ](BATTLE_SPIRITS_CORE_GEMS_AND_ART_QUALITY.md) ghi cách chọn và sửa tỷ lệ ảnh.
 
 Theo yêu cầu ngày **06/11/2026**, bản này đưa giao diện về phong cách ban đầu: nền đen/xám, viền bạc/trắng, nút có khung nổi và điểm nhấn xanh lime. Bố cục form, controller Battle Spirits, tiếng Việt và phần triệu hồi 0.4.0 được giữ. Đây là phục hồi một nhóm tài nguyên UI dùng chung và cách phối màu, không phải cam kết toàn bộ pixel hay bàn đấu giống hệt Master Duel.
 
@@ -22,7 +24,7 @@ Pet/wallpaper tiếp tục được giữ. Engine Yu-Gi-Oh, cut-in quái, giọn
 | Nhóm | Bản dùng trong dự án |
 | --- | --- |
 | Sáu viên biểu tượng màu | PNG chính thức 47×47, cùng họa tiết với ảnh tham khảo; không phải các byte ảnh độ phân giải cao đính kèm |
-| Core thường/Soul Core | Hai PNG chip chính thức 47×47 |
+| Chip Core/Soul tham khảo | Hai PNG chip chính thức 47×47; renderer Core 0.5.1 dùng ảnh ngọc xanh/đỏ |
 | Mặt sau bài | Bản mirror công khai 350×490, cùng thiết kế BS nhưng khác kích thước và dòng bản quyền nhỏ với ảnh 500×730 tham khảo |
 | Sân Standard | JPEG gốc 5877×4181 trích trực tiếp từ PDF chính thức; tài liệu có Second Main |
 | Sân xám tham khảo | JPEG gốc 2478×1753 trích từ PDF chính thức; lưu tham khảo, không dùng làm hướng dẫn lượt Standard |
@@ -35,7 +37,7 @@ Không vẽ lại hay thay pixel các file nguồn. TextureImporter giới hạn
 Các kiểm tra đã chạy cho phần phục hồi gồm **9 kiểm tra prefab**, **12 kiểm tra tài nguyên/import/manifest** và đối chiếu hash/metadata của **14 ảnh skin**. Kết quả integration cuối do [báo cáo kiểm tra](BATTLE_SPIRITS_VALIDATION.md) ghi lại; kiểm tra bằng stand-in không xác nhận hình ảnh thật trong Unity.
 
 1. Đóng Unity, cập nhật nhánh `battle-spirits-mdpro3-ui`; mở đúng Editor và Addressables **Use Asset Database**.
-2. Chạy scene Boot, xác nhận menu **0.5.0**. Xem menu, Cài đặt, Solo và Bộ bài: khung/nút có giao diện gốc, không lẫn nhãn Yu-Gi-Oh.
+2. Chạy scene Boot, xác nhận menu **0.5.1**. Xem menu, Cài đặt, Solo và Bộ bài: khung/nút có giao diện gốc, không lẫn nhãn Yu-Gi-Oh.
 3. Đổi bộ lọc màu rồi xóa bộ lọc; biểu tượng phải đổi đúng màu hoặc ẩn khi chọn tất cả. Chọn thẻ để kiểm tra biểu tượng trong chi tiết.
 4. Chơi Solo, kiểm tra mặt sau ở Deck và tay đối thủ, sáu biểu tượng trên sân, lượt quyết định lime/đỏ và hoạt ảnh triệu hồi vẫn chạy.
 5. Về menu rồi mở ván thứ hai; thử hai client LAN để xác nhận chỉ số lá công khai của tay đối thủ, không hiện mặt bài.

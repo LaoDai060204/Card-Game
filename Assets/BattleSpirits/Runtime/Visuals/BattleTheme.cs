@@ -10,6 +10,8 @@ namespace LaoDai.BattleSpirits.Visuals
     // textures; callers must not destroy them when closing a screen or field.
     public static class BattleTheme
     {
+        public const string CoreSkinConfig = "BattleSpiritsCoreSkin";
+        public const string DefaultCoreSkin = "Blue";
         public static readonly Color PanelBackground = new Color(0.15294118f, 0.15294118f, 0.1764706f, 1);
         public static readonly Color Frame = new Color(0.8f, 0.82f, 0.86f, 1);
         public static readonly Color Accent = new Color(0.7529412f, 1, 0, 1);
@@ -23,6 +25,31 @@ namespace LaoDai.BattleSpirits.Visuals
         public static Texture2D PlaymatStandard => Texture("PlaymatStandard");
         public static Texture2D PlaymatReference => Texture("PlaymatReference");
         public static Texture2D ColorIcon(CardColor color) => Texture("Color" + color);
+        public static string NormalizeCoreSkin(string value)
+        {
+            switch ((value ?? string.Empty).Trim().ToLowerInvariant())
+            {
+                case "purple": return "Purple";
+                case "green": return "Green";
+                case "yellow": return "Yellow";
+                case "white": return "White";
+                default: return DefaultCoreSkin;
+            }
+        }
+
+        // A cosmetic choice changes ordinary Core artwork only. Red remains
+        // reserved for the unique Soul Core and never follows a card's color.
+        public static Texture2D CoreGem(string style)
+        {
+            switch (NormalizeCoreSkin(style))
+            {
+                case "Purple": return ColorIcon(CardColor.Purple);
+                case "Green": return ColorIcon(CardColor.Green);
+                case "Yellow": return ColorIcon(CardColor.Yellow);
+                case "White": return ColorIcon(CardColor.White);
+                default: return ColorIcon(CardColor.Blue);
+            }
+        }
         public static Sprite ButtonSprite => SlicedSprite("ChromeButton", 22);
         public static Sprite PanelSprite => SlicedSprite("ChromePanel", 16);
 

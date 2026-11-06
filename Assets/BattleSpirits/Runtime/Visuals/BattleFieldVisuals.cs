@@ -54,6 +54,8 @@ namespace LaoDai.BattleSpirits.Visuals
         private Material dark, panel, trim, white, red, purple, green, blue, yellow, crystal, soul;
         private Material playerAccent, opponentAccent;
         private Material cardBackMaterial;
+        private Material normalGemMaterial, soulGemMaterial;
+        private string normalCoreSkin;
         private Mesh skinQuad;
         private Shader shader, artworkShader;
         private Action<string, RawImage> artworkProvider;
@@ -150,6 +152,9 @@ namespace LaoDai.BattleSpirits.Visuals
             yellow = Material("SolarYellow", new Color(0.93f, 0.72f, 0.16f));
             crystal = Material("CoreBlue", new Color(0.17f, 0.8f, 1f), 0.6f);
             soul = Material("SoulCore", new Color(0.95f, 0.12f, 0.17f), 0.7f);
+            normalCoreSkin = BattleTheme.NormalizeCoreSkin(Config.Get(BattleTheme.CoreSkinConfig, BattleTheme.DefaultCoreSkin));
+            normalGemMaterial = ArtworkMaterial("NormalCoreGem", BattleTheme.CoreGem(normalCoreSkin), new Rect(0, 0, 1, 1));
+            soulGemMaterial = ArtworkMaterial("SoulCoreGem", BattleTheme.ColorIcon(CardColor.Red), new Rect(0, 0, 1, 1));
             if (BattleTheme.CardBack != null)
                 cardBackMaterial = ArtworkMaterial("BattleSpiritsCardBack", BattleTheme.CardBack, new Rect(0, 0, 1, 1));
             font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
@@ -302,6 +307,7 @@ namespace LaoDai.BattleSpirits.Visuals
         public void Render(FilteredMatchView view)
         {
             if (disposed || stage == null || view == null || view.players == null) return;
+            RefreshCoreGemSkin();
             viewer = view.viewer;
             var present = new HashSet<int>();
             foreach (var player in view.players)
@@ -390,12 +396,12 @@ namespace LaoDai.BattleSpirits.Visuals
             int count = Math.Min(8, Math.Max(0, view.normalCores));
             for (int index = 0; index < count; index++)
             {
-                var marker = Part(unit.figure.root.transform, "SpiritCore", PrimitiveType.Sphere,
-                    new Vector3((index % 4 - 1.5f) * 0.25f, 0.14f, -0.75f - index / 4 * 0.25f), new Vector3(0.18f, 0.3f, 0.18f), crystal);
+                var marker = Gem(unit.figure.root.transform, "SpiritCore",
+                    new Vector3((index % 4 - 1.5f) * 0.25f, 0.25f, -0.75f - index / 4 * 0.25f), 0.22f, false);
                 unit.cores.Add(marker);
             }
-            if (view.soulCore) unit.cores.Add(Part(unit.figure.root.transform, "SpiritSoulCore", PrimitiveType.Sphere,
-                new Vector3(0, 0.4f, -0.85f), new Vector3(0.24f, 0.4f, 0.24f), soul));
+            if (view.soulCore) unit.cores.Add(Gem(unit.figure.root.transform, "SpiritSoulCore",
+                new Vector3(0, 0.56f, -0.85f), 0.36f, true));
         }
 
         private void SetCount(int side, int zone, string text)
@@ -440,11 +446,40 @@ namespace LaoDai.BattleSpirits.Visuals
             int count = Math.Min(12, normal);
             for (int index = 0; index < count; index++)
             {
-                var core = Part(root, "Core", PrimitiveType.Sphere,
-                    new Vector3((index % 4 - 1.5f) * 0.45f, 0.27f, (index / 4 - 1) * 0.45f), new Vector3(0.32f, 0.48f, 0.32f), crystal);
-                core.transform.localRotation = Quaternion.Euler(0, 45, 15); poolCrystals.Add(core);
+                var core = Gem(root, "Core",
+                    new Vector3((index % 4 - 1.5f) * 0.45f, 0.32f, (index / 4 - 1) * 0.45f), 0.4f, false);
+                poolCrystals.Add(core);
             }
-            if (hasSoul) poolCrystals.Add(Part(root, "SoulCore", PrimitiveType.Sphere, new Vector3(0, 0.7f, 0), new Vector3(0.48f, 0.68f, 0.48f), soul));
+            if (hasSoul) poolCrystals.Add(Gem(root, "SoulCore", new Vector3(0, 0.75f, 0), 0.52f, true));
+        }
+
+        private GameObject Gem(Transform parent, string name, Vector3 position, float width, bool isSoul)
+        {
+            var material = isSoul ? soulGemMaterial : normalGemMaterial;
+            var image = material == null ? null : material.mainTexture;
+            if (image == null)
+                return Part(parent, name, PrimitiveType.Sphere, position,
+                    new Vector3(width, width * 1.4f, width), isSoul ? soul : crystal);
+            float height = width * image.height / Math.Max(1, image.width);
+            var gem = TexturedPlane(parent, name, position, new Vector2(width, height), material);
+            // skinQuad is horizontal (u=+X, v=+Z). This rotation aligns the
+            // image to the camera's right/up axes without mirroring its face.
+            gem.transform.rotation = camera.transform.rotation * Quaternion.Euler(-90, 0, 0);
+            return gem;
+        }
+
+        private void RefreshCoreGemSkin()
+        {
+            string desired = BattleTheme.NormalizeCoreSkin(Config.Get(BattleTheme.CoreSkinConfig, BattleTheme.DefaultCoreSkin));
+            if (normalGemMaterial == null || desired == normalCoreSkin) return;
+            bool wasTextured = normalGemMaterial.mainTexture != null;
+            normalCoreSkin = desired;
+            normalGemMaterial.mainTexture = BattleTheme.CoreGem(desired);
+            if (wasTextured == (normalGemMaterial.mainTexture != null)) return;
+            // Rebuild only if the loader changes between image and fallback
+            // geometry. Normal cosmetic changes update the shared material.
+            poolSignature = null;
+            foreach (var unit in units.Values) unit.visibleNormalCores = -1;
         }
 
         public void PlayEvent(PublicBattleEvent message)
@@ -490,6 +525,7 @@ namespace LaoDai.BattleSpirits.Visuals
         private void Update()
         {
             if (stage == null || disposed) return;
+            RefreshCoreGemSkin();
             float time = Time.unscaledTime; expired.Clear();
             foreach (var pair in units)
             {
@@ -552,6 +588,7 @@ namespace LaoDai.BattleSpirits.Visuals
             for (int side = 0; side < 2; side++)
             { mates[side] = null; mateAnchors[side] = null; decisionRails[side] = null; for (int zone = 0; zone < 4; zone++) { counts[side, zone] = null; poolRoots[side, zone] = null; } }
             texture = null; camera = null; stage = null; poolSignature = null; skinQuad = null; cardBackMaterial = null;
+            normalGemMaterial = soulGemMaterial = null; normalCoreSkin = null;
         }
     }
 }

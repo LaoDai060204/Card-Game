@@ -52,7 +52,20 @@ namespace MDPro3
             DuelOverlayEffect2DMinus();
             DuelOverlayEffect3DMinus();
             UIBlurMinus();
+            EnsureBattleUiResolution();
             SystemEvent.OnResolutionChange += ChangeCameraFOV;
+        }
+
+        public static void EnsureBattleUiResolution()
+        {
+            if (!LaoDai.BattleSpirits.BattleSpiritsMode.Enabled) return;
+            var manager = Program.instance.camera_;
+            if (manager == null) return;
+            // BS cards live on this UI camera stack. Their resolution must not
+            // inherit a reduced world render scale or dynamic-resolution path.
+            if (manager.urpAssetForUI != null) manager.urpAssetForUI.renderScale = 1;
+            foreach (var camera in new[] { manager.camera2D, manager.cameraUI, manager.cameraUIBlur })
+                if (camera != null) camera.allowDynamicResolution = false;
         }
 
         public static void ChangeCameraFOV()
@@ -98,6 +111,7 @@ namespace MDPro3
             Program.instance.camera_.light.SetActive(false);
             Program.instance.camera_.camera2D.gameObject.SetActive(true);
             QualitySettings.SetQualityLevel(6);
+            EnsureBattleUiResolution();
             SettingServant.SetFpsToConfig();
         }
 

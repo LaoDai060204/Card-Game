@@ -115,7 +115,16 @@ namespace LaoDai.BattleSpirits.NativeUI
             }
             else go = Rect(parent, "BS_Card_" + id).gameObject;
             var image = go.GetComponentsInChildren<RawImage>(true).FirstOrDefault();
-            if (image == null) { var rect = Rect(go.transform, "CardArtwork"); Place(rect, 0, 0.12f, 1, 1); image = rect.gameObject.AddComponent<RawImage>(); }
+            // Card slots follow screen/layout sizes, while the official face
+            // retains its printed aspect. A separate art area also keeps the
+            // fitter from overlapping the card-code label underneath it.
+            var artArea = Rect(go.transform, "BS_CardArtworkSlot"); Place(artArea, 0, 0.12f, 1, 1);
+            if (image == null) image = Rect(artArea, "CardArtwork").gameObject.AddComponent<RawImage>();
+            else image.rectTransform.SetParent(artArea, false);
+            Place(image.rectTransform, 0, 0, 1, 1);
+            var aspect = image.GetComponent<AspectRatioFitter>() ?? image.gameObject.AddComponent<AspectRatioFitter>();
+            aspect.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
+            aspect.aspectRatio = 675f / 983;
             image.color = Color.white; image.raycastTarget = false;
             session.LoadArt(id, image);
             var button = go.GetComponent<Button>() ?? go.AddComponent<Button>();

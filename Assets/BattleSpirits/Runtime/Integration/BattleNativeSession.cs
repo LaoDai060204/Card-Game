@@ -347,7 +347,7 @@ namespace LaoDai.BattleSpirits.Integration
             if (image == null || string.IsNullOrEmpty(cardId)) return;
             string id = portrait ? "closeup:" + cardId : cardId;
             requestedArt[image] = id; imageAges[id] = ++imageClock;
-            if (textures.TryGetValue(id, out var texture)) { image.texture = texture; return; }
+            if (textures.TryGetValue(id, out var texture)) { AssignArtwork(image, texture); return; }
             image.texture = Texture2D.blackTexture;
             if (waitingArt.TryGetValue(id, out var targets)) { if (!targets.Contains(image)) targets.Add(image); return; }
             waitingArt[id] = new List<RawImage> { image };
@@ -362,7 +362,13 @@ namespace LaoDai.BattleSpirits.Integration
                 if (!path.StartsWith(root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)) return;
                 byte[] bytes = await Task.Run(() => File.ReadAllBytes(path));
                 if (this == null) return;
-                texture = new Texture2D(2, 2, TextureFormat.RGBA32, false) { name = "BattleSpirits_" + id };
+                texture = new Texture2D(2, 2, TextureFormat.RGBA32, false)
+                {
+                    name = "BattleSpirits_" + id,
+                    filterMode = FilterMode.Bilinear,
+                    wrapMode = TextureWrapMode.Clamp,
+                    anisoLevel = 8
+                };
                 if (!texture.LoadImage(bytes, true)) { Destroy(texture); texture = null; return; }
                 textures[id] = texture;
             }
@@ -371,9 +377,20 @@ namespace LaoDai.BattleSpirits.Integration
             {
                 if (waitingArt.TryGetValue(id, out var waiting))
                     foreach (var target in waiting)
-                        if (target != null && requestedArt.TryGetValue(target, out string current) && current == id) target.texture = texture;
+                        if (target != null && requestedArt.TryGetValue(target, out string current) && current == id) AssignArtwork(target, texture);
                 waitingArt.Remove(id);
             }
+        }
+
+        private static void AssignArtwork(RawImage image, Texture2D texture)
+        {
+            image.texture = texture;
+            var fitter = image.GetComponent<AspectRatioFitter>();
+            if (fitter == null || texture == null || texture == Texture2D.blackTexture
+                || texture.width <= 0 || texture.height <= 0) return;
+            Rect uv = image.uvRect;
+            if (uv.width > 0 && uv.height > 0)
+                fitter.aspectRatio = texture.width * uv.width / (texture.height * uv.height);
         }
 
         private void PruneArt()

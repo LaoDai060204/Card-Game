@@ -56,3 +56,5 @@ dotnet run --project Tests/BattleSpirits/Visuals/BattleSpirits.Visuals.Tests.csp
 ```
 
 Kiểm tra thuần xác nhận đường cong, PCM, file/hash và giới hạn số học. Render Blender, kiểm tra PCM và Unity stand-in không xác nhận shader, chuyển động hoặc phát AudioSource trong Windows Unity thật.
+
+Từ 0.5.1, ảnh ngọc trong bộ skin cũng hiển thị Core trên sân: xanh cho Core thường, đỏ cho Soul; tím/lục/vàng/trắng chỉ đổi ngoại hình Core thường. Xem [cách chọn và kiểm tra ảnh thẻ](../../Documentation/BATTLE_SPIRITS_CORE_GEMS_AND_ART_QUALITY.md).

@@ -1,4 +1,4 @@
-# Luật và phạm vi Battle Spirits Standard 0.5.0
+# Luật và phạm vi Battle Spirits Standard 0.5.1
 
 Unity **6000.0.24f1**, Windows x64, giao diện tiếng Việt. Chủ dự án đã chọn **Standard theo các PDF được cung cấp**. Theo yêu cầu cập nhật ngày 06/11/2026, bố cục UI và một phần khung/nút/bảng màu gốc được phục hồi có chọn lọc, còn thẻ, sân và cách chơi dùng Battle Spirits. Pet/wallpaper cùng phụ thuộc cần giữ tiếp tục hoạt động. Core vẫn có chế độ Eternal riêng để kiểm tra tương thích; UI và Solo/LAN mặc định dùng Standard rõ ràng.
 
@@ -54,3 +54,5 @@ Triệu hồi/đặt Nexus kích hoạt trình diễn khoảng 1,95 giây trên 
 - Chưa có MyCard/account/ghép trận/xếp hạng, tự mở cổng, reconnect tiếp tục trận hoặc replay online đầy đủ.
 - Floor Rules là quản lý giải đấu. Chưa áp dụng timer/penalty/tiebreak của giải vào Solo/LAN; không coi khuyến nghị 30 phút là luật bắt buộc.
 - Ảnh nổi giữ nền minh họa trong artwork; chưa có bộ cutout trong suốt riêng cho từng quái hay model chính thức riêng cho từng lá. Chưa có kéo thả đặt bài. **Chưa kiểm tra Play/render/build Windows Unity, LAN hai máy Windows hoặc Internet công khai trong môi trường này.**
+
+Bản 0.5.1 thay dấu Core bằng ảnh ngọc: thường xanh, Soul đỏ; các màu ngoại hình không phải loại tài nguyên mới. [Ngọc và tỷ lệ ảnh thẻ](BATTLE_SPIRITS_CORE_GEMS_AND_ART_QUALITY.md) ghi cách chọn ngoại hình và phạm vi sửa ảnh.
