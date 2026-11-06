@@ -7,6 +7,7 @@ import unittest
 
 import migrate_native_prefabs as migration
 from replace_master_duel_art import reskin_text
+from restore_original_ui_style import restore_reviewed_references
 
 
 class NativePrefabReplacementTests(unittest.TestCase):
@@ -21,7 +22,7 @@ class NativePrefabReplacementTests(unittest.TestCase):
             source = migration.original(path, migration.BASE)
             actual = (migration.ROOT / path).read_text()
             expected, removed, actions = migration.migrate(path, source, cls.script_paths, cls.removed_by_guid)
-            expected = reskin_text(expected)
+            expected = restore_reviewed_references(reskin_text(expected), path)
             cls.original[path] = source
             cls.migrated[path] = actual
             cls.removed[path] = removed

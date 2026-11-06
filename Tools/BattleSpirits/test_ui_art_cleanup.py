@@ -7,6 +7,7 @@ import struct
 import unittest
 
 import replace_master_duel_art as cleanup
+import restore_original_ui_style as restoration
 
 
 class UiArtCleanupTests(unittest.TestCase):
@@ -14,12 +15,20 @@ class UiArtCleanupTests(unittest.TestCase):
     def setUpClass(cls):
         cls.manifest = cleanup.load_manifest()
         cls.removed = {row["guid"] for row in cls.manifest["removedAssets"] if row["guid"]}
+        cls.restoration = json.loads(restoration.MANIFEST.read_text()) if restoration.MANIFEST.is_file() else {"restoredAssets": [], "restoredReferences": []}
+        cls.restored = {row["guid"]: row for row in cls.restoration["restoredAssets"]}
 
     def test_removed_assets_and_their_metadata_are_absent(self):
         for item in self.manifest["removedAssets"]:
             path = cleanup.ROOT / item["path"]
-            self.assertFalse(path.exists(), item["path"])
-            self.assertFalse(Path(str(path) + ".meta").exists(), item["path"])
+            if item["guid"] in self.restored:
+                record = self.restored[item["guid"]]
+                self.assertEqual(record["path"], item["path"])
+                self.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(), record["sha256"])
+                self.assertEqual(hashlib.sha256(Path(str(path) + ".meta").read_bytes()).hexdigest(), record["metaSha256"])
+            else:
+                self.assertFalse(path.exists(), item["path"])
+                self.assertFalse(Path(str(path) + ".meta").exists(), item["path"])
 
     def test_directory_structure_and_folder_guids_survive(self):
         for folder in self.manifest["preservedFolders"]:
@@ -46,12 +55,12 @@ class UiArtCleanupTests(unittest.TestCase):
                 continue
             text = path.read_text(encoding="utf-8-sig", errors="replace")
             refs = {match[2] for match in cleanup.REF.finditer(text)}
-            self.assertFalse(refs.intersection(self.removed), str(path))
+            self.assertFalse(refs.intersection(self.removed - self.restored.keys()), str(path))
 
     def test_addressable_entries_do_not_point_to_deleted_assets(self):
         for path in (cleanup.ROOT / "Assets/AddressableAssetsData/AssetGroups").glob("*.asset"):
             guids = set(re.findall(r"(?m)^  - m_GUID: ([0-9a-f]{32})$", path.read_text()))
-            self.assertFalse(guids.intersection(self.removed), str(path))
+            self.assertFalse(guids.intersection(self.removed - self.restored.keys()), str(path))
 
     def test_original_ui_pngs_and_import_guids_match_manifest(self):
         for name, item in self.manifest["originalUiSkin"].items():
@@ -82,6 +91,32 @@ class UiArtCleanupTests(unittest.TestCase):
         self.assertNotIn(deleted, actual)
         self.assertIn(kept, actual)
         self.assertIn("m_SchemaSet: []", actual)
+
+    def test_original_style_restoration_is_exactly_recorded_and_graphical(self):
+        self.assertEqual(len(self.restored), self.restoration["restoredAssetCount"])
+        self.assertEqual(len(self.restoration["restoredReferences"]), self.restoration["restoredReferenceCount"])
+        for item in self.restoration["restoredAssets"]:
+            self.assertTrue(restoration.graphical_dependency(item["path"]), item["path"])
+            self.assertFalse(item["path"].startswith(("Assets/Fonts/", "Assets/Addressables/Sound/")))
+        for item in self.restoration["restoredReferences"]:
+            self.assertTrue(restoration.ui_document(item["path"]), item["path"])
+            self.assertIn(item["property"], restoration.GRAPHICS)
+            self.assertNotEqual(item["before"], item["after"])
+
+    def test_restoration_does_not_overwrite_independent_reference_changes(self):
+        item = self.restoration["restoredReferences"][0]
+        source = "--- !u!114 &" + item["componentId"] + "\nComponent:\n  " + item["property"] + ": {fileID: 77}\n"
+        manifest = {"restoredReferences": [dict(item, occurrence=0)]}
+        self.assertEqual(restoration.restore_reviewed_references(source, item["path"], manifest), source)
+
+    def test_restored_references_are_idempotent_and_component_scoped(self):
+        item = self.restoration["restoredReferences"][0]
+        source = "--- !u!114 &" + item["componentId"] + "\nComponent:\n  " + item["property"] + ": " + item["before"] + "\n"
+        manifest = {"restoredReferences": [dict(item, occurrence=0)]}
+        once = restoration.restore_reviewed_references(source, item["path"], manifest)
+        self.assertIn(item["after"], once)
+        self.assertEqual(restoration.restore_reviewed_references(once, item["path"], manifest), once)
+        self.assertEqual(restoration.restore_reviewed_references(source, "another.prefab", manifest), source)
 
 
 if __name__ == "__main__": unittest.main()

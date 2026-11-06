@@ -68,7 +68,22 @@ namespace UnityEngine
     public class MeshFilter:Component {public Mesh sharedMesh;}
     public class Mesh:Object {public Vector3[] vertices;public Vector2[] uv;public int[] triangles;public void RecalculateNormals(){}public void RecalculateBounds(){} }
     public class MaterialPropertyBlock {public void SetFloat(string name,float value){} }
-    public static class Resources {public static T Load<T>(string path)where T:Object,new()=>new T();public static T GetBuiltinResource<T>(string path)where T:Object,new()=>new T();}
+    public static class Resources {
+        public static string ProjectRoot;
+        public static readonly Dictionary<string,Texture2D> Textures=new Dictionary<string,Texture2D>(StringComparer.Ordinal);
+        public static T Load<T>(string path)where T:Object{
+            if(typeof(T)==typeof(Shader))return (T)(Object)new Shader{name=path};
+            if(typeof(T)!=typeof(Texture2D)||ProjectRoot==null)return null;
+            if(Textures.TryGetValue(path,out var existing)&&existing!=null)return (T)(Object)existing;
+            string root=System.IO.Path.Combine(ProjectRoot,"Assets/BattleSpirits/Art/Resources");
+            string file=new[]{".png",".jpg",".jpeg"}.Select(ext=>System.IO.Path.Combine(root,path+ext)).FirstOrDefault(System.IO.File.Exists);
+            if(file==null)return null;
+            var texture=new Texture2D(1,1,TextureFormat.RGBA32,false){name=path,sourcePath=file};
+            if(!texture.LoadImage(System.IO.File.ReadAllBytes(file)))throw new System.IO.InvalidDataException("Unsupported test resource image: "+file);
+            Textures[path]=texture;return (T)(Object)texture;
+        }
+        public static T GetBuiltinResource<T>(string path)where T:Object,new()=>new T();
+    }
     public class AudioClip:Object {public float[] data;public static AudioClip Create(string name,int count,int channels,int sampleRate,bool stream)=>new AudioClip{name=name,data=new float[count*channels]};public void SetData(float[] samples,int offset)=>Array.Copy(samples,0,data,offset,samples.Length);}
     public class AudioSource:Behaviour {public bool loop,isPlaying;public float spatialBlend,volume;public AudioClip clip;public void Play()=>isPlaying=true;public void Stop()=>isPlaying=false;public void PlayOneShot(AudioClip value,float volume=1){} }
 }

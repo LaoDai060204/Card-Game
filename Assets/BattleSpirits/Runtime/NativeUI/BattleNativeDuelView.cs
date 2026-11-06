@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using LaoDai.BattleSpirits.Core;
 using LaoDai.BattleSpirits.Networking;
+using LaoDai.BattleSpirits.Visuals;
 using MDPro3;
 using MDPro3.UI;
 using TMPro;
@@ -18,7 +19,7 @@ namespace LaoDai.BattleSpirits.NativeUI
         private readonly Transform root;
         private readonly IBattleNativeSession session;
         private readonly Dictionary<string, CardDefinition> cards;
-        private RectTransform hand, field0, field1;
+        private RectTransform hand, opponentHand, field0, field1;
         private TextMeshProUGUI phase;
         private int selectedSpirit = -1;
         private RawImage backdrop;
@@ -43,6 +44,7 @@ namespace LaoDai.BattleSpirits.NativeUI
             background.SetAsFirstSibling(); backdrop = background.gameObject.AddComponent<RawImage>(); backdrop.raycastTarget = false;
             session.AttachField(backdrop);
             hand = BattleNativeWidgets.Rect(root, "BS_Hand"); BattleNativeWidgets.Place(hand, 0.17f, 0.005f, 0.83f, 0.20f);
+            opponentHand = BattleNativeWidgets.Rect(root, "BS_OpponentHand"); BattleNativeWidgets.Place(opponentHand, 0.28f, 0.84f, 0.75f, 0.96f);
             field0 = BattleNativeWidgets.Rect(root, "BS_OwnField"); BattleNativeWidgets.Place(field0, 0, 0, 1, 1);
             field1 = BattleNativeWidgets.Rect(root, "BS_OpponentField"); BattleNativeWidgets.Place(field1, 0, 0, 1, 1);
             phase = BattleNativeWidgets.Text(root, "BS_Phase", string.Empty, 25); BattleNativeWidgets.Place(phase.rectTransform, 0.25f, 0.45f, 0.74f, 0.56f);
@@ -83,7 +85,7 @@ namespace LaoDai.BattleSpirits.NativeUI
             Name("LP0/NameBase/TextPlayer0Name", own); Name("LP1/NameBase/TextPlayer1Name", opponent);
             phase.text = view.winner >= 0 ? (view.winner == view.viewer ? "CHIẾN THẮNG" : "KẾT THÚC TRẬN")
                 : "LƯỢT " + view.turn + " · " + Phase(view.phase) + "\n" + (view.decisionPlayer == view.viewer ? "Đến lượt bạn chọn" : "Đang chờ đối thủ…");
-            DrawHand(view); DrawField(field0, own, true); DrawField(field1, opponent, false); Actions(view);
+            DrawHand(view); DrawOpponentHand(opponent); DrawField(field0, own, true); DrawField(field1, opponent, false); Actions(view);
         }
         private void Name(string path, PublicPlayerView player)
         {
@@ -104,6 +106,29 @@ namespace LaoDai.BattleSpirits.NativeUI
                     && !(session is IBattleNativeReplaySession replay && replay.IsReplay);
             }
         }
+        private void DrawOpponentHand(PublicPlayerView player)
+        {
+            BattleNativeWidgets.ClearGenerated(opponentHand);
+            int count = Math.Min(10, Math.Max(0, player.handCount));
+            for (int i = 0; i < count; i++)
+            {
+                var slot = BattleNativeWidgets.Rect(opponentHand, "BS_OpponentBack_" + i);
+                float width = Math.Min(0.10f, 1f / Math.Max(1, count));
+                BattleNativeWidgets.Place(slot, i * width, 0, (i + 1) * width - 0.006f, 1);
+                var image = slot.gameObject.AddComponent<RawImage>();
+                image.texture = BattleTheme.CardBack; image.raycastTarget = false;
+                image.color = image.texture != null ? Color.white : BattleTheme.PanelBackground;
+                var aspect = slot.gameObject.AddComponent<AspectRatioFitter>();
+                aspect.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
+                aspect.aspectRatio = image.texture != null ? (float)image.texture.width / image.texture.height : 0.7f;
+            }
+            if (player.handCount > count)
+            {
+                var more = BattleNativeWidgets.Text(opponentHand, "BS_HandOverflow", "+" + (player.handCount - count), 18);
+                BattleNativeWidgets.Place(more.rectTransform, 0.92f, 0.02f, 1, 0.28f);
+            }
+        }
+
         private void DrawField(RectTransform container, PublicPlayerView player, bool own)
         {
             BattleNativeWidgets.ClearGenerated(container);
@@ -350,9 +375,8 @@ namespace LaoDai.BattleSpirits.NativeUI
                 ?? BattleNativeWidgets.Text(target, "BS_ActionLabel", label, 16);
             text.gameObject.SetActive(true); text.text = label; text.richText = false;
             var face = target.GetComponent<Image>() ?? target.gameObject.AddComponent<Image>();
-            face.sprite = null; face.material = null;
-            face.color = new Color(0.025f, 0.13f, 0.19f, 0.98f); face.raycastTarget = true;
-            var button = target.GetComponent<Button>(); if (button != null) button.targetGraphic = face;
+            face.raycastTarget = true;
+            var button = target.GetComponent<Button>(); if (button != null) BattleTheme.StyleButton(button, face);
             BattleNativeWidgets.Interactable(root, "Buttons/" + name, enabled);
         }
         private void Dispatch(string action, int index = 0, int source = -1, int target = -1, bool soul = false, CoreTransfer[] transfers = null)

@@ -30,8 +30,25 @@ namespace UnityEngine {
  }
  public struct Color{public float r,g,b,a;public Color(float r,float g,float b,float a=1){this.r=r;this.g=g;this.b=b;this.a=a;}public static Color white=>new Color(1,1,1,1);public static Color clear=>default;}
  public struct Vector4{public float x,y,z,w;public Vector4(float x,float y,float z,float w){this.x=x;this.y=y;this.z=z;this.w=w;}}
- public class Material:Object{public Material(){}public Material(Shader shader){}public Texture mainTexture;public readonly Dictionary<string,Texture> Textures=new Dictionary<string,Texture>();public readonly Dictionary<string,Vector4> Vectors=new Dictionary<string,Vector4>();public readonly Dictionary<string,float> Floats=new Dictionary<string,float>();public readonly Dictionary<string,Color> Colors=new Dictionary<string,Color>();public void SetColor(string n,Color c)=>Colors[n]=c;public void SetFloat(string n,float f)=>Floats[n]=f;public void SetTexture(string n,Texture t){Textures[n]=t;if(n=="_MainTex"||n=="_BaseMap")mainTexture=t;}public void SetVector(string n,Vector4 v)=>Vectors[n]=v;}public class Sprite:Object{}public class Texture:Object{public int width{get;protected set;}public int height{get;protected set;}}
- public enum TextureFormat{RGBA32}public class Texture2D:Texture{public static readonly Texture2D blackTexture=new Texture2D(1,1,TextureFormat.RGBA32,false);public Texture2D(int width,int height,TextureFormat format,bool mipmap){this.width=width;this.height=height;}public bool LoadImage(byte[] data,bool markNonReadable=false){if(data==null||data.Length==0)return false;if(data.Length>=24&&data[0]==137&&data[1]==80&&data[2]==78&&data[3]==71){width=(data[16]<<24)|(data[17]<<16)|(data[18]<<8)|data[19];height=(data[20]<<24)|(data[21]<<16)|(data[22]<<8)|data[23];}return true;}}
+ public class Material:Object{public Material(){}public Material(Shader shader){}public Texture mainTexture;public readonly Dictionary<string,Texture> Textures=new Dictionary<string,Texture>();public readonly Dictionary<string,Vector4> Vectors=new Dictionary<string,Vector4>();public readonly Dictionary<string,float> Floats=new Dictionary<string,float>();public readonly Dictionary<string,Color> Colors=new Dictionary<string,Color>();public void SetColor(string n,Color c)=>Colors[n]=c;public void SetFloat(string n,float f)=>Floats[n]=f;public void SetTexture(string n,Texture t){Textures[n]=t;if(n=="_MainTex"||n=="_BaseMap")mainTexture=t;}public void SetVector(string n,Vector4 v)=>Vectors[n]=v;}
+ public enum SpriteMeshType{FullRect}
+ public class Sprite:Object{public Texture2D texture;public Rect rect;public Vector4 border;public static Sprite Create(Texture2D texture,Rect rect,Vector2 pivot,float pixelsPerUnit,uint extrude,SpriteMeshType meshType,Vector4 border)=>new Sprite{texture=texture,rect=rect,border=border};}
+ public class Texture:Object{public int width{get;protected set;}public int height{get;protected set;}public string sourcePath;}
+ public enum TextureFormat{RGBA32}public class Texture2D:Texture{
+  public static readonly Texture2D blackTexture=new Texture2D(1,1,TextureFormat.RGBA32,false);
+  public Texture2D(int width,int height,TextureFormat format,bool mipmap){this.width=width;this.height=height;}
+  public bool LoadImage(byte[] data,bool markNonReadable=false){
+   if(data==null||data.Length<4)return false;
+   if(data.Length>=24&&data[0]==137&&data[1]==80&&data[2]==78&&data[3]==71){width=(data[16]<<24)|(data[17]<<16)|(data[18]<<8)|data[19];height=(data[20]<<24)|(data[21]<<16)|(data[22]<<8)|data[23];return width>0&&height>0;}
+   if(data[0]!=255||data[1]!=216)return false;
+   for(int pos=2;pos+3<data.Length;){
+    if(data[pos++]!=255)continue;while(pos<data.Length&&data[pos]==255)pos++;if(pos>=data.Length)break;int marker=data[pos++];
+    if(marker==216||marker==217||marker==1||marker>=208&&marker<=215)continue;
+    if(pos+1>=data.Length)break;int length=(data[pos]<<8)|data[pos+1];if(length<2||pos+length>data.Length)break;
+    if(new[]{192,193,194,195,197,198,199,201,202,203,205,206,207}.Contains(marker)&&length>=7){height=(data[pos+3]<<8)|data[pos+4];width=(data[pos+5]<<8)|data[pos+6];return width>0&&height>0;}pos+=length;
+   }return false;
+  }
+ }
  public enum CameraClearFlags{SolidColor}public enum FilterMode{Bilinear}public enum RenderTextureFormat{ARGB32}public enum LightType{Directional}public enum LightShadows{None}
  public class RenderTexture:Texture{public bool released,created;public FilterMode filterMode;public int antiAliasing;public RenderTexture(int a,int b,int c,RenderTextureFormat d){width=a;height=b;}public void Create()=>created=true;public void Release()=>released=true;}
  public class Camera:Behaviour{public float fieldOfView,nearClipPlane,farClipPlane;public int cullingMask;public CameraClearFlags clearFlags;public Color backgroundColor;public bool allowHDR,allowMSAA;public RenderTexture targetTexture;public Vector3 WorldToViewportPoint(Vector3 point){var local=transform.InverseTransformPoint(point);double half=Math.Tan(fieldOfView*Math.PI/360);float aspect=targetTexture==null?16f/9:targetTexture.width/(float)targetTexture.height;return new Vector3(0.5f+(float)(local.x/(local.z*half*aspect))*0.5f,0.5f+(float)(local.y/(local.z*half))*0.5f,local.z);}}
@@ -54,7 +71,7 @@ namespace UnityEngine.UI {
  public class Image:Graphic{public enum Type{Simple,Sliced}public UnityEngine.Sprite sprite;public Type type;public float fillAmount;public bool preserveAspect;}
  public class RawImage:Graphic{public UnityEngine.Texture texture;public UnityEngine.Rect uvRect=new UnityEngine.Rect(0,0,1,1);}
  public struct ColorBlock{public UnityEngine.Color normalColor,highlightedColor,selectedColor,pressedColor,disabledColor;public float fadeDuration;}
- public class Selectable:UnityEngine.Behaviour{public bool interactable=true;public Graphic targetGraphic;public ColorBlock colors;}
+ public class Selectable:UnityEngine.Behaviour{public enum Transition{None,ColorTint,SpriteSwap}public bool interactable=true;public Graphic targetGraphic;public ColorBlock colors;public Transition transition;}
  public class Button:Selectable{public UnityEngine.Events.UnityEvent onClick=new UnityEngine.Events.UnityEvent();}
  public class Toggle:Selectable{public Graphic graphic;public bool isOn;}
  public class GraphicRaycaster:UnityEngine.Behaviour{}public class RectMask2D:UnityEngine.Behaviour{}

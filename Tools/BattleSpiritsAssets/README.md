@@ -1,9 +1,12 @@
-# Tài nguyên Battle Spirits tự tạo
+# Tài nguyên giao diện, trình diễn và âm thanh Battle Spirits
 
-Nhóm này chứa sân, mã trình diễn thẻ và sound bank cho bản thay thế trực tiếp. Từ 0.4.0, quái trên sân dùng ảnh minh họa của đúng lá bài, thay các model chung trước đây. Mặt thẻ chính thức được quản lý riêng bởi [công cụ thẻ](../BattleSpiritsCards/README.md).
+Nhóm này chứa sân, mã trình diễn thẻ, sound bank và công cụ kiểm tra nguồn ảnh. Từ 0.4.0, quái trên sân dùng minh họa của đúng lá bài. Từ 0.5.0, UI dùng lại một phần chrome gốc cùng ảnh Battle Spirits có nguồn riêng; các ảnh đó không được coi là tài nguyên tự tạo. Mặt thẻ chính thức được quản lý riêng bởi [công cụ thẻ](../BattleSpiritsCards/README.md).
 
 | Tài nguyên | Vị trí |
 | --- | --- |
+| Bảng màu/chrome và texture skin | `Assets/BattleSpirits/Runtime/Visuals/BattleTheme.cs` |
+| Biểu tượng màu, mặt sau, playmat và chrome | `Assets/BattleSpirits/Art/Resources/BattleSpirits/Skin` |
+| Provenance/checksum ảnh skin | `Data/BattleSpirits/skin-sources.json` |
 | Sân và bố trí thẻ trong Unity | `Assets/BattleSpirits/Runtime/Visuals/BattleFieldVisuals.cs` |
 | Mặt thẻ trên sân + ảnh minh họa nổi | `Assets/BattleSpirits/Runtime/Visuals/BattleCardFigure.cs` |
 | Trình diễn triệu hồi trên UI bàn đấu | `Assets/BattleSpirits/Runtime/NativeUI/BattleSummonPresentation.cs` |
@@ -24,6 +27,18 @@ Hai model boss cũ là **diễn giải fan-made kiểu low-poly**, không phải
 Sound bank gồm loop nhạc 16 giây và tám cue `summon`, `boss_summon`, `attack`, `core`, `damage`, `destroy`, `victory`, `defeat`. Âm thanh được tổng hợp từ hàm sóng và noise xác định, không dùng bản ghi bên thứ ba. Thông số, peak/DC và SHA-256 nằm trong `Sound/BattleSpirits/manifest.json`.
 
 Manifest áp dụng **CC0-1.0 cho phần geometry/render và âm thanh tự tạo** được nêu trong đó. Quyền đối với tên, thiết kế và artwork chính thức Battle Spirits, cùng tài nguyên Master Duel dùng lại, vẫn theo [THIRD_PARTY_NOTICES](../../THIRD_PARTY_NOTICES.md).
+
+## Ảnh giao diện 0.5.0
+
+[Sổ nguồn skin](../../Data/BattleSpirits/skin-sources.json) ghi 14 ảnh: sáu biểu tượng màu thẻ chính thức, Core/Soul Core, mặt sau BS, playmat Standard và mẫu xám, cùng ba chrome gốc. Biểu tượng chính thức là bản 47×47; mặt sau là bản mirror 350×490 có khác dòng bản quyền so với ảnh tham khảo 500×730. JPEG playmat được trích nguyên byte từ PDF chính thức; chrome được sao chép nguyên byte từ template. Các ảnh này không thuộc CC0 của geometry/render/audio tự tạo.
+
+Sân dùng viền và logo của playmat Standard, không đưa chỉ dẫn Burst/lượt Eternal từ mẫu xám lên thay luật. Xem [phạm vi giao diện](../../Documentation/BATTLE_SPIRITS_THEME.md). Kiểm tra file, metadata và hash:
+
+```bash
+python Tools/BattleSpiritsAssets/check_skin_sources.py
+```
+
+Công cụ này không xác nhận render Unity hay cấp quyền mới đối với artwork.
 
 ## Tạo lại
 

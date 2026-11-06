@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Security.Cryptography;
 using System.Threading;
 using LaoDai.BattleSpirits.Core;
 using LaoDai.BattleSpirits.Integration;
@@ -209,7 +210,7 @@ internal static class Entry
     public static int Main(string[] args)
     {
         SynchronizationContext.SetSynchronizationContext(Context);
-        sourceRoot=Path.GetFullPath(args.Length>0?args[0]:".");LoadFixtures();
+        sourceRoot=Path.GetFullPath(args.Length>0?args[0]:".");Resources.ProjectRoot=sourceRoot;LoadFixtures();
         catalog=JsonConvert.DeserializeObject<CardsDatabase>(File.ReadAllText(Path.Combine(sourceRoot,"Data/BattleSpirits/cards.json")));
         temporary=Path.Combine(Path.GetTempPath(),"bs-native-presentation-"+Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(Path.Combine(temporary,"Assets"));Directory.CreateDirectory(Path.Combine(temporary,"Data/BattleSpirits"));
@@ -222,6 +223,29 @@ internal static class Entry
         }
         try
         {
+            Case("Skin resources resolve the reviewed PNG and JPEG files with their original dimensions",()=>{
+                var manifest=Newtonsoft.Json.Linq.JObject.Parse(File.ReadAllText(Path.Combine(sourceRoot,"Data/BattleSpirits/skin-sources.json")));
+                int count=0;
+                foreach(var entry in manifest["assets"])
+                {
+                    string path=(string)entry["resourcePath"];var resource=Resources.Load<Texture2D>(path);
+                    Assert(resource!=null,"A reviewed skin resource cannot be loaded: "+path);
+                    Assert(resource.width==(int)entry["width"]&&resource.height==(int)entry["height"],"Resource dimensions differ from the original file: "+path);
+                    string original=Path.GetFullPath(Path.Combine(sourceRoot,(string)entry["path"]));
+                    Assert(resource.sourcePath==original,"Resource resolved to an unrelated or fabricated image: "+path);
+                    using var sha=SHA256.Create();string hash=BitConverter.ToString(sha.ComputeHash(File.ReadAllBytes(original))).Replace("-","").ToLowerInvariant();
+                    Assert(hash==(string)entry["sha256"],"Imported skin bytes differ from reviewed source: "+path);count++;
+                }
+                Assert(count==14&&Resources.Load<Texture2D>("BattleSpirits/Skin/NotInstalled")==null,"Missing resources were fabricated or the reviewed bank is incomplete.");
+            });
+            Case("Generated Battle Spirits buttons keep original bevels and lime selection colors",()=>{
+                var parent=new GameObject("ButtonHost",typeof(RectTransform));var button=BattleNativeWidgets.Button(parent.transform,"TestButton","BỘ BÀI",()=>{});var face=button.GetComponent<Image>();
+                Assert(face.sprite!=null&&face.sprite.texture==Resources.Load<Texture2D>("BattleSpirits/Skin/ChromeButton"),"Generated button did not use the original template chrome.");
+                Assert(face.sprite.border.x==22&&face.sprite.border.y==22&&face.type==Image.Type.Sliced,"Original border was stretched instead of nine-sliced.");
+                Assert(button.transition==Selectable.Transition.ColorTint&&Math.Abs(button.colors.highlightedColor.r-0.7529412f)<0.000001f&&button.colors.highlightedColor.g==1&&button.colors.highlightedColor.b==0,"Template lime selection palette was not restored.");
+                Assert(face.color.r==1&&face.color.g==1&&face.color.b==1&&button.colors.normalColor.r==1,"Original button artwork is still tinted dark navy.");
+                Assert(Math.Abs(BattleTheme.PanelBackground.r-0.15294118f)<0.000001f&&Math.Abs(BattleTheme.Red.r-0.6117647f)<0.000001f,"Template panel or duel-red palette changed.");
+            });
             Case("Native navigation registers original prefab Servants without another Canvas",()=>{
                 BattleNativeNavigation.Open(BattleNativeScreen.Solo);
                 var first=program.currentServant;Assert(first is BattleNativeServant&&program.Registered.Count==1,"Native servant was not registered.");
@@ -247,6 +271,17 @@ internal static class Entry
                     foreach(var node in cards){string id=node.name.Substring("BS_Card_".Length);var card=catalog.cards.Single(card=>card.id==id);
                         Assert(query=="Magic"?card.type=="Magic":query=="cost:4"?card.cost==4:query=="bp:10000"?card.levels.Any(level=>level.bp>=10000):id==query,"Native BS search returned incompatible card.");}
                 }
+            });
+            Case("Deck details and filters show the matching Battle Spirits color symbol and Standard labels",()=>{
+                var screen=Screen(BattleNativeScreen.Deck);var view=Field<BattleNativeDeckView>(screen,"deck");
+                var card=catalog.cards.First(value=>value.color==CardColor.Blue);Call(view,"Select",card);
+                var detail=Field<RawImage>(view,"detailColorSymbol");Assert(detail!=null&&detail.gameObject.activeInHierarchy&&detail.texture==BattleTheme.ColorIcon(CardColor.Blue),"Card detail retained a Yu-Gi-Oh attribute or another color's icon.");
+                var filter=Field<RawImage>(view,"filterColorSymbol");Assert(filter!=null&&!filter.gameObject.activeSelf,"All-colors filter shows one misleading color.");
+                Click(screen.transform,"CardCollectionView/Root/Window/FilterAndSortArea/BottomArea/FilterToggle");
+                Assert(filter.gameObject.activeInHierarchy&&filter.texture==BattleTheme.ColorIcon(CardColor.Red),"Red filter does not show the red symbol.");
+                Click(screen.transform,"CardCollectionView/Root/Window/FilterAndSortArea/BottomArea/ClearButton");Assert(!filter.gameObject.activeSelf,"Clearing a color filter leaves its icon behind.");
+                foreach(string path in new[]{"DeckEditHeader/Root/Header/ButtonRegulation","CardCollectionView/Root/Window/TabArea/HistotyToggle"})
+                    Assert(Find(screen.transform,path).GetComponentsInChildren<TextMeshProUGUI>(true).Any(label=>label.text=="STANDARD"),"Active Standard filter is mislabeled Eternal.");
             });
             Case("Native collection paging creates fresh visible card widgets",()=>{
                 var screen=Screen(BattleNativeScreen.Deck);var view=Field<BattleNativeDeckView>(screen,"deck");var grid=Field<RectTransform>(view,"collection");
@@ -287,6 +322,16 @@ internal static class Entry
                 fake.View=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards),0);var screen=Screen(BattleNativeScreen.Duel);
                 var view=Field<BattleNativeDuelView>(screen,"duel");var hand=Field<RectTransform>(view,"hand");Assert(hand.childCount==4,"Own hand not displayed.");
                 Click(screen.transform,"Buttons/ButtonInfo");Assert(fake.Commands.Single().action=="opening","Keep opening did not send BS command.");AssertGeneratedLayers(screen.transform);
+            });
+            Case("Opponent hand displays bounded backs using only the public count",()=>{
+                fake.View=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);
+                string[] own=catalog.cards.Where(card=>card.IsPlayableFor(BattleRulesFormat.Standard)).Take(2).Select(card=>card.id).ToArray();fake.View.ownHand=own;fake.View.players[1].handCount=17;
+                var screen=Screen(BattleNativeScreen.Duel);var duel=Field<BattleNativeDuelView>(screen,"duel");var hand=Field<RectTransform>(duel,"opponentHand");
+                var backs=hand.GetComponentsInChildren<RawImage>(true);Assert(backs.Length==10&&backs.All(back=>back.texture==BattleTheme.CardBack&&!back.raycastTarget),"Opponent hand exposes a face, captures input, or creates unbounded back widgets.");
+                Assert(hand.GetComponentsInChildren<TextMeshProUGUI>(true).Any(label=>label.name=="BS_HandOverflow"&&label.text=="+7"),"Opponent public count overflow is lost.");
+                Assert(fake.RequestedArt.All(id=>own.Contains(id)),"Opponent hand requested a private face identity.");
+                fake.View.players[1].handCount=3;fake.Refresh();Assert(hand.GetComponentsInChildren<RawImage>(true).Length==3,"Old opponent backs survive the next snapshot.");
+                Assert(fake.RequestedArt.All(id=>own.Contains(id)),"A changed hidden hand requested its cards' faces.");
             });
             Case("Native Magic chooser permits Awaken draw-only without an owned Spirit",()=>{
                 fake.View=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards),0);
@@ -432,6 +477,34 @@ internal static class Entry
                     Assert(uv.x==expected.x&&uv.y==expected.y&&uv.z==expected.width&&uv.w==expected.height,"Field illustration has incorrect texture coordinates.");
                 }
                 Assert(fake.RequestedArt.SequenceEqual(ids.Take(2)),"Field requested a hand/private card rather than public units.");
+            });
+            Case("Field skin uses six proper color symbols and public deck backs without private card requests",()=>{
+                var output=new GameObject("SkinnedField",typeof(RectTransform)).AddComponent<RawImage>();var field=output.gameObject.AddComponent<BattleFieldVisuals>();field.SetArtworkProvider(fake.LoadArt);field.Load(output);
+                var snapshot=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);field.Render(snapshot);
+                var stage=Field<GameObject>(field,"stage");
+                foreach(CardColor color in Enum.GetValues(typeof(CardColor)))
+                {
+                    var symbol=stage.GetComponentsInChildren<MeshRenderer>(true).Single(renderer=>renderer.name=="ColorSymbol_"+color);
+                    Assert(symbol.sharedMaterial.mainTexture==Resources.Load<Texture2D>("BattleSpirits/Skin/Color"+color),"Field color symbol has another color's artwork: "+color);
+                }
+                var backs=stage.GetComponentsInChildren<MeshRenderer>(true).Where(renderer=>renderer.name=="DeckCardBack").ToArray();
+                Assert(backs.Length==2&&backs.All(renderer=>renderer.sharedMaterial.mainTexture==BattleTheme.CardBack),"Decks expose a face or lack the Battle Spirits back.");
+                Assert(backs.All(renderer=>Math.Abs(renderer.transform.localScale.z-1.2f*BattleTheme.CardBack.height/BattleTheme.CardBack.width)<0.00001f),"Deck back artwork has a stretched aspect.");
+                Assert(fake.RequestedArt.Count==0,"Decorative symbols/deck stacks requested a private hand/deck identity.");
+                var decoration=stage.GetComponentsInChildren<MeshRenderer>(true).Where(renderer=>renderer.name.StartsWith("Playmat",StringComparison.Ordinal)||renderer.name=="BattleSpiritsPlaymatLogo").ToArray();
+                Assert(decoration.Length==9&&decoration.All(renderer=>renderer.sharedMaterial.mainTexture==BattleTheme.PlaymatStandard),"Field uses the old Eternal sheet or omits Standard ornament.");
+                Assert(decoration.All(renderer=>{var uv=renderer.sharedMaterial.Vectors["_UvRect"];return uv.z<1&&uv.w<1;}),"A whole printed one-player sheet duplicates Japanese controls over the live field.");
+            });
+            Case("Repeated Core-pool updates reuse skin materials and release only field-owned resources",()=>{
+                var output=new GameObject("PooledSkinField",typeof(RectTransform)).AddComponent<RawImage>();var field=output.gameObject.AddComponent<BattleFieldVisuals>();field.SetArtworkProvider(fake.LoadArt);field.Load(output);
+                var snapshot=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);field.Render(snapshot);
+                var materials=Field<List<Material>>(field,"materials");var meshes=Field<List<Mesh>>(field,"meshes");int materialCount=materials.Count,meshCount=meshes.Count;
+                var deckMaterial=Field<Material>(field,"cardBackMaterial");var skinMesh=Field<Mesh>(field,"skinQuad");var back=BattleTheme.CardBack;var mat=BattleTheme.PlaymatStandard;
+                for(int i=0;i<30;i++){snapshot.players[0].reserveNormal=i;snapshot.players[1].trashNormal=i;field.Render(snapshot);}
+                Assert(materials.Count==materialCount&&meshes.Count==meshCount&&Field<Material>(field,"cardBackMaterial")==deckMaterial&&Field<Mesh>(field,"skinQuad")==skinMesh,"A public Core-count update allocates new decorative meshes/materials.");
+                var ownedMaterials=materials.ToArray();var ownedMeshes=meshes.ToArray();field.Dispose();
+                Assert(ownedMaterials.All(material=>material==null)&&ownedMeshes.All(mesh=>mesh==null),"Field-owned style resources leaked after disposal.");
+                Assert(back!=null&&mat!=null&&BattleTheme.CardBack==back&&BattleTheme.PlaymatStandard==mat,"Closing a field destroyed shared Resources artwork.");
             });
             Case("Field viewport bounds follow the printed card and exhausted orientation",()=>{
                 var output=new GameObject("BoundsField",typeof(RectTransform)).AddComponent<RawImage>();var field=output.gameObject.AddComponent<BattleFieldVisuals>();field.SetArtworkProvider(fake.LoadArt);field.Load(output);

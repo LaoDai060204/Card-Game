@@ -1,6 +1,6 @@
-# Luật và phạm vi Battle Spirits Standard 0.4.0
+# Luật và phạm vi Battle Spirits Standard 0.5.0
 
-Unity **6000.0.24f1**, Windows x64, giao diện tiếng Việt. Chủ dự án đã chọn **Standard theo các PDF được cung cấp**, giữ bố cục UI và thay đồ họa Master Duel, ngoại trừ pet/wallpaper cùng phụ thuộc cần giữ. Bản cập nhật này không đổi sang Saga. Core vẫn có chế độ Eternal riêng để kiểm tra tương thích; UI và Solo/LAN mặc định dùng Standard rõ ràng.
+Unity **6000.0.24f1**, Windows x64, giao diện tiếng Việt. Chủ dự án đã chọn **Standard theo các PDF được cung cấp**. Theo yêu cầu cập nhật ngày 06/11/2026, bố cục UI và một phần khung/nút/bảng màu gốc được phục hồi có chọn lọc, còn thẻ, sân và cách chơi dùng Battle Spirits. Pet/wallpaper cùng phụ thuộc cần giữ tiếp tục hoạt động. Core vẫn có chế độ Eternal riêng để kiểm tra tương thích; UI và Solo/LAN mặc định dùng Standard rõ ràng.
 
 Nguồn Standard là **Official Rules/Manual v1.0**. Mùa được xác minh **01/04/2026–31/03/2027 chỉ dùng block A**; metadata/importer không tự coi thẻ BS01 là Standard. [Đối chiếu PDF](BATTLE_SPIRITS_RULE_SOURCES.md) ghi trang, điều khoản, phiên bản và SHA-256. Ngày mở rộng danh mục Standard là **04/11/2026**; provenance giữ ngày truy cập gốc từng thẻ.
 
@@ -32,7 +32,7 @@ Code năm hiệu ứng BS01 trước đây vẫn được kiểm tra ở **Etern
 
 ## UI, tài nguyên, Solo và mạng
 
-Năm form và ba Parts gốc giữ hierarchy, geometry và GUID; ảnh/material/font game cũ được thay bằng skin tự tạo và font Source Han Sans độc lập. Không có Canvas ứng dụng overlay. Thư mục rỗng giữ bằng `.gitkeep`; manifest ghi đường dẫn chính xác đã xóa/thay để kiểm tra lại.
+Năm form và ba Parts gốc giữ hierarchy, geometry và GUID. Bản 0.3.0 từng thay đồ họa UI bằng skin mới; bản 0.5.0 phục hồi đúng 141 tài nguyên UI dùng chung và 2.867 tham chiếu trong 31 tệp theo [manifest phục hồi](original-ui-style-restoration.json). Controller/callback Battle Spirits và font Source Han Sans độc lập được giữ. Không có Canvas ứng dụng overlay. Thư mục rỗng giữ bằng `.gitkeep`; manifest cũ là lịch sử dọn tài nguyên, còn manifest phục hồi mô tả ngoại lệ được chủ dự án yêu cầu sau đó.
 
 Pet/wallpaper là ngoại lệ được giữ: **108 pet và 149 wallpaper** có bundle cài sẵn; Mate/Wallpaper, shader nhị phân chung và `SE_MATE` phục vụ các tài nguyên này. Các tên namespace/lớp serialized và mã template tổng quát cần tương thích vẫn tồn tại. Bootstrap BS dùng catalog cosmetic độc lập, bỏ eager-load UI/outduel/nhân vật/CDB/CID cũ. Build dùng allowlist thay vì chép toàn bộ Master Duel.
 
@@ -40,7 +40,9 @@ Executor WindBot nhận `FilteredMatchView`, chỉ có tay bot và thông tin c�
 
 Server TCP dùng cùng Core, cổng **7777**, giao thức **3**. Hello/welcome/state mang thể thức; server từ chối sai format, protocol và danh mục. Actor lấy từ kết nối, không từ payload. Snapshot không gửi tay đối thủ/thứ tự deck/seed. Client mới sau mất kết nối vào lobby mới, không nhận tay của phiên cũ.
 
-Sân và WAV mới do dự án tự tạo. Từ 0.4.0, Spirit hiện mặt thẻ trên sân và một mặt phẳng ảnh minh họa nổi hướng về camera, lấy đúng artwork của lá đó; không dùng hình quái chung theo màu. Ảnh nổi là vùng minh họa có nền được lấy bằng UV từ ảnh mặt thẻ nguyên gốc, không phải cutout trong suốt hay model 3D chính thức. Hai nguồn model BS01 low-poly/closeup trước đây vẫn được lưu như tài nguyên lịch sử.
+Sân có hình học do dự án dựng cùng họa tiết viền/logo từ playmat Standard chính thức, palette đen/xám/viền bạc và điểm nhấn lime/đỏ. Sáu biểu tượng màu chính thức dùng cho màu thẻ; Core thường và Soul Core vẫn theo luật. Tay đối thủ/chồng Deck dùng mặt sau BS, chỉ từ số lượng công khai và không tải ID bài trên tay đối thủ. [Nguồn và giới hạn ảnh giao diện](BATTLE_SPIRITS_THEME.md) phân biệt ảnh chính thức, bản mirror và ảnh tham khảo được gửi. WAV mới do dự án tự tạo.
+
+Từ 0.4.0, Spirit hiện mặt thẻ trên sân và một mặt phẳng ảnh minh họa nổi hướng về camera, lấy đúng artwork của lá đó; không dùng hình quái chung theo màu. Ảnh nổi giữ nền minh họa, không phải cutout trong suốt hay model 3D chính thức. Hai nguồn model BS01 low-poly/closeup trước đây vẫn được lưu như tài nguyên lịch sử.
 
 Triệu hồi/đặt Nexus kích hoạt trình diễn khoảng 1,95 giây trên UI bàn đấu hiện có: nền tối, quét sáng, mặt thẻ xoay/phóng to, ảnh minh họa nâng lên và lá bài hạ về vị trí trên sân. Nút **BỎ QUA** kết thúc phần trình diễn. Việc hiển thị không thay đổi luật, giao thức hay danh mục; trong khi trình diễn chỉ tạm chặn thao tác và lượt polling bot cục bộ, server LAN vẫn tiếp tục xử lý authority. Pet trang trí không quyết định luật. Xem [phần trình diễn triệu hồi](BATTLE_SPIRITS_SUMMON_PRESENTATION.md).
 

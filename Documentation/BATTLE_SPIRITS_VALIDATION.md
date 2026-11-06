@@ -1,5 +1,7 @@
 # Kiểm tra Standard và cách trình diễn thẻ
 
+Bản **0.5.0** khôi phục chrome/bảng màu UI gốc có kiểm soát và thêm skin Battle Spirits. [Báo cáo theme](battle-spirits-theme-validation.json) ghi nhận 38 luồng UI/session, 9 kiểm tra prefab, 12 kiểm tra tài nguyên/restoration, 14 ảnh đúng hash/kích thước/importer; 6 tệp production C# qua ba profile không có lỗi cú pháp. Đây là kiểm tra mã, dữ liệu và API thay thế, **chưa kiểm tra pixel, shader hoặc Play/build trong Windows Unity**. [Hướng dẫn theme](BATTLE_SPIRITS_THEME.md) ghi rõ nguồn ảnh và khác biệt với ảnh inline.
+
 Bản **0.4.0** thêm hoạt ảnh triệu hồi bằng artwork, mặt thẻ trên sân và ảnh minh họa nổi. Kiểm tra mới nằm trong [báo cáo triệu hồi](battle-spirits-summon-validation.json) và [hướng dẫn trình diễn](BATTLE_SPIRITS_SUMMON_PRESENTATION.md). Bộ luật, giao thức, danh mục và artwork gốc không đổi; các kết quả luật/AI/TCP bên dưới là baseline đã chạy cho **0.3.0**, không phải một lượt chạy lại cho tính năng hình ảnh.
 
 Kiểm tra riêng cho 0.4.0 đạt **32 luồng UI/session**, **29 tình huống chuyển động/PCM**, 4.080 mẫu chuyển động và 515 mẫu triệu hồi; 9 tệp production C# qua ba profile C# 9 không có lỗi cú pháp. Hai bộ kiểm tra prefab/closure vẫn đạt 9 + 9; metadata ghi nhận 44 GUID BattleSpirits và 10 source project. Bộ kiểm tra dùng API Unity thay thế và phép chiếu hình học kiểm soát, chưa xác nhận shader/pixel/raycast hoặc Play/build bằng Editor Windows thật.

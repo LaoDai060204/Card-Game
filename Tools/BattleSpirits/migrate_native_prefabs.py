@@ -237,8 +237,10 @@ def verify_visuals(path, source, migrated, removed):
     # Artwork may change only by the explicit replacement manifest; layout is
     # still compared to the untouched template above.
     from replace_master_duel_art import reskin_text
+    from restore_original_ui_style import restore_reviewed_references
     asset_values = r"(?m)^\s*(?:m_Sprite|m_FontAsset|m_fontAsset|m_Material|m_sharedMaterial|m_Texture|m_Font|m_fontMaterial):.*$"
-    require(re.findall(asset_values, reskin_text(source)) == re.findall(asset_values, migrated), "Unreviewed sprite/font/material references: " + path)
+    expected_art = restore_reviewed_references(reskin_text(source), path)
+    require(re.findall(asset_values, expected_art) == re.findall(asset_values, migrated), "Unreviewed sprite/font/material references: " + path)
 
 
 def execute(write, base):
@@ -251,7 +253,8 @@ def execute(write, base):
         source = original(path, base)
         expected, removed, actions = migrate(path, source, script_paths, removed_by_guid)
         from replace_master_duel_art import reskin_text
-        expected = reskin_text(expected)
+        from restore_original_ui_style import restore_reviewed_references
+        expected = restore_reviewed_references(reskin_text(expected), path)
         verify_visuals(path, source, expected, removed)
         target = ROOT / path
         if write:

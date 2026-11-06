@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using LaoDai.BattleSpirits.Core;
+using LaoDai.BattleSpirits.Visuals;
 using MDPro3;
 using TMPro;
 using UnityEngine;
@@ -18,6 +19,7 @@ namespace LaoDai.BattleSpirits.NativeUI
         private readonly Dictionary<string, CardDefinition> cards;
         private RectTransform collection, deckContent, collectionTemplate, deckTemplate;
         private TMP_InputField search, name;
+        private RawImage detailColorSymbol, filterColorSymbol;
         private CardDefinition selected;
         private int color = -1, sort, support, page;
         private string loadedDeck;
@@ -50,7 +52,7 @@ namespace LaoDai.BattleSpirits.NativeUI
             BattleNativeWidgets.Bind(root, Header + "/ButtonTest", () => { if (Save()) BattleNativeNavigation.Open(BattleNativeScreen.Solo); }, "ĐẤU THỬ");
             BattleNativeWidgets.Bind(root, Header + "/ButtonSort", () => { deck.Sort(CompareCards); RenderDeck(); }, "SẮP XẾP");
             BattleNativeWidgets.Bind(root, Header + "/ButtonChangeSide", () => { deck.Clear(); RenderDeck(); }, "XÓA BỘ BÀI");
-            BattleNativeWidgets.Bind(root, Header + "/ButtonRegulation", () => { support = (support + 1) % 3; page = 0; RenderCollection(); }, "ETERNAL");
+            BattleNativeWidgets.Bind(root, Header + "/ButtonRegulation", () => { support = (support + 1) % 3; page = 0; RenderCollection(); }, "STANDARD");
             BattleNativeWidgets.Bind(root, Header + "/ButtonMenu", NextDeck, "MỞ BỘ BÀI");
             BattleNativeWidgets.Bind(root, Collection + "/FilterAndSortArea/UpperArea/SearchButton", RenderCollection);
             BattleNativeWidgets.Bind(root, Collection + "/FilterAndSortArea/BottomArea/FilterToggle", CycleColor, "TẤT CẢ MÀU");
@@ -58,7 +60,7 @@ namespace LaoDai.BattleSpirits.NativeUI
             BattleNativeWidgets.Bind(root, Collection + "/FilterAndSortArea/BottomArea/ClearButton", () => { if (search != null) search.text = string.Empty; color = -1; support = 0; page = 0; RenderCollection(); });
             BattleNativeWidgets.Bind(root, Collection + "/TabArea/CardListToggle", () => { support = 0; RenderCollection(); }, "TẤT CẢ");
             BattleNativeWidgets.Bind(root, Collection + "/TabArea/BookmarkToggle", () => { support = 1; RenderCollection(); }, "CHƠI ĐƯỢC");
-            BattleNativeWidgets.Bind(root, Collection + "/TabArea/HistotyToggle", () => { support = 2; RenderCollection(); }, "ETERNAL");
+            BattleNativeWidgets.Bind(root, Collection + "/TabArea/HistotyToggle", () => { support = 2; RenderCollection(); }, "STANDARD");
             BattleNativeWidgets.Active(root, Deck + "/Scroll View/Viewport/Content/ExtraDeckView", false);
             BattleNativeWidgets.Active(root, Deck + "/Scroll View/Viewport/Content/SideDeckView", false);
             BattleNativeWidgets.Active(root, Deck + "/Scroll View/Loading", false);
@@ -73,7 +75,15 @@ namespace LaoDai.BattleSpirits.NativeUI
             BattleNativeWidgets.Bind(root, Detail + "/DescriptionArea/MenuAreaRoot/MenuArea/CardGroup/RemoveCardButton", RemoveSelected, "BỚT");
             BattleNativeWidgets.Bind(root, Deck + "/HeaderArea/NameAreaGroup/ButtonDeck", () => Save(), "LƯU TÊN");
             BattleNativeWidgets.Active(root, "CardActionMenu", false);
-            BattleNativeWidgets.Label(root, Deck + "/Scroll View/Viewport/Content/MainDeckView/Subhedding/Left/#TextMainDeckTMP", "BỘ BÀI ETERNAL");
+            BattleNativeWidgets.Label(root, Deck + "/Scroll View/Viewport/Content/MainDeckView/Subhedding/Left/#TextMainDeckTMP", "BỘ BÀI STANDARD");
+            var filter = BattleNativeWidgets.Find(root, Collection + "/FilterAndSortArea/BottomArea/FilterToggle");
+            if (filter != null)
+            {
+                var slot = BattleNativeWidgets.Rect(filter, "BS_FilterColorSymbol");
+                BattleNativeWidgets.Place(slot, 0.02f, 0.15f, 0.16f, 0.85f);
+                filterColorSymbol = slot.gameObject.AddComponent<RawImage>(); filterColorSymbol.raycastTarget = false;
+                filterColorSymbol.gameObject.SetActive(false);
+            }
             if (collection != null)
             {
                 var scrollRoot = collection.parent?.parent;
@@ -112,13 +122,18 @@ namespace LaoDai.BattleSpirits.NativeUI
         private void CycleColor()
         {
             color = color == 5 ? -1 : color + 1; page = 0;
-            string[] names = { "ĐỎ", "TÍM", "LỤC", "TRẮNG", "VÀNG", "LAM" };
-            BattleNativeWidgets.Label(root, Collection + "/FilterAndSortArea/BottomArea/FilterToggle", color < 0 ? "TẤT CẢ MÀU" : names[color]);
             RenderCollection();
         }
         private void RenderCollection()
         {
             if (collection == null) return;
+            string[] names = { "ĐỎ", "TÍM", "LỤC", "TRẮNG", "VÀNG", "LAM" };
+            BattleNativeWidgets.Label(root, Collection + "/FilterAndSortArea/BottomArea/FilterToggle", color < 0 ? "TẤT CẢ MÀU" : names[color]);
+            if (filterColorSymbol != null)
+            {
+                filterColorSymbol.texture = color >= 0 ? BattleTheme.ColorIcon((CardColor)color) : null;
+                filterColorSymbol.gameObject.SetActive(filterColorSymbol.texture != null);
+            }
             string query = (search?.text ?? string.Empty).Trim();
             IEnumerable<CardDefinition> values = session.Cards;
             if (query.Length > 0) values = values.Where(card => Matches(card, query));
@@ -158,6 +173,20 @@ namespace LaoDai.BattleSpirits.NativeUI
             BattleNativeWidgets.Label(detail, "TextDefTMP", "Symbol " + card.symbols);
             foreach (var suffix in new[] { "IconAttribute", "IconTuner", "IconRank", "IconLink", "IconPendulumScale", "SpellTrapType", "IconSpellTrapType", "IconLimit", "IconAtk", "IconDef", "IconLevel" }) BattleNativeWidgets.Active(detail, suffix, false);
             var art = BattleNativeWidgets.Component<RawImage>(detail, "CardArea/ImageCard"); if (art != null) session.LoadArt(card.id, art);
+            var symbolSlot = BattleNativeWidgets.Find(detail, "IconAttribute");
+            if (detailColorSymbol == null)
+            {
+                if (symbolSlot == null)
+                {
+                    var slot = BattleNativeWidgets.Rect(detail, "BS_ColorSymbolSlot");
+                    BattleNativeWidgets.Place(slot, 0.87f, 0.88f, 0.96f, 0.96f); symbolSlot = slot;
+                }
+                foreach (var old in symbolSlot.GetComponentsInChildren<Image>(true)) old.enabled = false;
+                var icon = BattleNativeWidgets.Rect(symbolSlot, "BS_ColorSymbol"); BattleNativeWidgets.Place(icon, 0, 0, 1, 1);
+                detailColorSymbol = icon.gameObject.AddComponent<RawImage>(); detailColorSymbol.raycastTarget = false;
+            }
+            detailColorSymbol.texture = BattleTheme.ColorIcon(card.color);
+            detailColorSymbol.transform.parent.gameObject.SetActive(detailColorSymbol.texture != null);
         }
         private void Add()
         {

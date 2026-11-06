@@ -33,7 +33,7 @@ namespace LaoDai.BattleSpirits.NativeUI
         private readonly List<Image> frame = new List<Image>();
         private readonly List<Image> streaks = new List<Image>();
         private RectTransform screen, cardSlot, illustrationSlot;
-        private RawImage cardArt, illustrationArt;
+        private RawImage cardArt, illustrationArt, colorSymbol;
         private AspectRatioFitter cardAspect, illustrationAspect;
         private Image dim, flash, horizon;
         private TextMeshProUGUI heading, title, identity;
@@ -100,6 +100,11 @@ namespace LaoDai.BattleSpirits.NativeUI
             frame.Add(Solid(screen, "FrameRight", Color.clear, 0.958f, 0.21f, 0.96f, 0.883f));
             heading = BattleNativeWidgets.Text(screen, "Heading", string.Empty, 28);
             BattleNativeWidgets.Place(heading.rectTransform, 0.06f, 0.90f, 0.94f, 0.96f);
+            var symbol = BattleNativeWidgets.Rect(screen, "BS_SummonColorSymbol");
+            BattleNativeWidgets.Place(symbol, 0.06f, 0.90f, 0.10f, 0.96f);
+            colorSymbol = symbol.gameObject.AddComponent<RawImage>(); colorSymbol.raycastTarget = false;
+            var symbolAspect = symbol.gameObject.AddComponent<AspectRatioFitter>();
+            symbolAspect.aspectMode = AspectRatioFitter.AspectMode.FitInParent; symbolAspect.aspectRatio = 1;
             title = BattleNativeWidgets.Text(screen, "CardName", string.Empty, 40);
             BattleNativeWidgets.Place(title.rectTransform, 0.06f, 0.12f, 0.94f, 0.20f);
             identity = BattleNativeWidgets.Text(screen, "CardId", string.Empty, 20);
@@ -138,6 +143,8 @@ namespace LaoDai.BattleSpirits.NativeUI
             bool local = session.View == null || current.actor == session.View.viewer;
             heading.text = (local ? "" : "ĐỐI THỦ · ") + (current.nexus ? "ĐẶT NEXUS" : "TRIỆU HỒI SPIRIT");
             title.text = current.name; identity.text = current.id;
+            colorSymbol.texture = BattleTheme.ColorIcon(catalog[current.id].color);
+            colorSymbol.gameObject.SetActive(colorSymbol.texture != null);
             screen.SetAsLastSibling(); screen.gameObject.SetActive(true);
             SetBusy(true);
             session.LoadArt(current.id, cardArt); session.LoadArt(current.id, illustrationArt);
@@ -178,7 +185,7 @@ namespace LaoDai.BattleSpirits.NativeUI
         private void Draw(BattleSummonSample pose)
         {
             if (current == null) return;
-            dim.color = new Color(0.005f, 0.012f, 0.025f, pose.backdropAlpha);
+            dim.color = new Color(0.005f, 0.005f, 0.008f, pose.backdropAlpha);
             flash.color = new Color(0.78f, 0.96f, 1, pose.flashAlpha);
             Color accent = current.accent;
             foreach (var edge in frame) edge.color = Alpha(accent, pose.glow * 0.66f);
@@ -218,6 +225,7 @@ namespace LaoDai.BattleSpirits.NativeUI
             illustrationArt.GetComponent<Outline>().effectColor = Alpha(accent, pose.glow * 0.7f);
             heading.color = Alpha(accent, pose.nameAlpha);
             title.color = identity.color = Alpha(Color.white, pose.nameAlpha);
+            colorSymbol.color = Alpha(Color.white, pose.nameAlpha);
         }
 
         private static void PlaceCentered(RectTransform rect, float x, float y, float width, float height)

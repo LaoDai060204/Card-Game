@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using LaoDai.BattleSpirits.Visuals;
 using MDPro3;
 using MDPro3.UI;
 using TMPro;
@@ -88,10 +89,7 @@ namespace LaoDai.BattleSpirits.NativeUI
         internal static Button Button(Transform parent, string name, string text, Action click)
         {
             var rect = Rect(parent, name); var image = rect.gameObject.AddComponent<Image>();
-            image.color = new Color(0.03f, 0.12f, 0.19f, 0.94f);
-            var source = parent.GetComponentInChildren<Image>(true);
-            if (source != null && source != image && source.sprite != null) { image.sprite = source.sprite; image.type = source.type; }
-            var button = rect.gameObject.AddComponent<Button>(); button.targetGraphic = image;
+            var button = rect.gameObject.AddComponent<Button>(); BattleTheme.StyleButton(button, image);
             if (click != null) button.onClick.AddListener(() => click());
             Text(rect, "Label", text); return button;
         }

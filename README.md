@@ -1,19 +1,21 @@
-# LaoDai Battle Spirits — Standard 0.4.0
+# LaoDai Battle Spirits — Standard 0.5.0
 
-Bản chuyển đổi từ **Card-Game/MDPro3** sang **Battle Spirits Nhật — Standard**, giao diện tiếng Việt, Unity **6000.0.24f1**. Theo lựa chọn của chủ dự án, bản này giữ bố cục các màn hình, thay đồ họa Master Duel bằng UI mới và chỉ giữ pet, wallpaper cùng những phụ thuộc cần để các tài nguyên đó hoạt động. Lớp ứng dụng overlay của bản 0.1.0 đã bỏ.
+Bản chuyển đổi từ **Card-Game/MDPro3** sang **Battle Spirits Nhật — Standard**, giao diện tiếng Việt, Unity **6000.0.24f1**. Theo yêu cầu ngày 06/11/2026, bản này giữ bố cục và khôi phục khung/nút cùng bảng màu giao diện gốc: đen, xám, viền sáng và điểm nhấn xanh lime. Thẻ, sân, luật và trình diễn tiếp tục dùng Battle Spirits; pet và wallpaper vẫn được giữ. Lớp ứng dụng overlay của bản 0.1.0 đã bỏ.
 
 Có **Solo đấu WindBot**, bộ bài, phòng LAN/IP trực tiếp, replay Solo và xem thử hoạt cảnh. Danh mục gồm **270 thẻ chính thức**; **19 thẻ Standard chơi được**: 16 Spirit không hiệu ứng và ba Spirit có Super Unleash đã triển khai. **251 thẻ khác không dùng trong trận Standard hiện tại**, gồm 21 thẻ Eternal đã có code tương thích. Đây chưa phải triển khai đầy đủ mọi thẻ và hiệu ứng Standard. Xem [phạm vi luật](Documentation/BATTLE_SPIRITS_SCOPE.md).
 
 Nhánh phát triển: `battle-spirits-mdpro3-ui`. Bản Card-Game/Yu-Gi-Oh cũ được giữ trên `main`.
 
-**Bản 0.4.0 đổi phần triệu hồi và hiển thị trên sân:** phóng to mặt thẻ, quét sáng, nâng ảnh minh họa rồi đưa lá bài xuống sân. Sau đó mặt thẻ nằm trên sân và ảnh minh họa của chính lá đó nổi phía trên. Hình nổi được lấy từ artwork có sẵn, giữ nền minh họa; không phải ảnh quái đã tách nền hay model 3D. Có nút **BỎ QUA** hoạt ảnh. [Chi tiết và cách thử](Documentation/BATTLE_SPIRITS_SUMMON_PRESENTATION.md).
+**Bản 0.5.0 đưa giao diện về phong cách ban đầu:** phục hồi có chọn lọc 141 tài nguyên UI dùng chung và 2.867 tham chiếu trong 31 tệp, thêm sáu biểu tượng màu, mặt sau bài BS và họa tiết sân Standard. [Chi tiết giao diện và nguồn ảnh](Documentation/BATTLE_SPIRITS_THEME.md).
+
+Phần triệu hồi của **0.4.0** được giữ: phóng to mặt thẻ, quét sáng, nâng ảnh minh họa rồi đưa lá bài xuống sân. Sau đó mặt thẻ nằm trên sân và ảnh minh họa của chính lá đó nổi phía trên. Hình nổi giữ nền minh họa, chưa phải cutout trong suốt hay model 3D. Có nút **BỎ QUA**. [Cách thử](Documentation/BATTLE_SPIRITS_SUMMON_PRESENTATION.md).
 
 ## Cập nhật và mở dự án
 
 Đóng Unity trước khi cập nhật. Stash giữ chỉnh sửa và tệp chưa được Git theo dõi; dữ liệu cá nhân bị `.gitignore` loại trừ cần sao lưu riêng trước khi di chuyển hoặc xóa.
 
 ```bash
-git stash push -u -m "backup-before-standard-0.4-update"
+git stash push -u -m "backup-before-standard-0.5-update"
 git fetch origin
 git switch battle-spirits-mdpro3-ui
 git pull --ff-only origin battle-spirits-mdpro3-ui
@@ -22,28 +24,33 @@ git pull --ff-only origin battle-spirits-mdpro3-ui
 1. Mở thư mục dự án bằng **Unity 6000.0.24f1**, nền tảng Windows x64.
 2. Giữ `Data`, `Picture`, `Platforms`, `Sound` cùng cấp với `Assets`.
 3. Vào **Window → Asset Management → Addressables → Groups**, chọn **Play Mode Script → Use Asset Database** khi chạy từ source để dùng prefab mới.
-4. Mở `Assets/Scenes/Boot.unity`, nhấn Play. Menu phải hiện **0.4.0**.
+4. Mở `Assets/Scenes/Boot.unity`, nhấn Play. Menu phải hiện **0.5.0**.
 5. Vào **Bộ bài** chọn bộ Standard mẫu, rồi **Đấu với máy**. Sau khi chọn **GIỮ 4 LÁ**, đến Main thì bấm lá trên tay để triệu hồi; chưa có thao tác kéo thả.
 
 **Mã, dữ liệu, UI stand-in và TCP đã được kiểm tra; chưa chạy Play/render/build trong Unity Windows thật.** Xem [báo cáo kiểm tra](Documentation/BATTLE_SPIRITS_VALIDATION.md).
 
 ## Giao diện và tài nguyên
 
-- Các form **DeckEditorUI, SoloSelectorUI, OnlineServantUI, RoomServantUI, OcgCoreUI** và ba Parts giữ hierarchy, vị trí và kích thước control. Đồ họa UI cũ được thay bằng ba sprite panel/button/clear tự tạo; không thêm Canvas ứng dụng phủ lên menu.
+- Các form **DeckEditorUI, SoloSelectorUI, OnlineServantUI, RoomServantUI, OcgCoreUI** và ba Parts giữ hierarchy, vị trí và kích thước control. Khung/nút/viền gốc được phục hồi theo manifest; nút Battle Spirits dùng chrome và màu lime tương ứng. Giữ font Source Han Sans cho tiếng Việt, không thêm Canvas ứng dụng phủ lên menu.
 - Deck giữ vùng bộ sưu tập, chi tiết và danh sách bài. Extra/Side được ẩn. Tìm theo mã/tên/hệ/hiệu ứng/loại/bộ, hoặc `cost:6`, `bp:6000`; có lọc màu, trạng thái và sắp xếp. Thẻ ngoài pool Standard bị từ chối khi thêm vào deck; thẻ chưa hỗ trợ bị từ chối lúc bắt đầu trận tự động.
-- Mặt thẻ nằm ở `Picture/Art/{mã-thẻ}.png`. Sân có vùng Life, Reserve, Trash, Deck, Spirit/Nexus và Core/Soul Core. Mỗi Spirit hiện đúng mặt thẻ trên sân và vùng minh họa nổi hướng về camera, thay các hình quái chung theo màu. Chọn thẻ ngay tại vị trí lá bài trên sân.
+- Sáu biểu tượng màu dùng ở bộ lọc, chi tiết thẻ, triệu hồi và sân. Đây là màu thẻ, không phải sáu loại Core. Chồng Deck và tay đối thủ dùng mặt sau BS; tay đối thủ chỉ hiện số lá công khai, tối đa mười ảnh lưng bài kèm số dư.
+- Mặt thẻ nằm ở `Picture/Art/{mã-thẻ}.png`. Sân có vùng Life, Reserve, Trash, Deck, Spirit/Nexus và Core/Soul Core. Mỗi Spirit hiện đúng mặt thẻ trên sân và vùng minh họa nổi hướng về camera. Chọn thẻ ngay tại vị trí lá bài trên sân.
 - Pet và wallpaper được giữ: danh mục độc lập có **108 pet, 149 wallpaper**. Chọn pet ở **Đồng hành**, chọn wallpaper ở **Cài đặt → Hình nền**. Giữ bundle Mate, Wallpaper, shader chung bắt buộc và âm thanh `SE_MATE`; bootstrap không còn đọc CDB/CID hay danh mục nhân vật Yu-Gi-Oh để lấy tên chúng.
 - **Hoạt cảnh** cho xem thử cách trình diễn artwork của **BS01-X01** và **BS01-097**. Hai thẻ đó thuộc Eternal, **không vào deck Standard**. Nguồn model low-poly/closeup tự dựng trước đây vẫn được lưu trong repository, nhưng không còn làm hình quái trên sân.
 - Nhạc nền và tám cue WAV mới ở `Sound/BattleSpirits`. Xem [nguồn tài nguyên tự tạo](Tools/BattleSpiritsAssets/README.md).
 
-Các thư mục cũ được giữ bằng `.gitkeep` khi rỗng. Manifest ghi chính xác từng đợt dọn dữ liệu:
+Sân 0.5.0 dùng nền đen/xám, khung bạc và họa tiết viền/logo từ playmat Standard chính thức. Chỉ dẫn tiếng Nhật và khu Burst của mẫu sân cũ không được đưa lên thay luật Standard. Viền lime cho biết quyền quyết định của bạn, đỏ cho đối thủ.
+
+Các thư mục cũ được giữ bằng `.gitkeep` khi rỗng. Manifest ghi chính xác từng đợt dọn dữ liệu và phục hồi có chọn lọc:
 
 - [Cut-in và giọng nhân vật cũ](Documentation/master-duel-initial-cleanup.json).
 - [Bundle/âm thanh ngoài pet, wallpaper và phụ thuộc cần giữ](Documentation/master-duel-external-cleanup.json).
 - [Đồ họa, font game cũ và tham chiếu UI được thay](Documentation/master-duel-art-replacement.json).
 - [CDB/CID, voice và dữ liệu Yu-Gi-Oh không còn dùng](Documentation/master-duel-data-cleanup.json).
+- [UI gốc được phục hồi trong 0.5.0](Documentation/original-ui-style-restoration.json).
+- [Nguồn và checksum ảnh giao diện BS](Data/BattleSpirits/skin-sources.json).
 
-Mã template tổng quát, thư viện và các tên lớp/namespace cần tương thích với bundle vẫn được giữ. Việc giữ những định danh đó không đưa gameplay hay đồ họa duel Master Duel trở lại game.
+Mã template tổng quát, thư viện và tên lớp/namespace cần tương thích vẫn được giữ. UI dùng chung được phục hồi theo yêu cầu mới; engine Yu-Gi-Oh, cut-in quái, giọng nhân vật và dữ liệu CDB/CID cũ không được bật lại.
 
 ## Luật, thẻ và Solo
 
@@ -51,7 +58,7 @@ Bản này dùng **Standard Official Rules/Manual v1.0** được cung cấp tro
 
 19 thẻ Standard đã kiểm tra thuộc 26RBS01/02/03. Ba thẻ Super Unleash là `26RBS03-052`, `26RBS03-061`, `26RBS03-071`: Soul Core cho Lv2 chỉ trên các bản in đã xác minh có biểu tượng đó. Không áp dụng Soul Core → Lv2 cho mọi Spirit. Soul Magic, Succession và các hiệu ứng chưa lập trình vẫn bị khóa khỏi trận tự động.
 
-Deck ít nhất 40 lá, tối đa ba lá cùng tên theo pool/hạn chế đã xác minh. Ba bộ mẫu tại `Data/BattleSpirits/StarterDecks` được xuất từ API profile WindBot Standard thực tế. Deck cá nhân lưu ở `Data/BattleSpirits/Decks`; replay Solo hoàn tất ở `Data/BattleSpirits/Replays`. Deck/replay cá nhân không được Git theo dõi. Bản replay 0.2.0/Eternal không được coi là replay Standard; bản 0.4.0 giữ luật, danh mục và giao thức 3 của 0.3.0.
+Deck ít nhất 40 lá, tối đa ba lá cùng tên theo pool/hạn chế đã xác minh. Ba bộ mẫu tại `Data/BattleSpirits/StarterDecks` được xuất từ API profile WindBot Standard thực tế. Deck cá nhân lưu ở `Data/BattleSpirits/Decks`; replay Solo hoàn tất ở `Data/BattleSpirits/Replays`. Deck/replay cá nhân không được Git theo dõi. Bản replay 0.2.0/Eternal không được coi là replay Standard; bản 0.5.0 giữ luật, danh mục và giao thức 3 của 0.3.0.
 
 AI chỉ nhận tay bài của nó và thông tin công khai. Có ba mức ưu tiên, xử lý cả Second Main và Super Unleash được hỗ trợ. Đây là AI heuristic cho pool hiện có, chưa hiểu toàn bộ thẻ Standard.
 
@@ -87,3 +94,5 @@ Template: [MDPro3 của Sherry Chaos](https://code.moenext.com/sherry_chaos/MDPr
 Backup trước đợt đổi Standard/dọn Master Duel: **`backup/2026-11-04-before-master-duel-cleanup` → `c70747a0`**. Các backup 0.1/0.2 trước đó và `main` được giữ, không force-push hay ghi đè.
 
 Backup trước phần trình diễn thẻ 0.4.0: **`backup/2026-11-05-before-card-summon-animation` → `c19c2d67`**.
+
+Backup trước đợt khôi phục giao diện 0.5.0: **`backup/2026-11-06-before-original-style-theme` → `035abd48`**.

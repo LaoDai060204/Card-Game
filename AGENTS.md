@@ -34,6 +34,11 @@ commit generated Unity caches such as `Library`, `Temp`, or `Logs`.
   the verified Standard pool through 2027-03-31; old BS01 cards are not Standard.
 - Keep screen layout, replace Master Duel graphics, and retain only pet and
   wallpaper resources plus dependencies required for those retained cosmetics.
+- On 2026-11-06 the owner requested the original Master Duel-style UI palette
+  and controls again. Restore only the reviewed shared UI/chrome dependency
+  closure in `Documentation/original-ui-style-restoration.json`; keep the
+  Battle Spirits controllers, rules, cards, field and summon presentation.
+  Do not restore the old Yu-Gi-Oh engines, monster cut-ins or character data.
 - New rules live in `Assets/BattleSpirits/Runtime/Core`, without Unity objects.
   Keep C# 9 and Unity's .NET Standard 2.1 API compatibility.
 - Network clients receive filtered player views. Never send the opponent's hand,
