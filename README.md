@@ -1,10 +1,12 @@
-# LaoDai Battle Spirits — Standard 0.5.1
+# LaoDai Battle Spirits — Standard 0.5.2
 
 Bản chuyển đổi từ **Card-Game/MDPro3** sang **Battle Spirits Nhật — Standard**, giao diện tiếng Việt, Unity **6000.0.24f1**. Theo yêu cầu ngày 06/11/2026, bản này giữ bố cục và khôi phục khung/nút cùng bảng màu giao diện gốc: đen, xám, viền sáng và điểm nhấn xanh lime. Thẻ, sân, luật và trình diễn tiếp tục dùng Battle Spirits; pet và wallpaper vẫn được giữ. Lớp ứng dụng overlay của bản 0.1.0 đã bỏ.
 
 Có **Solo đấu WindBot**, bộ bài, phòng LAN/IP trực tiếp, replay Solo và xem thử hoạt cảnh. Danh mục gồm **270 thẻ chính thức**; **19 thẻ Standard chơi được**: 16 Spirit không hiệu ứng và ba Spirit có Super Unleash đã triển khai. **251 thẻ khác không dùng trong trận Standard hiện tại**, gồm 21 thẻ Eternal đã có code tương thích. Đây chưa phải triển khai đầy đủ mọi thẻ và hiệu ứng Standard. Xem [phạm vi luật](Documentation/BATTLE_SPIRITS_SCOPE.md).
 
 Nhánh phát triển: `battle-spirits-mdpro3-ui`. Bản Card-Game/Yu-Gi-Oh cũ được giữ trên `main`.
+
+**0.5.2:** sửa nền trong suốt của màn tải gây vệt chữ; giữ màn tải hiện có tới khi menu và wallpaper sẵn sàng, rồi mới chuyển màn. Wallpaper được chọn tải trước ảnh dự phòng. [Chi tiết và cách thử khởi động](Documentation/BATTLE_SPIRITS_STARTUP.md).
 
 **0.5.1:** Core trên sân dùng ảnh ngọc xanh/đỏ; có lựa chọn ngoại hình Core thường tại Cài đặt. Ảnh thẻ giữ đúng tỷ lệ và kích thước gốc, UI được bảo vệ ở render scale 1. [Chi tiết và cách kiểm tra ảnh](Documentation/BATTLE_SPIRITS_CORE_GEMS_AND_ART_QUALITY.md).
 
@@ -17,7 +19,7 @@ Phần triệu hồi của **0.4.0** được giữ: phóng to mặt thẻ, qué
 Đóng Unity trước khi cập nhật. Stash giữ chỉnh sửa và tệp chưa được Git theo dõi; dữ liệu cá nhân bị `.gitignore` loại trừ cần sao lưu riêng trước khi di chuyển hoặc xóa.
 
 ```bash
-git stash push -u -m "backup-before-standard-0.5-update"
+git stash push -u -m "backup-before-standard-0.5.2-update"
 git fetch origin
 git switch battle-spirits-mdpro3-ui
 git pull --ff-only origin battle-spirits-mdpro3-ui
@@ -26,7 +28,7 @@ git pull --ff-only origin battle-spirits-mdpro3-ui
 1. Mở thư mục dự án bằng **Unity 6000.0.24f1**, nền tảng Windows x64.
 2. Giữ `Data`, `Picture`, `Platforms`, `Sound` cùng cấp với `Assets`.
 3. Vào **Window → Asset Management → Addressables → Groups**, chọn **Play Mode Script → Use Asset Database** khi chạy từ source để dùng prefab mới.
-4. Mở `Assets/Scenes/Boot.unity`, nhấn Play. Menu phải hiện **0.5.1**.
+4. Mở `Assets/Scenes/Boot.unity`, nhấn Play. Màn tải phải chuyển sang menu **0.5.2** sau khi menu và wallpaper sẵn sàng.
 5. Vào **Bộ bài** chọn bộ Standard mẫu, rồi **Đấu với máy**. Sau khi chọn **GIỮ 4 LÁ**, đến Main thì bấm lá trên tay để triệu hồi; chưa có thao tác kéo thả.
 
 **Mã, dữ liệu, UI stand-in và TCP đã được kiểm tra; chưa chạy Play/render/build trong Unity Windows thật.** Xem [báo cáo kiểm tra](Documentation/BATTLE_SPIRITS_VALIDATION.md).
@@ -98,3 +100,5 @@ Backup trước đợt đổi Standard/dọn Master Duel: **`backup/2026-11-04-b
 Backup trước phần trình diễn thẻ 0.4.0: **`backup/2026-11-05-before-card-summon-animation` → `c19c2d67`**.
 
 Backup trước đợt khôi phục giao diện 0.5.0: **`backup/2026-11-06-before-original-style-theme` → `035abd48`**.
+
+Backup trước đợt sửa chuyển màn khởi động 0.5.2: **`backup/2026-11-11-before-startup-ui-fix` → `42eb3a2f`**.

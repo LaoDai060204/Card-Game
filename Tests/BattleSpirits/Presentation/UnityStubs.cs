@@ -35,8 +35,9 @@ namespace UnityEngine {
  public class Sprite:Object{public Texture2D texture;public Rect rect;public Vector4 border;public static Sprite Create(Texture2D texture,Rect rect,Vector2 pivot,float pixelsPerUnit,uint extrude,SpriteMeshType meshType,Vector4 border)=>new Sprite{texture=texture,rect=rect,border=border};}
  public class Texture:Object{public int width{get;protected set;}public int height{get;protected set;}public string sourcePath;public FilterMode filterMode=FilterMode.Bilinear;public TextureWrapMode wrapMode=TextureWrapMode.Repeat;public int anisoLevel=1;}
  public enum TextureFormat{RGBA32}public class Texture2D:Texture{
+  public static readonly List<Texture2D> Created=new List<Texture2D>();
   public static readonly Texture2D blackTexture=new Texture2D(1,1,TextureFormat.RGBA32,false);
-  public Texture2D(int width,int height,TextureFormat format,bool mipmap){this.width=width;this.height=height;}
+  public Texture2D(int width,int height,TextureFormat format,bool mipmap){this.width=width;this.height=height;Created.Add(this);}
   public bool LoadImage(byte[] data,bool markNonReadable=false){
    if(data==null||data.Length<4)return false;
    if(data.Length>=24&&data[0]==137&&data[1]==80&&data[2]==78&&data[3]==71){width=(data[16]<<24)|(data[17]<<16)|(data[18]<<8)|data[19];height=(data[20]<<24)|(data[21]<<16)|(data[22]<<8)|data[23];return width>0&&height>0;}

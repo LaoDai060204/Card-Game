@@ -1,5 +1,7 @@
 # Kiểm tra Standard và cách trình diễn thẻ
 
+Bản **0.5.2** sửa chuyển màn Boot → Main và vòng đời wallpaper. [Báo cáo khởi động](battle-spirits-startup-validation.json) ghi **23 tình huống startup state**, **49 luồng UI/session** (gồm bảy kiểm tra mới cho loader wallpaper), bốn kiểm tra cấu trúc Boot, 9 kiểm tra prefab và 12 kiểm tra tài nguyên đạt. Bảy tệp production C# qua ba profile C# 9 không có lỗi cú pháp. **Boot, Program, UIManager và Servant đầy đủ chỉ được đọc mã/phân tích cú pháp; chưa biên dịch chúng bằng Unity hoặc xác minh chuyển cảnh/pixel/input trên Windows.** [Cách thử](BATTLE_SPIRITS_STARTUP.md).
+
 Bản **0.5.1** sửa hiển thị Core bằng ảnh ngọc, thêm ngoại hình Core thường và giữ đúng tỷ lệ ảnh thẻ. [Báo cáo ngọc/ảnh](battle-spirits-core-gem-quality-validation.json) ghi **42 luồng UI/session đạt**, gồm kiểm tra ảnh gốc 813×1184, bộ lọc/tỷ lệ, cache và các màu Core không đổi trạng thái trận. Guard độ phân giải camera UI được kiểm tra bằng đọc mã; chưa xác minh độ nét thực tế trong Windows Unity. Các kết quả phiên bản trước được giữ bên dưới như baseline.
 
 Bản **0.5.0** khôi phục chrome/bảng màu UI gốc có kiểm soát và thêm skin Battle Spirits. [Báo cáo theme](battle-spirits-theme-validation.json) ghi nhận 38 luồng UI/session, 9 kiểm tra prefab, 12 kiểm tra tài nguyên/restoration, 14 ảnh đúng hash/kích thước/importer; 6 tệp production C# qua ba profile không có lỗi cú pháp. Đây là kiểm tra mã, dữ liệu và API thay thế, **chưa kiểm tra pixel, shader hoặc Play/build trong Windows Unity**. [Hướng dẫn theme](BATTLE_SPIRITS_THEME.md) ghi rõ nguồn ảnh và khác biệt với ảnh inline.
@@ -54,6 +56,8 @@ Từ thư mục gốc:
 python Tools/BattleSpirits/validate_conversion.py
 python Tools/BattleSpirits/test_native_prefabs.py
 python Tools/BattleSpirits/test_ui_art_cleanup.py
+python Tests/BattleSpirits/Startup/test_boot_scene.py
+dotnet run --project Tests/BattleSpirits/Startup/BattleSpirits.Startup.Tests.csproj -c Release
 python Tools/BattleSpiritsCards/catalog.py validate
 python -m unittest discover -s Tools/BattleSpiritsCards -p 'test_*.py'
 dotnet run --project Tests/BattleSpirits/Core/BattleSpirits.Core.Tests.csproj -c Release -- Data/BattleSpirits/cards.json
@@ -69,7 +73,7 @@ Thay đường dẫn mẫu bằng đường dẫn trên máy. `catalog.py valida
 
 ## Cần kiểm tra bằng Windows Unity
 
-1. Mở Boot đúng Editor, Addressables **Use Asset Database**. Kiểm tra menu 0.3.0, bố cục giữ nguyên, skin/font mới, các form và nhãn nút.
+1. Mở Boot đúng Editor, Addressables **Use Asset Database**. Kiểm tra màn tải nền kín chuyển thẳng sang menu **0.5.2** và wallpaper đã chọn; thử khởi động lại, chuột và gamepad theo [hướng dẫn startup](BATTLE_SPIRITS_STARTUP.md). Bố cục các form và nhãn nút được giữ.
 2. Chọn một trong ba bộ Standard. Giữ/đổi tay đầu, triệu hồi bằng click, Core/Soul, Super Unleash, Main → Attack → Second Main → End; lượt đầu không có Core/Attack/Second Main.
 3. Về menu rồi chơi ván tiếp; kiểm tra field/pet và âm thanh không mất hoặc lặp. Thử chọn pet và **Cài đặt → Hình nền**, quay lại menu và khởi động lại để kiểm tra lựa chọn được giữ.
 4. Hoạt cảnh vẫn xem hai boss BS01 nhưng không cho đưa chúng vào deck Standard. Lịch sử cho tiến/lùi replay Standard cùng version/catalog.

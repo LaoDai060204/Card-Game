@@ -7,6 +7,7 @@ using System.Linq;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Threading;
+using System.Threading.Tasks;
 using LaoDai.BattleSpirits.Core;
 using LaoDai.BattleSpirits.Integration;
 using LaoDai.BattleSpirits.NativeUI;
@@ -19,6 +20,7 @@ using Newtonsoft.Json;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Debug=UnityEngine.Debug;
 using Object=UnityEngine.Object;
 
 internal static class Entry
@@ -26,6 +28,7 @@ internal static class Entry
     private sealed class MainContext:SynchronizationContext
     {
         private readonly ConcurrentQueue<Action> work=new ConcurrentQueue<Action>();
+        public int Pending=>work.Count;
         public override void Post(SendOrPostCallback callback,object state)=>work.Enqueue(()=>callback(state));
         public void Drain(){while(work.TryDequeue(out var action))action();}
     }
@@ -170,6 +173,32 @@ internal static class Entry
     private static void Pump(Func<bool> done,Action tick=null)
     {
         var watch=Stopwatch.StartNew();while(!done()&&watch.Elapsed.TotalSeconds<10){Context.Drain();tick?.Invoke();Thread.Sleep(2);}Context.Drain();Assert(done(),"Timed out waiting for actual production continuation.");
+    }
+    private static void InstallWallpaperFixture()
+    {
+        string target=Path.Combine(temporary,"Picture/Art/bs-menu.png");
+        Directory.CreateDirectory(Path.GetDirectoryName(target));
+        File.Copy(Path.Combine(sourceRoot,"Picture/Art/bs-menu.png"),target,true);
+    }
+    private static Task<bool> PendingWallpaper(BattleMenuWallpaper wallpaper,RawImage image,Func<bool> canAssign=null)
+    {
+        // Keep the real file-read continuation queued on the captured main context,
+        // so destruction and replacement races do not depend on Thread.Sleep timing.
+        for(int attempt=0;attempt<20;attempt++)
+        {
+            Task<bool> loading=wallpaper.LoadAsync(image,canAssign);
+            if(loading.IsCompleted){loading.GetAwaiter().GetResult();continue;}
+            var watch=Stopwatch.StartNew();
+            while(Context.Pending==0&&!loading.IsCompleted&&watch.Elapsed.TotalSeconds<10)Thread.Sleep(2);
+            Assert(Context.Pending>0&&!loading.IsCompleted,"Could not hold the actual wallpaper continuation for the lifecycle fixture.");
+            return loading;
+        }
+        throw new Exception("All wallpaper reads completed synchronously; the deferred-read fixture could not be established.");
+    }
+    private static bool FinishWallpaper(Task<bool> loading)
+    {
+        Pump(()=>loading.IsCompleted);
+        return loading.GetAwaiter().GetResult();
     }
     private static void AssertGeneratedLayers(Transform root)
     {
@@ -640,6 +669,83 @@ internal static class Entry
                 string bad=Path.Combine(temporary,"bad-replay.json");File.WriteAllText(bad,saved.ToString());
                 session.StartSolo(pair[0],pair[1]);var before=session.View;session.LoadReplay(bad,0);
                 Assert(!session.IsReplay&&session.CanSendCommands&&ReferenceEquals(before,session.View),"Invalid replay discarded the active game.");
+            });
+            Case("Actual wallpaper read owns its full-resolution texture and releases it with its component",()=>{
+                InstallWallpaperFixture();
+                var root=new GameObject("WallpaperOwner");var wallpaper=root.AddComponent<BattleMenuWallpaper>();
+                var image=new GameObject("WallpaperImage",typeof(RectTransform)).AddComponent<RawImage>();
+                Assert(FinishWallpaper(wallpaper.LoadAsync(image)),"The real installed wallpaper did not load.");
+                var texture=image.texture as Texture2D;
+                byte[] png=File.ReadAllBytes(Path.Combine(sourceRoot,"Picture/Art/bs-menu.png"));
+                int width=(png[16]<<24)|(png[17]<<16)|(png[18]<<8)|png[19],height=(png[20]<<24)|(png[21]<<16)|(png[22]<<8)|png[23];
+                Assert(texture!=null&&texture.width==width&&texture.height==height&&!image.raycastTarget&&image.color.a==1&&image.color.r==1,
+                    "The completed wallpaper remained a placeholder, intercepted clicks or did not become visible.");
+                Object.Destroy(root);
+                Assert(image.texture==null&&texture==null,"Destroying the wallpaper owner leaked its texture or left the image referencing it.");
+            });
+            Case("A queued wallpaper read cannot assign after its component is destroyed",()=>{
+                InstallWallpaperFixture();
+                var root=new GameObject("DestroyedWallpaper");var wallpaper=root.AddComponent<BattleMenuWallpaper>();
+                var image=new GameObject("PersistentImage",typeof(RectTransform)).AddComponent<RawImage>();
+                int created=Texture2D.Created.Count;
+                var loading=PendingWallpaper(wallpaper,image);
+                Object.Destroy(root);
+                Assert(!FinishWallpaper(loading)&&image.texture==null,"A destroyed wallpaper owner assigned its late file-read result.");
+                Assert(Texture2D.Created.Skip(created).All(texture=>texture==null),"The destroyed owner leaked a late texture.");
+            });
+            Case("A queued wallpaper read rejects a destroyed image without allocating a texture",()=>{
+                InstallWallpaperFixture();
+                var wallpaper=new GameObject("SurvivingWallpaper").AddComponent<BattleMenuWallpaper>();
+                var image=new GameObject("RemovedImage",typeof(RectTransform)).AddComponent<RawImage>();
+                var loading=PendingWallpaper(wallpaper,image);int created=Texture2D.Created.Count;
+                Object.Destroy(image.gameObject);
+                Assert(!FinishWallpaper(loading)&&Texture2D.Created.Count==created,
+                    "A removed image received a late texture or leaked its candidate allocation.");
+            });
+            Case("Only the newest wallpaper generation may assign its image",()=>{
+                InstallWallpaperFixture();
+                var wallpaper=new GameObject("ReusedWallpaper").AddComponent<BattleMenuWallpaper>();
+                var firstImage=new GameObject("OldImage",typeof(RectTransform)).AddComponent<RawImage>();
+                var secondImage=new GameObject("CurrentImage",typeof(RectTransform)).AddComponent<RawImage>();
+                var old=PendingWallpaper(wallpaper,firstImage);
+                var current=wallpaper.LoadAsync(secondImage);
+                Assert(!FinishWallpaper(old)&&FinishWallpaper(current),"A stale wallpaper generation completed or the newest one could not load.");
+                Assert(firstImage.texture==null&&secondImage.texture!=null,"A superseded read wrote into its old target.");
+            });
+            Case("The wallpaper assignment guard rejects a superseded manager request",()=>{
+                InstallWallpaperFixture();bool current=true;
+                var wallpaper=new GameObject("GuardedWallpaper").AddComponent<BattleMenuWallpaper>();
+                var image=new GameObject("GuardedImage",typeof(RectTransform)).AddComponent<RawImage>();
+                var loading=PendingWallpaper(wallpaper,image,()=>current);
+                current=false;
+                Assert(!FinishWallpaper(loading)&&image.texture==null,"A superseded manager request painted an obsolete wallpaper.");
+            });
+            Case("Replacing a wallpaper releases only its own image and texture",()=>{
+                InstallWallpaperFixture();
+                var root=new GameObject("ReplacingWallpaper");var wallpaper=root.AddComponent<BattleMenuWallpaper>();
+                var firstImage=new GameObject("FirstWallpaper",typeof(RectTransform)).AddComponent<RawImage>();
+                var secondImage=new GameObject("SecondWallpaper",typeof(RectTransform)).AddComponent<RawImage>();
+                Assert(FinishWallpaper(wallpaper.LoadAsync(firstImage)),"Initial wallpaper load failed.");
+                var old=firstImage.texture;
+                Assert(FinishWallpaper(wallpaper.LoadAsync(secondImage)),"Replacement wallpaper load failed.");
+                Assert(old==null&&firstImage.texture==null&&secondImage.texture!=null,"Replacement leaked the previous texture or left it assigned.");
+                var owned=secondImage.texture;var external=new Texture2D(8,8,TextureFormat.RGBA32,false);secondImage.texture=external;
+                Object.Destroy(root);
+                Assert(owned==null&&external!=null&&secondImage.texture==external,"Cleanup destroyed or cleared a newer texture owned by another loader.");
+            });
+            Case("Missing and invalid wallpaper files fail visibly without assigning a texture",()=>{
+                string path=Path.Combine(temporary,"Picture/Art/bs-menu.png");if(File.Exists(path))File.Delete(path);
+                var wallpaper=new GameObject("UnavailableWallpaper").AddComponent<BattleMenuWallpaper>();
+                var image=new GameObject("NeutralWallpaper",typeof(RectTransform)).AddComponent<RawImage>();
+                int warnings=Debug.Logs.Count;
+                Assert(!FinishWallpaper(wallpaper.LoadAsync(image))&&image.texture==null&&image.color.a==1&&Debug.Logs.Count>warnings,
+                    "A missing optional wallpaper silently reported success or left a transparent background.");
+                Directory.CreateDirectory(Path.GetDirectoryName(path));File.WriteAllBytes(path,new byte[]{1,2,3,4});warnings=Debug.Logs.Count;
+                int created=Texture2D.Created.Count;
+                Assert(!FinishWallpaper(wallpaper.LoadAsync(image))&&image.texture==null&&Debug.Logs.Count>warnings,
+                    "An invalid wallpaper was assigned or swallowed without a useful warning.");
+                Assert(Texture2D.Created.Skip(created).Any()&&Texture2D.Created.Skip(created).All(texture=>texture==null),
+                    "The undecodable candidate texture leaked after LoadImage rejected it.");
             });
             Console.WriteLine("PASS "+passed+" native production flow scenarios; actual prefab metadata, controlled Unity APIs, no Editor/render/device test.");return 0;
         }

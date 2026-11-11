@@ -16,6 +16,7 @@ using MDPro3.Servant;
 using Cysharp.Threading.Tasks;
 using MDPro3.Duel;
 using UnityEngine.Playables;
+using LaoDai.BattleSpirits.Integration;
 
 namespace MDPro3
 {
@@ -32,6 +33,7 @@ namespace MDPro3
         public RectTransform sidePanel;
         public RectTransform duelButton;
         public static string currentWallpaper;
+        private int battleWallpaperGeneration;
 
         [Header("UI Handler")]
         public FPSHandler fps;
@@ -74,6 +76,9 @@ namespace MDPro3
             }
             catch (Exception e)
             {
+                if (LaoDai.BattleSpirits.BattleSpiritsMode.Enabled)
+                    BattleStartupState.Fail(Program.instance.BattleStartupToken,
+                        "Không thể khởi tạo giao diện. Xem Console hoặc Editor.log để biết chi tiết.");
                 UnityEngine.Debug.LogError($"UIManager Initialize Error: {e}");
             }
             _ = LoadLoadingManager();
@@ -233,19 +238,26 @@ namespace MDPro3
         public Transform ChangeWallpaper(string path)
         {
             currentWallpaper = path;
-            if (wallpaper.transform.childCount > 0)
-                Destroy(wallpaper.transform.GetChild(0).gameObject);
+            int generation = ++battleWallpaperGeneration;
+            for (int i = wallpaper.transform.childCount - 1; i >= 0; i--)
+                DisposeBattleWallpaper(wallpaper.transform.GetChild(i).gameObject);
             if (LaoDai.BattleSpirits.BattleSpiritsMode.Enabled)
             {
-                if (path == Items.CODE_NONE.ToString()) return null;
+                int startupToken = Program.instance.BattleStartupToken;
+                if (path == Items.CODE_NONE.ToString())
+                {
+                    BattleStartupState.MarkWallpaperReady(startupToken);
+                    return null;
+                }
                 var go = new GameObject("BattleSpiritsWallpaper", typeof(RectTransform), typeof(RawImage));
                 go.layer = wallpaper.gameObject.layer;
                 var rect = go.GetComponent<RectTransform>(); rect.SetParent(wallpaper.transform, false);
                 rect.anchorMin = Vector2.zero; rect.anchorMax = Vector2.one;
                 rect.offsetMin = Vector2.zero; rect.offsetMax = Vector2.zero;
-                go.AddComponent<LaoDai.BattleSpirits.Integration.BattleMenuWallpaper>().Load(go.GetComponent<RawImage>());
-                string cosmeticPath = Program.items.GetWallpaperPath(path);
-                if (!string.IsNullOrEmpty(cosmeticPath)) _ = LoadBattleWallpaperAsync(cosmeticPath, rect);
+                var image = go.GetComponent<RawImage>();
+                image.raycastTarget = false;
+                image.color = new Color(0.2f, 0.3f, 0.45f, 1f);
+                LoadBattleWallpaperAsync(path, rect, generation, startupToken).Forget();
                 return rect;
             }
             if (path == Items.CODE_NONE.ToString())
@@ -271,38 +283,82 @@ namespace MDPro3
             return front;
         }
 
-        private async UniTask LoadBattleWallpaperAsync(string cosmeticPath, Transform parent)
+        private bool IsCurrentBattleWallpaper(Transform parent, int generation)
+            => this != null && parent != null && generation == battleWallpaperGeneration;
+
+        private static void DisposeBattleWallpaper(GameObject item)
+        {
+            if (item == null) return;
+            item.SetActive(false);
+            Destroy(item);
+        }
+
+        private async UniTask LoadBattleWallpaperAsync(string path, Transform parent, int generation, int startupToken)
         {
             GameObject front = null;
             try
             {
-                bool standardFront = cosmeticPath.StartsWith("Wallpaper/Front", StringComparison.OrdinalIgnoreCase);
-                front = await ABLoader.LoadFromFolderAsync<RectTransform>("MasterDuel/" +
-                    (standardFront ? cosmeticPath : "Wallpaper/Front0002"), false, true);
-                if (front == null) return;
-                if (!standardFront)
+                // Resolve the requested cosmetic first. The artwork fallback is
+                // loaded only when no retained selection can be displayed.
+                string cosmeticPath = Program.items.GetWallpaperPath(path);
+                if (!string.IsNullOrEmpty(cosmeticPath))
                 {
-                    var overlay = await ABLoader.LoadFromFileAsync("MasterDuel/" + cosmeticPath, false, true);
-                    if (overlay == null) { Destroy(front); return; }
-                    if (front.transform.childCount > 1) Destroy(front.transform.GetChild(1).gameObject);
-                    overlay.transform.SetParent(front.transform, false);
+                    bool standardFront = cosmeticPath.StartsWith("Wallpaper/Front", StringComparison.OrdinalIgnoreCase);
+                    front = await ABLoader.LoadFromFolderAsync<RectTransform>("MasterDuel/" +
+                        (standardFront ? cosmeticPath : "Wallpaper/Front0002"), false, true);
+                    if (front == null || front.GetComponent<RectTransform>() == null)
+                        throw new InvalidOperationException("The retained wallpaper prefab could not be loaded.");
+                    front.SetActive(false);
+                    if (!IsCurrentBattleWallpaper(parent, generation)) { DisposeBattleWallpaper(front); return; }
+                    if (!standardFront)
+                    {
+                        var overlay = await ABLoader.LoadFromFileAsync("MasterDuel/" + cosmeticPath, false, true);
+                        if (!IsCurrentBattleWallpaper(parent, generation))
+                        {
+                            DisposeBattleWallpaper(overlay); DisposeBattleWallpaper(front); return;
+                        }
+                        if (overlay == null) throw new InvalidOperationException("The retained wallpaper overlay could not be loaded.");
+                        if (front.transform.childCount > 1) DisposeBattleWallpaper(front.transform.GetChild(1).gameObject);
+                        overlay.transform.SetParent(front.transform, false);
+                    }
+                    front.transform.SetParent(parent, false);
+                    foreach (var child in front.GetComponentsInChildren<Transform>(true)) child.gameObject.layer = wallpaper.gameObject.layer;
+                    for (int i = 0; i < front.transform.childCount; i++)
+                        if (front.transform.GetChild(i).GetComponent<RectLoopMoveY>() == null)
+                            front.transform.GetChild(i).gameObject.AddComponent<RectLoopMoveY>();
+                    var neutralImage = parent.GetComponent<RawImage>();
+                    if (neutralImage != null) neutralImage.enabled = false;
+                    front.SetActive(true);
+                    foreach (var particle in front.GetComponentsInChildren<ParticleSystem>(true)) particle.Play();
+                    BattleStartupState.MarkWallpaperReady(startupToken);
+                    return;
                 }
-                if (this == null || parent == null) { Destroy(front); return; }
-                front.transform.SetParent(parent, false);
-                foreach (var child in front.GetComponentsInChildren<Transform>(true)) child.gameObject.layer = wallpaper.gameObject.layer;
-                for (int i = 0; i < front.transform.childCount; i++)
-                    if (front.transform.GetChild(i).GetComponent<RectLoopMoveY>() == null)
-                        front.transform.GetChild(i).gameObject.AddComponent<RectLoopMoveY>();
-                foreach (var particle in front.GetComponentsInChildren<ParticleSystem>(true)) particle.Play();
-                var fallback = parent.GetComponent<LaoDai.BattleSpirits.Integration.BattleMenuWallpaper>();
-                if (fallback != null) Destroy(fallback);
-                var image = parent.GetComponent<RawImage>();
-                if (image != null) Destroy(image);
             }
             catch (Exception error)
             {
-                if (front != null) Destroy(front);
-                if (this != null && parent != null) Debug.LogWarning("Retained wallpaper could not load; using Battle Spirits artwork: " + error.Message);
+                DisposeBattleWallpaper(front);
+                if (IsCurrentBattleWallpaper(parent, generation))
+                    Debug.LogWarning("Retained wallpaper could not load; using Battle Spirits artwork: " + error.Message);
+            }
+
+            if (!IsCurrentBattleWallpaper(parent, generation)) return;
+            try
+            {
+                var image = parent.GetComponent<RawImage>();
+                if (image == null) throw new InvalidOperationException("The wallpaper background image is missing.");
+                image.enabled = true;
+                var fallback = parent.gameObject.AddComponent<BattleMenuWallpaper>();
+                await fallback.LoadAsync(image, () => IsCurrentBattleWallpaper(parent, generation));
+            }
+            catch (Exception error)
+            {
+                if (IsCurrentBattleWallpaper(parent, generation))
+                    Debug.LogWarning("Battle Spirits wallpaper could not load; keeping the neutral background: " + error.Message);
+            }
+            finally
+            {
+                // Optional artwork must never keep the loading curtain open.
+                if (IsCurrentBattleWallpaper(parent, generation)) BattleStartupState.MarkWallpaperReady(startupToken);
             }
         }
 

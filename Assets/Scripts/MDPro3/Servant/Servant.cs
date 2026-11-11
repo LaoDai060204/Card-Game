@@ -8,6 +8,8 @@ using YgomSystem.ElementSystem;
 using TMPro;
 using UnityEngine.AddressableAssets;
 using MDPro3.UI.ServantUI;
+using LaoDai.BattleSpirits.Integration;
+using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace MDPro3.Servant
 {
@@ -49,14 +51,7 @@ namespace MDPro3.Servant
             else
             {
                 inTransition = true;
-                var handle = Addressables.InstantiateAsync(Label_UI);
-                handle.Completed += (result) =>
-                {
-                    result.Result.transform.SetParent(transform, false);
-                    servantUI = result.Result.GetComponent<ServantUI>();
-                    FirstLoadEvent();
-                    ApplyShowArrangement(preDepth);
-                };
+                InstantiateUI(true, preDepth);
             }
         }
 
@@ -113,6 +108,8 @@ namespace MDPro3.Servant
 
         public virtual bool NeedResponseInput()
         {
+            if (LaoDai.BattleSpirits.BattleSpiritsMode.Enabled && BattleStartupState.IsActive)
+                return false;
             if (!showing) return false;
             if (inTransition) return false;
             if (servantUI == null) return false;
@@ -151,13 +148,71 @@ namespace MDPro3.Servant
 
         protected void LoadUI()
         {
-            var handle = Addressables.InstantiateAsync(Label_UI);
-            handle.Completed += (result) =>
+            InstantiateUI(false, 0);
+        }
+
+        private void InstantiateUI(bool applyShowArrangement, int preDepth)
+        {
+            int startupToken = this is MainMenu && LaoDai.BattleSpirits.BattleSpiritsMode.Enabled
+                && BattleStartupState.IsActive && Program.instance != null ? Program.instance.BattleStartupToken : 0;
+            try
             {
-                result.Result.transform.SetParent(transform, false);
-                servantUI = result.Result.GetComponent<ServantUI>();
+                var handle = Addressables.InstantiateAsync(Label_UI);
+                handle.Completed += result => CompleteUILoad(result, applyShowArrangement, preDepth, startupToken);
+            }
+            catch (Exception error)
+            {
+                ReportUILoadFailure(error, startupToken);
+            }
+        }
+
+        private void CompleteUILoad(AsyncOperationHandle<GameObject> result, bool applyShowArrangement, int preDepth, int startupToken)
+        {
+            GameObject instance = null;
+            try
+            {
+                if (this == null || (startupToken != 0 && (!BattleStartupState.IsActive
+                    || BattleStartupState.CurrentToken != startupToken || BattleStartupState.HasFailed)))
+                {
+                    if (result.IsValid())
+                    {
+                        if (result.Status == AsyncOperationStatus.Succeeded && result.Result != null)
+                            Addressables.ReleaseInstance(result);
+                        else Addressables.Release(result);
+                    }
+                    return;
+                }
+                if (result.Status != AsyncOperationStatus.Succeeded || result.Result == null)
+                    throw new InvalidOperationException($"UI prefab could not load: {Label_UI}", result.OperationException);
+                instance = result.Result;
+                instance.transform.SetParent(transform, false);
+                servantUI = instance.GetComponent<ServantUI>();
+                if (servantUI == null)
+                    throw new InvalidOperationException($"UI prefab has no ServantUI component: {Label_UI}");
                 FirstLoadEvent();
-            };
+                if (applyShowArrangement) ApplyShowArrangement(preDepth);
+            }
+            catch (Exception error)
+            {
+                if (instance != null) instance.SetActive(false);
+                if (result.IsValid())
+                {
+                    if (instance != null) Addressables.ReleaseInstance(result);
+                    else Addressables.Release(result);
+                }
+                if (this == null) return;
+                servantUI = null;
+                ReportUILoadFailure(error, startupToken);
+            }
+        }
+
+        private void ReportUILoadFailure(Exception error, int startupToken)
+        {
+            showing = false;
+            inTransition = false;
+            if (this is MainMenu && LaoDai.BattleSpirits.BattleSpiritsMode.Enabled)
+                BattleStartupState.Fail(startupToken, "Không thể tải giao diện chính. Xem Console hoặc Editor.log để biết chi tiết.");
+            Debug.LogException(error, this);
         }
 
         protected virtual void FirstLoadEvent()

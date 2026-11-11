@@ -10,6 +10,8 @@ using MDPro3.Servant;
 using Cysharp.Threading.Tasks;
 using MDPro3.Utility;
 using MDPro3.IO;
+using LaoDai.BattleSpirits.Integration;
+using UnityEngine.ResourceManagement.AsyncOperations;
 
 
 
@@ -117,6 +119,7 @@ namespace MDPro3
         private readonly List<Manager> managers = new();
         private readonly List<Servant.Servant> servants = new();
         public static bool exitOnReturn = false;
+        internal int BattleStartupToken { get; private set; }
 
         public void RegisterBattleServant(Servant.Servant servant)
         {
@@ -127,38 +130,73 @@ namespace MDPro3
 
         private async UniTask Initialize()
         {
-            if (!Directory.Exists(PATH_DATA))
-                Directory.CreateDirectory(PATH_DATA);
-            Config.Initialize(PATH_CONFIG);
-
-            Screen.sleepTimeout = SleepTimeout.NeverSleep;
-
-            if (LaoDai.BattleSpirits.BattleSpiritsMode.Enabled)
-                await ABLoader.CacheBattleCosmeticsAsync();
-            else
+            int startupToken = BattleStartupState.IsActive ? BattleStartupState.CurrentToken : 0;
+            BattleStartupToken = startupToken;
+            try
             {
-                await ResourceManager.InitializeAsync();
-                if (!ABLoader.mdCached) await ABLoader.CacheMasterDuelOutDuelBundles();
-            }
+                if (!Directory.Exists(PATH_DATA))
+                    Directory.CreateDirectory(PATH_DATA);
+                Config.Initialize(PATH_CONFIG);
 
-            if(items == null)
+                Screen.sleepTimeout = SleepTimeout.NeverSleep;
+
+                if (LaoDai.BattleSpirits.BattleSpiritsMode.Enabled)
+                    await ABLoader.CacheBattleCosmeticsAsync();
+                else
+                {
+                    await ResourceManager.InitializeAsync();
+                    if (!ABLoader.mdCached) await ABLoader.CacheMasterDuelOutDuelBundles();
+                }
+                if (!CanContinueStartup(startupToken)) return;
+
+                if (items == null)
+                {
+                    var handle = Addressables.LoadAssetAsync<Items>("ScriptableObjects/Items.asset");
+                    try
+                    {
+                        await handle.Task;
+                        if (!CanContinueStartup(startupToken))
+                        {
+                            if (handle.IsValid()) Addressables.Release(handle);
+                            return;
+                        }
+                        if (handle.Status != AsyncOperationStatus.Succeeded || handle.Result == null)
+                            throw new InvalidOperationException("The shared Items asset could not be loaded.", handle.OperationException);
+                        items = handle.Result;
+                    }
+                    catch
+                    {
+                        if (handle.IsValid()) Addressables.Release(handle);
+                        throw;
+                    }
+                }
+
+                items.Initialize();
+                if (!LaoDai.BattleSpirits.BattleSpiritsMode.Enabled)
+                {
+                    cardRenderer = (await Addressables.InstantiateAsync("Prefab/CardRenderer.prefab")).GetComponent<CardRenderer>();
+                    await BanlistManager.InitializeAsync();
+                    await CardImageLoader.InitializeAsync();
+                    _ = OnlineService.InitializeAsync();
+                }
+                if (!CanContinueStartup(startupToken)) return;
+
+                InitializeAllManagers();
+                InitializeAllServants();
+                BattleStartupState.MarkManagersReady(startupToken);
+            }
+            catch (Exception error)
             {
-                var handle = Addressables.LoadAssetAsync<Items>("ScriptableObjects/Items.asset");
-                await handle.Task;
-                items = handle.Result;
+                if (this == null) return;
+                BattleStartupState.Fail(startupToken, "Không thể khởi tạo trò chơi. Xem Console hoặc Editor.log để biết chi tiết.");
+                UnityEngine.Debug.LogException(error, this);
             }
+        }
 
-            items.Initialize();
-            if (!LaoDai.BattleSpirits.BattleSpiritsMode.Enabled)
-            {
-                cardRenderer = (await Addressables.InstantiateAsync("Prefab/CardRenderer.prefab")).GetComponent<CardRenderer>();
-                await BanlistManager.InitializeAsync();
-                await CardImageLoader.InitializeAsync();
-                _ = OnlineService.InitializeAsync();
-            }
-
-            InitializeAllManagers();
-            InitializeAllServants();
+        private bool CanContinueStartup(int startupToken)
+        {
+            return this != null && (startupToken == 0 || (BattleStartupState.IsActive
+                && BattleStartupState.CurrentToken == startupToken && !BattleStartupState.HasFailed));
         }
 
         public void ReadParams()
@@ -284,15 +322,12 @@ namespace MDPro3
 
         private void InitializeAllManagers()
         {
-            managers.Add(texture_);
-            managers.Add(ui_);
-            managers.Add(camera_);
-            managers.Add(audio_);
-            managers.Add(background_);
-            managers.Add(message_);
-
-            foreach (Manager manager in managers)
+            foreach (Manager manager in new Manager[] { texture_, ui_, camera_, audio_, background_, message_ })
+            {
+                if (manager == null) throw new InvalidOperationException("A startup manager reference is missing.");
                 manager.Initialize();
+                managers.Add(manager);
+            }
         }
 
         private void InitializeAllServants()
@@ -343,7 +378,7 @@ namespace MDPro3
         {
             SetRoot();
             instance = this;
-            _ = Initialize();
+            Initialize().Forget();
 
             //ABLoader.LoadFromFolder("Robber/fxp_somldg_Advance_S1imp_001");
             //ABLoader.LoadFromFolder("Robber/fxp_somldg_Advance_S2imp_001");

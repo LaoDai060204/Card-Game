@@ -6,12 +6,16 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using UnityEngine.Networking;
+using LaoDai.BattleSpirits.Integration;
+using UnityEngine.EventSystems;
 
 namespace MDPro3.Servant
 {
     public class MainMenu : Servant
     {
         [HideInInspector] public SelectionButton_MainMenu lastSelectedButton;
+        private bool startupInputLocked;
+        private bool menuWasInteractable;
 
         public override int Depth => 0;
         protected override bool ShowLine => false;
@@ -52,6 +56,13 @@ namespace MDPro3.Servant
         {
             base.FirstLoadEvent();
             servantUI.ResetUI();
+            if (LaoDai.BattleSpirits.BattleSpiritsMode.Enabled && BattleStartupState.IsActive)
+            {
+                menuWasInteractable = servantUI.CG.interactable;
+                servantUI.CG.interactable = false;
+                startupInputLocked = true;
+                if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(null);
+            }
             if (LaoDai.BattleSpirits.BattleSpiritsMode.Enabled)
                 GetUI<MainMenuUI>().News.Hide();
             else
@@ -61,6 +72,8 @@ namespace MDPro3.Servant
             Program.instance.ReadParams();
             if(!Program.exitOnReturn && !LaoDai.BattleSpirits.BattleSpiritsMode.Enabled)
                 VersionIntroduction.Show();
+            if (LaoDai.BattleSpirits.BattleSpiritsMode.Enabled)
+                BattleStartupState.MarkMenuReady(Program.instance.BattleStartupToken);
         }
 
         protected override void ApplyShowArrangement(int preDepth)
@@ -79,6 +92,11 @@ namespace MDPro3.Servant
 
         public override void PerFrameFunction()
         {
+            if (startupInputLocked && !BattleStartupState.IsActive)
+            {
+                if (servantUI != null) servantUI.CG.interactable = menuWasInteractable;
+                startupInputLocked = false;
+            }
             if (NeedResponseInput())
             {
                 if (UserInput.WasCancelPressed)
@@ -101,6 +119,8 @@ namespace MDPro3.Servant
 
         public override void Select(bool forced = false)
         {
+            if (LaoDai.BattleSpirits.BattleSpiritsMode.Enabled && BattleStartupState.IsActive)
+                return;
             if (!forced && !UserInput.NeedDefaultSelect())
                 return;
 
