@@ -12,6 +12,9 @@ using UnityEngine.Networking;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using Cysharp.Threading.Tasks;
 using LaoDai.BattleSpirits.Integration;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 
 namespace MDPro3
 {
@@ -28,6 +31,7 @@ namespace MDPro3
         private int nowNum;
         private int startupToken;
         private GameObject startupCanvasRoot;
+        private BattleTitleScreen startupTitle;
         private AsyncOperationHandle startupInitialization;
         private AsyncOperationHandle<Items> startupItems;
         private AsyncOperationHandle<SceneInstance> startupScene;
@@ -73,9 +77,11 @@ namespace MDPro3
                 }
                 if (BattleStartupState.HasFailed)
                 {
-                    text.text = BattleStartupState.FailureMessage;
+                    if (startupTitle != null) startupTitle.ShowFailure(BattleStartupState.FailureMessage);
+                    else text.text = BattleStartupState.FailureMessage;
                     return;
                 }
+                if (startupTitle != null) startupTitle.Tick(Time.unscaledDeltaTime);
             }
             time += Time.deltaTime;
             if (time > 0.33f)
@@ -324,9 +330,27 @@ namespace MDPro3
             if (!ContinueBattleStartup()) yield break;
 
             progressBar.value = 1;
-            // Let the ready Main canvases complete their first layout/render
-            // update under the curtain before revealing them together.
+            // Let Main finish its first layout before presenting the title over
+            // its selected wallpaper. Main remains hidden and input-locked.
             yield return null;
+            if (!ContinueBattleStartup() || !BattleStartupState.IsReady) yield break;
+            if (!TryBattleAction(() => startupTitle.ShowReady(),
+                "Không thể mở màn hình bắt đầu. Hãy mở lại trò chơi.")) yield break;
+
+            var titleFlow = new BattleTitleFlow();
+            titleFlow.Ready();
+            while (titleFlow.Phase != BattleTitlePhase.Complete)
+            {
+                if (!ContinueBattleStartup()) yield break;
+                ReadBattleTitleInput(out bool pressed, out bool held);
+                titleFlow.Advance(Time.unscaledDeltaTime, pressed, held);
+                if (!TryBattleAction(() =>
+                {
+                    startupTitle.SetRevealProgress(titleFlow.RevealProgress);
+                    Program.instance.menu.SetStartupReveal(titleFlow.RevealProgress);
+                }, "Không thể mở menu. Hãy mở lại trò chơi.")) yield break;
+                yield return null;
+            }
             if (!ContinueBattleStartup() || !BattleStartupState.IsReady) yield break;
             BattleStartupState.Complete(startupToken);
             DestroyBattleStartupScreen();
@@ -342,6 +366,30 @@ namespace MDPro3
             startupCanvasRoot = canvas.transform.root.gameObject;
             DontDestroyOnLoad(startupCanvasRoot);
             DontDestroyOnLoad(gameObject);
+            startupTitle = BattleTitleScreen.Create(canvas, text, progressBar);
+        }
+
+        private static void ReadBattleTitleInput(out bool pressed, out bool held)
+        {
+            pressed = false;
+            held = false;
+#if ENABLE_INPUT_SYSTEM
+            var keyboard = Keyboard.current;
+            var mouse = Mouse.current;
+            var touch = Touchscreen.current;
+            var gamepad = Gamepad.current;
+            pressed = (keyboard != null && keyboard.anyKey.wasPressedThisFrame)
+                || (mouse != null && mouse.leftButton.wasPressedThisFrame)
+                || (touch != null && touch.primaryTouch.press.wasPressedThisFrame)
+                || (gamepad != null && (gamepad.buttonSouth.wasPressedThisFrame || gamepad.startButton.wasPressedThisFrame));
+            held = (keyboard != null && keyboard.anyKey.isPressed)
+                || (mouse != null && mouse.leftButton.isPressed)
+                || (touch != null && touch.primaryTouch.press.isPressed)
+                || (gamepad != null && (gamepad.buttonSouth.isPressed || gamepad.startButton.isPressed));
+#elif ENABLE_LEGACY_INPUT_MANAGER
+            pressed = Input.anyKeyDown;
+            held = Input.anyKey;
+#endif
         }
 
         private bool ContinueBattleStartup()

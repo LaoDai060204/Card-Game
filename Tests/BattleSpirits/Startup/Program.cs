@@ -33,6 +33,173 @@ internal static class Entry
         for (int requirement = 0; requirement < 3; requirement++) Mark(token, requirement);
     }
 
+    private static void WaitAtTitle(BattleTitleFlow flow)
+    {
+        flow.Ready();
+        for (int frame = 0; frame < 5; frame++) flow.Advance(0.1f, false, false);
+    }
+
+    private static BattleTitleFlow BeginReveal()
+    {
+        var flow = new BattleTitleFlow();
+        WaitAtTitle(flow);
+        flow.Advance(0.016f, true, true);
+        Assert(flow.Phase == BattleTitlePhase.Revealing, "A deliberate start press could not begin the reveal.");
+        return flow;
+    }
+
+    private static void RunTitleFlowTests()
+    {
+        Case("Title cannot accept input or reveal before loading finishes", () =>
+        {
+            var flow = new BattleTitleFlow();
+            for (int frame = 0; frame < 100; frame++) flow.Advance(0.1f, frame % 2 == 0, frame % 2 == 0);
+            Assert(flow.Phase == BattleTitlePhase.Loading && flow.RevealProgress == 0,
+                "A preloading input or elapsed time revealed the unfinished menu.");
+        });
+
+        Case("Ready leaves the title waiting indefinitely for an explicit start press", () =>
+        {
+            var flow = new BattleTitleFlow();
+            flow.Ready();
+            for (int frame = 0; frame < 1000; frame++) flow.Advance(0.1f, false, false);
+            Assert(flow.Phase == BattleTitlePhase.WaitingForStart && flow.RevealProgress == 0,
+                "The title automatically entered the menu without a player action.");
+        });
+
+        Case("A held startup key must be released before a fresh start press can enter", () =>
+        {
+            var flow = new BattleTitleFlow();
+            flow.Advance(0.1f, true, true);
+            flow.Ready();
+            for (int frame = 0; frame < 10; frame++) flow.Advance(0.1f, frame == 5, true);
+            Assert(flow.Phase == BattleTitlePhase.WaitingForStart, "A key held through loading skipped the title.");
+            flow.Advance(0.016f, false, false);
+            flow.Advance(0.016f, true, true);
+            Assert(flow.Phase == BattleTitlePhase.Revealing, "Releasing and pressing again failed to enter.");
+        });
+
+        Case("A release observed only during loading does not arm the later title", () =>
+        {
+            var flow = new BattleTitleFlow();
+            flow.Advance(0.1f, false, false);
+            flow.Ready();
+            for (int frame = 0; frame < 10; frame++) flow.Advance(0.1f, false, true);
+            flow.Advance(0.016f, true, true);
+            Assert(flow.Phase == BattleTitlePhase.WaitingForStart, "Pre-title neutral input armed a held startup button.");
+        });
+
+        Case("An early start press is discarded rather than buffered past the title dwell", () =>
+        {
+            var flow = new BattleTitleFlow();
+            flow.Ready();
+            flow.Advance(0.01f, false, false);
+            flow.Advance(0.01f, true, true);
+            Assert(flow.Phase == BattleTitlePhase.WaitingForStart, "A press before the minimum title duration was accepted.");
+            for (int frame = 0; frame < 10; frame++) flow.Advance(0.1f, false, true);
+            Assert(flow.Phase == BattleTitlePhase.WaitingForStart, "An early press was buffered until the title timeout.");
+            flow.Advance(0.01f, false, false);
+            flow.Advance(0.01f, true, true);
+            Assert(flow.Phase == BattleTitlePhase.Revealing, "A later deliberate press was lost with the earlier press.");
+        });
+
+        Case("A fresh press begins the reveal with a still-covered menu", () =>
+        {
+            var flow = BeginReveal();
+            Assert(flow.RevealProgress == 0, "The start input skipped the beginning of the fade.");
+            flow.Advance(0.05f, false, false);
+            Assert(flow.Phase == BattleTitlePhase.Revealing && flow.RevealProgress > 0 && flow.RevealProgress < 1,
+                "A normal frame did not produce a partial fade.");
+        });
+
+        Case("Reveal progresses monotonically to one and completes exactly once", () =>
+        {
+            var flow = BeginReveal();
+            float previous = flow.RevealProgress;
+            for (int frame = 0; frame < 30; frame++)
+            {
+                flow.Advance(0.05f, frame % 2 == 0, frame % 2 == 0);
+                Assert(float.IsFinite(flow.RevealProgress) && flow.RevealProgress >= previous && flow.RevealProgress <= 1,
+                    "Repeated input reversed, overflowed or invalidated the reveal.");
+                previous = flow.RevealProgress;
+            }
+            Assert(flow.Phase == BattleTitlePhase.Complete && flow.RevealProgress == 1,
+                "A completed fade did not expose the menu fully.");
+            flow.Ready();
+            flow.Advance(1, true, true);
+            Assert(flow.Phase == BattleTitlePhase.Complete && flow.RevealProgress == 1,
+                "A completed title re-entered loading or restarted its animation.");
+        });
+
+        Case("Repeated readiness notifications do not reset the waiting title or its input arm", () =>
+        {
+            var flow = new BattleTitleFlow();
+            WaitAtTitle(flow);
+            flow.Ready();
+            flow.Advance(0.016f, true, true);
+            Assert(flow.Phase == BattleTitlePhase.Revealing, "A duplicate ready callback reset the readable duration or neutral input.");
+            flow.Advance(0.1f, false, false);
+            float progress = flow.RevealProgress;
+            flow.Ready();
+            Assert(flow.Phase == BattleTitlePhase.Revealing && flow.RevealProgress == progress,
+                "A duplicate ready callback reset an in-progress fade.");
+        });
+
+        Case("Invalid or paused frame durations cannot advance an unfinished reveal", () =>
+        {
+            var flow = BeginReveal();
+            foreach (float delta in new[] { 0f, -1f, float.NaN, float.PositiveInfinity, float.NegativeInfinity })
+            {
+                flow.Advance(delta, false, false);
+                Assert(flow.Phase == BattleTitlePhase.Revealing && flow.RevealProgress == 0,
+                    "A zero, negative or non-finite frame duration changed the fade.");
+            }
+            flow.Advance(0.1f, false, false);
+            Assert(flow.RevealProgress > 0 && flow.RevealProgress < 1, "Valid time did not recover from an invalid frame.");
+        });
+
+        Case("A stalled frame is bounded instead of skipping the title or full reveal", () =>
+        {
+            var flow = new BattleTitleFlow();
+            flow.Ready();
+            flow.Advance(float.MaxValue, false, false);
+            flow.Advance(0, true, true);
+            Assert(flow.Phase == BattleTitlePhase.WaitingForStart, "A single long frame skipped the minimum readable duration.");
+            WaitAtTitle(flow);
+            flow.Advance(0.016f, true, true);
+            flow.Advance(float.MaxValue, false, false);
+            Assert(flow.Phase == BattleTitlePhase.Revealing && flow.RevealProgress > 0 && flow.RevealProgress < 1,
+                "A long frame skipped the entire fade into the menu.");
+        });
+
+        Case("Unscaled frame time controls the complete duration without depending on input repetition", () =>
+        {
+            var flow = BeginReveal();
+            float elapsed = 0;
+            while (elapsed + 0.05f < BattleTitleFlow.RevealSeconds - 0.0001f)
+            {
+                flow.Advance(0.05f, false, false);
+                elapsed += 0.05f;
+                Assert(flow.Phase == BattleTitlePhase.Revealing, "The reveal completed before its configured duration.");
+            }
+            flow.Advance(0.1f, false, false);
+            Assert(flow.Phase == BattleTitlePhase.Complete && flow.RevealProgress == 1,
+                "The reveal stayed incomplete after enough unscaled frame time.");
+        });
+
+        Case("A new title instance does not inherit a prior completed entry", () =>
+        {
+            var prior = BeginReveal();
+            for (int frame = 0; frame < 10; frame++) prior.Advance(0.1f, false, false);
+            Assert(prior.Phase == BattleTitlePhase.Complete, "Fixture did not complete its first entry.");
+            var next = new BattleTitleFlow();
+            Assert(next.Phase == BattleTitlePhase.Loading && next.RevealProgress == 0,
+                "A new Play session inherited old title state.");
+            WaitAtTitle(next);
+            Assert(next.Phase == BattleTitlePhase.WaitingForStart, "A previous entry automatically accepted the next title.");
+        });
+    }
+
     public static int Main()
     {
         try
@@ -180,7 +347,10 @@ internal static class Entry
                 BattleStartupState.Complete(current);
             });
 
-            Console.WriteLine(passed + " startup state scenarios passed (actual production state, no Unity dependencies).");
+            int startupStateCases = passed;
+            RunTitleFlowTests();
+            Console.WriteLine(startupStateCases + " startup state + " + (passed - startupStateCases)
+                + " title flow scenarios passed (actual production source, no Unity dependencies).");
             return 0;
         }
         catch (Exception error)

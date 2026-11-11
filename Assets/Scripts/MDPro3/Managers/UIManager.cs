@@ -38,6 +38,8 @@ namespace MDPro3
         [Header("UI Handler")]
         public FPSHandler fps;
         List<UIHandler> handlers;
+        private bool startupFpsHidden;
+        private bool startupFpsWasEnabled;
 
         [Header("Side Panel")]
         public ChatPanel chatPanel;
@@ -66,6 +68,13 @@ namespace MDPro3
             };
             foreach (UIHandler handler in handlers)
                 handler.Initialize();
+            if (LaoDai.BattleSpirits.BattleSpiritsMode.Enabled && BattleStartupState.IsActive
+                && fps != null && fps.text != null)
+            {
+                startupFpsWasEnabled = fps.text.enabled;
+                fps.text.enabled = false;
+                startupFpsHidden = true;
+            }
 
             try
             {
@@ -87,6 +96,11 @@ namespace MDPro3
         public override void PerFrameFunction()
         {
             base.PerFrameFunction();
+            if (startupFpsHidden && !BattleStartupState.IsActive)
+            {
+                if (fps != null && fps.text != null) fps.text.enabled = startupFpsWasEnabled;
+                startupFpsHidden = false;
+            }
             foreach (UIHandler handler in handlers)
                     handler.PerframeFunction();
         }

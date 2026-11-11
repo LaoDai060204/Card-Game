@@ -58,6 +58,9 @@ namespace UnityEngine
     public static class Time { public static float unscaledTime,unscaledDeltaTime=1f/60; }
     public class CanvasGroup:Behaviour { public float alpha=1; public bool blocksRaycasts=true,interactable=true; }
     public class Font:Object { public Material material=new Material(); }
+    public enum FontStyle { Normal,Bold,Italic,BoldAndItalic }
+    public enum HorizontalWrapMode { Wrap,Overflow }
+    public enum VerticalWrapMode { Truncate,Overflow }
     public enum TextAlignment { Left,Center,Right }
     public class TextMesh:Component {public string text;public Font font;public int fontSize;public float characterSize;public TextAnchor anchor;public TextAlignment alignment;public Color color;}
     public enum PrimitiveType { Cube,Sphere,Cylinder }
@@ -87,7 +90,7 @@ namespace UnityEngine
     public class AudioClip:Object {public float[] data;public static AudioClip Create(string name,int count,int channels,int sampleRate,bool stream)=>new AudioClip{name=name,data=new float[count*channels]};public void SetData(float[] samples,int offset)=>Array.Copy(samples,0,data,offset,samples.Length);}
     public class AudioSource:Behaviour {public bool loop,isPlaying;public float spatialBlend,volume;public AudioClip clip;public void Play()=>isPlaying=true;public void Stop()=>isPlaying=false;public void PlayOneShot(AudioClip value,float volume=1){} }
 }
-namespace UnityEngine.UI {public class Text:Graphic {public string text;public bool supportRichText;}}
+namespace UnityEngine.UI {public class Text:Graphic {public string text;public bool supportRichText,resizeTextForBestFit;public UnityEngine.Font font;public int fontSize,resizeTextMinSize,resizeTextMaxSize;public UnityEngine.FontStyle fontStyle;public UnityEngine.TextAnchor alignment;public UnityEngine.HorizontalWrapMode horizontalOverflow;public UnityEngine.VerticalWrapMode verticalOverflow;}}
 namespace TMPro
 {
     public enum HorizontalAlignmentOptions{Left,Center,Right}

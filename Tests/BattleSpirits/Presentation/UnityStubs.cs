@@ -57,7 +57,7 @@ namespace UnityEngine {
  [Flags] public enum AdditionalCanvasShaderChannels{None=0,TexCoord1=1,TexCoord2=2,TexCoord3=4,Normal=8,Tangent=16}
  public class Canvas:Behaviour{public bool overrideSorting;public int sortingOrder,sortingLayerID;public Camera worldCamera;public AdditionalCanvasShaderChannels additionalShaderChannels;}
  public class RectOffset{public RectOffset(int l,int r,int t,int b){}}
- public enum TextAnchor{UpperLeft,UpperCenter,MiddleCenter}public enum KeyCode{Escape}public static class Input{public static bool GetKeyDown(KeyCode key)=>throw new InvalidOperationException("Legacy Input is disabled: activeInputHandler is Input System package.");}
+ public enum TextAnchor{UpperLeft,UpperCenter,MiddleLeft,MiddleCenter,MiddleRight,LowerLeft,LowerCenter,LowerRight}public enum KeyCode{Escape}public static class Input{public static bool GetKeyDown(KeyCode key)=>throw new InvalidOperationException("Legacy Input is disabled: activeInputHandler is Input System package.");}
  public static partial class Mathf{public static float Abs(float f)=>Math.Abs(f);public static float Max(float a,float b)=>Math.Max(a,b);}
  public static class Application{public static string dataPath,productName="Battle Spirits",version="0.1.0";}
  public static class Debug{public static readonly List<string> Logs=new List<string>();public static void Log(object o)=>Logs.Add(o?.ToString());public static void LogWarning(object o)=>Logs.Add(o?.ToString());public static void LogError(object o)=>Logs.Add(o?.ToString());}
@@ -75,6 +75,7 @@ namespace UnityEngine.UI {
  public class Selectable:UnityEngine.Behaviour{public enum Transition{None,ColorTint,SpriteSwap}public bool interactable=true;public Graphic targetGraphic;public ColorBlock colors;public Transition transition;}
  public class Button:Selectable{public UnityEngine.Events.UnityEvent onClick=new UnityEngine.Events.UnityEvent();}
  public class Toggle:Selectable{public Graphic graphic;public bool isOn;}
+ public class Slider:Selectable{public UnityEngine.RectTransform handleRect,fillRect;public float value,minValue,maxValue=1;public bool wholeNumbers;}
  public class GraphicRaycaster:UnityEngine.Behaviour{}public class RectMask2D:UnityEngine.Behaviour{}
  public class LayoutElement:UnityEngine.Behaviour{public float minHeight,preferredHeight,minWidth,preferredWidth;}
  public class LayoutGroup:UnityEngine.Behaviour{public UnityEngine.RectOffset padding;public UnityEngine.TextAnchor childAlignment;}

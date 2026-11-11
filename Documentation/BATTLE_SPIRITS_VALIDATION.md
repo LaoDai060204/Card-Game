@@ -1,5 +1,7 @@
 # Kiểm tra Standard và cách trình diễn thẻ
 
+Bản **0.6.0** thêm màn mở đầu theo trình tự Master Duel chính thức: title Battle Spirits → nhấn bắt đầu → menu. [Báo cáo title](battle-spirits-title-validation.json) ghi **35 tình huống startup/title** và **57 luồng UI/session**, gồm 12 kiểm tra mới của luồng chờ bắt đầu và tám kiểm tra view thực với API Unity thay thế. Năm tệp production C# qua ba profile C# 9 không có lỗi cú pháp; Boot, MainMenu đầy đủ, input thiết bị và khóa FPS chỉ được đọc mã/phân tích cú pháp. Chưa xác minh hình ảnh/chuyển cảnh bằng Unity Windows. [Cách chạy thử](BATTLE_SPIRITS_TITLE_SCREEN.md).
+
 Bản **0.5.2** sửa chuyển màn Boot → Main và vòng đời wallpaper. [Báo cáo khởi động](battle-spirits-startup-validation.json) ghi **23 tình huống startup state**, **49 luồng UI/session** (gồm bảy kiểm tra mới cho loader wallpaper), bốn kiểm tra cấu trúc Boot, 9 kiểm tra prefab và 12 kiểm tra tài nguyên đạt. Bảy tệp production C# qua ba profile C# 9 không có lỗi cú pháp. **Boot, Program, UIManager và Servant đầy đủ chỉ được đọc mã/phân tích cú pháp; chưa biên dịch chúng bằng Unity hoặc xác minh chuyển cảnh/pixel/input trên Windows.** [Cách thử](BATTLE_SPIRITS_STARTUP.md).
 
 Bản **0.5.1** sửa hiển thị Core bằng ảnh ngọc, thêm ngoại hình Core thường và giữ đúng tỷ lệ ảnh thẻ. [Báo cáo ngọc/ảnh](battle-spirits-core-gem-quality-validation.json) ghi **42 luồng UI/session đạt**, gồm kiểm tra ảnh gốc 813×1184, bộ lọc/tỷ lệ, cache và các màu Core không đổi trạng thái trận. Guard độ phân giải camera UI được kiểm tra bằng đọc mã; chưa xác minh độ nét thực tế trong Windows Unity. Các kết quả phiên bản trước được giữ bên dưới như baseline.
@@ -73,7 +75,7 @@ Thay đường dẫn mẫu bằng đường dẫn trên máy. `catalog.py valida
 
 ## Cần kiểm tra bằng Windows Unity
 
-1. Mở Boot đúng Editor, Addressables **Use Asset Database**. Kiểm tra màn tải nền kín chuyển thẳng sang menu **0.5.2** và wallpaper đã chọn; thử khởi động lại, chuột và gamepad theo [hướng dẫn startup](BATTLE_SPIRITS_STARTUP.md). Bố cục các form và nhãn nút được giữ.
+1. Mở Boot đúng Editor, Addressables **Use Asset Database**. Kiểm tra màn mở đầu **0.6.0**, wallpaper đã chọn và thao tác nhấn bắt đầu theo [hướng dẫn title](BATTLE_SPIRITS_TITLE_SCREEN.md); thử khởi động lại, chuột, phím và gamepad. Bố cục các form và nhãn nút được giữ.
 2. Chọn một trong ba bộ Standard. Giữ/đổi tay đầu, triệu hồi bằng click, Core/Soul, Super Unleash, Main → Attack → Second Main → End; lượt đầu không có Core/Attack/Second Main.
 3. Về menu rồi chơi ván tiếp; kiểm tra field/pet và âm thanh không mất hoặc lặp. Thử chọn pet và **Cài đặt → Hình nền**, quay lại menu và khởi động lại để kiểm tra lựa chọn được giữ.
 4. Hoạt cảnh vẫn xem hai boss BS01 nhưng không cho đưa chúng vào deck Standard. Lịch sử cho tiến/lùi replay Standard cùng version/catalog.

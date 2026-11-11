@@ -170,6 +170,37 @@ internal static class Entry
         foreach(var component in GameObject.All.Where(go=>!go.destroyed&&go.activeInHierarchy).SelectMany(go=>go.GetComponents<BattleSummonPresentation>()).ToArray()) component.Tick(delta);
     }
     private static void Case(string name,Action test){Setup();test();Context.Drain();passed++;Console.WriteLine("PASS "+name);}
+    private sealed class TitleFixture
+    {
+        public Canvas Canvas;
+        public Image Backdrop;
+        public Text Status;
+        public Slider Progress;
+        public Font Font;
+        public BattleTitleScreen View;
+    }
+    private static TitleFixture Title()
+    {
+        var fixture=new TitleFixture();
+        var canvas=new GameObject("BootCanvas",typeof(RectTransform),typeof(Canvas),typeof(GraphicRaycaster)){layer=5};
+        fixture.Canvas=canvas.GetComponent<Canvas>();
+        var backdrop=new GameObject("Backdrop",typeof(RectTransform),typeof(Image)){layer=5};
+        backdrop.transform.SetParent(canvas.transform,false);fixture.Backdrop=backdrop.GetComponent<Image>();
+        fixture.Backdrop.sprite=new Sprite();
+        var status=new GameObject("LoadingStatus",typeof(RectTransform),typeof(Text)){layer=5};
+        status.transform.SetParent(canvas.transform,false);fixture.Status=status.GetComponent<Text>();
+        fixture.Font=new Font{name="Boot Vietnamese font"};fixture.Status.font=fixture.Font;fixture.Status.text="Đang tải dữ liệu";
+        var progress=new GameObject("LoadingProgress",typeof(RectTransform),typeof(Slider)){layer=5};
+        progress.transform.SetParent(canvas.transform,false);fixture.Progress=progress.GetComponent<Slider>();
+        foreach(string name in new[]{"Background","Fill","Handle"})
+        {
+            var graphic=new GameObject(name,typeof(RectTransform),typeof(Image)){layer=5};graphic.transform.SetParent(progress.transform,false);
+            if(name=="Fill")fixture.Progress.fillRect=graphic.GetComponent<RectTransform>();
+            if(name=="Handle")fixture.Progress.handleRect=graphic.GetComponent<RectTransform>();
+        }
+        fixture.View=BattleTitleScreen.Create(fixture.Canvas,fixture.Status,fixture.Progress);
+        return fixture;
+    }
     private static void Pump(Func<bool> done,Action tick=null)
     {
         var watch=Stopwatch.StartNew();while(!done()&&watch.Elapsed.TotalSeconds<10){Context.Drain();tick?.Invoke();Thread.Sleep(2);}Context.Drain();Assert(done(),"Timed out waiting for actual production continuation.");
@@ -746,6 +777,101 @@ internal static class Entry
                     "An invalid wallpaper was assigned or swallowed without a useful warning.");
                 Assert(Texture2D.Created.Skip(created).Any()&&Texture2D.Created.Skip(created).All(texture=>texture==null),
                     "The undecodable candidate texture leaked after LoadImage rejected it.");
+            });
+            Case("Title is owned by the existing Boot Canvas and repeated creation does not duplicate it",()=>{
+                int before=GameObject.All.Count(go=>go!=null&&go.GetComponent<Canvas>()!=null);
+                var title=Title();
+                Assert(GameObject.All.Count(go=>go!=null&&go.GetComponent<Canvas>()!=null)==before+1,
+                    "The title created another Canvas beyond its provided Boot fixture.");
+                var again=BattleTitleScreen.Create(title.Canvas,title.Status,title.Progress);
+                Assert(again==title.View&&title.Canvas.GetComponentsInChildren<BattleTitleScreen>(true).Length==1,
+                    "Repeated title setup stacked another application view.");
+                Assert(title.View.transform.parent==title.Canvas.transform&&title.View.GetComponentsInChildren<Transform>(true).All(node=>node.gameObject.layer==5),
+                    "The title was mounted outside the existing Boot Canvas or lost the UI layer.");
+            });
+            Case("Loading title keeps an opaque input curtain and reuses the original status and progress",()=>{
+                var title=Title();
+                Assert(title.Backdrop.sprite==null&&title.Backdrop.color.a==1&&title.Backdrop.raycastTarget,
+                    "The loading title still uses a transparent sprite or permits pointer input behind it.");
+                Assert(title.Status.transform.parent==title.View.transform&&title.Progress.transform.parent==title.View.transform&&
+                    title.Status.gameObject.activeSelf&&title.Progress.gameObject.activeSelf,
+                    "Loading cloned or discarded the existing Boot controls.");
+                Assert(!title.Progress.interactable&&!title.Progress.handleRect.gameObject.activeSelf&&
+                    title.Progress.GetComponentsInChildren<Graphic>(true).All(graphic=>!graphic.raycastTarget),
+                    "Decorative loading controls are interactive or intercept the input curtain.");
+                Assert(!title.View.transform.Find("StartPrompt").gameObject.activeSelf,
+                    "The title offered Start before Main was ready.");
+            });
+            Case("Title labels retain a Vietnamese-capable font and the actual game version",()=>{
+                string original=Application.version;
+                try
+                {
+                    Application.version="0.6.0-test";
+                    var title=Title();var labels=title.View.GetComponentsInChildren<Text>(true);
+                    Assert(labels.All(label=>label.font==title.Font&&!label.supportRichText&&!label.raycastTarget),
+                        "A title label used a missing font, parsed text as markup or intercepted input.");
+                    Assert(labels.Count(label=>label.text=="NHẤN ĐỂ BẮT ĐẦU")==1&&labels.Any(label=>label.text=="SPIRITS")&&
+                        labels.Any(label=>label.text=="v0.6.0-test")&&labels.Any(label=>label.text.Contains("Dự án cộng đồng độc lập")),
+                        "The title omitted its single Vietnamese prompt, Battle Spirits identity, game version or attribution.");
+                }
+                finally{Application.version=original;}
+            });
+            Case("Ready title hides loading controls and reveals only the already-selected wallpaper beneath it",()=>{
+                var title=Title();var prompt=title.View.transform.Find("StartPrompt").GetComponent<Text>();
+                title.View.ShowReady();
+                Assert(!title.Status.gameObject.activeSelf&&!title.Progress.gameObject.activeSelf&&prompt.gameObject.activeSelf,
+                    "Ready title left the loading controls stacked with its start prompt.");
+                title.View.Tick(0.25f);float initial=title.Backdrop.color.a;
+                title.View.Tick(0.5f);float ready=title.Backdrop.color.a;
+                Assert(initial<1&&ready<initial&&ready>=0.4f&&ready<=0.5f&&title.Backdrop.raycastTarget,
+                    "Ready title failed to fade its solid backdrop into a readable scrim over the wallpaper.");
+                title.View.ShowReady();title.View.Tick(0);
+                Assert(Math.Abs(title.Backdrop.color.a-ready)<0.0001f,
+                    "A duplicate ready notification restarted the wallpaper fade.");
+            });
+            Case("Title reveal fades all title chrome while retaining its pointer curtain until destruction",()=>{
+                var title=Title();title.View.ShowReady();title.View.Tick(1);
+                var group=title.View.GetComponent<CanvasGroup>();
+                title.View.SetRevealProgress(0.5f);
+                Assert(Math.Abs(group.alpha-0.5f)<0.0001f&&title.Backdrop.color.a>0&&title.Backdrop.color.a<0.3f&&title.Backdrop.raycastTarget,
+                    "Partial reveal did not fade title chrome and scrim together.");
+                title.View.SetRevealProgress(1);
+                Assert(group.alpha==0&&title.Backdrop.color.a>0&&title.Backdrop.color.a<=0.002f&&title.Backdrop.raycastTarget,
+                    "The final retained curtain became fully transparent/cullable before Boot removed it.");
+            });
+            Case("A title failure replaces the prompt with a stable readable error and opaque backdrop",()=>{
+                var title=Title();title.View.ShowReady();title.View.Tick(1);title.View.SetRevealProgress(0.6f);
+                const string message="Không thể mở giao diện. Hãy mở lại trò chơi.";
+                int count=GameObject.All.Count;
+                title.View.ShowFailure(message);title.View.ShowFailure(message);title.View.ShowReady();title.View.Tick(1);
+                Assert(title.Backdrop.color.a==1&&title.View.GetComponent<CanvasGroup>().alpha==1&&
+                    title.Status.gameObject.activeSelf&&title.Status.text==message&&!title.Progress.gameObject.activeSelf&&
+                    !title.View.transform.Find("StartPrompt").gameObject.activeSelf&&!title.View.transform.Find("InputHint").gameObject.activeSelf,
+                    "An initialization failure remained faded, hid the status or restored an actionable start prompt.");
+                Assert(GameObject.All.Count==count,"Repeated error updates allocated duplicate labels or views.");
+            });
+            Case("Title animations pulse in unscaled ticks and reject non-finite or negative durations",()=>{
+                var title=Title();title.View.ShowReady();var prompt=title.View.transform.Find("StartPrompt").GetComponent<Text>();
+                float initial=prompt.color.a;title.View.Tick(0.25f);float animated=prompt.color.a;
+                Assert(animated!=initial&&animated>=0.65f&&animated<=1,"A normal unscaled tick did not animate the prompt.");
+                float backdrop=title.Backdrop.color.a;
+                foreach(float delta in new[]{-1f,float.NaN,float.PositiveInfinity,float.NegativeInfinity})title.View.Tick(delta);
+                Assert(prompt.color.a==animated&&title.Backdrop.color.a==backdrop,
+                    "Invalid frame time corrupted the title alpha or backdrop.");
+                title.View.SetRevealProgress(float.NaN);
+                Assert(title.View.GetComponent<CanvasGroup>().alpha==1&&!float.IsNaN(title.Backdrop.color.a),
+                    "Invalid reveal progress made the retained title invisible or non-finite.");
+            });
+            Case("Removing the Boot Canvas releases its title hierarchy and preserves externally owned resources",()=>{
+                var title=Title();var owner=title.Canvas.gameObject;
+                var outside=new GameObject("SelectedWallpaperOutsideBoot",typeof(RectTransform)).AddComponent<RawImage>();
+                var shared=new Texture2D(8,8,TextureFormat.RGBA32,false);outside.texture=shared;
+                var children=owner.GetComponentsInChildren<Component>(true);int textures=Texture2D.Created.Count;
+                Object.Destroy(owner);
+                Assert(children.All(component=>component==null)&&title.View==null&&title.Status==null&&title.Progress==null,
+                    "Destroying Boot retained title controls or a duplicate overlay hierarchy.");
+                Assert(title.Font!=null&&outside!=null&&outside.texture==shared&&shared!=null&&Texture2D.Created.Count==textures,
+                    "Title cleanup destroyed external font/wallpaper ownership or allocated a texture.");
             });
             Console.WriteLine("PASS "+passed+" native production flow scenarios; actual prefab metadata, controlled Unity APIs, no Editor/render/device test.");return 0;
         }

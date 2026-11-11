@@ -16,6 +16,8 @@ namespace MDPro3.Servant
         [HideInInspector] public SelectionButton_MainMenu lastSelectedButton;
         private bool startupInputLocked;
         private bool menuWasInteractable;
+        private bool menuWasBlockingRaycasts;
+        private float menuStartupAlpha;
 
         public override int Depth => 0;
         protected override bool ShowLine => false;
@@ -59,7 +61,11 @@ namespace MDPro3.Servant
             if (LaoDai.BattleSpirits.BattleSpiritsMode.Enabled && BattleStartupState.IsActive)
             {
                 menuWasInteractable = servantUI.CG.interactable;
+                menuWasBlockingRaycasts = servantUI.CG.blocksRaycasts;
+                menuStartupAlpha = servantUI.CG.alpha;
                 servantUI.CG.interactable = false;
+                servantUI.CG.blocksRaycasts = false;
+                servantUI.CG.alpha = 0f;
                 startupInputLocked = true;
                 if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(null);
             }
@@ -94,7 +100,12 @@ namespace MDPro3.Servant
         {
             if (startupInputLocked && !BattleStartupState.IsActive)
             {
-                if (servantUI != null) servantUI.CG.interactable = menuWasInteractable;
+                if (servantUI != null)
+                {
+                    servantUI.CG.alpha = menuStartupAlpha;
+                    servantUI.CG.interactable = menuWasInteractable;
+                    servantUI.CG.blocksRaycasts = menuWasBlockingRaycasts;
+                }
                 startupInputLocked = false;
             }
             if (NeedResponseInput())
@@ -115,6 +126,12 @@ namespace MDPro3.Servant
                         GetUI<MainMenuUI>().News.OnClose();
                 }
             }
+        }
+
+        public void SetStartupReveal(float progress)
+        {
+            if (startupInputLocked && servantUI != null)
+                servantUI.CG.alpha = menuStartupAlpha * Mathf.Clamp01(progress);
         }
 
         public override void Select(bool forced = false)
