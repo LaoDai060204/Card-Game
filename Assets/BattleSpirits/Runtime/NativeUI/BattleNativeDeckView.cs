@@ -18,11 +18,29 @@ namespace LaoDai.BattleSpirits.NativeUI
         private readonly List<string> deck;
         private readonly Dictionary<string, CardDefinition> cards;
         private RectTransform collection, deckContent, collectionTemplate, deckTemplate;
+        private ScrollRect collectionScroll;
         private TMP_InputField search, name;
         private RawImage detailColorSymbol, filterColorSymbol;
+        private Transform detailRoot;
+        private RawImage detailArtwork;
+        private readonly Dictionary<string, Transform> detailNodes = new Dictionary<string, Transform>(StringComparer.Ordinal);
+        private bool detailRendered;
         private CardDefinition selected;
         private int color = -1, sort, support, page;
         private string loadedDeck;
+        private readonly List<BattleNativeWidgets.CardSlot> collectionSlots = new List<BattleNativeWidgets.CardSlot>();
+        private readonly List<BattleNativeWidgets.CardSlot> deckSlots = new List<BattleNativeWidgets.CardSlot>();
+        private readonly List<BattleNativeWidgets.CardSlot> orderedDeckSlots = new List<BattleNativeWidgets.CardSlot>();
+        private readonly HashSet<BattleNativeWidgets.CardSlot> usedDeckSlots = new HashSet<BattleNativeWidgets.CardSlot>();
+        private readonly CardDefinition[][] sortedCatalog;
+        private readonly Dictionary<string, int> copyLimits;
+        private CardDefinition[] collectionResults;
+        private string renderedQuery;
+        private int renderedColor, renderedSort, renderedSupport;
+        private bool searchPending;
+        private float searchDue;
+        private int displayedPage = -1;
+        internal const float SearchDelaySeconds = 0.15f;
         private const int PageSize = 42;
         private const string Collection = "CardCollectionView/Root/Window";
         private const string Deck = "DeckView/Root/Window";
@@ -33,6 +51,15 @@ namespace LaoDai.BattleSpirits.NativeUI
         {
             this.root = root; this.session = session;
             cards = session.Cards.ToDictionary(card => card.id, StringComparer.Ordinal);
+            sortedCatalog = new[] {
+                session.Cards.OrderByDescending(card => card.releaseDate, StringComparer.Ordinal).ThenBy(card => card.id, StringComparer.Ordinal).ToArray(),
+                session.Cards.OrderBy(card => card.cost).ThenBy(card => card.id, StringComparer.Ordinal).ToArray(),
+                session.Cards.OrderBy(card => card.DisplayName, StringComparer.Ordinal).ToArray()
+            };
+            copyLimits = session.Cards.Where(card => card.standardBlock == "A" && card.standardLegalityVerified
+                    && (card.format == "Standard" || card.format == "Both"))
+                .GroupBy(card => card.nameJa, StringComparer.Ordinal)
+                .ToDictionary(group => group.Key, group => group.Min(card => card.EffectiveCopyLimit), StringComparer.Ordinal);
             deck = new List<string>(session.SelectedDeck?.cards ?? Array.Empty<string>());
             loadedDeck = Signature(session.SelectedDeck);
         }
@@ -41,12 +68,13 @@ namespace LaoDai.BattleSpirits.NativeUI
             collection = BattleNativeWidgets.Component<RectTransform>(root, Collection + "/CardListArea/CollectionAreaCenter/ScrollRect/Viewport/Content");
             deckContent = BattleNativeWidgets.Component<RectTransform>(root, Deck + "/Scroll View/Viewport/Content/MainDeckView/MainDeckContent");
             collectionTemplate = collection?.Find("Template") as RectTransform; deckTemplate = deckContent?.Find("Template") as RectTransform;
+            collectionScroll = collection?.GetComponentInParent<ScrollRect>();
             if (collectionTemplate != null) collectionTemplate.gameObject.SetActive(false);
             if (deckTemplate != null) deckTemplate.gameObject.SetActive(false);
             BattleNativeWidgets.Grid(collection, 5); BattleNativeWidgets.Grid(deckContent, 6, 92, 138);
             search = BattleNativeWidgets.Input(root, Collection + "/FilterAndSortArea/UpperArea/InputField", string.Empty);
             name = BattleNativeWidgets.Input(root, Deck + "/HeaderArea/NameAreaGroup/InputField", session.SelectedDeck?.name ?? "Battle Spirits Standard");
-            if (search != null) search.onValueChanged.AddListener(_ => { page = 0; RenderCollection(); });
+            if (search != null) search.onValueChanged.AddListener(_ => { page = 0; searchPending = true; searchDue = Time.unscaledTime + SearchDelaySeconds; });
             BattleNativeWidgets.Bind(root, Header + "/ButtonBack", BattleNativeNavigation.ReturnToMenu);
             BattleNativeWidgets.Bind(root, Header + "/ButtonSave", () => Save(), "LƯU");
             BattleNativeWidgets.Bind(root, Header + "/ButtonTest", () => { if (Save()) BattleNativeNavigation.Open(BattleNativeScreen.Solo); }, "ĐẤU THỬ");
@@ -57,10 +85,10 @@ namespace LaoDai.BattleSpirits.NativeUI
             BattleNativeWidgets.Bind(root, Collection + "/FilterAndSortArea/UpperArea/SearchButton", RenderCollection);
             BattleNativeWidgets.Bind(root, Collection + "/FilterAndSortArea/BottomArea/FilterToggle", CycleColor, "TẤT CẢ MÀU");
             BattleNativeWidgets.Bind(root, Collection + "/FilterAndSortArea/BottomArea/SortButton", () => { sort = (sort + 1) % 3; page = 0; RenderCollection(); }, "MỚI NHẤT");
-            BattleNativeWidgets.Bind(root, Collection + "/FilterAndSortArea/BottomArea/ClearButton", () => { if (search != null) search.text = string.Empty; color = -1; support = 0; page = 0; RenderCollection(); });
-            BattleNativeWidgets.Bind(root, Collection + "/TabArea/CardListToggle", () => { support = 0; RenderCollection(); }, "TẤT CẢ");
-            BattleNativeWidgets.Bind(root, Collection + "/TabArea/BookmarkToggle", () => { support = 1; RenderCollection(); }, "CHƠI ĐƯỢC");
-            BattleNativeWidgets.Bind(root, Collection + "/TabArea/HistotyToggle", () => { support = 2; RenderCollection(); }, "STANDARD");
+            BattleNativeWidgets.Bind(root, Collection + "/FilterAndSortArea/BottomArea/ClearButton", () => { if (search != null) search.SetTextWithoutNotify(string.Empty); color = -1; support = 0; page = 0; RenderCollection(); });
+            BattleNativeWidgets.Bind(root, Collection + "/TabArea/CardListToggle", () => { support = 0; page = 0; RenderCollection(); }, "TẤT CẢ");
+            BattleNativeWidgets.Bind(root, Collection + "/TabArea/BookmarkToggle", () => { support = 1; page = 0; RenderCollection(); }, "CHƠI ĐƯỢC");
+            BattleNativeWidgets.Bind(root, Collection + "/TabArea/HistotyToggle", () => { support = 2; page = 0; RenderCollection(); }, "STANDARD");
             BattleNativeWidgets.Active(root, Deck + "/Scroll View/Viewport/Content/ExtraDeckView", false);
             BattleNativeWidgets.Active(root, Deck + "/Scroll View/Viewport/Content/SideDeckView", false);
             BattleNativeWidgets.Active(root, Deck + "/Scroll View/Loading", false);
@@ -112,8 +140,12 @@ namespace LaoDai.BattleSpirits.NativeUI
             => definition == null ? string.Empty : definition.name + "\n" + string.Join("\n", definition.cards ?? Array.Empty<string>());
         internal void RefreshSelectedDeck()
         {
+            // Cached screens can outlive hidden artwork in the session's LRU.
+            // Rebinding checks destroyed textures without cloning any widgets.
+            RenderCollection();
+            if (selected != null) Select(selected);
             string signature = Signature(session.SelectedDeck);
-            if (signature == loadedDeck) return;
+            if (signature == loadedDeck) { RenderDeck(); return; }
             loadedDeck = signature;
             deck.Clear(); deck.AddRange(session.SelectedDeck?.cards ?? Array.Empty<string>());
             if (name != null) name.SetTextWithoutNotify(session.SelectedDeck?.name ?? "Battle Spirits Standard");
@@ -124,9 +156,18 @@ namespace LaoDai.BattleSpirits.NativeUI
             color = color == 5 ? -1 : color + 1; page = 0;
             RenderCollection();
         }
+        internal void Tick(float now)
+        {
+            if (searchPending && now >= searchDue) RenderCollection();
+        }
+        internal void FlushSearch()
+        {
+            if (searchPending) RenderCollection();
+        }
         private void RenderCollection()
         {
             if (collection == null) return;
+            searchPending = false;
             string[] names = { "ĐỎ", "TÍM", "LỤC", "TRẮNG", "VÀNG", "LAM" };
             BattleNativeWidgets.Label(root, Collection + "/FilterAndSortArea/BottomArea/FilterToggle", color < 0 ? "TẤT CẢ MÀU" : names[color]);
             if (filterColorSymbol != null)
@@ -135,19 +176,37 @@ namespace LaoDai.BattleSpirits.NativeUI
                 filterColorSymbol.gameObject.SetActive(filterColorSymbol.texture != null);
             }
             string query = (search?.text ?? string.Empty).Trim();
-            IEnumerable<CardDefinition> values = session.Cards;
-            if (query.Length > 0) values = values.Where(card => Matches(card, query));
-            if (color >= 0) values = values.Where(card => card.color == (CardColor)color);
-            if (support == 1) values = values.Where(card => card.IsPlayableFor(BattleSpiritsMode.RulesFormat));
-            if (support == 2) values = values.Where(card => card.IsEligibleFor(BattleSpiritsMode.RulesFormat));
-            values = sort == 1 ? values.OrderBy(card => card.cost).ThenBy(card => card.id, StringComparer.Ordinal)
-                : sort == 2 ? values.OrderBy(card => card.DisplayName, StringComparer.Ordinal)
-                : values.OrderByDescending(card => card.releaseDate, StringComparer.Ordinal).ThenBy(card => card.id, StringComparer.Ordinal);
-            var all = values.ToArray(); page = Math.Max(0, Math.Min(page, Math.Max(0, (all.Length - 1) / PageSize)));
-            BattleNativeWidgets.ClearGenerated(collection);
-            foreach (var card in all.Skip(page * PageSize).Take(PageSize))
-                BattleNativeWidgets.Card(collection, card.id, () => Select(card), session, collectionTemplate);
-            BattleNativeWidgets.Label(root, Collection + "/FilterAndSortArea/BottomArea/SortButton", (sort == 1 ? "COST" : sort == 2 ? "TÊN" : "MỚI NHẤT") + " · " + all.Length + " · " + (page + 1));
+            bool criteriaChanged = collectionResults == null || !string.Equals(renderedQuery, query, StringComparison.OrdinalIgnoreCase)
+                || renderedColor != color || renderedSort != sort || renderedSupport != support;
+            if (criteriaChanged)
+            {
+                IEnumerable<CardDefinition> values = sortedCatalog[sort];
+                if (query.Length > 0) values = values.Where(card => Matches(card, query));
+                if (color >= 0) values = values.Where(card => card.color == (CardColor)color);
+                if (support == 1) values = values.Where(card => card.IsPlayableFor(BattleSpiritsMode.RulesFormat));
+                if (support == 2) values = values.Where(card => card.IsEligibleFor(BattleSpiritsMode.RulesFormat));
+                collectionResults = values.ToArray();
+                renderedQuery = query; renderedColor = color; renderedSort = sort; renderedSupport = support;
+            }
+            var all = collectionResults;
+            int pageCount = Math.Max(1, (all.Length + PageSize - 1) / PageSize);
+            page = Math.Max(0, Math.Min(page, pageCount - 1));
+            if (collectionScroll != null && (criteriaChanged || displayedPage != page))
+                collectionScroll.verticalNormalizedPosition = 1f;
+            displayedPage = page;
+            int start = page * PageSize, count = Math.Min(PageSize, all.Length - start);
+            for (int i = 0; i < count; i++)
+            {
+                if (i == collectionSlots.Count)
+                {
+                    var slot = BattleNativeWidgets.CreateCardSlot(collection, session, collectionTemplate);
+                    collectionSlots.Add(slot);
+                    slot.Bind(all[start + i].id, () => { if (cards.TryGetValue(slot.Id, out var card)) Select(card); });
+                }
+                else collectionSlots[i].Bind(all[start + i].id);
+            }
+            for (int i = count; i < collectionSlots.Count; i++) collectionSlots[i].Hide();
+            BattleNativeWidgets.Label(root, Collection + "/FilterAndSortArea/BottomArea/SortButton", (sort == 1 ? "COST" : sort == 2 ? "TÊN" : "MỚI NHẤT") + " · " + all.Length + " · " + (page + 1) + "/" + pageCount);
         }
         private static bool Matches(CardDefinition card, string query)
         {
@@ -158,22 +217,30 @@ namespace LaoDai.BattleSpirits.NativeUI
         }
         private void Select(CardDefinition card)
         {
+            bool unchanged = ReferenceEquals(selected, card) && detailRendered;
             selected = card;
-            var detail = BattleNativeWidgets.Find(root, Detail);
+            var detail = detailRoot != null ? detailRoot : (detailRoot = BattleNativeWidgets.Find(root, Detail));
             if (detail == null) return;
             detail.gameObject.SetActive(true);
-            BattleNativeWidgets.Label(detail, "TextCardName", card.DisplayName);
-            BattleNativeWidgets.Label(detail, "TextCardNumValueTMP", card.id);
-            BattleNativeWidgets.Label(detail, "TextDescriptionItemTMP", "HIỆU ỨNG / " + card.type);
+            if (unchanged)
+            {
+                if (detailArtwork != null && detailArtwork.texture == null) session.LoadArt(card.id, detailArtwork);
+                return;
+            }
+            LabelDetail("TextCardName", card.DisplayName);
+            LabelDetail("TextCardNumValueTMP", card.id);
+            LabelDetail("TextDescriptionItemTMP", "HIỆU ỨNG / " + card.type);
             string status = !card.IsEligibleFor(BattleSpiritsMode.RulesFormat) ? "Ngoài pool Standard hoặc chưa xác minh hợp lệ"
                 : card.IsPlayableFor(BattleSpiritsMode.RulesFormat) ? "Standard · đã hỗ trợ trong trận" : "Standard · chỉ tra cứu; hiệu ứng chưa triển khai";
-            BattleNativeWidgets.Label(detail, "TextDescriptionValueTMP", card.effectTextJa + "\n\n" + card.setName + "\n" + status);
-            BattleNativeWidgets.Label(detail, "TextLevelTMP", "Cost " + card.cost + " / ↓" + card.reductionSymbols);
-            BattleNativeWidgets.Label(detail, "TextAtkTMP", string.Join(" / ", (card.levels ?? new List<CardLevel>()).Select(level => level.bp)) + " BP");
-            BattleNativeWidgets.Label(detail, "TextDefTMP", "Symbol " + card.symbols);
-            foreach (var suffix in new[] { "IconAttribute", "IconTuner", "IconRank", "IconLink", "IconPendulumScale", "SpellTrapType", "IconSpellTrapType", "IconLimit", "IconAtk", "IconDef", "IconLevel" }) BattleNativeWidgets.Active(detail, suffix, false);
-            var art = BattleNativeWidgets.Component<RawImage>(detail, "CardArea/ImageCard"); if (art != null) session.LoadArt(card.id, art);
-            var symbolSlot = BattleNativeWidgets.Find(detail, "IconAttribute");
+            LabelDetail("TextDescriptionValueTMP", card.effectTextJa + "\n\n" + card.setName + "\n" + status);
+            LabelDetail("TextLevelTMP", "Cost " + card.cost + " / ↓" + card.reductionSymbols);
+            LabelDetail("TextAtkTMP", string.Join(" / ", (card.levels ?? new List<CardLevel>()).Select(level => level.bp)) + " BP");
+            LabelDetail("TextDefTMP", "Symbol " + card.symbols);
+            foreach (var suffix in new[] { "IconAttribute", "IconTuner", "IconRank", "IconLink", "IconPendulumScale", "SpellTrapType", "IconSpellTrapType", "IconLimit", "IconAtk", "IconDef", "IconLevel" })
+            { var icon = DetailNode(suffix); if (icon != null) icon.gameObject.SetActive(false); }
+            if (detailArtwork == null) detailArtwork = DetailNode("CardArea/ImageCard")?.GetComponent<RawImage>();
+            if (detailArtwork != null) session.LoadArt(card.id, detailArtwork);
+            var symbolSlot = DetailNode("IconAttribute");
             if (detailColorSymbol == null)
             {
                 if (symbolSlot == null)
@@ -187,14 +254,21 @@ namespace LaoDai.BattleSpirits.NativeUI
             }
             detailColorSymbol.texture = BattleTheme.ColorIcon(card.color);
             detailColorSymbol.transform.parent.gameObject.SetActive(detailColorSymbol.texture != null);
+            detailRendered = true;
         }
+        private Transform DetailNode(string suffix)
+        {
+            if (!detailNodes.TryGetValue(suffix, out var node))
+            { node = BattleNativeWidgets.Find(detailRoot, suffix); detailNodes[suffix] = node; }
+            return node;
+        }
+        private void LabelDetail(string suffix, string value) => BattleNativeWidgets.SetLabel(DetailNode(suffix), value);
         private void Add()
         {
             if (selected == null) return;
             if (!selected.IsEligibleFor(BattleSpiritsMode.RulesFormat))
             { MessageManager.Cast("Thẻ này không thuộc pool Standard đã xác minh."); return; }
-            int limit = session.Cards.Where(card => card.nameJa == selected.nameJa && card.standardBlock == "A"
-                && card.standardLegalityVerified && (card.format == "Standard" || card.format == "Both")).Min(card => card.EffectiveCopyLimit);
+            if (!copyLimits.TryGetValue(selected.nameJa, out int limit)) return;
             if (deck.Count(id => cards.TryGetValue(id, out var card) && card.nameJa == selected.nameJa) >= limit)
             { MessageManager.Cast("Tối đa " + limit + " lá cùng tên."); return; }
             deck.Add(selected.id); RenderDeck();
@@ -203,14 +277,44 @@ namespace LaoDai.BattleSpirits.NativeUI
         private void RenderDeck()
         {
             if (deckContent == null) return;
-            BattleNativeWidgets.ClearGenerated(deckContent);
+            // Match occurrences before allocating/rebinding. Sorting or removing
+            // a card moves its existing widget instead of reloading every face.
+            orderedDeckSlots.Clear(); usedDeckSlots.Clear();
             for (int i = 0; i < deck.Count; i++)
             {
-                int index = i; string id = deck[i];
-                BattleNativeWidgets.Card(deckContent, id, () => { if (cards.TryGetValue(id, out var card)) Select(card); deck.RemoveAt(index); RenderDeck(); }, session, deckTemplate);
+                string id = deck[i];
+                var existing = deckSlots.FirstOrDefault(slot => slot.Id == id && !usedDeckSlots.Contains(slot));
+                orderedDeckSlots.Add(existing);
+                if (existing != null) usedDeckSlots.Add(existing);
             }
+            for (int i = 0; i < deck.Count; i++)
+            {
+                var slot = orderedDeckSlots[i];
+                if (slot == null)
+                {
+                    slot = deckSlots.FirstOrDefault(candidate => !usedDeckSlots.Contains(candidate));
+                    if (slot == null)
+                    {
+                        slot = BattleNativeWidgets.CreateCardSlot(deckContent, session, deckTemplate);
+                        deckSlots.Add(slot);
+                        var captured = slot;
+                        slot.Bind(deck[i], () => RemoveSlot(captured));
+                    }
+                    orderedDeckSlots[i] = slot; usedDeckSlots.Add(slot);
+                }
+                slot.Index = i; slot.Bind(deck[i]);
+                slot.Button.transform.SetSiblingIndex(i + (deckTemplate != null ? 1 : 0));
+            }
+            foreach (var slot in deckSlots) if (!usedDeckSlots.Contains(slot)) slot.Hide();
             BattleNativeWidgets.Label(root, Deck + "/Scroll View/Viewport/Content/MainDeckView/Subhedding/Left/TextMainDeckCardNumTMP", deck.Count + " / 40+");
             BattleNativeWidgets.Label(root, Deck + "/HeaderArea/DeckNameText", name?.text ?? session.SelectedDeck?.name ?? "Battle Spirits");
+        }
+        private void RemoveSlot(BattleNativeWidgets.CardSlot slot)
+        {
+            int index = slot.Index;
+            if (index < 0 || index >= deck.Count || deck[index] != slot.Id) return;
+            if (cards.TryGetValue(slot.Id, out var card)) Select(card);
+            deck.RemoveAt(index); RenderDeck();
         }
         private bool Save()
         {

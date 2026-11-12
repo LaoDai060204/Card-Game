@@ -1,5 +1,7 @@
 # Màn mở đầu Battle Spirits — 0.6.0
 
+**Tài liệu phiên bản trước.** Từ 0.6.1, Boot vào thẳng menu theo kiểu MDPro3, theo lựa chọn mới của người dùng. Các helper title được giữ để tương thích và kiểm tra, nhưng không còn được Boot tạo hoặc chờ thao tác. Xem [bản hiện tại](BATTLE_SPIRITS_DECK_OPTIMIZATION.md).
+
 Theo lựa chọn của người dùng, màn vào game đi theo trình tự của **Master Duel chính thức**: hiển thị tên game, chờ thao tác bắt đầu, rồi chuyển sang menu. Tên hiển thị là **Battle Spirits**, phần giao diện dùng tiếng Việt.
 
 ## Trình tự

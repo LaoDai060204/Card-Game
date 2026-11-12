@@ -31,7 +31,11 @@ namespace LaoDai.BattleSpirits.NativeUI
         { var target = Find(root, suffix); if (target != null) target.gameObject.SetActive(value); }
         internal static void Label(Transform root, string suffix, string value)
         {
-            var node = Find(root, suffix); if (node == null) return;
+            SetLabel(Find(root, suffix), value);
+        }
+        internal static void SetLabel(Transform node, string value)
+        {
+            if (node == null) return;
             // Toggle faces contain separate On/Off labels; update both through
             // the existing template API so the old face cannot reappear.
             var selection = node.GetComponent<SelectionButton>();
@@ -102,18 +106,79 @@ namespace LaoDai.BattleSpirits.NativeUI
         internal static void SetLayer(Transform root, int layer)
         { foreach (var node in root.GetComponentsInChildren<Transform>(true)) node.gameObject.layer = layer; }
 
+        // The original card form is expensive to clone. Deck screens keep these
+        // handles and change only the identity/callback when a visible slot changes.
+        internal sealed class CardSlot
+        {
+            internal readonly Button Button;
+            internal readonly RawImage Image;
+            private readonly TextMeshProUGUI label;
+            private readonly IBattleNativeSession session;
+            private Action click;
+            internal string Id { get; private set; }
+            internal int Index;
+
+            internal CardSlot(Button button, RawImage image, TextMeshProUGUI label, IBattleNativeSession session)
+            {
+                Button = button; Image = image; this.label = label; this.session = session;
+                // Keep template hover/chrome but let one Unity Button own click
+                // and Submit. A nested legacy selection must not dispatch twice.
+                foreach (var selection in button.GetComponentsInChildren<SelectionButton>(true))
+                    selection.SetClickEvent(() => { });
+                button.onClick.RemoveAllListeners(); button.onClick.AddListener(Invoke);
+            }
+
+            private void Invoke()
+            {
+                if (Button != null && Button.gameObject.activeInHierarchy && Button.interactable)
+                    click?.Invoke();
+            }
+
+            internal void Bind(string id, Action action = null)
+            {
+                if (action != null) click = action;
+                bool changed = !string.Equals(Id, id, StringComparison.Ordinal);
+                Id = id;
+                Button.gameObject.name = "BS_Card_" + id;
+                if (changed)
+                {
+                    label.text = id;
+                    Image.texture = null;
+                    Image.uvRect = new Rect(0, 0, 1, 1);
+                    Image.GetComponent<AspectRatioFitter>().aspectRatio = 675f / 983;
+                }
+                Button.gameObject.SetActive(true);
+                // A hidden card's texture may have been evicted by the session.
+                // LoadArt also updates its own target-generation guard, so a
+                // late result for a previous ID cannot paint the reused slot.
+                if (changed || Image.texture == null) session.LoadArt(id, Image);
+            }
+
+            internal void Hide()
+            {
+                Button.gameObject.name = "BS_PooledCard";
+                Button.gameObject.SetActive(false);
+            }
+        }
+
         internal static Button Card(Transform parent, string id, Action click, IBattleNativeSession session, RectTransform template = null)
+        {
+            var slot = CreateCardSlot(parent, session, template);
+            slot.Bind(id, click);
+            return slot.Button;
+        }
+
+        internal static CardSlot CreateCardSlot(Transform parent, IBattleNativeSession session, RectTransform template = null)
         {
             GameObject go;
             if (template != null)
             {
-                go = UnityEngine.Object.Instantiate(template.gameObject, parent, false); go.name = "BS_Card_" + id;
+                go = UnityEngine.Object.Instantiate(template.gameObject, parent, false); go.name = "BS_PooledCard";
                 go.SetActive(true); SetLayer(go.transform, parent.gameObject.layer);
-                foreach (var selection in go.GetComponentsInChildren<SelectionButton>(true)) selection.SetClickEvent(() => click());
                 foreach (var node in go.GetComponentsInChildren<Transform>(true))
                     if (node.name.StartsWith("Icon", StringComparison.Ordinal) || node.name == "PickupCursor" || node.name == "CardPoint") node.gameObject.SetActive(false);
             }
-            else go = Rect(parent, "BS_Card_" + id).gameObject;
+            else go = Rect(parent, "BS_PooledCard").gameObject;
             var image = go.GetComponentsInChildren<RawImage>(true).FirstOrDefault();
             // Card slots follow screen/layout sizes, while the official face
             // retains its printed aspect. A separate art area also keeps the
@@ -126,12 +191,10 @@ namespace LaoDai.BattleSpirits.NativeUI
             aspect.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
             aspect.aspectRatio = 675f / 983;
             image.color = Color.white; image.raycastTarget = false;
-            session.LoadArt(id, image);
             var button = go.GetComponent<Button>() ?? go.AddComponent<Button>();
             button.targetGraphic = image; image.raycastTarget = true;
-            button.onClick.RemoveAllListeners(); button.onClick.AddListener(() => click());
-            var label = Text(go.transform, "BS_CardCode", id, 14); Place(label.rectTransform, 0, 0, 1, 0.12f);
-            return button;
+            var label = Text(go.transform, "BS_CardCode", string.Empty, 14); Place(label.rectTransform, 0, 0, 1, 0.12f);
+            return new CardSlot(button, image, label, session);
         }
         internal static void Grid(RectTransform content, int columns, float width = 110f, float height = 166f)
         {

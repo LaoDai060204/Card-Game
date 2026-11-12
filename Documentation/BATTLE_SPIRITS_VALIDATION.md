@@ -1,5 +1,7 @@
 # Kiểm tra Standard và cách trình diễn thẻ
 
+Bản **0.6.1** dùng lại luồng Boot → menu MDPro3 và tối ưu Bộ bài. [Báo cáo Bộ bài](battle-spirits-deck-optimization-validation.json) ghi **67 luồng UI/session**, gồm 10 tình huống mới kiểm tra pool, kết quả tìm kiếm, lá trùng, ảnh tải muộn và bản nháp khi mở lại. Sau khi pool sẵn sàng, tám lần refresh cùng truy vấn và 12 vòng phân trang không tạo thêm GameObject. Các kiểm tra cấu trúc đạt 9 prefab, 12 tài nguyên, 4 scene Boot; năm tệp C# qua ba profile C# 9 không có lỗi cú pháp. **Chưa đo FPS hoặc chạy Play/render bằng Unity Windows.** [Cách thử bản hiện tại](BATTLE_SPIRITS_DECK_OPTIMIZATION.md). Các kết quả title 0.6.0 bên dưới là kiểm tra helper lưu lại; Boot hiện tại không dùng title đó.
+
 Bản **0.6.0** thêm màn mở đầu theo trình tự Master Duel chính thức: title Battle Spirits → nhấn bắt đầu → menu. [Báo cáo title](battle-spirits-title-validation.json) ghi **35 tình huống startup/title** và **57 luồng UI/session**, gồm 12 kiểm tra mới của luồng chờ bắt đầu và tám kiểm tra view thực với API Unity thay thế. Năm tệp production C# qua ba profile C# 9 không có lỗi cú pháp; Boot, MainMenu đầy đủ, input thiết bị và khóa FPS chỉ được đọc mã/phân tích cú pháp. Chưa xác minh hình ảnh/chuyển cảnh bằng Unity Windows. [Cách chạy thử](BATTLE_SPIRITS_TITLE_SCREEN.md).
 
 Bản **0.5.2** sửa chuyển màn Boot → Main và vòng đời wallpaper. [Báo cáo khởi động](battle-spirits-startup-validation.json) ghi **23 tình huống startup state**, **49 luồng UI/session** (gồm bảy kiểm tra mới cho loader wallpaper), bốn kiểm tra cấu trúc Boot, 9 kiểm tra prefab và 12 kiểm tra tài nguyên đạt. Bảy tệp production C# qua ba profile C# 9 không có lỗi cú pháp. **Boot, Program, UIManager và Servant đầy đủ chỉ được đọc mã/phân tích cú pháp; chưa biên dịch chúng bằng Unity hoặc xác minh chuyển cảnh/pixel/input trên Windows.** [Cách thử](BATTLE_SPIRITS_STARTUP.md).
@@ -75,7 +77,7 @@ Thay đường dẫn mẫu bằng đường dẫn trên máy. `catalog.py valida
 
 ## Cần kiểm tra bằng Windows Unity
 
-1. Mở Boot đúng Editor, Addressables **Use Asset Database**. Kiểm tra màn mở đầu **0.6.0**, wallpaper đã chọn và thao tác nhấn bắt đầu theo [hướng dẫn title](BATTLE_SPIRITS_TITLE_SCREEN.md); thử khởi động lại, chuột, phím và gamepad. Bố cục các form và nhãn nút được giữ.
+1. Mở Boot đúng Editor, Addressables **Use Asset Database**. Xác nhận game tự vào menu MDPro3 **0.6.1** khi tải xong; thử tìm kiếm, phân trang và sửa deck theo [hướng dẫn Bộ bài](BATTLE_SPIRITS_DECK_OPTIMIZATION.md). Bố cục các form và nhãn nút được giữ.
 2. Chọn một trong ba bộ Standard. Giữ/đổi tay đầu, triệu hồi bằng click, Core/Soul, Super Unleash, Main → Attack → Second Main → End; lượt đầu không có Core/Attack/Second Main.
 3. Về menu rồi chơi ván tiếp; kiểm tra field/pet và âm thanh không mất hoặc lặp. Thử chọn pet và **Cài đặt → Hình nền**, quay lại menu và khởi động lại để kiểm tra lựa chọn được giữ.
 4. Hoạt cảnh vẫn xem hai boss BS01 nhưng không cho đưa chúng vào deck Standard. Lịch sử cho tiến/lùi replay Standard cùng version/catalog.

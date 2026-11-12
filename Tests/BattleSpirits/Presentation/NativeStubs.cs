@@ -35,6 +35,7 @@ namespace UnityEngine
         public static GameObject CreatePrimitive(PrimitiveType type) => new GameObject(type.ToString(),typeof(MeshRenderer),typeof(MeshFilter),typeof(Collider));
     }
     public partial class Transform {
+  public void SetSiblingIndex(int index){if(parent==null)return;parent.children.Remove(this);parent.children.Insert(Math.Max(0,Math.Min(index,parent.children.Count)),this);}
   public Vector3 eulerAngles;
   public Vector3 TransformPoint(Vector3 value){var scaled=new Vector3(value.x*localScale.x,value.y*localScale.y,value.z*localScale.z);var local=localPosition+localRotation*scaled;return parent==null?local:parent.TransformPoint(local);}
   public Vector3 InverseTransformPoint(Vector3 value){var local=parent==null?value:parent.InverseTransformPoint(value);var rotated=Quaternion.Inverse(localRotation)*(local-localPosition);return new Vector3(localScale.x==0?0:rotated.x/localScale.x,localScale.y==0?0:rotated.y/localScale.y,localScale.z==0?0:rotated.z/localScale.z);}

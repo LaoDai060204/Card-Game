@@ -1,4 +1,4 @@
-# LaoDai Battle Spirits — Standard 0.6.0
+# LaoDai Battle Spirits — Standard 0.6.1
 
 Bản chuyển đổi từ **Card-Game/MDPro3** sang **Battle Spirits Nhật — Standard**, giao diện tiếng Việt, Unity **6000.0.24f1**. Theo yêu cầu ngày 06/11/2026, bản này giữ bố cục và khôi phục khung/nút cùng bảng màu giao diện gốc: đen, xám, viền sáng và điểm nhấn xanh lime. Thẻ, sân, luật và trình diễn tiếp tục dùng Battle Spirits; pet và wallpaper vẫn được giữ. Lớp ứng dụng overlay của bản 0.1.0 đã bỏ.
 
@@ -6,7 +6,9 @@ Có **Solo đấu WindBot**, bộ bài, phòng LAN/IP trực tiếp, replay Solo
 
 Nhánh phát triển: `battle-spirits-mdpro3-ui`. Bản Card-Game/Yu-Gi-Oh cũ được giữ trên `main`.
 
-**0.6.0:** màn mở đầu theo trình tự của Master Duel chính thức: tên **Battle Spirits** ở giữa, wallpaper phía sau, dòng **NHẤN ĐỂ BẮT ĐẦU**, rồi chuyển mượt sang menu. Màn này dùng chính Canvas Boot và chỉ nhận thao tác sau khi dữ liệu, menu và wallpaper sẵn sàng. [Chi tiết và cách thử](Documentation/BATTLE_SPIRITS_TITLE_SCREEN.md).
+**0.6.1:** dùng lại luồng **Boot → menu MDPro3**, giữ bố cục các form template và tối ưu Bộ bài bằng tái sử dụng ô thẻ, lưu kết quả lọc/sắp xếp, gom thao tác tìm kiếm liên tiếp. [Chi tiết và cách thử](Documentation/BATTLE_SPIRITS_DECK_OPTIMIZATION.md).
+
+Màn **Nhấn để bắt đầu** của 0.6.0 đã ngừng dùng trong Boot theo lựa chọn mới. [Tài liệu 0.6.0](Documentation/BATTLE_SPIRITS_TITLE_SCREEN.md) được giữ để tra cứu phiên bản trước.
 
 **0.5.2:** sửa nền trong suốt của màn tải gây vệt chữ, đồng bộ menu/wallpaper và tải wallpaper được chọn trước ảnh dự phòng. [Chi tiết sửa khởi động](Documentation/BATTLE_SPIRITS_STARTUP.md).
 
@@ -21,7 +23,7 @@ Phần triệu hồi của **0.4.0** được giữ: phóng to mặt thẻ, qué
 Đóng Unity trước khi cập nhật. Stash giữ chỉnh sửa và tệp chưa được Git theo dõi; dữ liệu cá nhân bị `.gitignore` loại trừ cần sao lưu riêng trước khi di chuyển hoặc xóa.
 
 ```bash
-git stash push -u -m "backup-before-standard-0.6.0-update"
+git stash push -u -m "backup-before-standard-0.6.1-update"
 git fetch origin
 git switch battle-spirits-mdpro3-ui
 git pull --ff-only origin battle-spirits-mdpro3-ui
@@ -30,7 +32,7 @@ git pull --ff-only origin battle-spirits-mdpro3-ui
 1. Mở thư mục dự án bằng **Unity 6000.0.24f1**, nền tảng Windows x64.
 2. Giữ `Data`, `Picture`, `Platforms`, `Sound` cùng cấp với `Assets`.
 3. Vào **Window → Asset Management → Addressables → Groups**, chọn **Play Mode Script → Use Asset Database** khi chạy từ source để dùng prefab mới.
-4. Mở `Assets/Scenes/Boot.unity`, nhấn Play. Chờ màn mở đầu **0.6.0** hiện **NHẤN ĐỂ BẮT ĐẦU**, rồi bấm chuột, một phím hoặc nút A/Start trên gamepad để vào menu.
+4. Mở `Assets/Scenes/Boot.unity`, nhấn Play. Sau khi tải đủ dữ liệu và wallpaper, game vào thẳng menu **0.6.1** theo kiểu MDPro3.
 5. Vào **Bộ bài** chọn bộ Standard mẫu, rồi **Đấu với máy**. Sau khi chọn **GIỮ 4 LÁ**, đến Main thì bấm lá trên tay để triệu hồi; chưa có thao tác kéo thả.
 
 **Mã, dữ liệu, UI stand-in và TCP đã được kiểm tra; chưa chạy Play/render/build trong Unity Windows thật.** Xem [báo cáo kiểm tra](Documentation/BATTLE_SPIRITS_VALIDATION.md).
@@ -106,3 +108,5 @@ Backup trước đợt khôi phục giao diện 0.5.0: **`backup/2026-11-06-befo
 Backup trước đợt sửa chuyển màn khởi động 0.5.2: **`backup/2026-11-11-before-startup-ui-fix` → `42eb3a2f`**.
 
 Backup trước đợt thêm màn mở đầu 0.6.0: **`backup/2026-11-12-before-title-screen` → `83709983`**.
+
+Backup trước đợt dùng lại UI MDPro3 và tối ưu Bộ bài 0.6.1: **`backup/2026-11-12-before-mdpro3-ui-deck-optimization` → `012e1f28`**.

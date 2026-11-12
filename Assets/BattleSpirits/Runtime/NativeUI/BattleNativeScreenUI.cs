@@ -53,6 +53,10 @@ namespace LaoDai.BattleSpirits.NativeUI
             if (screen == BattleNativeScreen.Solo) RefreshSoloChoices();
             Refresh();
         }
+        private void Update()
+        {
+            deck?.Tick(Time.unscaledTime);
+        }
         protected override void OnDestroy()
         {
             if (session != null) session.Changed -= Refresh;

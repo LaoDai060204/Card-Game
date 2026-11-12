@@ -1,6 +1,6 @@
 # Màn tải và chuyển sang menu
 
-Bản 0.6.0 giữ các sửa lỗi 0.5.2 bên dưới và thêm [màn mở đầu chờ nhấn bắt đầu](BATTLE_SPIRITS_TITLE_SCREEN.md). Sau khi tải xong, người chơi xác nhận ở màn này rồi mới vào menu.
+Bản **0.6.1** dùng lại luồng **Boot → menu MDPro3**. Giữ các sửa lỗi tải dữ liệu/wallpaper của 0.5.2, bỏ bước chờ nhấn bắt đầu đã thêm ở 0.6.0. [Giao diện hiện tại và tối ưu Bộ bài](BATTLE_SPIRITS_DECK_OPTIMIZATION.md).
 
 Người dùng xác nhận menu vẫn xuất hiện sau khi chờ; lỗi được báo là chữ có vệt chồng ở màn tải và background xuất hiện trước menu trong lúc chuyển cảnh.
 
@@ -23,9 +23,9 @@ Luật Standard, mạng, deck, thẻ, hình Core, pet và wallpaper được ch�
 
 1. Dừng Play và đóng Unity trước khi cập nhật nhánh `battle-spirits-mdpro3-ui`. Dùng Unity **6000.0.24f1**, Windows x64.
 2. Trong Addressables Groups, chọn **Play Mode Script → Use Asset Database** để kiểm tra scene và prefab source mới. Bản build phải build lại Addressables.
-3. Mở `Assets/Scenes/Boot.unity`, nhấn Play. Màn tải có nền kín; các lần đổi chữ/dấu chấm không để lại chữ cũ. Khi tải xong, nhấn bắt đầu ở màn mở đầu **0.6.0** để hiện menu cùng wallpaper.
+3. Mở `Assets/Scenes/Boot.unity`, nhấn Play. Màn tải có nền kín; các lần đổi chữ/dấu chấm không để lại chữ cũ. Khi tải xong, menu **0.6.1** hiện cùng wallpaper.
 4. Thử wallpaper mặc định, một wallpaper giữ lại và lựa chọn không dùng wallpaper. Khởi động lại để kiểm tra mỗi lựa chọn; không nên thấy ảnh rồng dự phòng chớp trước wallpaper đã chọn.
-5. Khi đang tải, thử chuột, Enter và gamepad: chưa được mở form phía sau. Khi hiện **NHẤN ĐỂ BẮT ĐẦU**, thao tác mới cho vào menu. Sau đó thử **Đấu với máy**, **Bộ bài**, **Cài đặt**.
+5. Khi đang tải, thử chuột, Enter và gamepad: chưa được mở form phía sau. Sau khi menu tự hiện, thử **Đấu với máy**, **Bộ bài**, **Cài đặt**.
 6. Dừng Play, rồi nhấn Play lại vài lần. Không được giữ màn tải của lượt cũ hoặc nhân đôi menu.
 
 Game View đang phóng **1.3x** trong ảnh người dùng; có thể thử **1x** để so sánh nét chữ. Việc phóng Game View không phải nguyên nhân đã xác nhận của lớp nền tải trong suốt.
