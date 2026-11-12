@@ -45,6 +45,7 @@ namespace LaoDai.BattleSpirits.NativeUI
             status.enableWordWrapping = false;
             status.overflowMode = TextOverflowModes.Ellipsis;
             BattleNativeWidgets.Place(status.rectTransform, 0.02f, 0.005f, 0.98f, 0.045f);
+            if (screen == BattleNativeScreen.Duel) BattleNativeWidgets.Place(status.rectTransform, .245f, .005f, .85f, .035f);
             session.Changed += Refresh;
             Refresh();
         }
@@ -58,7 +59,9 @@ namespace LaoDai.BattleSpirits.NativeUI
         private void Update()
         {
             deck?.Tick(Time.unscaledTime);
+            duel?.Tick();
         }
+        public bool TryCloseCardZoom() => duel?.TryCloseZoom() == true;
         protected override void OnDestroy()
         {
             if (session != null) session.Changed -= Refresh;

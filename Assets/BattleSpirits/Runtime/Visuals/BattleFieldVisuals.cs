@@ -20,6 +20,9 @@ namespace LaoDai.BattleSpirits.Visuals
     public sealed class BattleFieldVisuals : MonoBehaviour, IDisposable
     {
         private const int StageLayer = 31;
+        private const float CameraPitch = 62;
+        private const float CameraFocusZ = -2.5f;
+        private const int MaximumRenderEdge = 1920;
         private static readonly Vector3 StageOrigin = new Vector3(20000, 0, 0);
         private sealed class Unit
         {
@@ -63,6 +66,8 @@ namespace LaoDai.BattleSpirits.Visuals
         private bool disposed;
         private Font font;
         private string poolSignature;
+        private int pendingWidth, pendingHeight;
+        private float resizeReadyAt;
 
         public bool IsLoaded => stage != null && !disposed;
         public bool IsDisposed => disposed;
@@ -80,6 +85,7 @@ namespace LaoDai.BattleSpirits.Visuals
         {
             bounds = default;
             if (disposed || camera == null || stage == null || !units.TryGetValue(instanceId, out var unit) || unit.removed) return false;
+            RefreshRenderTarget();
             float width = BattleCardFigure.CardWidth * unit.layoutScale;
             float height = BattleCardFigure.CardHeight * unit.layoutScale;
             if (unit.exhausted) { float swap = width; width = height; height = swap; }
@@ -109,7 +115,7 @@ namespace LaoDai.BattleSpirits.Visuals
         public void Load(RawImage output)
         {
             if (disposed || output == null) return;
-            if (target == output && stage != null) return;
+            if (target == output && stage != null) { RefreshRenderTarget(); return; }
             ReleaseStage(); target = output; generation++;
             try
             {
@@ -162,9 +168,10 @@ namespace LaoDai.BattleSpirits.Visuals
             var cameraObject = new GameObject("BattleSpirits_FieldCamera"); cameraObject.layer = StageLayer;
             cameraObject.transform.SetParent(stage.transform, false);
             camera = cameraObject.AddComponent<Camera>();
-            camera.transform.localPosition = new Vector3(0, 28, -27);
-            camera.transform.localRotation = Quaternion.Euler(47, 0, 0);
-            camera.fieldOfView = 48; camera.nearClipPlane = 0.3f; camera.farClipPlane = 100;
+            // A steeper view exposes both players' printed faces instead of
+            // looking through large floating illustrations across the table.
+            camera.transform.localRotation = Quaternion.Euler(CameraPitch, 0, 0);
+            camera.fieldOfView = 46; camera.nearClipPlane = 0.3f; camera.farClipPlane = 200;
             camera.cullingMask = 1 << StageLayer; camera.clearFlags = CameraClearFlags.SolidColor;
             camera.backgroundColor = new Color(0.012f, 0.012f, 0.018f); camera.allowHDR = false; camera.allowMSAA = false;
             var urp = cameraObject.AddComponent<UniversalAdditionalCameraData>(); urp.renderType = CameraRenderType.Base;
@@ -177,11 +184,78 @@ namespace LaoDai.BattleSpirits.Visuals
             var light = lightObject.AddComponent<Light>(); light.type = LightType.Directional;
             light.intensity = 1.6f; light.color = new Color(0.85f, 0.93f, 1f);
             light.cullingMask = 1 << StageLayer; light.shadows = LightShadows.None;
-            texture = new RenderTexture(1600, 900, 24, RenderTextureFormat.ARGB32)
-            { name = "BattleSpirits_NativeField", antiAliasing = 1, filterMode = FilterMode.Bilinear };
-            texture.Create(); camera.targetTexture = texture;
-            target.texture = texture; target.color = Color.white; target.raycastTarget = false;
+            RefreshRenderTarget();
+            target.color = Color.white; target.raycastTarget = false;
             BuildField();
+        }
+
+        private void RefreshRenderTarget()
+        {
+            if (target == null || camera == null) return;
+            var rect = target.rectTransform.rect;
+            var canvas = target.GetComponentInParent<Canvas>();
+            float scale = canvas != null ? canvas.scaleFactor : 1;
+            if (float.IsNaN(scale) || float.IsInfinity(scale) || scale <= 0) scale = 1;
+            float width = Math.Abs(rect.width) * scale, height = Math.Abs(rect.height) * scale;
+            // During initial layout the view can still have a zero rect. Use
+            // the previous target until Unity has resolved its actual bounds.
+            if (width < 1 || height < 1)
+            {
+                if (texture != null) return;
+                width = 1280; height = 720;
+            }
+            float aspect = width / height;
+            int edge = Math.Min(MaximumRenderEdge, (int)Math.Ceiling(Math.Max(640, Math.Max(width, height)) / 32) * 32);
+            int desiredWidth = width >= height ? edge : Math.Max(1, (int)Math.Round(edge * aspect));
+            int desiredHeight = width >= height ? Math.Max(1, (int)Math.Round(edge / aspect)) : edge;
+            if (texture != null && texture.width == desiredWidth && texture.height == desiredHeight)
+            { pendingWidth = pendingHeight = 0; return; }
+            if (texture != null)
+            {
+                // Window drags otherwise create/release a GPU texture for every
+                // pixel. Refit once the requested size has settled briefly.
+                if (pendingWidth != desiredWidth || pendingHeight != desiredHeight)
+                {
+                    pendingWidth = desiredWidth; pendingHeight = desiredHeight;
+                    resizeReadyAt = Time.unscaledTime + 0.12f; return;
+                }
+                if (Time.unscaledTime < resizeReadyAt) return;
+            }
+            var previous = texture;
+            texture = new RenderTexture(desiredWidth, desiredHeight, 24, RenderTextureFormat.ARGB32)
+            { name = "BattleSpirits_NativeField", antiAliasing = 1, filterMode = FilterMode.Bilinear };
+            texture.Create(); camera.targetTexture = texture; target.texture = texture;
+            camera.aspect = (float)desiredWidth / desiredHeight;
+            pendingWidth = pendingHeight = 0;
+            FitCamera((float)desiredWidth / desiredHeight);
+            if (previous != null) { previous.Release(); Destroy(previous); }
+        }
+
+        private void FitCamera(float aspect)
+        {
+            double pitch = CameraPitch * Math.PI / 180;
+            double sin = Math.Sin(pitch), cos = Math.Cos(pitch);
+            double tan = Math.Tan(camera.fieldOfView * Math.PI / 360);
+            double distance = 1;
+            // Fit the actual table corners, including near-side perspective,
+            // rather than clipping Life/Deck pools in a narrow Game window.
+            for (int x = -1; x <= 1; x += 2)
+                for (int z = -1; z <= 1; z += 2)
+                {
+                    FitPoint(x * 17.6, 0.3, z * 13.6);
+                    FitPoint(x * 12, 5, z * 8);
+                }
+            void FitPoint(double x, double y, double z)
+            {
+                z -= CameraFocusZ;
+                double depth = z * cos - y * sin;
+                distance = Math.Max(distance, Math.Abs(x) / (tan * aspect) - depth);
+                distance = Math.Max(distance, Math.Abs(y * cos + z * sin) / tan - depth);
+            }
+            distance *= 1.045;
+            // Bias the target toward the near half to balance perspective:
+            // aiming exactly at world zero wastes space above the far rail.
+            camera.transform.localPosition = new Vector3(0, (float)(sin * distance), CameraFocusZ + (float)(-cos * distance));
         }
 
         private void BuildField()
@@ -197,7 +271,7 @@ namespace LaoDai.BattleSpirits.Visuals
                 int side = sign < 0 ? 0 : 1;
                 var half = BattleSpiritGeometry.Pivot(stage.transform, side == 0 ? "NearPlayerField" : "FarPlayerField", Vector3.zero);
                 Zone(half, "SPIRIT", new Vector3(0, 0.1f, sign * 3.8f), new Vector3(23, 0.12f, 4.8f), side);
-                Zone(half, "NEXUS", new Vector3(0, 0.1f, sign * 7.4f), new Vector3(18, 0.12f, 1.8f), side);
+                Zone(half, "NEXUS", new Vector3(0, 0.1f, sign * 7.75f), new Vector3(18, 0.12f, 2.7f), side);
                 decisionRails[side] = Part(half, "DecisionAccent", PrimitiveType.Cube,
                     new Vector3(0, 0.18f, sign * 1.25f), new Vector3(22.8f, 0.035f, 0.05f), trim).GetComponent<Renderer>();
                 string[] labels = { "LIFE", "RESERVE", "TRASH", "DECK" };
@@ -338,9 +412,9 @@ namespace LaoDai.BattleSpirits.Visuals
                         int rows = Math.Max(1, (nexusCount + columns - 1) / columns);
                         int index = nexusIndex++, row = index / columns, column = index % columns;
                         int rowCount = Math.Min(columns, nexusCount - row * columns);
-                        unit.layoutScale = Math.Min(0.75f, 1f / rows);
+                        unit.layoutScale = Math.Min(0.72f, Math.Min(16.8f / columns, 2.6f / rows) / 3.7f);
                         unit.home = new Vector3((column - (rowCount - 1) * 0.5f) * (16f / columns), 0.22f,
-                            sign * (6.55f + (row + 0.5f) * (1.7f / rows)));
+                            sign * (6.4f + (row + 0.5f) * (2.7f / rows)));
                     }
                     else
                     {
@@ -350,7 +424,10 @@ namespace LaoDai.BattleSpirits.Visuals
                         int rows = Math.Max(1, (spiritCount + columns - 1) / columns);
                         int index = spiritIndex++, row = index / columns, column = index % columns;
                         int rowCount = Math.Min(columns, spiritCount - row * columns);
-                        unit.layoutScale = Math.Min(1f, 1.5f / rows);
+                        // Leave room for the full long edge after exhausting a
+                        // card. Sparse fields can use larger faces; crowded
+                        // fields keep every instance inside its own cell.
+                        unit.layoutScale = Math.Min(1.22f, Math.Min(23f / columns, 4.8f / rows) / 3.7f);
                         unit.home = new Vector3((column - (rowCount - 1) * 0.5f) * (23f / columns), 0.22f,
                             sign * (1.4f + (row + 0.5f) * (4.8f / rows)));
                     }
@@ -525,6 +602,7 @@ namespace LaoDai.BattleSpirits.Visuals
         private void Update()
         {
             if (stage == null || disposed) return;
+            RefreshRenderTarget();
             RefreshCoreGemSkin();
             float time = Time.unscaledTime; expired.Clear();
             foreach (var pair in units)
@@ -588,6 +666,7 @@ namespace LaoDai.BattleSpirits.Visuals
             for (int side = 0; side < 2; side++)
             { mates[side] = null; mateAnchors[side] = null; decisionRails[side] = null; for (int zone = 0; zone < 4; zone++) { counts[side, zone] = null; poolRoots[side, zone] = null; } }
             texture = null; camera = null; stage = null; poolSignature = null; skinQuad = null; cardBackMaterial = null;
+            pendingWidth = pendingHeight = 0; resizeReadyAt = 0;
             normalGemMaterial = soulGemMaterial = null; normalCoreSkin = null;
         }
     }

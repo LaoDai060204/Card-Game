@@ -10,7 +10,11 @@ namespace LaoDai.BattleSpirits.NativeUI
         protected override bool ShowLine => Screen != BattleNativeScreen.Duel;
         public override int Depth => Screen == BattleNativeScreen.Duel ? -1 : 1;
 
-        public override void OnReturn() => OnExit();
+        public override void OnReturn()
+        {
+            if (GetUI<BattleNativeScreenUI>()?.TryCloseCardZoom() == true) return;
+            OnExit();
+        }
         public override void OnExit() => BattleNativeNavigation.ReturnToMenu();
     }
 }

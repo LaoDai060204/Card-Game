@@ -44,7 +44,7 @@ internal static class Entry
         public IEnumerator<CardDefinition> GetEnumerator(){Enumerations++;return cards.GetEnumerator();}
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()=>GetEnumerator();
     }
-    private sealed class FakeSession:IBattleNativeSession,IBattleNativeReplaySession,IBattleNativePresentationSession
+    private sealed class FakeSession:IBattleNativeSession,IBattleNativeReplaySession,IBattleNativePortraitSession,IBattleNativePresentationSession
     {
         public IReadOnlyList<CardDefinition> Cards{get;set;}
         public IReadOnlyList<DeckDefinition> Decks{get;set;}
@@ -64,6 +64,7 @@ internal static class Entry
         public int ReplayDelta,Hosts,Joins,Starts,ReadyRequests,SoloStarts,Disconnected;
         public string HostName,JoinAddress;public int Port;
         public readonly List<string> RequestedArt=new List<string>();
+        public readonly List<string> RequestedPortraits=new List<string>();
         public readonly List<WireMessage> Commands=new List<WireMessage>();
         public DeckDefinition Saved;
         public event Action Changed;
@@ -82,6 +83,7 @@ internal static class Entry
         public void StartOnline(){Starts++;}
         public void Send(WireMessage command)=>Commands.Add(command);
         public void LoadArt(string id,RawImage image){RequestedArt.Add(id);if(MissingArtwork){image.texture=Texture2D.blackTexture;return;}if(!ArtTextures.TryGetValue(id,out var texture)||texture==null){texture=new Texture2D(675,983,TextureFormat.RGBA32,false){name="Face:"+id};ArtTextures[id]=texture;}image.texture=texture;}
+        public void LoadPortrait(string id,RawImage image){RequestedPortraits.Add(id);LoadArt(id,image);}
         public void AttachField(RawImage image){image.texture=Texture2D.blackTexture;}
         public void Disconnect(){Disconnected++;IsConnected=false;View=null;PresentationReset?.Invoke();SetPresentationBusy(false);}
         public void StepReplay(int delta)=>ReplayDelta+=delta;
@@ -865,8 +867,27 @@ internal static class Entry
                 var backs=hand.GetComponentsInChildren<RawImage>(true);Assert(backs.Length==10&&backs.All(back=>back.texture==BattleTheme.CardBack&&!back.raycastTarget),"Opponent hand exposes a face, captures input, or creates unbounded back widgets.");
                 Assert(hand.GetComponentsInChildren<TextMeshProUGUI>(true).Any(label=>label.name=="BS_HandOverflow"&&label.text=="+7"),"Opponent public count overflow is lost.");
                 Assert(fake.RequestedArt.All(id=>own.Contains(id)),"Opponent hand requested a private face identity.");
-                fake.View.players[1].handCount=3;fake.Refresh();Assert(hand.GetComponentsInChildren<RawImage>(true).Length==3,"Old opponent backs survive the next snapshot.");
+                fake.View.players[1].handCount=3;fake.Refresh();Assert(hand.GetComponentsInChildren<RawImage>(true).Count(back=>back.gameObject.activeInHierarchy)==3,"Old opponent backs survive the next snapshot.");
                 Assert(fake.RequestedArt.All(id=>own.Contains(id)),"A changed hidden hand requested its cards' faces.");
+            });
+            Case("Opponent card backs fit inside separate positioned slots instead of stacking their layout anchors",()=>{
+                fake.View=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);fake.View.players[1].handCount=4;
+                var screen=Screen(BattleNativeScreen.Duel);var duel=Field<BattleNativeDuelView>(screen,"duel");var hand=Field<RectTransform>(duel,"opponentHand");
+                var backs=hand.GetComponentsInChildren<RawImage>(true).Where(back=>back.gameObject.activeInHierarchy).ToArray();Assert(backs.Length==4,"The public opponent hand lost visible backs.");
+                float previousRight=-1;
+                foreach(var back in backs)
+                {
+                    var outer=back.transform.parent as RectTransform;var fit=back.GetComponent<AspectRatioFitter>();
+                    Assert(outer!=null&&outer.parent==hand&&outer.GetComponent<AspectRatioFitter>()==null&&outer.gameObject.activeInHierarchy
+                        &&outer.anchorMin.x>=previousRight&&outer.anchorMax.x>outer.anchorMin.x&&outer.anchorMax.x<=1,
+                        "A FitInParent component owns positioned hand anchors or opponent slots overlap.");
+                    Assert(fit!=null&&fit.aspectMode==AspectRatioFitter.AspectMode.FitInParent&&back.rectTransform.anchorMin.x==0&&back.rectTransform.anchorMin.y==0
+                        &&back.rectTransform.anchorMax.x==1&&back.rectTransform.anchorMax.y==1&&back.texture==BattleTheme.CardBack&&!back.raycastTarget,
+                        "Opponent artwork does not fit within its own independent public-back slot.");
+                    previousRight=outer.anchorMax.x;
+                }
+                var saved=fake.View;fake.View=null;fake.Refresh();Assert(backs.All(back=>!back.gameObject.activeInHierarchy),"Disconnected opponent slots remain visible.");
+                fake.View=saved;fake.Refresh();Assert(backs.All(back=>back.gameObject.activeInHierarchy),"Re-entering a match leaves pooled back-art children disabled.");
             });
             Case("Native Magic chooser permits Awaken draw-only without an owned Spirit",()=>{
                 fake.View=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards),0);
@@ -878,6 +899,15 @@ internal static class Entry
                 var go=new GameObject("PopupChoice",typeof(RectTransform));go.AddComponent<SelectionButton>();go.AddComponent<TextMeshProUGUI>().text=option;
                 UnityEngine.EventSystems.EventSystem.current.currentSelectedGameObject=go;MDPro3.UIManager.PopupSelected.Invoke();
                 var command=fake.Commands.Single();Assert(command.action=="playMagic"&&command.target==-1&&command.transfers?.Length==0,"Draw-only choice requested a nonexistent target or core.");
+            });
+            Case("A delayed Magic choice cannot play another card after its inspected hand entry changes",()=>{
+                fake.View=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards),0);fake.View.phase="Main";fake.View.decisionPlayer=0;fake.View.ownHand=new[]{AbilityRegistry.AwakenMagic};
+                var screen=Screen(BattleNativeScreen.Duel);var duel=Field<BattleNativeDuelView>(screen,"duel");Call(duel,"PlayHand",0,AbilityRegistry.AwakenMagic);
+                var choice=new GameObject("DelayedMagicChoice",typeof(RectTransform));choice.AddComponent<SelectionButton>();choice.AddComponent<TextMeshProUGUI>().text="Không chuyển Core · rút 1 lá";
+                UnityEngine.EventSystems.EventSystem.current.currentSelectedGameObject=choice;var delayed=MDPro3.UIManager.PopupSelected;
+                fake.View.ownHand=new[]{catalog.cards.First(item=>item.IsPlayableFor(BattleRulesFormat.Standard)&&item.IsSpirit).id};delayed.Invoke();
+                Assert(fake.Commands.Count==0,"An old Magic popup submitted the replacement hand card at its remembered index.");
+                fake.View.ownHand=Array.Empty<string>();delayed.Invoke();Assert(fake.Commands.Count==0,"An old Magic popup submitted an index no longer in the hand.");
             });
             Case("Standard Second Main permits summon and end without another Attack",()=>{
                 fake.View=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);
@@ -1103,6 +1133,232 @@ internal static class Entry
                 Assert(rect.anchorMin.x==0.2f&&rect.anchorMin.y==0.3f&&Math.Abs(rect.anchorMax.x-0.35f)<0.00001f&&Math.Abs(rect.anchorMax.y-0.42f)<0.00001f,"Click target does not match the rendered card.");
                 Assert(target.GetComponent<Image>().color.a==0&&target.GetComponentsInChildren<RawImage>(true).Length==0,"Another opaque card face obscures the field artwork.");
                 Click(screen.transform,"BS_FieldCard_21");Assert(Field<int>(Field<BattleNativeDuelView>(screen,"duel"),"selectedSpirit")==21,"Projected card target did not select the correct Spirit.");
+            });
+            Case("Duel inspection repairs the actual offscreen native window and shows a full card with readable metadata",()=>{
+                var imported=Fixture("OcgCoreUI");var hidden=(RectTransform)Find(imported.transform,"CardDescription/Window");
+                Assert(hidden.anchoredPosition.x< -400,"The native fixture lost the inspector's actual offscreen starting position.");Object.Destroy(imported);
+                fake.View=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);
+                var card=catalog.cards.First(item=>item.IsPlayableFor(BattleRulesFormat.Standard));
+                fake.View.players[0].field=new[]{new SpiritView{instanceId=70,cardId=card.id,normalCores=2,level=2,bp=6000}};
+                var screen=Screen(BattleNativeScreen.Duel);Click(screen.transform,"BS_FieldCard_70");
+                var window=(RectTransform)Find(screen.transform,"CardDescription/Window");
+                Assert(window.gameObject.activeInHierarchy&&window.anchorMin.x>=0&&window.anchorMin.y>=0&&window.anchorMax.x<=.24f&&window.anchorMax.y<=1
+                    &&window.anchorMax.x-window.anchorMin.x>=.20f&&window.anchorMax.y-window.anchorMin.y>=.8f
+                    &&Math.Abs(window.offsetMin.x)<.01f&&Math.Abs(window.offsetMax.x)<.01f,"Native inspector remains outside the visible left rail or retains its hidden pixel offsets.");
+                var image=Find(window,"Card").GetComponent<RawImage>();
+                Assert(image!=null&&image.texture==fake.ArtTextures[card.id]&&image.uvRect.width==1&&image.uvRect.height==1
+                    &&image.GetComponent<AspectRatioFitter>()?.aspectMode==AspectRatioFitter.AspectMode.FitInParent
+                    &&fake.RequestedPortraits.Count==0,"Inspection must display the complete original card, not an artwork-only portrait or cropped face.");
+                var name=Find(window,"BS_InspectName")?.GetComponent<TextMeshProUGUI>();
+                var meta=Find(window,"BS_InspectMeta")?.GetComponent<TextMeshProUGUI>();
+                Assert(name?.text==card.DisplayName&&meta!=null&&meta.text.Contains(card.id)&&meta.color.a>.9f&&!name.raycastTarget&&!meta.raycastTarget,
+                    "Card identity, readable metadata or nonblocking labels are missing from inspection.");
+                var scroll=Find(window,"Description Scroll View").GetComponent<ScrollRect>();
+                Assert(scroll!=null&&scroll.enabled&&scroll.vertical&&!scroll.horizontal&&scroll.viewport!=null&&scroll.content!=null
+                    &&scroll.viewport.anchorMax.x-scroll.viewport.anchorMin.x>.9f
+                    &&scroll.viewport.anchorMax.y-scroll.viewport.anchorMin.y>.9f,"The original zero-size inspector viewport was not normalized into a scrollable region.");
+                Assert(screen.GetComponentsInChildren<Canvas>(true).Length==0,"Inspection created another Canvas over the native UI.");
+            });
+            Case("Hand selection inspects safely and only the explicit play button summons the selected index",()=>{
+                fake.View=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);fake.View.phase="Main";fake.View.decisionPlayer=0;
+                var ids=catalog.cards.Where(item=>item.IsPlayableFor(BattleRulesFormat.Standard)&&item.IsSpirit).Take(2).Select(item=>item.id).ToArray();fake.View.ownHand=ids;
+                var screen=Screen(BattleNativeScreen.Duel);Click(screen.transform,"BS_Hand/BS_Card_"+ids[1]);
+                Assert(fake.Commands.Count==0,"Merely inspecting a card played it from the hand.");
+                Assert(Find(screen.transform,"BS_InspectName").GetComponent<TextMeshProUGUI>().text==catalog.cards.Single(card=>card.id==ids[1]).DisplayName,"Hand inspection shows another card.");
+                Click(screen.transform,"BS_InspectPlay");var command=fake.Commands.Single();
+                Assert(command.action=="summon"&&command.index==1,"Explicit play lost the selected logical hand index.");
+            });
+            Case("Stale inspected hand indices cannot play a replacement card and a changed hand clears its selection",()=>{
+                fake.View=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);fake.View.phase="Main";fake.View.decisionPlayer=0;
+                var ids=catalog.cards.Where(item=>item.IsPlayableFor(BattleRulesFormat.Standard)&&item.IsSpirit).Take(2).Select(item=>item.id).ToArray();fake.View.ownHand=new[]{ids[0]};
+                var screen=Screen(BattleNativeScreen.Duel);Click(screen.transform,"BS_Hand/BS_Card_"+ids[0]);var play=Find(screen.transform,"BS_InspectPlay").GetComponent<Button>();
+                fake.View.ownHand=new[]{ids[1]};play.onClick.Invoke();Assert(fake.Commands.Count==0,"Stale inspect button summoned a newly drawn replacement card.");
+                fake.Refresh();Assert(Field<int>(Field<BattleNativeDuelView>(screen,"duel"),"selectedHand")==-1,"Hand replacement retained its old selection.");
+                play.onClick.Invoke();Assert(fake.Commands.Count==0,"Repainting a changed hand rebound an old inspected card to the new card.");
+                fake.View=null;fake.Refresh();Assert(!Find(screen.transform,"BS_CardZoom").gameObject.activeSelf,"Disconnected state retained a visible card zoom.");
+            });
+            Case("Inspection remains available without allowing commands during opening opponent turn replay or summon presentation",()=>{
+                fake.View=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);
+                string id=catalog.cards.First(item=>item.IsPlayableFor(BattleRulesFormat.Standard)&&item.IsSpirit).id;fake.View.ownHand=new[]{id};
+                var screen=Screen(BattleNativeScreen.Duel);Click(screen.transform,"BS_Hand/BS_Card_"+id);var play=Find(screen.transform,"BS_InspectPlay").GetComponent<Button>();
+                play.onClick.Invoke();Assert(fake.Commands.Count==0,"Opening inspection offered a summon command.");
+                fake.View.phase="Main";fake.View.decisionPlayer=1;fake.Refresh();play.onClick.Invoke();Assert(fake.Commands.Count==0,"Opponent turn inspection played a card.");
+                fake.View.decisionPlayer=0;fake.IsReplay=true;fake.Refresh();play.onClick.Invoke();Assert(fake.Commands.Count==0,"Replay inspection can issue a gameplay command.");
+                fake.IsReplay=false;fake.SetPresentationBusy(true);play.onClick.Invoke();Assert(fake.Commands.Count==0,"Summon presentation inspection can issue a gameplay command.");
+                fake.SetPresentationBusy(false);fake.CanSendCommands=false;fake.Refresh();play.onClick.Invoke();Assert(fake.Commands.Count==0,"Disconnected inspection can issue a gameplay command.");
+            });
+            Case("Inspecting an opponent field card clears the previous action selection and public stats stay current",()=>{
+                fake.View=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);fake.View.phase="Attack";fake.View.decisionPlayer=0;
+                var ids=catalog.cards.Where(item=>item.IsPlayableFor(BattleRulesFormat.Standard)&&item.IsSpirit).Take(2).Select(item=>item.id).ToArray();
+                fake.View.players[0].field=new[]{new SpiritView{instanceId=71,cardId=ids[0],normalCores=1,level=1,bp=1000}};
+                fake.View.players[1].field=new[]{new SpiritView{instanceId=72,cardId=ids[1],normalCores=2,soulCore=true,level=2,bp=6000}};
+                var screen=Screen(BattleNativeScreen.Duel);var duel=Field<BattleNativeDuelView>(screen,"duel");Click(screen.transform,"BS_FieldCard_71");
+                Assert(Field<int>(duel,"selectedSpirit")==71,"Own public field inspection cannot select an attacker.");
+                Click(screen.transform,"BS_FieldCard_72");Assert(Field<int>(duel,"selectedSpirit")==-1&&fake.Commands.Count==0,"Opponent inspection retained an unrelated own attacker or sent a command.");
+                var state=Find(screen.transform,"BS_InspectState").GetComponent<TextMeshProUGUI>();
+                Assert(state.text.Contains("6000")&&state.text.Contains("2"),"Inspected opponent public BP/Core state is missing.");
+                fake.View.players[1].field[0].bp=9000;fake.View.players[1].field[0].normalCores=3;fake.Refresh();
+                Assert(state.text.Contains("9000")&&!state.text.Contains("6000"),"Open inspection retained stale battlefield BP after a snapshot.");
+                fake.View.players[1].field=Array.Empty<SpiritView>();fake.Refresh();
+                Assert(!Find(screen.transform,"BS_InspectPlay").GetComponent<Selectable>().interactable&&Field<int>(duel,"selectedSpirit")==-1,"Removed inspected field unit retained an actionable selection.");
+            });
+            Case("Full card zoom preserves original artwork identity and closes without issuing commands",()=>{
+                fake.View=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);
+                string id=catalog.cards.First(item=>item.IsPlayableFor(BattleRulesFormat.Standard)).id;fake.View.ownHand=new[]{id};
+                var screen=Screen(BattleNativeScreen.Duel);var zoom=Find(screen.transform,"BS_CardZoom");Assert(!zoom.gameObject.activeSelf,"Card zoom starts open.");
+                Click(screen.transform,"BS_Hand/BS_Card_"+id);Click(screen.transform,"BS_InspectZoom");
+                var image=Find(zoom,"BS_ZoomArt").GetComponent<RawImage>();
+                Assert(zoom.gameObject.activeInHierarchy&&image.texture==fake.ArtTextures[id]&&image.uvRect.width==1&&image.uvRect.height==1
+                    &&image.GetComponent<AspectRatioFitter>()?.aspectMode==AspectRatioFitter.AspectMode.FitInParent&&fake.RequestedPortraits.Count==0,
+                    "Zoom cropped, distorted or replaced the inspected card face.");
+                Click(screen.transform,"BS_ZoomClose");Assert(!zoom.gameObject.activeSelf&&fake.Commands.Count==0,"Closing full card inspection played a card or left its input shield visible.");
+            });
+            Case("Zoom owns focus and blocks underlying hand play field attack and replay callbacks until it closes",()=>{
+                fake.View=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);fake.View.phase="Main";fake.View.turn=3;fake.View.decisionPlayer=0;
+                var ids=catalog.cards.Where(item=>item.IsPlayableFor(BattleRulesFormat.Standard)&&item.IsSpirit).Take(2).Select(item=>item.id).ToArray();fake.View.ownHand=ids;
+                fake.View.players[0].field=new[]{new SpiritView{instanceId=75,cardId=ids[1],normalCores=1}};
+                var screen=Screen(BattleNativeScreen.Duel);var duel=Field<BattleNativeDuelView>(screen,"duel");Click(screen.transform,"BS_Hand/BS_Card_"+ids[0]);
+                var previous=Find(screen.transform,"BS_Hand/BS_Card_"+ids[0]).gameObject;UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(previous);
+                Click(screen.transform,"BS_InspectZoom");var close=Find(screen.transform,"BS_ZoomClose").GetComponent<Button>();
+                Assert(UnityEngine.EventSystems.EventSystem.current.currentSelectedGameObject==close.gameObject&&close.navigation.mode==Navigation.Mode.None,
+                    "Zoom failed to take Submit focus or permits navigation onto the obscured duel controls.");
+                Find(screen.transform,"BS_Hand/BS_Card_"+ids[1]).GetComponent<Button>().onClick.Invoke();
+                Find(screen.transform,"BS_FieldCard_75").GetComponent<Button>().onClick.Invoke();Find(screen.transform,"BS_InspectPlay").GetComponent<Button>().onClick.Invoke();
+                Click(screen.transform,"Buttons/ButtonInfo");Click(screen.transform,"Buttons/ButtonSetting");
+                Assert(fake.Commands.Count==0&&Field<int>(duel,"selectedHand")==0&&Field<int>(duel,"selectedSpirit")==-1,
+                    "An obscured hand/field/play/attack/concede callback remained live behind zoom.");
+                Click(screen.transform,"BS_ZoomClose");Assert(UnityEngine.EventSystems.EventSystem.current.currentSelectedGameObject==previous,
+                    "Closing zoom failed to restore its previous valid card focus.");
+                Click(screen.transform,"BS_InspectPlay");Assert(fake.Commands.Single().action=="summon","Closing zoom failed to restore explicit hand play.");
+                fake.Commands.Clear();fake.IsReplay=true;fake.Refresh();Click(screen.transform,"BS_InspectZoom");
+                Click(screen.transform,"Buttons/ButtonInfo");Click(screen.transform,"Buttons/ButtonLog");
+                Assert(fake.ReplayDelta==0&&fake.Disconnected==0,"An obscured replay or return callback ran behind zoom.");
+                Click(screen.transform,"BS_ZoomClose");Click(screen.transform,"Buttons/ButtonInfo");Assert(fake.ReplayDelta==1,"Replay stepping did not return after zoom closes.");
+            });
+            Case("Inspector and battlefield labels declare bounded autosizing and truncation for short windows",()=>{
+                fake.View=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);
+                var card=catalog.cards.First(item=>item.IsPlayableFor(BattleRulesFormat.Standard));fake.View.players[0].field=new[]{new SpiritView{instanceId=76,cardId=card.id,normalCores=4,bp=99999}};
+                var screen=Screen(BattleNativeScreen.Duel);Click(screen.transform,"BS_FieldCard_76");
+                foreach(string path in new[]{"BS_InspectName","BS_InspectMeta","BS_InspectState","BS_FieldCard_76/BS_StatsBackdrop/BS_Stats"})
+                {
+                    var label=Find(screen.transform,path).GetComponent<TextMeshProUGUI>();
+                    Assert(label.enableAutoSizing&&label.fontSizeMin>=11&&label.fontSizeMax>=label.fontSizeMin&&label.fontSizeMax<=24
+                        &&label.overflowMode==TextOverflowModes.Truncate&&!label.raycastTarget,
+                        "A bounded inspector/status label can spill onto nearby controls in a short window: "+path);
+                }
+            });
+            Case("Native return first closes card zoom and only a later return disconnects the match",()=>{
+                fake.View=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);fake.IsConnected=true;
+                string id=catalog.cards.First(item=>item.IsPlayableFor(BattleRulesFormat.Standard)).id;fake.View.ownHand=new[]{id};
+                BattleNativeNavigation.Open(BattleNativeScreen.Duel);var servant=(BattleNativeServant)program.currentServant;var screen=servant.GetUI<BattleNativeScreenUI>();
+                Click(screen.transform,"BS_Hand/BS_Card_"+id);Click(screen.transform,"BS_InspectZoom");servant.OnReturn();
+                Assert(!Find(screen.transform,"BS_CardZoom").gameObject.activeSelf&&fake.Disconnected==0&&fake.IsConnected&&program.currentServant==servant,
+                    "Cancel/Escape through the actual native Servant exited the match instead of closing card zoom.");
+                servant.OnReturn();Assert(fake.Disconnected==1&&program.currentServant==program.menu,"The normal return route was lost after closing zoom.");
+            });
+            Case("Status snapshots reuse duel card widgets and artwork while maintaining the selected card identity",()=>{
+                fake.View=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);fake.View.phase="Main";fake.View.decisionPlayer=0;
+                var ids=catalog.cards.Where(item=>item.IsPlayableFor(BattleRulesFormat.Standard)).Take(2).Select(item=>item.id).ToArray();fake.View.ownHand=ids;
+                fake.View.players[0].field=new[]{new SpiritView{instanceId=73,cardId=ids[0]}};
+                var screen=Screen(BattleNativeScreen.Duel);Click(screen.transform,"BS_Hand/BS_Card_"+ids[1]);
+                var handCard=Find(screen.transform,"BS_Hand/BS_Card_"+ids[1]);var fieldCard=Find(screen.transform,"BS_FieldCard_73");
+                int objects=GameObject.All.Count,requests=fake.RequestedArt.Count;
+                fake.Status="Another public status";fake.Refresh();fake.Refresh();
+                Assert(Find(screen.transform,"BS_Hand/BS_Card_"+ids[1])==handCard&&Find(screen.transform,"BS_FieldCard_73")==fieldCard
+                    &&GameObject.All.Count==objects&&fake.RequestedArt.Count==requests,"A status-only snapshot recloned card targets or reloaded unchanged inspection artwork.");
+                Assert(Find(screen.transform,"BS_InspectName").GetComponent<TextMeshProUGUI>().text==catalog.cards.Single(item=>item.id==ids[1]).DisplayName,"Status repaint silently changed the selected card.");
+                fake.View.ownHand=new[]{ids[1],ids[0]};fake.Refresh();Click(screen.transform,"BS_Hand/BS_Card_"+ids[0]);Click(screen.transform,"BS_InspectPlay");
+                Assert(fake.Commands.Single().index==1,"A recycled hand callback targeted its old index or identity.");
+            });
+            Case("Long match field churn reuses retired targets and rebound clicks follow the current owner and instance",()=>{
+                fake.View=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);fake.View.phase="Attack";fake.View.decisionPlayer=0;
+                var ids=catalog.cards.Where(item=>item.IsPlayableFor(BattleRulesFormat.Standard)&&item.IsSpirit).Take(2).Select(item=>item.id).ToArray();
+                fake.View.players[0].field=new[]{new SpiritView{instanceId=1000,cardId=ids[0]},new SpiritView{instanceId=1001,cardId=ids[1]}};
+                var screen=Screen(BattleNativeScreen.Duel);var duel=Field<BattleNativeDuelView>(screen,"duel");var stable=Find(screen.transform,"BS_FieldCard_1000");int widgets=GameObject.All.Count;
+                for(int i=0;i<24;i++)
+                {
+                    int instance=2000+i;var dynamic=new SpiritView{instanceId=instance,cardId=ids[i%2],normalCores=i+1,bp=1000+i};bool own=i%2==0;
+                    fake.View.players[0].field=own?new[]{new SpiritView{instanceId=1000,cardId=ids[0]},dynamic}:new[]{new SpiritView{instanceId=1000,cardId=ids[0]}};
+                    fake.View.players[1].field=own?Array.Empty<SpiritView>():new[]{dynamic};fake.Refresh();
+                    Assert(GameObject.All.Count==widgets&&Find(screen.transform,"BS_FieldCard_1000")==stable,"Dead instances accumulate hidden field widgets or replace an unchanged field target.");
+                    var target=Find(screen.transform,"BS_FieldCard_"+instance);Assert(target!=null&&target.parent.name==(own?"BS_OwnField":"BS_OpponentField"),"Recycled target stayed under its previous owner.");
+                    Click(screen.transform,"BS_FieldCard_"+instance);
+                    Assert(Field<int>(duel,"selectedSpirit")== (own?instance:-1)
+                        &&Find(screen.transform,"BS_InspectName").GetComponent<TextMeshProUGUI>().text==catalog.cards.Single(item=>item.id==dynamic.cardId).DisplayName,
+                        "Recycled field click still inspects or selects the removed instance.");
+                }
+                Assert(fake.Commands.Count==0,"Public field inspection issued a command during pool reuse.");
+            });
+            Case("Duel card targets share the actual field rectangle and phase text does not cover the card zones",()=>{
+                fake.View=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);
+                var screen=Screen(BattleNativeScreen.Duel);var image=(RectTransform)Find(screen.transform,"BS_Field");
+                var own=(RectTransform)Find(screen.transform,"BS_OwnField");var opponent=(RectTransform)Find(screen.transform,"BS_OpponentField");var phase=(RectTransform)Find(screen.transform,"BS_Phase");
+                Assert(image.anchorMin.x>=.24f&&image.anchorMin.y>=.17f&&image.anchorMax.x>=.99f&&image.anchorMax.y<=.91f,"Battlefield remains squeezed under the hand or the native inspector.");
+                foreach(var target in new[]{own,opponent})Assert(target.anchorMin.x==image.anchorMin.x&&target.anchorMin.y==image.anchorMin.y
+                    &&target.anchorMax.x==image.anchorMax.x&&target.anchorMax.y==image.anchorMax.y,"Card picking coordinates are stretched over another rectangle than the rendered field.");
+                Assert(phase.anchorMin.y>=.90f,"The turn/phase text still overlays central battlefield cards.");
+            });
+            Case("A viewport resize reprojects existing field targets without rebuilding cards or loading artwork",()=>{
+                fake.View=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);
+                string id=catalog.cards.First(item=>item.IsPlayableFor(BattleRulesFormat.Standard)).id;fake.View.players[0].field=new[]{new SpiritView{instanceId=74,cardId=id}};
+                fake.Bounds[74]=new Rect(.2f,.3f,.1f,.15f);var screen=Screen(BattleNativeScreen.Duel);var duel=Field<BattleNativeDuelView>(screen,"duel");
+                var target=(RectTransform)Find(screen.transform,"BS_FieldCard_74");int objects=GameObject.All.Count,requests=fake.RequestedArt.Count;
+                fake.Bounds[74]=new Rect(.35f,.24f,.17f,.12f);Call(duel,"Tick");
+                Assert(target.anchorMin.x==.35f&&target.anchorMin.y==.24f&&Math.Abs(target.anchorMax.x-.52f)<.00001f&&Math.Abs(target.anchorMax.y-.36f)<.00001f,
+                    "Existing inspect targets retain obsolete camera coordinates after resizing the field.");
+                Assert(GameObject.All.Count==objects&&fake.RequestedArt.Count==requests,"Reprojecting hit areas rebuilds widgets or reloads card faces.");
+            });
+            Case("Field render target follows the visible area aspect and releases settled resizes without status churn",()=>{
+                var host=new GameObject("SizedCanvas",typeof(RectTransform),typeof(Canvas));host.GetComponent<Canvas>().scaleFactor=1.5f;
+                var output=new GameObject("SizedField",typeof(RectTransform)).AddComponent<RawImage>();output.transform.SetParent(host.transform,false);
+                output.rectTransform.rect=new Rect(0,0,912,518);var field=output.gameObject.AddComponent<BattleFieldVisuals>();field.SetArtworkProvider(fake.LoadArt);field.Load(output);
+                var original=(RenderTexture)output.texture;var camera=Field<Camera>(field,"camera");
+                Assert(original.width<=1920&&original.height<=1920&&original.width>=1368&&Math.Abs(original.width/(float)original.height-912f/518)<.005f
+                    &&Math.Abs(camera.aspect-original.width/(float)original.height)<.0001f,"Field target ignores its actual scaled area or distorts the board aspect.");
+                Call(field,"Update");Call(field,"Update");Assert(output.texture==original&&!original.released,"Unchanged field updates recreate their GPU target.");
+                output.rectTransform.rect=new Rect(0,0,730,650);Call(field,"Update");Assert(output.texture==original,"An unsettled window resize immediately reallocates its GPU target.");
+                Time.unscaledTime+=.05f;output.rectTransform.rect=new Rect(0,0,731,651);Call(field,"Update");Assert(output.texture==original,"Active resize drag is not debounced.");
+                Time.unscaledTime+=.13f;Call(field,"Update");var resized=(RenderTexture)output.texture;
+                Assert(resized!=original&&original.released&&original==null&&Math.Abs(resized.width/(float)resized.height-731f/651)<.005f,"Settled resize failed to retain aspect and release the previous target.");
+                Call(field,"Update");Assert(output.texture==resized,"Settled render target still churns after the resize.");
+                field.Dispose();Assert(resized.released&&resized==null,"Duel disposal leaked the final GPU target.");
+            });
+            Case("Fitted field camera retains both players table pools at wide and narrow display aspects",()=>{
+                foreach(var size in new[]{new Vector2(1459,778),new Vector2(778,622),new Vector2(640,720)})
+                {
+                    var output=new GameObject("FramedField",typeof(RectTransform)).AddComponent<RawImage>();output.rectTransform.rect=new Rect(0,0,size.x,size.y);
+                    var field=output.gameObject.AddComponent<BattleFieldVisuals>();field.Load(output);var camera=Field<Camera>(field,"camera");var stage=Field<GameObject>(field,"stage");
+                    foreach(int x in new[]{-1,1})foreach(int z in new[]{-1,1})foreach(var point in new[]{new Vector3(x*17.5f,.3f,z*13.5f),new Vector3(x*12,5,z*8)})
+                    {
+                        var projected=camera.WorldToViewportPoint(stage.transform.TransformPoint(point));
+                        Assert(projected.z>0&&projected.x>=0&&projected.x<=1&&projected.y>=0&&projected.y<=1,
+                            "Field camera clips a table pool or standing illustration at aspect "+size.x+":"+size.y);
+                    }
+                    field.Dispose();
+                }
+            });
+            Case("Field cards enlarge sparse formations and crowded exhausted units remain inside their open zones",()=>{
+                var output=new GameObject("FormationField",typeof(RectTransform)).AddComponent<RawImage>();output.rectTransform.rect=new Rect(0,0,1280,860);
+                var field=output.gameObject.AddComponent<BattleFieldVisuals>();field.SetArtworkProvider(fake.LoadArt);field.SetCatalog(catalog.cards);field.Load(output);
+                string spiritId=catalog.cards.First(card=>card.IsPlayableFor(BattleRulesFormat.Standard)&&card.IsSpirit).id;
+                string nexusId=catalog.cards.First(card=>card.IsNexus).id;
+                var snapshot=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);
+                snapshot.players[0].field=new[]{new SpiritView{instanceId=100,cardId=spiritId}};field.Render(snapshot);
+                var units=(System.Collections.IDictionary)Field<object>(field,"units");Assert(Field<float>(units[100],"layoutScale")>1,"A sparse field leaves printed cards at their old small size.");
+                foreach(var owner in snapshot.players)
+                    owner.field=Enumerable.Range(0,26).Select(i=>new SpiritView{instanceId=100+owner.playerIndex*100+i,cardId=spiritId,exhausted=i%2==0})
+                        .Concat(Enumerable.Range(0,10).Select(i=>new SpiritView{instanceId=150+owner.playerIndex*100+i,cardId=nexusId,exhausted=i%2==1})).ToArray();
+                string data=JsonConvert.SerializeObject(snapshot);field.Render(snapshot);
+                foreach(var owner in snapshot.players)foreach(var item in owner.field)
+                {
+                    var unit=units[item.instanceId];float scale=Field<float>(unit,"layoutScale");var home=Field<Vector3>(unit,"home");
+                    bool nexus=item.cardId==nexusId;float half=BattleCardFigure.CardHeight*scale*.5f;
+                    float near=nexus?6.4f:1.4f,far=nexus?9.1f:6.2f,width=nexus?18f:23f;
+                    Assert(Math.Abs(home.x)+half<=width*.5f+.02f&&Math.Abs(home.z)-half>=near-.03f&&Math.Abs(home.z)+half<=far+.03f,
+                        "Crowded/exhausted printed card escapes its own Spirit or Nexus zone.");
+                    Assert(field.TryGetCardViewport(item.instanceId,out var bounds)&&bounds.width>0&&bounds.height>0,"A crowded public field card loses its inspectable projected target.");
+                }
+                Assert(JsonConvert.SerializeObject(snapshot)==data,"Visual formation layout mutated authoritative match state.");field.Dispose();
             });
             Case("Figure disposal retains shared textures and a cached card can reload evicted artwork",()=>{
                 var output=new GameObject("OwnershipField",typeof(RectTransform)).AddComponent<RawImage>();var field=output.gameObject.AddComponent<BattleFieldVisuals>();field.SetArtworkProvider(fake.LoadArt);field.Load(output);

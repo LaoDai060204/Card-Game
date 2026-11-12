@@ -1,10 +1,12 @@
-# LaoDai Battle Spirits — Standard 0.6.3
+# LaoDai Battle Spirits — Standard 0.6.4
 
 Bản chuyển đổi từ **Card-Game/MDPro3** sang **Battle Spirits Nhật — Standard**, giao diện tiếng Việt, Unity **6000.0.24f1**. Theo yêu cầu ngày 06/11/2026, bản này giữ bố cục và khôi phục khung/nút cùng bảng màu giao diện gốc: đen, xám, viền sáng và điểm nhấn xanh lime. Thẻ, sân, luật và trình diễn tiếp tục dùng Battle Spirits; pet và wallpaper vẫn được giữ. Lớp ứng dụng overlay của bản 0.1.0 đã bỏ.
 
 Có **Solo đấu WindBot**, bộ bài, phòng LAN/IP trực tiếp, replay Solo và xem thử hoạt cảnh. Danh mục gồm **270 thẻ chính thức**; **19 thẻ Standard chơi được**: 16 Spirit không hiệu ứng và ba Spirit có Super Unleash đã triển khai. **251 thẻ khác không dùng trong trận Standard hiện tại**, gồm 21 thẻ Eternal đã có code tương thích. Đây chưa phải triển khai đầy đủ mọi thẻ và hiệu ứng Standard. Xem [phạm vi luật](Documentation/BATTLE_SPIRITS_SCOPE.md).
 
 Nhánh phát triển: `battle-spirits-mdpro3-ui`. Bản Card-Game/Yu-Gi-Oh cũ được giữ trên `main`.
+
+**0.6.4:** chỉnh sàn đấu để dễ nhìn thẻ, đưa khung thông tin MDPro3 vào bên trái, xem toàn bộ ảnh thẻ và phóng to. Bấm thẻ trên tay chỉ chọn/soi; dùng nút **TRIỆU HỒI / DÙNG MAGIC** để đánh. Góc camera cao hơn, ảnh sân theo đúng tỷ lệ cửa sổ, ô sân/tay bài được tái sử dụng. [Cách chơi và kiểm tra](Documentation/BATTLE_SPIRITS_DUEL_READABILITY.md).
 
 **0.6.3:** bộ bài gom các bản sao cùng mã thành một ô có số lượng, thêm viền chọn/trạng thái thẻ và ba mức kích thước **GỌN / VỪA / LỚN**. Ô nhập và tab dùng chữ sáng trên nền tối cả khi hover/focus; tên gợi ý được tách khỏi bộ màu template cũ. [Chi tiết và cách thử](Documentation/BATTLE_SPIRITS_CARD_BROWSER.md).
 
@@ -27,7 +29,7 @@ Phần triệu hồi của **0.4.0** được giữ: phóng to mặt thẻ, qué
 Đóng Unity trước khi cập nhật. Stash giữ chỉnh sửa và tệp chưa được Git theo dõi; dữ liệu cá nhân bị `.gitignore` loại trừ cần sao lưu riêng trước khi di chuyển hoặc xóa.
 
 ```bash
-git stash push -u -m "backup-before-standard-0.6.3-update"
+git stash push -u -m "backup-before-standard-0.6.4-update"
 git fetch origin
 git switch battle-spirits-mdpro3-ui
 git pull --ff-only origin battle-spirits-mdpro3-ui
@@ -36,14 +38,15 @@ git pull --ff-only origin battle-spirits-mdpro3-ui
 1. Mở thư mục dự án bằng **Unity 6000.0.24f1**, nền tảng Windows x64.
 2. Giữ `Data`, `Picture`, `Platforms`, `Sound` cùng cấp với `Assets`.
 3. Vào **Window → Asset Management → Addressables → Groups**, chọn **Play Mode Script → Use Asset Database** khi chạy từ source để dùng prefab mới.
-4. Mở `Assets/Scenes/Boot.unity`, nhấn Play. Sau khi tải đủ dữ liệu và wallpaper, game vào thẳng menu **0.6.3** theo kiểu MDPro3.
-5. Vào **Bộ bài** chọn bộ Standard mẫu, rồi **Đấu với máy**. Sau khi chọn **GIỮ 4 LÁ**, đến Main thì bấm lá trên tay để triệu hồi; chưa có thao tác kéo thả.
+4. Mở `Assets/Scenes/Boot.unity`, nhấn Play. Sau khi tải đủ dữ liệu và wallpaper, game vào thẳng menu **0.6.4** theo kiểu MDPro3.
+5. Vào **Bộ bài** chọn bộ Standard mẫu, rồi **Đấu với máy**. Sau khi chọn **GIỮ 4 LÁ**, đến Main thì bấm lá trên tay để xem thông tin, sau đó bấm **TRIỆU HỒI** để đặt xuống sân. Magic dùng nút **DÙNG MAGIC** khi luật cho phép. Chưa có thao tác kéo thả.
+6. Bấm lá trên sân của bất kỳ bên nào để soi BP, Lv, Core và trạng thái. Bấm **PHÓNG TO** hoặc ảnh thẻ trong khung trái để xem ảnh gốc lớn; **ĐÓNG** để tiếp tục.
 
 **Mã, dữ liệu, UI stand-in và TCP đã được kiểm tra; chưa chạy Play/render/build trong Unity Windows thật.** Xem [báo cáo kiểm tra](Documentation/BATTLE_SPIRITS_VALIDATION.md).
 
 ## Giao diện và tài nguyên
 
-- Các form **DeckEditorUI, SoloSelectorUI, OnlineServantUI, RoomServantUI, OcgCoreUI** và ba Parts giữ hierarchy, vị trí và kích thước control. Khung/nút/viền gốc được phục hồi theo manifest; nút Battle Spirits dùng chrome và màu lime tương ứng. Giữ font Source Han Sans cho tiếng Việt, không thêm Canvas ứng dụng phủ lên menu.
+- Các form **DeckEditorUI, SoloSelectorUI, OnlineServantUI, RoomServantUI, OcgCoreUI** và ba Parts dùng lại cấu trúc native; Bộ bài và sàn đấu điều chỉnh vị trí/kích thước runtime để phù hợp cửa sổ và luật Battle Spirits. Khung/nút/viền gốc được phục hồi theo manifest; nút Battle Spirits dùng chrome và màu lime tương ứng. Giữ font Source Han Sans cho tiếng Việt, không thêm Canvas ứng dụng phủ lên menu.
 - Deck giữ vùng bộ sưu tập, chi tiết và danh sách bài. Extra/Side được ẩn. Tìm theo mã/tên/hệ/hiệu ứng/loại/bộ, hoặc `cost:6`, `bp:6000`; có lọc màu, trạng thái và sắp xếp. Thẻ ngoài pool Standard bị từ chối khi thêm vào deck; thẻ chưa hỗ trợ bị từ chối lúc bắt đầu trận tự động.
 - Sáu biểu tượng màu dùng ở bộ lọc, chi tiết thẻ, triệu hồi và sân. Đây là màu thẻ, không phải sáu loại Core. Chồng Deck và tay đối thủ dùng mặt sau BS; tay đối thủ chỉ hiện số lá công khai, tối đa mười ảnh lưng bài kèm số dư.
 - Mặt thẻ nằm ở `Picture/Art/{mã-thẻ}.png`. Sân có vùng Life, Reserve, Trash, Deck, Spirit/Nexus và Core/Soul Core. Mỗi Spirit hiện đúng mặt thẻ trên sân và vùng minh họa nổi hướng về camera. Chọn thẻ ngay tại vị trí lá bài trên sân.
@@ -118,3 +121,5 @@ Backup trước đợt dùng lại UI MDPro3 và tối ưu Bộ bài 0.6.1: **`b
 Backup trước đợt sửa tìm kiếm/bố cục Bộ bài 0.6.2: **`backup/2026-11-12-before-deck-input-layout-fix` → `9c0025f83`**.
 
 Backup trước đợt chỉnh giao diện thẻ 0.6.3: **`backup/2026-11-12-before-card-browser-polish` → `442c11c66`**.
+
+Backup trước đợt chỉnh sàn đấu/soi thẻ 0.6.4: **`backup/2026-11-13-before-duel-readability` → `0599f41f5`**.

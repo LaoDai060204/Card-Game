@@ -24,7 +24,7 @@ namespace LaoDai.BattleSpirits.Visuals
         private readonly string cardId;
         private Texture assignedTexture;
         private bool hadReadyTexture;
-        private float portraitWidth = 3.6f, portraitHeight = 3.2f;
+        private float portraitWidth = 2.8f, portraitHeight = 2.5f;
         private bool disposed;
 
         internal BattleCardFigure(Transform parent, Transform artworkParent, string cardId,
@@ -101,8 +101,8 @@ namespace LaoDai.BattleSpirits.Visuals
             float width = Math.Max(1, candidate.width) * illustrationUv.width;
             float height = Math.Max(1, candidate.height) * illustrationUv.height;
             float aspect = Math.Max(0.45f, Math.Min(2.1f, width / height));
-            portraitWidth = nexus ? 2.5f : 3.6f;
-            portraitHeight = Math.Min(nexus ? 2.6f : 4.2f, portraitWidth / aspect);
+            portraitWidth = nexus ? 2.1f : 2.8f;
+            portraitHeight = Math.Min(nexus ? 2.2f : 3.3f, portraitWidth / aspect);
             portraitWidth = portraitHeight * aspect;
         }
 
@@ -127,9 +127,11 @@ namespace LaoDai.BattleSpirits.Visuals
             float floorScale = summon ? 0.2f + reveal * 0.8f : 1;
             card.localScale = new Vector3(CardWidth * floorScale, CardHeight * floorScale, 1);
 
-            float lift = nexus ? 0.48f : 0.7f;
+            float lift = nexus ? 0.3f : 0.45f;
             illustration.localPosition = new Vector3(0, lift + portraitHeight * 0.5f * reveal + sample.height,
-                0.2f + sample.advance * facing);
+                // Keep the standing artwork behind the printed face from the
+                // camera's direction, so the floor card can still be read.
+                CardHeight * 0.48f + sample.advance * facing);
             // Match the camera's image axes. Looking the quad's +Z towards the
             // camera would reverse its X axis and mirror the official artwork.
             // This shader renders both sides, so the camera-aligned back face

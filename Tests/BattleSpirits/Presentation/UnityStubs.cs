@@ -58,10 +58,10 @@ namespace UnityEngine {
  }
  public enum CameraClearFlags{SolidColor}public enum FilterMode{Point,Bilinear,Trilinear}public enum TextureWrapMode{Repeat,Clamp}public enum RenderTextureFormat{ARGB32}public enum LightType{Directional}public enum LightShadows{None}
  public class RenderTexture:Texture{public bool released,created;public int antiAliasing;public RenderTexture(int a,int b,int c,RenderTextureFormat d){width=a;height=b;}public void Create()=>created=true;public void Release()=>released=true;}
- public class Camera:Behaviour{public float fieldOfView,nearClipPlane,farClipPlane;public int cullingMask;public CameraClearFlags clearFlags;public Color backgroundColor;public bool allowHDR,allowMSAA;public RenderTexture targetTexture;public Vector3 WorldToViewportPoint(Vector3 point){var local=transform.InverseTransformPoint(point);double half=Math.Tan(fieldOfView*Math.PI/360);float aspect=targetTexture==null?16f/9:targetTexture.width/(float)targetTexture.height;return new Vector3(0.5f+(float)(local.x/(local.z*half*aspect))*0.5f,0.5f+(float)(local.y/(local.z*half))*0.5f,local.z);}}
+ public class Camera:Behaviour{public float fieldOfView,nearClipPlane,farClipPlane,aspect;public int cullingMask;public CameraClearFlags clearFlags;public Color backgroundColor;public bool allowHDR,allowMSAA;public RenderTexture targetTexture;public Vector3 WorldToViewportPoint(Vector3 point){var local=transform.InverseTransformPoint(point);double half=Math.Tan(fieldOfView*Math.PI/360);float imageAspect=aspect>0?aspect:targetTexture==null?16f/9:targetTexture.width/(float)targetTexture.height;return new Vector3(0.5f+(float)(local.x/(local.z*half*imageAspect))*0.5f,0.5f+(float)(local.y/(local.z*half))*0.5f,local.z);}}
  public class Light:Behaviour{public LightType type;public Color color;public float intensity;public LightShadows shadows;public int cullingMask;}
  [Flags] public enum AdditionalCanvasShaderChannels{None=0,TexCoord1=1,TexCoord2=2,TexCoord3=4,Normal=8,Tangent=16}
- public class Canvas:Behaviour{public bool overrideSorting;public int sortingOrder,sortingLayerID;public Camera worldCamera;public AdditionalCanvasShaderChannels additionalShaderChannels;}
+ public class Canvas:Behaviour{public bool overrideSorting;public int sortingOrder,sortingLayerID;public float scaleFactor=1;public Camera worldCamera;public AdditionalCanvasShaderChannels additionalShaderChannels;}
  public class RectOffset{public int left,right,top,bottom;public RectOffset(int l,int r,int t,int b){left=l;right=r;top=t;bottom=b;}}
  public enum TextAnchor{UpperLeft,UpperCenter,MiddleLeft,MiddleCenter,MiddleRight,LowerLeft,LowerCenter,LowerRight}public enum KeyCode{Escape}public static class Input{public static bool GetKeyDown(KeyCode key)=>throw new InvalidOperationException("Legacy Input is disabled: activeInputHandler is Input System package.");}
  public static partial class Mathf{public static float Abs(float f)=>Math.Abs(f);public static float Max(float a,float b)=>Math.Max(a,b);}
@@ -78,7 +78,8 @@ namespace UnityEngine.UI {
  public class Image:Graphic{public enum Type{Simple,Sliced}public UnityEngine.Sprite sprite;public Type type;public float fillAmount;public bool preserveAspect;}
  public class RawImage:Graphic{public UnityEngine.Texture texture;public UnityEngine.Rect uvRect=new UnityEngine.Rect(0,0,1,1);}
  public struct ColorBlock{public UnityEngine.Color normalColor,highlightedColor,selectedColor,pressedColor,disabledColor;public float fadeDuration,colorMultiplier;}
- public class Selectable:UnityEngine.Behaviour{public enum Transition{None,ColorTint,SpriteSwap}public bool interactable=true;public Graphic targetGraphic;public ColorBlock colors;public Transition transition;}
+ public struct Navigation{public enum Mode{None,Horizontal,Vertical,Automatic,Explicit}public Mode mode;}
+ public class Selectable:UnityEngine.Behaviour{public Navigation navigation;public enum Transition{None,ColorTint,SpriteSwap}public bool interactable=true;public Graphic targetGraphic;public ColorBlock colors;public Transition transition;}
  public class Button:Selectable{public UnityEngine.Events.UnityEvent onClick=new UnityEngine.Events.UnityEvent();}
  public class Toggle:Selectable{public Graphic graphic;public bool isOn;}
  public class Slider:Selectable{public UnityEngine.RectTransform handleRect,fillRect;public float value,minValue,maxValue=1;public bool wholeNumbers;}
@@ -89,14 +90,15 @@ namespace UnityEngine.UI {
  public class VerticalLayoutGroup:HorizontalLayoutGroup{}
  public class GridLayoutGroup:LayoutGroup{public enum Constraint{Flexible,FixedColumnCount,FixedRowCount}public enum Corner{UpperLeft,UpperRight,LowerLeft,LowerRight}public enum Axis{Horizontal,Vertical}public UnityEngine.Vector2 cellSize,spacing;public Constraint constraint;public Corner startCorner;public Axis startAxis;public int constraintCount;}
  public class ContentSizeFitter:UnityEngine.Behaviour{public enum FitMode{Unconstrained,MinSize,PreferredSize}public FitMode verticalFit,horizontalFit;}
- public class ScrollRect:UnityEngine.Behaviour{public enum MovementType{Clamped}public UnityEngine.RectTransform viewport,content;public bool horizontal,vertical;public float scrollSensitivity,verticalNormalizedPosition;public MovementType movementType;}
+ public class Scrollbar:Selectable{}
+ public class ScrollRect:UnityEngine.Behaviour{public enum MovementType{Clamped}public Scrollbar horizontalScrollbar,verticalScrollbar;public UnityEngine.RectTransform viewport,content;public bool horizontal,vertical;public float scrollSensitivity,verticalNormalizedPosition;public MovementType movementType;}
  public class AspectRatioFitter:UnityEngine.Behaviour{public enum AspectMode{FitInParent}public AspectMode aspectMode;public float aspectRatio;}
  public class Outline:UnityEngine.Behaviour{public UnityEngine.Color effectColor;public UnityEngine.Vector2 effectDistance;}
 }
 namespace TMPro {
  public class TMP_FontAsset:UnityEngine.Object{}public static class TMP_Settings{public static TMP_FontAsset defaultFontAsset;}
- public enum TextAlignmentOptions{TopLeft,Center,MidlineLeft,MidlineRight,BottomLeft}public enum TextOverflowModes{Ellipsis}
- public class TextMeshProUGUI:UnityEngine.UI.Graphic{public string text;public int fontSize;public TMP_FontAsset font;public TextAlignmentOptions alignment;public bool enableWordWrapping,richText;public TextOverflowModes overflowMode;}
+ public enum TextAlignmentOptions{TopLeft,Center,MidlineLeft,MidlineRight,BottomLeft}public enum TextOverflowModes{Ellipsis,Truncate}
+ public class TextMeshProUGUI:UnityEngine.UI.Graphic{public string text;public int fontSize;public bool enableAutoSizing;public float fontSizeMin,fontSizeMax;public TMP_FontAsset font;public TextAlignmentOptions alignment;public bool enableWordWrapping,richText;public TextOverflowModes overflowMode;}
  public partial class TMP_InputField:UnityEngine.UI.Selectable{public enum LineType{SingleLine}public enum ContentType{IntegerNumber}public UnityEngine.RectTransform textViewport;public TextMeshProUGUI textComponent;public UnityEngine.UI.Graphic placeholder;public LineType lineType;public ContentType contentType;public string text;public int characterLimit;public bool richText;public UnityEngine.Events.UnityEvent<string> onValueChanged=new UnityEngine.Events.UnityEvent<string>();}
  public class TMP_Dropdown:UnityEngine.UI.Selectable{public class OptionData{public string text;public OptionData(string text){this.text=text;}}public TextMeshProUGUI captionText,itemText;public UnityEngine.RectTransform template;public List<OptionData> options=new List<OptionData>();public int value;public UnityEngine.Events.UnityEvent<int> onValueChanged=new UnityEngine.Events.UnityEvent<int>();public void RefreshShownValue(){if(captionText!=null&&options.Count>0)captionText.text=options[value].text;}}
 }
