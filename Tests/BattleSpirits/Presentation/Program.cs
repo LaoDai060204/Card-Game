@@ -121,13 +121,31 @@ internal static class Entry
                 &&input.targetGraphic.enabled&&input.targetGraphic.raycastTarget&&input.targetGraphic.gameObject.activeInHierarchy
                 &&input.textViewport!=null&&input.textComponent!=null,
                 "The actual search field has no visible pointer target or serialized text references.");
-        input.text=value;input.onValueChanged.Invoke(value);
+        input.text=value;input.ForceLabelUpdate();input.onValueChanged.Invoke(value);
     }
     private const string DeckSearch="CardCollectionView/Root/Window/FilterAndSortArea/UpperArea/InputField";
     private const string DeckSearchButton="CardCollectionView/Root/Window/FilterAndSortArea/UpperArea/SearchButton";
     private const string DeckAdd="CardDetailView/Root/Window/Content/DescriptionArea/MenuAreaRoot/MenuArea/CardGroup/AddCardButton";
     private static Transform[] VisibleCards(RectTransform content)=>content.children.Where(child=>child.name.StartsWith("BS_Card_",StringComparison.Ordinal)&&child.gameObject.activeSelf).ToArray();
     private static string[] VisibleIds(RectTransform content)=>VisibleCards(content).Select(child=>child.name.Substring("BS_Card_".Length)).ToArray();
+    private static string CardId(Transform card)=>card.name.Substring("BS_Card_".Length);
+    private static int CardQuantity(Transform card)
+    {
+        var badge=card.Find("BS_CardQuantity");Assert(badge!=null,"An editor card has no quantity badge.");
+        if(!badge.gameObject.activeSelf)return 0;
+        var text=badge.GetComponentInChildren<TextMeshProUGUI>(true)?.text??string.Empty;
+        Assert(int.TryParse(text.TrimStart('×','x','X',' '),out int quantity),"Quantity badge has no numerical count: "+text);
+        return quantity;
+    }
+    private static double Luminance(Color color)
+    {
+        double Linear(float value)=>value<=.04045f?value/12.92:Math.Pow((value+.055)/1.055,2.4);
+        return .2126*Linear(color.r)+.7152*Linear(color.g)+.0722*Linear(color.b);
+    }
+    private static double Contrast(Color first,Color second)
+    {
+        double a=Luminance(first),b=Luminance(second);return (Math.Max(a,b)+.05)/(Math.Min(a,b)+.05);
+    }
     private static void SearchDeck(BattleNativeScreenUI screen,string query){Input(screen.transform,DeckSearch,query);Click(screen.transform,DeckSearchButton);}
     private static void TickDeck(BattleNativeDeckView view,float now){Time.unscaledTime=now;Call(view,"Tick",now);}
     private static Type FixtureType(string kind)=>kind switch {
@@ -419,7 +437,8 @@ internal static class Entry
                 var collection=Field<RectTransform>(view,"collection");var deck=Field<RectTransform>(view,"deckContent");
                 Assert(collection!=null&&deck!=null,"Original nested deck form paths not resolved.");
                 Assert(collection.children.Count(child=>child.name.StartsWith("BS_Card_"))==42,"Collection first page missing.");
-                Assert(deck.children.Count(child=>child.name.StartsWith("BS_Card_"))==fake.SelectedDeck.cards.Length,"Deck cards not rebound.");
+                Assert(VisibleIds(deck).SequenceEqual(fake.SelectedDeck.cards.Distinct(StringComparer.Ordinal))
+                    &&VisibleCards(deck).Sum(CardQuantity)==fake.SelectedDeck.cards.Length,"Grouped deck cards or their logical quantities were not rebound.");
                 Assert(fake.RequestedArt.All(id=>catalog.cards.Any(card=>card.id==id)),"Legacy YGO card images requested.");AssertGeneratedLayers(screen.transform);
             });
             Case("Native search filters actual catalog by card ID, type, cost and BP",()=>{
@@ -479,11 +498,11 @@ internal static class Entry
                 Assert(Find(raw.transform,"CardCollectionView/Root/Window/CardListArea/CollectionAreaCenter/#Text_NoItemMessageTMP").gameObject.activeSelf,
                     "Fixture omitted the independent serialized empty-results label.");
             });
-            Case("Native search repairs the real input hit surface without replacing its TMP references",()=>{
+            Case("Native search repairs its hit surface while retaining the original text and viewport",()=>{
                 var screen=Screen(BattleNativeScreen.Deck);var field=Find(screen.transform,DeckSearch).GetComponent<TMP_InputField>();
-                var outGraphic=field.transform.Find("Out").GetComponent<Image>();
-                Assert(field.targetGraphic==outGraphic&&outGraphic.enabled&&outGraphic.raycastTarget&&outGraphic.color.a>0,
-                    "The source input background still cannot be targeted by a GraphicRaycaster.");
+                var surface=field.targetGraphic;
+                Assert(surface is Image&&surface.transform==field.transform.Find("BS_InputSurface")&&surface.enabled&&surface.raycastTarget&&surface.color.a>0,
+                    "The repaired input has no owned surface for a GraphicRaycaster.");
                 Assert(field.textViewport==field.transform.Find("Mask")&&field.textComponent.transform.parent==field.textViewport
                     &&field.placeholder.transform.parent==field.textViewport,"Search repair broke the serialized viewport/text hierarchy.");
                 Assert(!field.textComponent.raycastTarget&&!field.placeholder.raycastTarget,"Search text or placeholder competes with its focus surface.");
@@ -544,7 +563,7 @@ internal static class Entry
                 Assert(card.anchorMax.y-card.anchorMin.y>.5f&&card.sizeDelta.y==0,"Selected artwork still uses the original 143-by-208 corner slot.");
                 var image=card.Find("ImageCard").GetComponent<RawImage>();Assert(image.GetComponent<AspectRatioFitter>().aspectMode==AspectRatioFitter.AspectMode.FitInParent,"The enlarged portrait is stretched.");
                 var outer=(RectTransform)Find(screen.transform,"DeckView/Root/Window/Scroll View/Viewport/Content");
-                var grid=Field<RectTransform>(view,"deckContent").GetComponent<GridLayoutGroup>();int count=Field<List<string>>(view,"deck").Count;
+                var grid=Field<RectTransform>(view,"deckContent").GetComponent<GridLayoutGroup>();int count=VisibleCards(Field<RectTransform>(view,"deckContent")).Length;
                 Assert(outer.sizeDelta.y>=44+((count+grid.constraintCount-1)/grid.constraintCount)*grid.cellSize.y,"The deck ScrollRect content cannot reach its final card rows.");
             });
             Case("Deck chrome uses readable captions and hides unused legacy appearance controls",()=>{
@@ -627,7 +646,7 @@ internal static class Entry
                 Assert(Field<CardDefinition>(view,"selected").id==removed&&Field<List<string>>(view,"deck").Count==2,"A deck slot click did not select and remove its current card exactly once.");
                 string next=VisibleIds(content)[0];VisibleCards(content)[0].GetComponent<Button>().onClick.Invoke();
                 Assert(Field<CardDefinition>(view,"selected").id==next&&Field<List<string>>(view,"deck").Count==1,"A moved pooled deck slot retained its former removal index or card.");
-                Assert(VisibleIds(content).SequenceEqual(Field<List<string>>(view,"deck")),"The pooled deck widgets no longer match the saved card order.");
+                Assert(VisibleIds(content).SequenceEqual(Field<List<string>>(view,"deck").Distinct(StringComparer.Ordinal)),"The pooled deck widgets no longer match the first occurrence order of the saved cards.");
             });
             Case("A pooled slot reloads an evicted texture without replacing its widget",()=>{
                 var parent=new GameObject("PooledArtwork",typeof(RectTransform));var slot=BattleNativeWidgets.CreateCardSlot(parent.transform,fake);
@@ -636,20 +655,152 @@ internal static class Entry
                 slot.Hide();Object.Destroy(fake.ArtTextures[id]);slot.Bind(id);
                 Assert(ReferenceEquals(node,slot.Button.gameObject)&&fake.RequestedArt.Count==requests+1&&image.texture!=null,"Reactivating a pooled slot kept an evicted texture or recreated its widget.");
             });
-            Case("Duplicate deck occurrences own separate slots and removal keeps their current indices",()=>{
+            Case("Grouped duplicate cards show their logical quantity and remove one current occurrence",()=>{
                 var screen=Screen(BattleNativeScreen.Deck);var view=Field<BattleNativeDeckView>(screen,"deck");var content=Field<RectTransform>(view,"deckContent");
                 var choices=catalog.cards.Where(card=>card.IsPlayableFor(BattleRulesFormat.Standard)).GroupBy(card=>card.nameJa).Select(group=>group.First()).OrderBy(card=>card.cost).ToArray();
                 var first=choices[choices.Length-1];var second=choices.First(card=>card.nameJa!=first.nameJa);
                 Click(screen.transform,"DeckEditHeader/Root/Header/ButtonChangeSide");
                 Call(view,"Select",first);for(int copy=0;copy<3;copy++)Click(screen.transform,DeckAdd);
                 Call(view,"Select",second);for(int copy=0;copy<2;copy++)Click(screen.transform,DeckAdd);
-                Assert(VisibleCards(content).Length==5&&VisibleCards(content).Distinct().Count()==5,"Copies of one card shared a single pooled widget.");
-                VisibleCards(content)[1].GetComponent<Button>().onClick.Invoke();
-                Assert(Field<List<string>>(view,"deck").SequenceEqual(new[]{first.id,first.id,second.id,second.id}),"Removing a duplicate occurrence removed the wrong deck position.");
-                VisibleCards(content)[1].GetComponent<Button>().onClick.Invoke();
-                Assert(Field<List<string>>(view,"deck").SequenceEqual(new[]{first.id,second.id,second.id}),"A duplicate slot retained a stale removal index after shifting.");
-                Call(view,"Select",first);Click(screen.transform,DeckAdd);Click(screen.transform,"DeckEditHeader/Root/Header/ButtonSort");
-                Assert(VisibleCards(content).Length==4&&VisibleCards(content).Distinct().Count()==4&&VisibleIds(content).SequenceEqual(Field<List<string>>(view,"deck")),"Sorting duplicate occurrences lost a slot or changed the displayed deck order.");
+                var firstNode=VisibleCards(content).Single(node=>CardId(node)==first.id);
+                Assert(VisibleIds(content).SequenceEqual(new[]{first.id,second.id})&&CardQuantity(firstNode)==3
+                    &&CardQuantity(VisibleCards(content).Single(node=>CardId(node)==second.id))==2,
+                    "Grouped deck lost first occurrence order, quantity badges, or displayed duplicate card faces.");
+                firstNode.GetComponent<Button>().onClick.Invoke();
+                Assert(Field<List<string>>(view,"deck").SequenceEqual(new[]{first.id,first.id,second.id,second.id})
+                    &&CardQuantity(firstNode)==2,"Clicking a grouped face removed the wrong occurrence or more than one copy.");
+                VisibleCards(content).Single(node=>CardId(node)==second.id).GetComponent<Button>().onClick.Invoke();
+                Assert(Field<List<string>>(view,"deck").SequenceEqual(new[]{first.id,first.id,second.id}),"A later grouped card retained a stale logical removal index.");
+                Click(screen.transform,"DeckEditHeader/Root/Header/ButtonSort");
+                Assert(VisibleIds(content).SequenceEqual(Field<List<string>>(view,"deck").Distinct(StringComparer.Ordinal))
+                    &&VisibleCards(content).Sum(CardQuantity)==Field<List<string>>(view,"deck").Count,
+                    "Sorting grouped cards changed logical quantities or the displayed order.");
+                firstNode.GetComponent<Button>().onClick.Invoke();
+                Assert(Field<List<string>>(view,"deck").Count(id=>id==first.id)==1&&CardQuantity(firstNode)==1,
+                    "A grouped card retained its pre-sort removal index.");
+            });
+            Case("Grouping the initial deck keeps all logical copies and saves the exact original list",()=>{
+                var original=fake.SelectedDeck.cards.ToArray();var screen=Screen(BattleNativeScreen.Deck);var view=Field<BattleNativeDeckView>(screen,"deck");
+                var content=Field<RectTransform>(view,"deckContent");
+                Assert(original.Length>=40&&VisibleIds(content).SequenceEqual(original.Distinct(StringComparer.Ordinal)),"The grouped form omitted an ID or failed to collapse duplicate faces.");
+                Assert(VisibleCards(content).Sum(CardQuantity)==original.Length&&Field<List<string>>(view,"deck").SequenceEqual(original),
+                    "A compact card grid changed the underlying deck copy count or order.");
+                Click(screen.transform,"DeckEditHeader/Root/Header/ButtonSave");
+                Assert(fake.Saved!=null&&fake.Saved.cards.SequenceEqual(original),"Saving the compact form wrote one copy per group instead of the full deck.");
+            });
+            Case("Collection quantity badges follow logical edits while copy limits remain enforced",()=>{
+                var screen=Screen(BattleNativeScreen.Deck);var view=Field<BattleNativeDeckView>(screen,"deck");
+                var content=Field<RectTransform>(view,"deckContent");var grid=Field<RectTransform>(view,"collection");
+                var card=catalog.cards.First(value=>value.IsPlayableFor(BattleRulesFormat.Standard));
+                Click(screen.transform,"DeckEditHeader/Root/Header/ButtonChangeSide");SearchDeck(screen,card.id);
+                var tile=VisibleCards(grid).Single();Assert(CardQuantity(tile)==0,"An empty deck left an in-deck quantity on its collection tile.");
+                Call(view,"Select",card);for(int copy=0;copy<4;copy++)Click(screen.transform,DeckAdd);
+                Assert(Field<List<string>>(view,"deck").Count==3&&VisibleCards(content).Length==1&&CardQuantity(tile)==3
+                    &&CardQuantity(VisibleCards(content).Single())==3,"Grouping bypassed the copy cap or displayed a stale collection count.");
+                VisibleCards(content).Single().GetComponent<Button>().onClick.Invoke();
+                Assert(CardQuantity(tile)==2&&CardQuantity(VisibleCards(content).Single())==2&&Field<List<string>>(view,"deck").Count==2,
+                    "Removing one copy did not update both views immediately.");
+                Assert(ReferenceEquals(tile,VisibleCards(grid).Single()),"A quantity-only edit replaced the collection's pooled tile.");
+            });
+            Case("Card selection border follows rebound identities without tinting the official face",()=>{
+                var screen=Screen(BattleNativeScreen.Deck);var view=Field<BattleNativeDeckView>(screen,"deck");var grid=Field<RectTransform>(view,"collection");
+                var chosen=VisibleCards(grid).First(node=>CardId(node)!=Field<CardDefinition>(view,"selected").id);string id=CardId(chosen);
+                chosen.GetComponent<Button>().onClick.Invoke();
+                Assert(VisibleCards(grid).Single(node=>node.Find("BS_CardSelection").gameObject.activeSelf)==chosen,
+                    "The selected card has no unique visible editor border.");
+                foreach(var node in VisibleCards(grid)){
+                    Assert(node.GetComponent<Button>().transition==Selectable.Transition.None,"Editor selection can tint the printed card face.");
+                    Assert(node.Find("BS_CardSelection").GetComponentsInChildren<Graphic>(true).All(graphic=>!graphic.raycastTarget),
+                        "A decorative selection border can intercept a card click.");
+                }
+                Click(screen.transform,"BS_Next");
+                Assert(VisibleCards(grid).All(node=>!node.Find("BS_CardSelection").gameObject.activeSelf),"A rebound page retained the selected border on another card ID.");
+                Click(screen.transform,"BS_Previous");
+                Assert(VisibleCards(grid).Single(node=>CardId(node)==id).Find("BS_CardSelection").gameObject.activeSelf,
+                    "Returning to the selected card's page lost its selection border.");
+            });
+            Case("Card status badges reset when pooled collection slots change eligibility",()=>{
+                var screen=Screen(BattleNativeScreen.Deck);var view=Field<BattleNativeDeckView>(screen,"deck");var grid=Field<RectTransform>(view,"collection");
+                var outside=catalog.cards.First(card=>!card.IsEligibleFor(BattleRulesFormat.Standard));
+                var playable=catalog.cards.First(card=>card.IsPlayableFor(BattleRulesFormat.Standard));
+                SearchDeck(screen,outside.id);var tile=VisibleCards(grid).Single();var status=tile.Find("BS_CardStatus");
+                Assert(status.gameObject.activeSelf&&status.GetComponentInChildren<TextMeshProUGUI>(true).text=="NGOÀI POOL",
+                    "An out-of-pool card has no clear eligibility marker.");
+                SearchDeck(screen,playable.id);
+                Assert(ReferenceEquals(tile,VisibleCards(grid).Single())&&!tile.Find("BS_CardStatus").gameObject.activeSelf,
+                    "A playable card inherited another card's out-of-pool badge.");
+            });
+            Case("Editor badges and selection chrome are absent from ordinary gameplay cards",()=>{
+                var parent=new GameObject("GameplayHandCard",typeof(RectTransform));
+                var button=BattleNativeWidgets.Card(parent.transform,catalog.cards[0].id,()=>{},fake);
+                foreach(string decoration in new[]{"BS_CardQuantity","BS_CardStatus","BS_CardSelection","BS_CardCodeBackdrop"})
+                    Assert(button.transform.Find(decoration)==null,"Deck-editor decorations leaked into the game hand: "+decoration);
+            });
+            Case("Search field keeps readable dark colors for every selectable state",()=>{
+                var screen=Screen(BattleNativeScreen.Deck);var field=Find(screen.transform,DeckSearch).GetComponent<TMP_InputField>();
+                foreach(var background in new[]{field.colors.normalColor,field.colors.highlightedColor,field.colors.selectedColor,field.colors.pressedColor})
+                    Assert(background.a>.9f&&Contrast(field.textComponent.color,background)>=4.5,
+                        "Hover, focus or press can make search text white on a light background.");
+                var placeholder=field.placeholder as TextMeshProUGUI;
+                Assert(placeholder!=null&&placeholder.color.a>=.9f&&Contrast(placeholder.color,field.colors.normalColor)>=4.5,
+                    "Search placeholder has insufficient contrast on the normal field.");
+                Assert(placeholder.name=="BS_InputPlaceholder"&&placeholder.transform.parent==field.textViewport
+                    &&placeholder.enabled==string.IsNullOrEmpty(field.text)&&!placeholder.raycastTarget
+                    &&placeholder.gameObject.activeSelf,
+                    "The owned input hint has broken viewport ownership, initial visibility or pointer behavior.");
+                var legacyHint=field.textViewport.Find("#Text_Placeholder").GetComponent<TextMeshProUGUI>();
+                Assert(legacyHint!=placeholder&&!legacyHint.enabled&&!legacyHint.raycastTarget,"The old hint can still draw or intercept input.");
+                legacyHint.color=new Color(1,1,1,.125f);
+                Assert(placeholder.color.a==1,"A legacy hint tint changed the owned placeholder's alpha.");
+                Assert(field.colors.colorMultiplier==1&&field.customCaretColor&&Contrast(field.caretColor,field.colors.selectedColor)>=4.5,
+                    "The focused input has an invisible caret or uncontrolled tint multiplier.");
+                var owned=field.targetGraphic;var original=Find(field.transform,"Out").GetComponent<Image>();original.color=Color.white;
+                Assert(owned!=original&&!original.enabled&&owned.enabled,"Legacy field chrome can still overwrite the owned dark hit surface.");
+            });
+            Case("Active collection tabs keep light captions and a dedicated selection underline",()=>{
+                var screen=Screen(BattleNativeScreen.Deck);
+                foreach(string selected in new[]{"CardListToggle","BookmarkToggle","HistotyToggle"}){
+                    Click(screen.transform,"CardCollectionView/Root/Window/TabArea/"+selected);
+                    foreach(string name in new[]{"CardListToggle","BookmarkToggle","HistotyToggle"}){
+                        var tab=Find(screen.transform,"CardCollectionView/Root/Window/TabArea/"+name);
+                        var caption=tab.Find("BS_Caption").GetComponent<TextMeshProUGUI>();
+                        Assert(caption.color.r>.8f&&caption.color.g>.8f&&caption.color.b>.8f&&caption.color.a>.9f,
+                            "A tab caption becomes dark against its dark face.");
+                        Assert(tab.Find("BS_TabSelectedUnderline").gameObject.activeSelf==(name==selected),
+                            "The active tab is not distinguished by its dedicated underline.");
+                    }
+                }
+            });
+            Case("Owned hints can return after clearing either search text or the deck name",()=>{
+                var screen=Screen(BattleNativeScreen.Deck);
+                foreach(string path in new[]{DeckSearch,"DeckView/Root/Window/HeaderArea/NameAreaGroup/InputField"}){
+                    var field=Find(screen.transform,path).GetComponent<TMP_InputField>();
+                    field.SetTextWithoutNotify("A visible value");
+                    Assert(!field.placeholder.enabled&&field.placeholder.gameObject.activeSelf,
+                        "A nonempty field kept its hint visible or deactivated its owned hint object.");
+                    field.SetTextWithoutNotify(string.Empty);
+                    Assert(field.placeholder.enabled&&field.placeholder.gameObject.activeInHierarchy,
+                        "Clearing a field cannot show its owned hint again.");
+                }
+            });
+            Case("Card density cycles and persists without changing the query, artwork or logical deck",()=>{
+                var measured=new CountingCards(catalog.cards);fake.Cards=measured;
+                var screen=Screen(BattleNativeScreen.Deck);var view=Field<BattleNativeDeckView>(screen,"deck");var grid=Field<RectTransform>(view,"collection");
+                var area=(RectTransform)Find(screen.transform,"SafeArea");area.rect=new Rect(0,0,2680,1080);TickDeck(view,0);
+                var ids=VisibleIds(grid);var logical=Field<List<string>>(view,"deck").ToArray();int scans=measured.Enumerations,requests=fake.RequestedArt.Count,objects=GameObject.All.Count;
+                var widths=new List<float>();
+                for(int step=0;step<3;step++){
+                    Click(screen.transform,"BS_CardSize");widths.Add(grid.GetComponent<GridLayoutGroup>().cellSize.x);
+                    Assert(VisibleIds(grid).SequenceEqual(ids)&&Field<List<string>>(view,"deck").SequenceEqual(logical),"A density choice changed the current page or deck.");
+                }
+                Assert(widths.Distinct().Count()>1&&measured.Enumerations==scans&&fake.RequestedArt.Count==requests&&GameObject.All.Count==objects,
+                    "Density does not reflow the cards, or it reallocates tiles/reloads artwork/rescans the catalog.");
+                Assert(MDPro3.Config.Values.TryGetValue("BattleSpiritsDeckDensity",out string saved)&&new[]{"Compact","Medium","Large"}.Contains(saved),
+                    "The card density selection was not saved as a cosmetic preference.");
+                var other=Screen(BattleNativeScreen.Deck);var otherView=Field<BattleNativeDeckView>(other,"deck");
+                var otherArea=(RectTransform)Find(other.transform,"SafeArea");otherArea.rect=new Rect(0,0,2680,1080);TickDeck(otherView,0);
+                Assert(Field<RectTransform>(otherView,"collection").GetComponent<GridLayoutGroup>().cellSize.x==widths.Last(),
+                    "Reopening the deck form lost its saved card density.");
             });
             Case("Returning to an unchanged deck reloads evicted visible images and preserves unsaved edits",()=>{
                 var screen=Screen(BattleNativeScreen.Deck);var view=Field<BattleNativeDeckView>(screen,"deck");var grid=Field<RectTransform>(view,"collection");var content=Field<RectTransform>(view,"deckContent");

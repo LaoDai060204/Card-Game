@@ -14,19 +14,26 @@ namespace LaoDai.BattleSpirits.NativeUI
         private const string Collection = "CardCollectionView/Root/Window";
         private const string Deck = "DeckView/Root/Window";
         private const string Detail = "CardDetailView/Root/Window/Content";
+        internal const string DensityConfigKey = "BattleSpiritsDeckDensity";
+        private static readonly string[] DensityValues = { "Compact", "Medium", "Large" };
+        private static readonly string[] DensityLabels = { "GỌN", "VỪA", "LỚN" };
+        private static readonly float[] DensityWidths = { 126, 150, 180 };
         private readonly Transform root;
         private readonly RectTransform area, collection, deck, outerDeck, deckSection;
         private readonly GridLayoutGroup collectionGrid, deckGrid;
         private readonly TextMeshProUGUI pageLabel;
+        private readonly TextMeshProUGUI densityCaption;
         private readonly Transform[] tabOn = new Transform[3], tabOff = new Transform[3];
+        private readonly GameObject[] tabUnderline = new GameObject[3];
         private readonly TextMeshProUGUI[] tabCaptions = new TextMeshProUGUI[3];
         private readonly Button[] tabButtons = new Button[3];
         private float lastWidth, lastHeight;
-        private int deckCount;
+        private int deckCount, density;
 
         internal BattleNativeDeckLayout(Transform root, RectTransform collection, RectTransform deck)
         {
             this.root = root; this.collection = collection; this.deck = deck;
+            density = ReadDensity(Config.Get(DensityConfigKey, "Medium"));
             area = Rect("SafeArea") ?? root as RectTransform;
             foreach (string panel in new[] { "CardDetailView", "DeckView", "CardCollectionView", "DeckEditHeader" })
             { Frame(panel, 0, 0, 1, 1); Frame(panel + "/Root", 0, 0, 1, 1); }
@@ -44,9 +51,28 @@ namespace LaoDai.BattleSpirits.NativeUI
             collectionGrid = collection.GetComponent<GridLayoutGroup>();
             deckGrid = deck.GetComponent<GridLayoutGroup>();
             pageLabel = BattleNativeWidgets.Text(Rect(Collection), "BS_PageLabel", string.Empty, 22);
-            BattleNativeWidgets.Place(pageLabel.rectTransform, .025f, .005f, .76f, .075f);
+            BattleNativeWidgets.Place(pageLabel.rectTransform, .025f, .005f, .47f, .075f);
             pageLabel.alignment = TextAlignmentOptions.MidlineLeft;
             pageLabel.enableWordWrapping = false; pageLabel.overflowMode = TextOverflowModes.Ellipsis;
+            var sizeButton = BattleNativeWidgets.Button(Rect(Collection), "BS_CardSize", "THẺ: " + DensityLabels[density], CycleDensity);
+            BattleNativeWidgets.Place(sizeButton.transform as RectTransform, .49f, .005f, .76f, .075f);
+            densityCaption = sizeButton.GetComponentInChildren<TextMeshProUGUI>(true);
+            densityCaption.fontSize = 20; densityCaption.enableWordWrapping = false;
+            Refresh();
+        }
+
+        private static int ReadDensity(string value)
+        {
+            for (int i = 0; i < DensityValues.Length; i++)
+                if (string.Equals(value, DensityValues[i], StringComparison.OrdinalIgnoreCase)) return i;
+            return 1;
+        }
+        private void CycleDensity()
+        {
+            density = (density + 1) % DensityValues.Length;
+            Config.Set(DensityConfigKey, DensityValues[density]); Config.Save();
+            densityCaption.text = "THẺ: " + DensityLabels[density];
+            lastWidth = 0; // Reflow the existing slots; do not rebuild or reload them.
             Refresh();
         }
 
@@ -107,8 +133,8 @@ namespace LaoDai.BattleSpirits.NativeUI
             string[] captions = { "MỞ BỘ BÀI", "STANDARD", "ĐẤU THỬ", "SẮP XẾP", "LƯU", "XÓA BỘ BÀI" };
             for (int i = 0; i < buttons.Length; i++)
             {
-                float x = .205f + i * .132f;
-                Frame(header + "/" + buttons[i], x, .12f, x + .122f, .88f);
+                float x = .20f + i * .125f;
+                Frame(header + "/" + buttons[i], x, .12f, x + .115f, .88f);
                 Caption(header + "/" + buttons[i], captions[i]);
             }
         }
@@ -131,6 +157,7 @@ namespace LaoDai.BattleSpirits.NativeUI
                 tabCaptions[i] = Caption(path, text[i], 22);
                 tabOn[i] = Rect(path + "/ImageOn"); tabOff[i] = Rect(path + "/ImageOff");
                 tabButtons[i] = Rect(path)?.GetComponent<Button>();
+                BuildTabSurface(Rect(path), tabCaptions[i], tabButtons[i], i);
             }
             const string filters = Collection + "/FilterAndSortArea";
             Frame(filters, 0, 0, 1, 1);
@@ -163,12 +190,32 @@ namespace LaoDai.BattleSpirits.NativeUI
         private void Field(string path, string hint)
         {
             var input = BattleNativeWidgets.Component<TMP_InputField>(root, path); if (input == null) return;
-            if (input.targetGraphic is Image background)
+            // The old Out image is still driven by cached template color
+            // containers. Give the field its own surface so hover/focus cannot
+            // repaint a white panel underneath white input text.
+            if (input.targetGraphic != null)
             {
-                StopLayout(background.rectTransform); BattleNativeWidgets.Place(background.rectTransform, 0, 0, 1, 1);
-                background.sprite = BattleTheme.PanelSprite; background.type = Image.Type.Sliced;
-                background.color = new Color(.18f, .19f, .22f, 1);
+                input.targetGraphic.enabled = false; input.targetGraphic.raycastTarget = false;
             }
+            var surfaceRect = input.transform.Find("BS_InputSurface") as RectTransform
+                ?? BattleNativeWidgets.Rect(input.transform, "BS_InputSurface");
+            BattleNativeWidgets.Place(surfaceRect, 0, 0, 1, 1); surfaceRect.SetAsFirstSibling();
+            var background = surfaceRect.GetComponent<Image>() ?? surfaceRect.gameObject.AddComponent<Image>();
+            background.enabled = true; background.raycastTarget = true; background.material = null;
+            background.sprite = BattleTheme.PanelSprite; background.type = Image.Type.Sliced;
+            input.targetGraphic = background; input.transition = Selectable.Transition.ColorTint;
+            var inputColors = input.colors;
+            inputColors.normalColor = new Color(.13f, .16f, .20f, 1);
+            inputColors.highlightedColor = new Color(.17f, .22f, .26f, 1);
+            inputColors.selectedColor = new Color(.18f, .24f, .28f, 1);
+            inputColors.pressedColor = new Color(.10f, .14f, .18f, 1);
+            inputColors.disabledColor = new Color(.08f, .10f, .12f, .8f);
+            inputColors.colorMultiplier = 1; inputColors.fadeDuration = .10f;
+            input.colors = inputColors; background.color = inputColors.normalColor;
+            input.customCaretColor = true; input.caretColor = Color.white;
+            input.selectionColor = new Color(.45f, .68f, .14f, .5f);
+            foreach (string overlay in new[] { "Hover", "ButtonHover", "SelectCursor" })
+            { var legacy = input.transform.Find(overlay); if (legacy != null) legacy.gameObject.SetActive(false); }
             if (input.textViewport != null)
             { StopLayout(input.textViewport); BattleNativeWidgets.Place(input.textViewport, .08f, .08f, .9f, .92f); }
             if (input.textComponent != null)
@@ -177,15 +224,59 @@ namespace LaoDai.BattleSpirits.NativeUI
                 input.textComponent.fontSize = 25; input.textComponent.color = Color.white;
                 input.textComponent.enableWordWrapping = false;
             }
-            if (input.placeholder is TextMeshProUGUI placeholder)
+            if (input.placeholder != null && input.placeholder.name != "BS_InputPlaceholder")
             {
+                // Legacy ColorContainerGraphic can multiply the old hint's
+                // alpha several times during hover/selection. Leave its
+                // serialized object in place, but render an owned hint instead.
+                input.placeholder.enabled = false; input.placeholder.raycastTarget = false;
+            }
+            if (input.textViewport != null)
+            {
+                var placeholder = input.textViewport.Find("BS_InputPlaceholder")?.GetComponent<TextMeshProUGUI>()
+                    ?? BattleNativeWidgets.Text(input.textViewport, "BS_InputPlaceholder", hint, 22);
                 BattleNativeWidgets.Place(placeholder.rectTransform, 0, 0, 1, 1);
                 placeholder.text = hint; placeholder.fontSize = 22; placeholder.font = Program.instance.ui_.tmpFont;
+                placeholder.color = new Color(.65f, .71f, .78f, 1); placeholder.enabled = true;
+                placeholder.alignment = TextAlignmentOptions.MidlineLeft; placeholder.raycastTarget = false;
                 placeholder.enableWordWrapping = false; placeholder.overflowMode = TextOverflowModes.Ellipsis;
+                input.placeholder = placeholder;
+                // Keep the object active and let TMP own Graphic visibility.
+                // It must be able to show the hint again after clearing a name.
+                placeholder.gameObject.SetActive(true);
+                input.ForceLabelUpdate();
             }
             var icon = input.transform.Find("SearchIcon"); if (icon != null) icon.gameObject.SetActive(false);
             var clear = BattleNativeWidgets.Find(input.transform, "ClearButton") as RectTransform;
             if (clear != null) BattleNativeWidgets.Place(clear, .91f, .08f, .99f, .92f);
+        }
+        private void BuildTabSurface(RectTransform node, TextMeshProUGUI caption, Button button, int index)
+        {
+            if (node == null || button == null) return;
+            foreach (var old in node.GetComponentsInChildren<Graphic>(true))
+                if (old != caption) { old.enabled = false; old.raycastTarget = false; }
+            var surface = BattleNativeWidgets.Rect(node, "BS_TabSurface");
+            BattleNativeWidgets.Place(surface, 0, 0, 1, 1); surface.SetAsFirstSibling();
+            var face = surface.gameObject.AddComponent<Image>();
+            face.sprite = BattleTheme.ButtonSprite; face.type = Image.Type.Sliced;
+            face.raycastTarget = true; button.targetGraphic = face;
+            button.transition = Selectable.Transition.ColorTint;
+            button.colors = TabColors(button.colors, false); face.color = button.colors.normalColor;
+            var underline = BattleNativeWidgets.Rect(node, "BS_TabSelectedUnderline");
+            BattleNativeWidgets.Place(underline, .08f, .025f, .92f, .075f);
+            var accent = underline.gameObject.AddComponent<Image>(); accent.color = BattleTheme.Accent; accent.raycastTarget = false;
+            tabUnderline[index] = underline.gameObject; tabUnderline[index].SetActive(false);
+            caption.color = Color.white;
+        }
+        private static ColorBlock TabColors(ColorBlock colors, bool chosen)
+        {
+            colors.normalColor = chosen ? new Color(.16f, .23f, .19f, 1) : new Color(.12f, .15f, .18f, 1);
+            colors.highlightedColor = new Color(.21f, .28f, .25f, 1);
+            colors.selectedColor = new Color(.23f, .31f, .27f, 1);
+            colors.pressedColor = new Color(.10f, .15f, .12f, 1);
+            colors.disabledColor = new Color(.08f, .10f, .12f, .8f);
+            colors.colorMultiplier = 1; colors.fadeDuration = .10f;
+            return colors;
         }
         private void BuildDeckHeader()
         {
@@ -202,12 +293,13 @@ namespace LaoDai.BattleSpirits.NativeUI
             string heading = Deck + "/Scroll View/Viewport/Content/MainDeckView/Subhedding";
             var row = Rect(heading); if (row != null) { StopLayout(row); Top(row, 0); row.sizeDelta = new Vector2(0, 42); }
             Frame(heading + "/Left", 0, 0, 1, 1);
-            Frame(heading + "/Left/#TextMainDeckTMP", .02f, 0, .7f, 1);
-            Frame(heading + "/Left/TextMainDeckCardNumTMP", .72f, 0, .98f, 1);
+            Frame(heading + "/Left/#TextMainDeckTMP", .02f, 0, .48f, 1);
+            Frame(heading + "/Left/TextMainDeckCardNumTMP", .5f, 0, .98f, 1);
+            BattleNativeWidgets.Label(root, heading + "/Left/#TextMainDeckTMP", "BỘ BÀI");
             foreach (string field in new[] { "#TextMainDeckTMP", "TextMainDeckCardNumTMP" })
             {
                 var label = BattleNativeWidgets.Component<TextMeshProUGUI>(root, heading + "/Left/" + field);
-                if (label != null) { label.font = Program.instance.ui_.tmpFont; label.fontSize = 23; label.enableWordWrapping = false; }
+                if (label != null) { label.font = Program.instance.ui_.tmpFont; label.fontSize = field == "TextMainDeckCardNumTMP" ? 20 : 23; label.enableWordWrapping = false; }
             }
         }
         private void SetupScroll(string path, RectTransform content)
@@ -284,17 +376,17 @@ namespace LaoDai.BattleSpirits.NativeUI
             if (width != lastWidth || height != lastHeight)
             {
                 lastWidth = width; lastHeight = height;
-                ResizeGrid(collectionGrid, width * .346f * .97f, 3, 6);
-                ResizeGrid(deckGrid, width * .374f * .98f, 4, 8);
+                ResizeGrid(collectionGrid, width * .346f * .97f, density == 2 ? 2 : 3, density == 0 ? 6 : density == 1 ? 5 : 4);
+                ResizeGrid(deckGrid, width * .374f * .98f, density == 2 ? 2 : 3, density == 0 ? 8 : density == 1 ? 6 : 5);
             }
             int rows = deckCount == 0 ? 0 : (deckCount + deckGrid.constraintCount - 1) / deckGrid.constraintCount;
             float total = 44 + rows * (deckGrid.cellSize.y + deckGrid.spacing.y) + 12;
             if (outerDeck != null) outerDeck.sizeDelta = new Vector2(0, total);
             if (deckSection != null) deckSection.sizeDelta = new Vector2(0, total);
         }
-        private static void ResizeGrid(GridLayoutGroup grid, float width, int minimum, int maximum)
+        private void ResizeGrid(GridLayoutGroup grid, float width, int minimum, int maximum)
         {
-            int columns = Math.Max(minimum, Math.Min(maximum, (int)(width / 126f)));
+            int columns = Math.Max(minimum, Math.Min(maximum, (int)(width / DensityWidths[density])));
             grid.constraintCount = columns; grid.spacing = new Vector2(8, 8); grid.padding = new RectOffset(8, 8, 8, 8);
             float cardWidth = Math.Max(1, (width - 16 - (columns - 1) * 8) / columns);
             grid.cellSize = new Vector2(cardWidth, cardWidth * 1.62f);
@@ -307,12 +399,12 @@ namespace LaoDai.BattleSpirits.NativeUI
                 if (tabOn[i] != null) tabOn[i].gameObject.SetActive(i == support);
                 if (tabOff[i] != null) tabOff[i].gameObject.SetActive(i != support);
                 var caption = tabCaptions[i];
-                if (caption != null) caption.color = i == support ? new Color(.05f, .06f, .08f, 1) : Color.white;
+                if (caption != null) caption.color = Color.white;
+                if (tabUnderline[i] != null) tabUnderline[i].SetActive(i == support);
                 var button = tabButtons[i];
                 if (button != null)
                 {
-                    var colors = button.colors;
-                    colors.normalColor = i == support ? BattleTheme.Accent : Color.white;
+                    var colors = TabColors(button.colors, i == support);
                     button.colors = colors;
                     if (button.targetGraphic != null) button.targetGraphic.color = colors.normalColor;
                 }

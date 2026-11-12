@@ -1,5 +1,7 @@
 # Kiểm tra Standard và cách trình diễn thẻ
 
+Bản **0.6.3** gom bản sao trong danh sách deck, thêm badge/viền/trạng thái, ba cỡ thẻ và sửa tương phản ô nhập/tab. **84 luồng UI/session đạt**, gồm chín kiểm tra mới và các kiểm tra cũ được giữ theo cách hiển thị gom nhóm. Lưu deck vẫn giữ đủ bản sao; đổi mật độ không tạo lại ô/tải ảnh/tính lại truy vấn trong harness. Tương phản được kiểm tra bằng màu trạng thái khai báo, không phải phép đo pixel. **Chưa chạy Unity Windows.** [Hướng dẫn](BATTLE_SPIRITS_CARD_BROWSER.md) và [báo cáo](battle-spirits-card-browser-polish-validation.json).
+
 Bản **0.6.2** sửa lỗi thực của prefab: ô tìm kiếm thiếu vùng raycast/targetGraphic, collection grid bị tắt và label rỗng độc lập không theo kết quả. Bố cục runtime giãn ba khung theo SafeArea, phóng lớn preview và sửa vùng cuộn. Fixture nay đọc enabled/raycast, các tham chiếu TMP/ScrollRect, layout và anchor/size từ prefab. **75 luồng UI/session đạt**, gồm tám kiểm tra mới cho những lỗi này và hợp đồng hình học 16:9/rộng/4:3. Đây vẫn là kiểm tra bằng API thay thế; **chưa thực thi GraphicRaycaster, gõ phím, layout pass hoặc render trong Unity Windows**. [Hướng dẫn](BATTLE_SPIRITS_DECK_INPUT_LAYOUT.md) và [báo cáo](battle-spirits-deck-input-layout-validation.json).
 
 Bản **0.6.1** dùng lại luồng Boot → menu MDPro3 và tối ưu Bộ bài. [Báo cáo Bộ bài](battle-spirits-deck-optimization-validation.json) ghi **67 luồng UI/session**, gồm 10 tình huống mới kiểm tra pool, kết quả tìm kiếm, lá trùng, ảnh tải muộn và bản nháp khi mở lại. Sau khi pool sẵn sàng, tám lần refresh cùng truy vấn và 12 vòng phân trang không tạo thêm GameObject. Các kiểm tra cấu trúc đạt 9 prefab, 12 tài nguyên, 4 scene Boot; năm tệp C# qua ba profile C# 9 không có lỗi cú pháp. **Chưa đo FPS hoặc chạy Play/render bằng Unity Windows.** [Cách thử bản hiện tại](BATTLE_SPIRITS_DECK_OPTIMIZATION.md). Các kết quả title 0.6.0 bên dưới là kiểm tra helper lưu lại; Boot hiện tại không dùng title đó.
@@ -79,7 +81,7 @@ Thay đường dẫn mẫu bằng đường dẫn trên máy. `catalog.py valida
 
 ## Cần kiểm tra bằng Windows Unity
 
-1. Mở Boot đúng Editor, Addressables **Use Asset Database**. Xác nhận game tự vào menu MDPro3 **0.6.2** khi tải xong; thử click/gõ/Enter, phân trang, cửa sổ rộng và sửa deck theo [hướng dẫn hiện tại](BATTLE_SPIRITS_DECK_INPUT_LAYOUT.md).
+1. Mở Boot đúng Editor, Addressables **Use Asset Database**. Xác nhận menu MDPro3 **0.6.3**; thử số lượng lá trùng, cỡ thẻ, tìm kiếm/hover/tab và lưu deck theo [hướng dẫn hiện tại](BATTLE_SPIRITS_CARD_BROWSER.md).
 2. Chọn một trong ba bộ Standard. Giữ/đổi tay đầu, triệu hồi bằng click, Core/Soul, Super Unleash, Main → Attack → Second Main → End; lượt đầu không có Core/Attack/Second Main.
 3. Về menu rồi chơi ván tiếp; kiểm tra field/pet và âm thanh không mất hoặc lặp. Thử chọn pet và **Cài đặt → Hình nền**, quay lại menu và khởi động lại để kiểm tra lựa chọn được giữ.
 4. Hoạt cảnh vẫn xem hai boss BS01 nhưng không cho đưa chúng vào deck Standard. Lịch sử cho tiến/lùi replay Standard cùng version/catalog.

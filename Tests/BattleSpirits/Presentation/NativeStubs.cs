@@ -95,7 +95,7 @@ namespace UnityEngine.UI {public class Text:Graphic {public string text;public b
 namespace TMPro
 {
     public enum HorizontalAlignmentOptions{Left,Center,Right}
-    public partial class TMP_InputField {public bool readOnly;public UnityEngine.Events.UnityEvent<string> onSubmit=new UnityEngine.Events.UnityEvent<string>();public void SetTextWithoutNotify(string value)=>text=value;}
+    public partial class TMP_InputField {public bool readOnly,customCaretColor;public UnityEngine.Color caretColor,selectionColor;public UnityEngine.Events.UnityEvent<string> onSubmit=new UnityEngine.Events.UnityEvent<string>();public void SetTextWithoutNotify(string value){text=value;ForceLabelUpdate();}public void ForceLabelUpdate(){if(placeholder!=null)placeholder.enabled=string.IsNullOrEmpty(text);}}
 }
 namespace UnityEngine.EventSystems {public class EventSystem {public static EventSystem current;public UnityEngine.GameObject currentSelectedGameObject;}}
 namespace MDPro3

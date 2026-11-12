@@ -1,5 +1,7 @@
 # Tìm kiếm và bố cục Bộ bài — 0.6.2
 
+Bản **0.6.3** giữ các sửa lỗi bên dưới và thêm [gom bản sao/cỡ thẻ/độ tương phản](BATTLE_SPIRITS_CARD_BROWSER.md). Text và viewport TMP vẫn giữ tham chiếu gốc; phần gợi ý và nền nhập nay dùng graphic riêng để tránh bộ màu template cũ ghi đè.
+
 Ảnh người dùng ở 0.6.1 cho thấy một lá trong vùng kết quả, thông báo không có bài vẫn hiện và khung giao diện bó vào giữa cửa sổ rộng. Kiểm tra serialized prefab xác định các lỗi cụ thể:
 
 - **Ô tìm kiếm không có bề mặt nhận click:** TMP_InputField không có `targetGraphic`, các hình nền/chữ thường đều tắt `raycastTarget`. Nút xóa nhỏ là thành phần duy nhất nhận click, nhưng controller ẩn nó khi ô trống. Binding mới bật vùng nền nhập và gán nó làm `targetGraphic`, giữ đúng text/viewport/placeholder đã serialize.

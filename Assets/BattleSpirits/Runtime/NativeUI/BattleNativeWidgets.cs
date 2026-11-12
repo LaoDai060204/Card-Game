@@ -146,6 +146,11 @@ namespace LaoDai.BattleSpirits.NativeUI
             internal readonly RawImage Image;
             private readonly TextMeshProUGUI label;
             private readonly IBattleNativeSession session;
+            private TextMeshProUGUI quantityLabel, statusLabel;
+            private GameObject quantityBadge, statusBadge, selectionFrame;
+            private int editorQuantity = -1;
+            private string editorStatus;
+            private bool editorSelected;
             private Action click;
             internal string Id { get; private set; }
             internal int Index;
@@ -184,6 +189,74 @@ namespace LaoDai.BattleSpirits.NativeUI
                 // LoadArt also updates its own target-generation guard, so a
                 // late result for a previous ID cannot paint the reused slot.
                 if (changed || Image.texture == null) session.LoadArt(id, Image);
+            }
+
+            // Deck browsing decorations are deliberately opt-in: duel hands
+            // and other callers keep the original card widget behavior.
+            internal void ConfigureEditorCard()
+            {
+                if (quantityBadge != null) return;
+                Button.transition = Selectable.Transition.None;
+                Image.color = Color.white;
+                // The face leaves room for its code/count footer. Keep that
+                // footer and portrait margins clickable through the same Button.
+                var surface = Button.GetComponent<Image>() ?? Button.gameObject.AddComponent<Image>();
+                surface.sprite = null; surface.material = null; surface.enabled = true; surface.raycastTarget = true;
+                surface.color = new Color(.02f, .025f, .03f, .25f);
+                label.fontSize = 18; label.enableWordWrapping = false;
+                label.overflowMode = TextOverflowModes.Ellipsis;
+                Place(label.rectTransform, .025f, 0, .76f, .12f);
+                var bar = Rect(Button.transform, "BS_CardCodeBackdrop");
+                Place(bar, 0, 0, 1, .12f); bar.SetAsFirstSibling();
+                var barImage = bar.gameObject.AddComponent<Image>();
+                barImage.color = new Color(.035f, .045f, .055f, .96f); barImage.raycastTarget = false;
+                quantityLabel = Badge("BS_CardQuantity", .77f, 0, 1, .12f, 20);
+                quantityBadge = quantityLabel.transform.parent.gameObject;
+                statusLabel = Badge("BS_CardStatus", .025f, .125f, .975f, .235f, 16);
+                statusBadge = statusLabel.transform.parent.gameObject;
+                var frame = Rect(Button.transform, "BS_CardSelection"); Place(frame, 0, 0, 1, 1);
+                selectionFrame = frame.gameObject;
+                Edge(frame, "Top", 0, 1, 1, 1, 0, 3);
+                Edge(frame, "Bottom", 0, 0, 1, 0, 0, 3);
+                Edge(frame, "Left", 0, 0, 0, 1, 3, 0);
+                Edge(frame, "Right", 1, 0, 1, 1, 3, 0);
+                quantityBadge.SetActive(false); statusBadge.SetActive(false); selectionFrame.SetActive(false);
+                label.transform.SetAsLastSibling();
+            }
+
+            private TextMeshProUGUI Badge(string name, float left, float bottom, float right, float top, int size)
+            {
+                var badge = Rect(Button.transform, name); Place(badge, left, bottom, right, top);
+                var background = badge.gameObject.AddComponent<Image>();
+                background.color = new Color(.025f, .035f, .045f, .94f); background.raycastTarget = false;
+                var text = Text(badge, "Label", string.Empty, size);
+                text.enableWordWrapping = false; text.overflowMode = TextOverflowModes.Ellipsis;
+                return text;
+            }
+
+            private static void Edge(Transform parent, string name, float left, float bottom, float right, float top, float width, float height)
+            {
+                var line = Rect(parent, name); Place(line, left, bottom, right, top); line.sizeDelta = new Vector2(width, height);
+                var graphic = line.gameObject.AddComponent<Image>(); graphic.color = BattleTheme.Accent; graphic.raycastTarget = false;
+            }
+
+            internal void SetEditorState(int quantity, bool selected, string status)
+            {
+                ConfigureEditorCard();
+                quantity = Math.Max(0, quantity); status ??= string.Empty;
+                if (editorQuantity != quantity)
+                {
+                    editorQuantity = quantity;
+                    quantityLabel.text = "×" + quantity;
+                    quantityBadge.SetActive(quantity > 0);
+                }
+                if (editorSelected != selected) { editorSelected = selected; selectionFrame.SetActive(selected); }
+                if (!string.Equals(editorStatus, status, StringComparison.Ordinal))
+                {
+                    editorStatus = status; statusLabel.text = status; statusBadge.SetActive(status.Length > 0);
+                    statusLabel.color = new Color(1f, .83f, .42f, 1);
+                    label.color = status.Length > 0 ? new Color(.74f, .78f, .82f, 1) : new Color(.9f, .93f, .97f, 1);
+                }
             }
 
             internal void Hide()

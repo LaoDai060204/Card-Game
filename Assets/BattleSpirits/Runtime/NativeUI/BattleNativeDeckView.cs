@@ -32,8 +32,11 @@ namespace LaoDai.BattleSpirits.NativeUI
         private string loadedDeck;
         private readonly List<BattleNativeWidgets.CardSlot> collectionSlots = new List<BattleNativeWidgets.CardSlot>();
         private readonly List<BattleNativeWidgets.CardSlot> deckSlots = new List<BattleNativeWidgets.CardSlot>();
-        private readonly List<BattleNativeWidgets.CardSlot> orderedDeckSlots = new List<BattleNativeWidgets.CardSlot>();
-        private readonly HashSet<BattleNativeWidgets.CardSlot> usedDeckSlots = new HashSet<BattleNativeWidgets.CardSlot>();
+        private readonly Dictionary<string, int> deckQuantities = new Dictionary<string, int>(StringComparer.Ordinal);
+        private readonly Dictionary<string, int> firstDeckIndex = new Dictionary<string, int>(StringComparer.Ordinal);
+        private readonly List<string> displayedDeckIds = new List<string>();
+        private readonly Dictionary<string, BattleNativeWidgets.CardSlot> matchedDeckSlots = new Dictionary<string, BattleNativeWidgets.CardSlot>(StringComparer.Ordinal);
+        private readonly Stack<BattleNativeWidgets.CardSlot> recycledDeckSlots = new Stack<BattleNativeWidgets.CardSlot>();
         private readonly CardDefinition[][] sortedCatalog;
         private readonly Dictionary<string, int> copyLimits;
         private CardDefinition[] collectionResults;
@@ -209,12 +212,14 @@ namespace LaoDai.BattleSpirits.NativeUI
                 if (i == collectionSlots.Count)
                 {
                     var slot = BattleNativeWidgets.CreateCardSlot(collection, session, collectionTemplate);
+                    slot.ConfigureEditorCard();
                     collectionSlots.Add(slot);
                     slot.Bind(all[start + i].id, () => { if (cards.TryGetValue(slot.Id, out var card)) Select(card); });
                 }
                 else collectionSlots[i].Bind(all[start + i].id);
             }
             for (int i = count; i < collectionSlots.Count; i++) collectionSlots[i].Hide();
+            RefreshCardStates();
             BattleNativeWidgets.Label(root, Collection + "/FilterAndSortArea/BottomArea/SortButton", sort == 1 ? "COST" : sort == 2 ? "TÊN" : "MỚI NHẤT");
             layout?.Results(all.Length, page, pageCount, support);
         }
@@ -229,6 +234,7 @@ namespace LaoDai.BattleSpirits.NativeUI
         {
             bool unchanged = ReferenceEquals(selected, card) && detailRendered;
             selected = card;
+            RefreshCardStates();
             var detail = detailRoot != null ? detailRoot : (detailRoot = BattleNativeWidgets.Find(root, Detail));
             if (detail == null) return;
             detail.gameObject.SetActive(true);
@@ -287,38 +293,60 @@ namespace LaoDai.BattleSpirits.NativeUI
         private void RenderDeck()
         {
             if (deckContent == null) return;
-            // Match occurrences before allocating/rebinding. Sorting or removing
-            // a card moves its existing widget instead of reloading every face.
-            orderedDeckSlots.Clear(); usedDeckSlots.Clear();
+            // The saved deck still contains every copy. Only its visual list is
+            // grouped, in first-occurrence order, with one reusable slot per ID.
+            deckQuantities.Clear(); firstDeckIndex.Clear(); displayedDeckIds.Clear();
             for (int i = 0; i < deck.Count; i++)
             {
                 string id = deck[i];
-                var existing = deckSlots.FirstOrDefault(slot => slot.Id == id && !usedDeckSlots.Contains(slot));
-                orderedDeckSlots.Add(existing);
-                if (existing != null) usedDeckSlots.Add(existing);
+                if (deckQuantities.TryGetValue(id, out int quantity)) deckQuantities[id] = quantity + 1;
+                else { deckQuantities[id] = 1; firstDeckIndex[id] = i; displayedDeckIds.Add(id); }
             }
-            for (int i = 0; i < deck.Count; i++)
+            matchedDeckSlots.Clear(); recycledDeckSlots.Clear();
+            foreach (var slot in deckSlots)
             {
-                var slot = orderedDeckSlots[i];
-                if (slot == null)
+                if (deckQuantities.ContainsKey(slot.Id) && !matchedDeckSlots.ContainsKey(slot.Id)) matchedDeckSlots.Add(slot.Id, slot);
+                else recycledDeckSlots.Push(slot);
+            }
+            for (int i = 0; i < displayedDeckIds.Count; i++)
+            {
+                string id = displayedDeckIds[i];
+                if (!matchedDeckSlots.TryGetValue(id, out var slot))
                 {
-                    slot = deckSlots.FirstOrDefault(candidate => !usedDeckSlots.Contains(candidate));
-                    if (slot == null)
+                    if (recycledDeckSlots.Count > 0) slot = recycledDeckSlots.Pop();
+                    else
                     {
                         slot = BattleNativeWidgets.CreateCardSlot(deckContent, session, deckTemplate);
+                        slot.ConfigureEditorCard();
                         deckSlots.Add(slot);
                         var captured = slot;
-                        slot.Bind(deck[i], () => RemoveSlot(captured));
+                        slot.Bind(id, () => RemoveSlot(captured));
                     }
-                    orderedDeckSlots[i] = slot; usedDeckSlots.Add(slot);
+                    matchedDeckSlots.Add(id, slot);
                 }
-                slot.Index = i; slot.Bind(deck[i]);
+                slot.Index = firstDeckIndex[id]; slot.Bind(id);
                 slot.Button.transform.SetSiblingIndex(i + (deckTemplate != null ? 1 : 0));
             }
-            foreach (var slot in deckSlots) if (!usedDeckSlots.Contains(slot)) slot.Hide();
-            BattleNativeWidgets.Label(root, Deck + "/Scroll View/Viewport/Content/MainDeckView/Subhedding/Left/TextMainDeckCardNumTMP", deck.Count + " / 40+");
+            foreach (var slot in deckSlots)
+                if (!matchedDeckSlots.TryGetValue(slot.Id, out var active) || active != slot) slot.Hide();
+            RefreshCardStates();
+            BattleNativeWidgets.Label(root, Deck + "/Scroll View/Viewport/Content/MainDeckView/Subhedding/Left/TextMainDeckCardNumTMP", deck.Count + " lá · " + displayedDeckIds.Count + " loại");
             BattleNativeWidgets.Label(root, Deck + "/HeaderArea/DeckNameText", name?.text ?? session.SelectedDeck?.name ?? "Battle Spirits");
-            layout?.Refresh(deck.Count);
+            layout?.Refresh(displayedDeckIds.Count);
+        }
+        private void RefreshCardStates()
+        {
+            foreach (var slot in collectionSlots) ApplyCardState(slot);
+            foreach (var slot in deckSlots) ApplyCardState(slot);
+        }
+        private void ApplyCardState(BattleNativeWidgets.CardSlot slot)
+        {
+            if (!slot.Button.gameObject.activeSelf) return;
+            deckQuantities.TryGetValue(slot.Id, out int quantity);
+            string status = string.Empty;
+            if (cards.TryGetValue(slot.Id, out var definition) && !definition.IsPlayableFor(BattleSpiritsMode.RulesFormat))
+                status = definition.IsEligibleFor(BattleSpiritsMode.RulesFormat) ? "TRA CỨU" : "NGOÀI POOL";
+            slot.SetEditorState(quantity, selected != null && slot.Id == selected.id, status);
         }
         private void RemoveSlot(BattleNativeWidgets.CardSlot slot)
         {

@@ -77,7 +77,7 @@ namespace UnityEngine.UI {
  public class Graphic:UnityEngine.Behaviour{public UnityEngine.Color color;public bool raycastTarget;public UnityEngine.Material material;public UnityEngine.RectTransform rectTransform=>transform as UnityEngine.RectTransform;}
  public class Image:Graphic{public enum Type{Simple,Sliced}public UnityEngine.Sprite sprite;public Type type;public float fillAmount;public bool preserveAspect;}
  public class RawImage:Graphic{public UnityEngine.Texture texture;public UnityEngine.Rect uvRect=new UnityEngine.Rect(0,0,1,1);}
- public struct ColorBlock{public UnityEngine.Color normalColor,highlightedColor,selectedColor,pressedColor,disabledColor;public float fadeDuration;}
+ public struct ColorBlock{public UnityEngine.Color normalColor,highlightedColor,selectedColor,pressedColor,disabledColor;public float fadeDuration,colorMultiplier;}
  public class Selectable:UnityEngine.Behaviour{public enum Transition{None,ColorTint,SpriteSwap}public bool interactable=true;public Graphic targetGraphic;public ColorBlock colors;public Transition transition;}
  public class Button:Selectable{public UnityEngine.Events.UnityEvent onClick=new UnityEngine.Events.UnityEvent();}
  public class Toggle:Selectable{public Graphic graphic;public bool isOn;}

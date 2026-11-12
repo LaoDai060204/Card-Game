@@ -70,7 +70,7 @@ namespace LaoDai.BattleSpirits.NativeUI
         {
             if (session == null || !gameObject.activeInHierarchy) return;
             if (status != null) status.text = screen == BattleNativeScreen.Deck
-                ? "Tìm theo tên/mã thẻ · cost:6 · bp:6000 · Chọn thẻ để xem chi tiết; bấm lá trong bộ bài để bớt."
+                ? "Tìm theo tên/mã · cost:6 · bp:6000 · Bấm thẻ trong bộ bài để bớt 1 bản sao · Đổi cỡ thẻ ở góc phải."
                 : session.Status;
             if (screen == BattleNativeScreen.Duel) duel?.Render();
             else if (screen == BattleNativeScreen.Room) RefreshRoom();
