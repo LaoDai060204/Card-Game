@@ -1,5 +1,7 @@
 # UI MDPro3 và Bộ bài — 0.6.1
 
+Bản **0.6.2** giữ các tối ưu dưới đây và sửa thêm cấu hình pointer/grid thật bị bỏ sót trong 0.6.1. [Tìm kiếm và bố cục hiện tại](BATTLE_SPIRITS_DECK_INPUT_LAYOUT.md). Kết quả 67 test cũ không phải kiểm tra thao tác nhập hay layout bằng Unity.
+
 Game vào thẳng **Boot → menu** theo kiểu MDPro3. Nền tải kín và điều kiện chờ manager/menu/wallpaper của 0.5.2 vẫn được giữ để tránh chữ có vệt và background hiện trước menu. Boot không tạo màn title hay đợi nhấn bắt đầu của 0.6.0.
 
 Các form menu, Bộ bài, Solo và Chơi mạng vẫn dùng prefab MDPro3 cùng bố cục/khung/nút template; dữ liệu và luật là Battle Spirits Standard. Lựa chọn wallpaper, pet và dữ liệu cá nhân được giữ.

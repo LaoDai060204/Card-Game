@@ -17,6 +17,7 @@ using LaoDai.BattleSpirits.Visuals;
 using MDPro3.UI;
 using MDPro3.UI.ServantUI;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -32,7 +33,7 @@ internal static class Entry
         public override void Post(SendOrPostCallback callback,object state)=>work.Enqueue(()=>callback(state));
         public void Drain(){while(work.TryDequeue(out var action))action();}
     }
-    private sealed class FixtureNode {public string path="";public string[] components=Array.Empty<string>();public int layer=5;public bool active=true;}
+    private sealed class FixtureNode {public string path="";public string[] components=Array.Empty<string>();public JObject[] states=Array.Empty<JObject>();public JObject rect=null;public int layer=5;public bool active=true;}
     private sealed class CountingCards:IReadOnlyList<CardDefinition>
     {
         private readonly IReadOnlyList<CardDefinition> cards;
@@ -115,6 +116,11 @@ internal static class Entry
     private static void Input(Transform root,string suffix,string value)
     {
         var input=Find(root,suffix)?.GetComponent<TMP_InputField>();Assert(input!=null,"Missing actual prefab input: "+suffix);
+        if(suffix==DeckSearch&&root.gameObject.activeInHierarchy)
+            Assert(input.enabled&&input.interactable&&!input.readOnly&&input.targetGraphic!=null
+                &&input.targetGraphic.enabled&&input.targetGraphic.raycastTarget&&input.targetGraphic.gameObject.activeInHierarchy
+                &&input.textViewport!=null&&input.textComponent!=null,
+                "The actual search field has no visible pointer target or serialized text references.");
         input.text=value;input.onValueChanged.Invoke(value);
     }
     private const string DeckSearch="CardCollectionView/Root/Window/FilterAndSortArea/UpperArea/InputField";
@@ -124,6 +130,77 @@ internal static class Entry
     private static string[] VisibleIds(RectTransform content)=>VisibleCards(content).Select(child=>child.name.Substring("BS_Card_".Length)).ToArray();
     private static void SearchDeck(BattleNativeScreenUI screen,string query){Input(screen.transform,DeckSearch,query);Click(screen.transform,DeckSearchButton);}
     private static void TickDeck(BattleNativeDeckView view,float now){Time.unscaledTime=now;Call(view,"Tick",now);}
+    private static Type FixtureType(string kind)=>kind switch {
+        "CanvasGroup"=>typeof(CanvasGroup),"SelectionButton"=>typeof(SelectionButton),"SelectionToggle"=>typeof(SelectionToggle),
+        "TMP_InputField"=>typeof(TMP_InputField),"TMP_Dropdown"=>typeof(TMP_Dropdown),"TextMeshProUGUI"=>typeof(TextMeshProUGUI),
+        "RawImage"=>typeof(RawImage),"Image"=>typeof(Image),"Button"=>typeof(Button),"Toggle"=>typeof(Toggle),
+        "GridLayoutGroup"=>typeof(GridLayoutGroup),"HorizontalLayoutGroup"=>typeof(HorizontalLayoutGroup),
+        "VerticalLayoutGroup"=>typeof(VerticalLayoutGroup),"ContentSizeFitter"=>typeof(ContentSizeFitter),"LayoutElement"=>typeof(LayoutElement),
+        "ScrollRect"=>typeof(ScrollRect),"ElementObjectManager"=>typeof(YgomSystem.ElementSystem.ElementObjectManager),_=>null};
+    private static Vector2 FixtureVector(JToken value)=>value==null||value.Type==JTokenType.Null?Vector2.zero:new Vector2((float)value["x"],(float)value["y"]);
+    private static T FixtureReference<T>(Dictionary<string,GameObject> objects,JToken value)where T:Component
+        =>value!=null&&value.Type!=JTokenType.Null&&objects.TryGetValue((string)value,out var owner)?owner.GetComponent<T>():null;
+    private static void ApplyFixtureState(GameObject go,JObject state,Dictionary<string,GameObject> objects)
+    {
+        var type=FixtureType((string)state["type"]);if(type==null)return;
+        var component=go.GetComponents<Component>().FirstOrDefault(type.IsInstanceOfType);if(component==null)return;
+        if(component is Behaviour behaviour&&state["enabled"]!=null)behaviour.enabled=(float)state["enabled"]!=0;
+        if(component is Graphic graphic&&state["raycastTarget"]!=null)graphic.raycastTarget=(float)state["raycastTarget"]!=0;
+        if(component is Selectable selectable&&state["interactable"]!=null)selectable.interactable=(float)state["interactable"]!=0;
+        if(component is CanvasGroup group)
+        {
+            if(state["alpha"]!=null)group.alpha=(float)state["alpha"];
+            if(state["interactable"]!=null)group.interactable=(float)state["interactable"]!=0;
+            if(state["blocksRaycasts"]!=null)group.blocksRaycasts=(float)state["blocksRaycasts"]!=0;
+            if(state["ignoreParentGroups"]!=null)group.ignoreParentGroups=(float)state["ignoreParentGroups"]!=0;
+        }
+        if(component is TMP_InputField input)
+        {
+            input.textViewport=FixtureReference<RectTransform>(objects,state["TextViewport"]);
+            input.textComponent=FixtureReference<TextMeshProUGUI>(objects,state["TextComponent"]);
+            input.placeholder=FixtureReference<Graphic>(objects,state["Placeholder"]);
+            input.targetGraphic=FixtureReference<Graphic>(objects,state["TargetGraphic"]);
+            if(state["readOnly"]!=null)input.readOnly=(float)state["readOnly"]!=0;
+        }
+        if(component is TextMeshProUGUI label)
+        {
+            if(state["text"]!=null)label.text=(string)state["text"];
+            if(state["fontSize"]!=null)label.fontSize=(int)(float)state["fontSize"];
+        }
+        if(component is GridLayoutGroup grid)
+        {
+            if(state["constraintCount"]!=null)grid.constraintCount=(int)(float)state["constraintCount"];
+            if(state["cellSize"]!=null)grid.cellSize=FixtureVector(state["cellSize"]);
+            if(state["spacing"]!=null)grid.spacing=FixtureVector(state["spacing"]);
+        }
+        if(component is HorizontalLayoutGroup horizontal)
+        {
+            if(state["spacingScalar"]!=null)horizontal.spacing=(float)state["spacingScalar"];
+            if(state["childControlWidth"]!=null)horizontal.childControlWidth=(float)state["childControlWidth"]!=0;
+            if(state["childControlHeight"]!=null)horizontal.childControlHeight=(float)state["childControlHeight"]!=0;
+            if(state["childForceExpandWidth"]!=null)horizontal.childForceExpandWidth=(float)state["childForceExpandWidth"]!=0;
+            if(state["childForceExpandHeight"]!=null)horizontal.childForceExpandHeight=(float)state["childForceExpandHeight"]!=0;
+        }
+        if(component is ContentSizeFitter fitter)
+        {
+            if(state["horizontalFit"]!=null)fitter.horizontalFit=(ContentSizeFitter.FitMode)(int)(float)state["horizontalFit"];
+            if(state["verticalFit"]!=null)fitter.verticalFit=(ContentSizeFitter.FitMode)(int)(float)state["verticalFit"];
+        }
+        if(component is LayoutElement element)
+        {
+            if(state["minWidth"]!=null)element.minWidth=(float)state["minWidth"];
+            if(state["minHeight"]!=null)element.minHeight=(float)state["minHeight"];
+            if(state["preferredWidth"]!=null)element.preferredWidth=(float)state["preferredWidth"];
+            if(state["preferredHeight"]!=null)element.preferredHeight=(float)state["preferredHeight"];
+            if(state["flexibleWidth"]!=null)element.flexibleWidth=(float)state["flexibleWidth"];
+            if(state["flexibleHeight"]!=null)element.flexibleHeight=(float)state["flexibleHeight"];
+        }
+        if(component is ScrollRect scroll)
+        {
+            scroll.viewport=FixtureReference<RectTransform>(objects,state["Viewport"]);
+            scroll.content=FixtureReference<RectTransform>(objects,state["Content"]);
+        }
+    }
     private static GameObject Fixture(string name)
     {
         var objects=new Dictionary<string,GameObject>(StringComparer.Ordinal);
@@ -134,16 +211,22 @@ internal static class Entry
             int slash=row.path.LastIndexOf('/');if(slash>=0)go.transform.SetParent(objects[row.path.Substring(0,slash)].transform,false);
             foreach(string kind in row.components??Array.Empty<string>())
             {
-                Type type=kind switch {
-                    "CanvasGroup"=>typeof(CanvasGroup),"SelectionButton"=>typeof(SelectionButton),"SelectionToggle"=>typeof(SelectionToggle),
-                    "TMP_InputField"=>typeof(TMP_InputField),"TMP_Dropdown"=>typeof(TMP_Dropdown),"TextMeshProUGUI"=>typeof(TextMeshProUGUI),
-                    "RawImage"=>typeof(RawImage),"Image"=>typeof(Image),"Button"=>typeof(Button),"Toggle"=>typeof(Toggle),
-                    "ScrollRect"=>typeof(ScrollRect),"ElementObjectManager"=>typeof(YgomSystem.ElementSystem.ElementObjectManager),_=>null};
+                Type type=FixtureType(kind);
                 if(type!=null)go.AddComponent(type);
+            }
+            if(row.rect!=null)
+            {
+                var rect=(RectTransform)go.transform;
+                rect.anchorMin=FixtureVector(row.rect["AnchorMin"]);rect.anchorMax=FixtureVector(row.rect["AnchorMax"]);
+                rect.anchoredPosition=FixtureVector(row.rect["AnchoredPosition"]);rect.sizeDelta=FixtureVector(row.rect["SizeDelta"]);
+                rect.pivot=FixtureVector(row.rect["Pivot"]);
+                if(row.rect["LocalScale"] is JToken scale)rect.localScale=new Vector3((float)scale["x"],(float)scale["y"],(float)scale["z"]);
             }
             if(go.GetComponent<Image>() is Image image)image.sprite=new Sprite();
             go.SetActive(row.active);
         }
+        foreach(var row in fixtures[name])
+            foreach(var state in row.states??Array.Empty<JObject>())ApplyFixtureState(objects[row.path],state,objects);
         var result=objects.Values.First(go=>go.transform.parent==null);
         result.SetActive(true);return result;
     }
@@ -384,6 +467,98 @@ internal static class Entry
                 Click(screen.transform,"CardCollectionView/Root/Window/FilterAndSortArea/BottomArea/ClearButton");Assert(!filter.gameObject.activeSelf,"Clearing a color filter leaves its icon behind.");
                 foreach(string path in new[]{"DeckEditHeader/Root/Header/ButtonRegulation","CardCollectionView/Root/Window/TabArea/HistotyToggle"})
                     Assert(Find(screen.transform,path).GetComponentsInChildren<TextMeshProUGUI>(true).Any(label=>label.text=="STANDARD"),"Active Standard filter is mislabeled Eternal.");
+            });
+            Case("Prefab fixture retains the actual disabled grid and unfocusable search preconditions",()=>{
+                var raw=Fixture("DeckEditorUI");var field=Find(raw.transform,DeckSearch).GetComponent<TMP_InputField>();
+                Assert(field.targetGraphic==null&&field.textComponent!=null&&field.textViewport!=null&&field.placeholder!=null,
+                    "Fixture lost the serialized TMP references or silently invented a pointer target.");
+                Assert(!field.transform.Find("Out").GetComponent<Image>().raycastTarget,"Fixture discarded the source background's disabled raycast flag.");
+                var content=Find(raw.transform,"CardCollectionView/Root/Window/CardListArea/CollectionAreaCenter/ScrollRect/Viewport/Content");
+                Assert(content.GetComponent<GridLayoutGroup>()!=null&&!content.GetComponent<GridLayoutGroup>().enabled,
+                    "Fixture replaced the actual disabled GridLayoutGroup with an enabled default.");
+                Assert(Find(raw.transform,"CardCollectionView/Root/Window/CardListArea/CollectionAreaCenter/#Text_NoItemMessageTMP").gameObject.activeSelf,
+                    "Fixture omitted the independent serialized empty-results label.");
+            });
+            Case("Native search repairs the real input hit surface without replacing its TMP references",()=>{
+                var screen=Screen(BattleNativeScreen.Deck);var field=Find(screen.transform,DeckSearch).GetComponent<TMP_InputField>();
+                var outGraphic=field.transform.Find("Out").GetComponent<Image>();
+                Assert(field.targetGraphic==outGraphic&&outGraphic.enabled&&outGraphic.raycastTarget&&outGraphic.color.a>0,
+                    "The source input background still cannot be targeted by a GraphicRaycaster.");
+                Assert(field.textViewport==field.transform.Find("Mask")&&field.textComponent.transform.parent==field.textViewport
+                    &&field.placeholder.transform.parent==field.textViewport,"Search repair broke the serialized viewport/text hierarchy.");
+                Assert(!field.textComponent.raycastTarget&&!field.placeholder.raycastTarget,"Search text or placeholder competes with its focus surface.");
+                SearchDeck(screen,"cost:4");var view=Field<BattleNativeDeckView>(screen,"deck");
+                Assert(VisibleIds(Field<RectTransform>(view,"collection")).All(id=>catalog.cards.Single(card=>card.id==id).cost==4),"A repaired search did not filter the actual catalog.");
+            });
+            Case("Existing disabled grid and fitter are enabled and linked to a vertical viewport",()=>{
+                var screen=Screen(BattleNativeScreen.Deck);var view=Field<BattleNativeDeckView>(screen,"deck");
+                foreach(string key in new[]{"collection","deckContent"}){
+                    var content=Field<RectTransform>(view,key);var grid=content.GetComponent<GridLayoutGroup>();var fit=content.GetComponent<ContentSizeFitter>();
+                    Assert(grid.enabled&&fit.enabled&&fit.horizontalFit==ContentSizeFitter.FitMode.Unconstrained&&fit.verticalFit==ContentSizeFitter.FitMode.PreferredSize,
+                        "The actual reused grid/fitter stayed disabled or tried to drive the content width.");
+                    Assert(content.anchorMin.x==0&&content.anchorMax.x==1&&content.pivot.y==1&&content.sizeDelta.x==0,"Grid content is still a centered zero-width virtual-list rect.");
+                }
+                var scroll=Find(screen.transform,"CardCollectionView/Root/Window/CardListArea/CollectionAreaCenter/ScrollRect").GetComponent<ScrollRect>();
+                Assert(scroll.enabled&&scroll.vertical&&!scroll.horizontal&&scroll.content==Field<RectTransform>(view,"collection")&&scroll.viewport.GetComponent<RectMask2D>()!=null,
+                    "Collection scrolling or clipping is not connected to its actual card content.");
+            });
+            Case("Empty-results label follows actual search results instead of covering a populated grid",()=>{
+                var screen=Screen(BattleNativeScreen.Deck);var view=Field<BattleNativeDeckView>(screen,"deck");
+                var empty=Find(screen.transform,"CardCollectionView/Root/Window/CardListArea/CollectionAreaCenter/#Text_NoItemMessageTMP");
+                Assert(!empty.gameObject.activeSelf,"Empty label covers the initial populated collection.");
+                SearchDeck(screen,"__no_card_can_match_this__");
+                Assert(empty.gameObject.activeInHierarchy&&VisibleIds(Field<RectTransform>(view,"collection")).Length==0,"No-result search left old cards or hid its feedback.");
+                Click(screen.transform,"CardCollectionView/Root/Window/FilterAndSortArea/BottomArea/ClearButton");
+                Assert(!empty.gameObject.activeSelf&&VisibleCards(Field<RectTransform>(view,"collection")).Length==42,"Clearing search did not restore cards and dismiss the empty label.");
+            });
+            Case("Submitting the actual TMP field applies a pending query immediately",()=>{
+                var screen=Screen(BattleNativeScreen.Deck);var view=Field<BattleNativeDeckView>(screen,"deck");
+                Input(screen.transform,DeckSearch,"bp:6000");
+                var field=Find(screen.transform,DeckSearch).GetComponent<TMP_InputField>();field.onSubmit.Invoke(field.text);
+                var ids=VisibleIds(Field<RectTransform>(view,"collection"));
+                Assert(ids.Length>0&&ids.All(id=>catalog.cards.Single(card=>card.id==id).levels.Any(level=>level.bp>=6000)),"Enter/Submit left the pending search unapplied.");
+                int requests=fake.RequestedArt.Count;TickDeck(view,1);Assert(fake.RequestedArt.Count==requests,"Submit caused a duplicate delayed render.");
+            });
+            Case("Three existing panels stretch across normal, wide and four-three windows with fitting grids",()=>{
+                var screen=Screen(BattleNativeScreen.Deck);var view=Field<BattleNativeDeckView>(screen,"deck");
+                var area=(RectTransform)Find(screen.transform,"SafeArea");
+                foreach(float width in new[]{1920f,2680f,1440f}){
+                    area.rect=new Rect(0,0,width,1080);TickDeck(view,0);
+                    var detail=(RectTransform)Find(screen.transform,"CardDetailView/Root/Window");
+                    var middle=(RectTransform)Find(screen.transform,"DeckView/Root/Window");
+                    var right=(RectTransform)Find(screen.transform,"CardCollectionView/Root/Window");
+                    Assert(detail.anchorMin.x<.02f&&right.anchorMax.x>.98f&&detail.anchorMax.x<middle.anchorMin.x&&middle.anchorMax.x<right.anchorMin.x,
+                        "Panel anchors overlap or leave the original centered 1920-wide dead space.");
+                    foreach(string panel in new[]{"CardDetailView","DeckView","CardCollectionView"}){
+                        var frame=(RectTransform)Find(screen.transform,panel);Assert(frame.anchorMin.x==0&&frame.anchorMax.x==1&&frame.sizeDelta.x==0,"An outer panel container remains fixed-width.");
+                    }
+                    var grid=Field<RectTransform>(view,"collection").GetComponent<GridLayoutGroup>();
+                    float occupied=grid.cellSize.x*grid.constraintCount+grid.spacing.x*(grid.constraintCount-1)+grid.padding.left+grid.padding.right;
+                    Assert(grid.constraintCount>=3&&grid.constraintCount<=6&&grid.cellSize.y>grid.cellSize.x&&occupied<=width*.346f*.97f+.01f,
+                        "The active collection grid spills out of its responsive viewport.");
+                }
+            });
+            Case("Deck preview and scroll height replace the old tiny portrait and fixed outer content",()=>{
+                var screen=Screen(BattleNativeScreen.Deck);var view=Field<BattleNativeDeckView>(screen,"deck");
+                var card=(RectTransform)Find(screen.transform,"CardDetailView/Root/Window/Content/CardArea");
+                Assert(card.anchorMax.y-card.anchorMin.y>.5f&&card.sizeDelta.y==0,"Selected artwork still uses the original 143-by-208 corner slot.");
+                var image=card.Find("ImageCard").GetComponent<RawImage>();Assert(image.GetComponent<AspectRatioFitter>().aspectMode==AspectRatioFitter.AspectMode.FitInParent,"The enlarged portrait is stretched.");
+                var outer=(RectTransform)Find(screen.transform,"DeckView/Root/Window/Scroll View/Viewport/Content");
+                var grid=Field<RectTransform>(view,"deckContent").GetComponent<GridLayoutGroup>();int count=Field<List<string>>(view,"deck").Count;
+                Assert(outer.sizeDelta.y>=44+((count+grid.constraintCount-1)/grid.constraintCount)*grid.cellSize.y,"The deck ScrollRect content cannot reach its final card rows.");
+            });
+            Case("Deck chrome uses readable captions and hides unused legacy appearance controls",()=>{
+                var screen=Screen(BattleNativeScreen.Deck);
+                Assert(!Find(screen.transform,"DeckEditOverHeader").gameObject.activeSelf&&!Find(screen.transform,"DeckEditHeader/Root/Header/ButtonInfoSwitching").gameObject.activeSelf,
+                    "Unused six-icon appearance row or the old 100-point control remains visible.");
+                Assert(Find(screen.transform,"BS_DeckTitle").GetComponent<TextMeshProUGUI>().text=="BỘ BÀI","Deck header has no readable title.");
+                foreach(string button in new[]{"CardListToggle","BookmarkToggle","HistotyToggle"}){
+                    var node=Find(screen.transform,"CardCollectionView/Root/Window/TabArea/"+button);
+                    Assert(node.Find("BS_Caption").GetComponent<TextMeshProUGUI>().enabled&&node.GetComponent<Button>().targetGraphic.raycastTarget,"A tab is still an icon-only or untargetable control.");
+                }
+                Click(screen.transform,"CardCollectionView/Root/Window/TabArea/BookmarkToggle");
+                Assert(Find(screen.transform,"CardCollectionView/Root/Window/TabArea/BookmarkToggle/ImageOn").gameObject.activeSelf
+                    &&!Find(screen.transform,"CardCollectionView/Root/Window/TabArea/CardListToggle/ImageOn").gameObject.activeSelf,"Selected-tab chrome still displays the all-cards state.");
             });
             Case("Native collection paging rebinds visible card identities",()=>{
                 var screen=Screen(BattleNativeScreen.Deck);var view=Field<BattleNativeDeckView>(screen,"deck");var grid=Field<RectTransform>(view,"collection");

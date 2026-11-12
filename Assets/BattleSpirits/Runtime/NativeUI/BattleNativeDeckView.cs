@@ -20,6 +20,8 @@ namespace LaoDai.BattleSpirits.NativeUI
         private RectTransform collection, deckContent, collectionTemplate, deckTemplate;
         private ScrollRect collectionScroll;
         private TMP_InputField search, name;
+        private BattleNativeDeckLayout layout;
+        private Transform emptyCollection;
         private RawImage detailColorSymbol, filterColorSymbol;
         private Transform detailRoot;
         private RawImage detailArtwork;
@@ -75,6 +77,7 @@ namespace LaoDai.BattleSpirits.NativeUI
             search = BattleNativeWidgets.Input(root, Collection + "/FilterAndSortArea/UpperArea/InputField", string.Empty);
             name = BattleNativeWidgets.Input(root, Deck + "/HeaderArea/NameAreaGroup/InputField", session.SelectedDeck?.name ?? "Battle Spirits Standard");
             if (search != null) search.onValueChanged.AddListener(_ => { page = 0; searchPending = true; searchDue = Time.unscaledTime + SearchDelaySeconds; });
+            if (search != null) search.onSubmit.AddListener(_ => { page = 0; RenderCollection(); });
             BattleNativeWidgets.Bind(root, Header + "/ButtonBack", BattleNativeNavigation.ReturnToMenu);
             BattleNativeWidgets.Bind(root, Header + "/ButtonSave", () => Save(), "LƯU");
             BattleNativeWidgets.Bind(root, Header + "/ButtonTest", () => { if (Save()) BattleNativeNavigation.Open(BattleNativeScreen.Solo); }, "ĐẤU THỬ");
@@ -85,7 +88,7 @@ namespace LaoDai.BattleSpirits.NativeUI
             BattleNativeWidgets.Bind(root, Collection + "/FilterAndSortArea/UpperArea/SearchButton", RenderCollection);
             BattleNativeWidgets.Bind(root, Collection + "/FilterAndSortArea/BottomArea/FilterToggle", CycleColor, "TẤT CẢ MÀU");
             BattleNativeWidgets.Bind(root, Collection + "/FilterAndSortArea/BottomArea/SortButton", () => { sort = (sort + 1) % 3; page = 0; RenderCollection(); }, "MỚI NHẤT");
-            BattleNativeWidgets.Bind(root, Collection + "/FilterAndSortArea/BottomArea/ClearButton", () => { if (search != null) search.SetTextWithoutNotify(string.Empty); color = -1; support = 0; page = 0; RenderCollection(); });
+            BattleNativeWidgets.Bind(root, Collection + "/FilterAndSortArea/BottomArea/ClearButton", () => { if (search != null) search.text = string.Empty; color = -1; support = 0; page = 0; RenderCollection(); });
             BattleNativeWidgets.Bind(root, Collection + "/TabArea/CardListToggle", () => { support = 0; page = 0; RenderCollection(); }, "TẤT CẢ");
             BattleNativeWidgets.Bind(root, Collection + "/TabArea/BookmarkToggle", () => { support = 1; page = 0; RenderCollection(); }, "CHƠI ĐƯỢC");
             BattleNativeWidgets.Bind(root, Collection + "/TabArea/HistotyToggle", () => { support = 2; page = 0; RenderCollection(); }, "STANDARD");
@@ -123,6 +126,10 @@ namespace LaoDai.BattleSpirits.NativeUI
                     BattleNativeWidgets.Place(next.transform as RectTransform, 0.88f, 0.01f, 0.97f, 0.08f);
                 }
             }
+            emptyCollection = BattleNativeWidgets.Find(root, Collection + "/CardListArea/CollectionAreaCenter/#Text_NoItemMessageTMP");
+            if (emptyCollection != null)
+                BattleNativeWidgets.SetLabel(emptyCollection, "Không tìm thấy thẻ phù hợp.\nThử tên, mã thẻ hoặc xóa bộ lọc.");
+            layout = new BattleNativeDeckLayout(root, collection, deckContent);
             RenderCollection(); RenderDeck();
             if (session.Cards.Count > 0) Select(session.Cards[0]);
         }
@@ -158,6 +165,7 @@ namespace LaoDai.BattleSpirits.NativeUI
         }
         internal void Tick(float now)
         {
+            layout?.Refresh();
             if (searchPending && now >= searchDue) RenderCollection();
         }
         internal void FlushSearch()
@@ -189,6 +197,7 @@ namespace LaoDai.BattleSpirits.NativeUI
                 renderedQuery = query; renderedColor = color; renderedSort = sort; renderedSupport = support;
             }
             var all = collectionResults;
+            if (emptyCollection != null) emptyCollection.gameObject.SetActive(all.Length == 0);
             int pageCount = Math.Max(1, (all.Length + PageSize - 1) / PageSize);
             page = Math.Max(0, Math.Min(page, pageCount - 1));
             if (collectionScroll != null && (criteriaChanged || displayedPage != page))
@@ -206,7 +215,8 @@ namespace LaoDai.BattleSpirits.NativeUI
                 else collectionSlots[i].Bind(all[start + i].id);
             }
             for (int i = count; i < collectionSlots.Count; i++) collectionSlots[i].Hide();
-            BattleNativeWidgets.Label(root, Collection + "/FilterAndSortArea/BottomArea/SortButton", (sort == 1 ? "COST" : sort == 2 ? "TÊN" : "MỚI NHẤT") + " · " + all.Length + " · " + (page + 1) + "/" + pageCount);
+            BattleNativeWidgets.Label(root, Collection + "/FilterAndSortArea/BottomArea/SortButton", sort == 1 ? "COST" : sort == 2 ? "TÊN" : "MỚI NHẤT");
+            layout?.Results(all.Length, page, pageCount, support);
         }
         private static bool Matches(CardDefinition card, string query)
         {
@@ -308,6 +318,7 @@ namespace LaoDai.BattleSpirits.NativeUI
             foreach (var slot in deckSlots) if (!usedDeckSlots.Contains(slot)) slot.Hide();
             BattleNativeWidgets.Label(root, Deck + "/Scroll View/Viewport/Content/MainDeckView/Subhedding/Left/TextMainDeckCardNumTMP", deck.Count + " / 40+");
             BattleNativeWidgets.Label(root, Deck + "/HeaderArea/DeckNameText", name?.text ?? session.SelectedDeck?.name ?? "Battle Spirits");
+            layout?.Refresh(deck.Count);
         }
         private void RemoveSlot(BattleNativeWidgets.CardSlot slot)
         {

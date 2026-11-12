@@ -40,7 +40,8 @@ namespace LaoDai.BattleSpirits.NativeUI
             // the existing template API so the old face cannot reappear.
             var selection = node.GetComponent<SelectionButton>();
             if (selection != null) selection.SetButtonText(value ?? string.Empty);
-            var text = node.GetComponent<TextMeshProUGUI>() ?? node.GetComponentInChildren<TextMeshProUGUI>(true);
+            var text = node.Find("BS_Caption")?.GetComponent<TextMeshProUGUI>()
+                ?? node.GetComponent<TextMeshProUGUI>() ?? node.GetComponentInChildren<TextMeshProUGUI>(true);
             if (text != null) { text.text = value ?? string.Empty; text.richText = false; return; }
             var old = node.GetComponent<Text>() ?? node.GetComponentInChildren<Text>(true);
             if (old != null) { old.text = value ?? string.Empty; old.supportRichText = false; }
@@ -67,7 +68,38 @@ namespace LaoDai.BattleSpirits.NativeUI
         internal static TMP_InputField Input(Transform root, string suffix, string value = null)
         {
             var field = Component<TMP_InputField>(root, suffix);
-            if (field != null) { field.richText = false; if (value != null) field.SetTextWithoutNotify(value); }
+            if (field != null)
+            {
+                field.enabled = true;
+                field.interactable = true;
+                field.readOnly = false;
+                field.richText = false;
+                // These template fields intentionally have no targetGraphic and
+                // every normal background/text graphic has raycasts disabled.
+                // Their old controller supplied focus; the native controller
+                // must restore a full-field pointer target before it can type.
+                var background = field.targetGraphic;
+                if (background == null)
+                    background = field.transform.Find("Out")?.GetComponent<Graphic>()
+                        ?? field.GetComponent<Graphic>();
+                if (background == null)
+                    background = field.GetComponentsInChildren<Image>(true)
+                        .FirstOrDefault(image => image.GetComponentInParent<Button>() == null);
+                if (background == null)
+                {
+                    // Minimal fields without template chrome still need a hit
+                    // surface. Keep it on the existing field, not another input.
+                    var surface = field.gameObject.AddComponent<Image>();
+                    surface.color = new Color(0, 0, 0, 0.001f);
+                    background = surface;
+                }
+                background.enabled = true;
+                background.raycastTarget = true;
+                field.targetGraphic = background;
+                if (field.textComponent != null) field.textComponent.raycastTarget = false;
+                if (field.placeholder != null) field.placeholder.raycastTarget = false;
+                if (value != null) field.SetTextWithoutNotify(value);
+            }
             return field;
         }
         internal static RectTransform Rect(Transform parent, string name)
@@ -200,11 +232,20 @@ namespace LaoDai.BattleSpirits.NativeUI
         {
             if (content == null) return;
             var grid = content.GetComponent<GridLayoutGroup>() ?? content.gameObject.AddComponent<GridLayoutGroup>();
-            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount; grid.constraintCount = columns;
-            grid.cellSize = new Vector2(width, height); grid.spacing = new Vector2(5, 6);
+            // The original virtualized collection serializes both components
+            // disabled. Reusing them without enabling them stacks all cards at
+            // the template's original position instead of laying out a grid.
+            grid.enabled = true;
+            grid.startCorner = GridLayoutGroup.Corner.UpperLeft;
+            grid.startAxis = GridLayoutGroup.Axis.Horizontal;
+            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount; grid.constraintCount = Math.Max(1, columns);
+            grid.cellSize = new Vector2(Math.Max(1f, width), Math.Max(1f, height)); grid.spacing = new Vector2(5, 6);
             grid.childAlignment = TextAnchor.UpperLeft;
             var fitter = content.GetComponent<ContentSizeFitter>() ?? content.gameObject.AddComponent<ContentSizeFitter>();
+            fitter.enabled = true;
+            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
             fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            content.pivot = new Vector2(content.pivot.x, 1f);
         }
     }
 }
