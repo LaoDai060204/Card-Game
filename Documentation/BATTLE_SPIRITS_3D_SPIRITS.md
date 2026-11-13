@@ -1,5 +1,7 @@
 # Model 3D và trình diễn sân — 0.7.0
 
+Tài liệu lịch sử **0.7.0**. Từ **0.7.1**, renderer sân dùng [standee giấy](BATTLE_SPIRITS_CHARACTER_STANDEES.md); bộ rig dưới đây được giữ để tra cứu và không khởi tạo trên sân mặc định.
+
 19 Spirit Standard đang chơi được có model skinned 3D riêng, tự dựng dựa trên hình dáng/màu/phụ kiện của artwork. Đây là geometry có chiều sâu, normal, màu đỉnh, mười khớp và chuyển động; không còn dùng tấm ảnh phẳng làm quái cho những lá đã hỗ trợ. Mặt lá bài vẫn hiện trên sân và giữ ảnh nguồn nguyên vẹn.
 
 [Xem bảng 19 model dựng thử](Previews/SpiritModels/production-model-contact-sheet.jpg). Đây là render Blender từ đúng mesh production, với ánh sáng và nền studio để kiểm tra hình dáng; **không phải ảnh chụp Unity**. Model có phong cách stylized nhẹ, không phải model chính thức của Battle Spirits hoặc model trích từ Master Duel/Duel Links. [Danh mục, nguồn và thông số](../Tools/BattleSpiritsAssets/spirit-model-manifest.json).

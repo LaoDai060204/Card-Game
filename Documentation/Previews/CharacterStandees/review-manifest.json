@@ -1,0 +1,81 @@
+{
+  "version": "0.7.1",
+  "renderer": "Blender 4.3.2 Cycles CPU",
+  "kind": "studio geometry review using production paper meshes and unedited cutout PNGs",
+  "unityRenderingVerified": false,
+  "coordinateConversion": "Unity left-handed Y-up to Blender right-handed Z-up, swap Y/Z, reverse triangle winding and convert rotations to preserve character left/right",
+  "individualSamples": 48,
+  "gallerySamples": 24,
+  "sources": [
+    {
+      "path": "Assets/BattleSpirits/Runtime/Visuals/BattleCharacterStandee.cs",
+      "sha256": "f2833c1975d944d533f71eab9a7a15762092e4d4a0c6678b22bd8ddc6d5cb8f8"
+    },
+    {
+      "path": "Assets/BattleSpirits/Art/Resources/BattleSpirits/PaperStandee.shader",
+      "sha256": "5ba465477feab4f2a37bc315e69a1f12828744f5aaf74384f6f51814aab4eda7"
+    },
+    {
+      "path": "Assets/BattleSpirits/Runtime/Visuals/BattleCardFigure.cs",
+      "sha256": "30575a830784f695ff5d341e1548c3ac704551b1f0749d309cbc630e1cbab5f7"
+    },
+    {
+      "path": "Assets/BattleSpirits/Runtime/Visuals/BattleFieldVisuals.cs",
+      "sha256": "39424fd68a9bf6da30a1d44654ff1159d8c0a4177302822e585b21687560aaba"
+    },
+    {
+      "path": "Assets/BattleSpirits/Runtime/Integration/BattleNativeSession.cs",
+      "sha256": "d53dc222baa5ea82d22fe214aa35117747f742fc1a1f733a57e94df9b8f07caa"
+    },
+    {
+      "path": "Assets/BattleSpirits/Runtime/Presentation/BattleSpiritsApp.cs",
+      "sha256": "adff04a9b872f805f917248d5b9f8e1cfe5852295e711e6d7e832c04849d31f8"
+    },
+    {
+      "path": "Assets/BattleSpirits/Runtime/NativeUI/BattleNativeDuelView.cs",
+      "sha256": "e10b20aca270f50a0f0b5a9ccc86803ae213fe412c4e922aca8c2463bf963547"
+    },
+    {
+      "path": "Assets/BattleSpirits/Runtime/NativeUI/IBattleNativeSession.cs",
+      "sha256": "68b8288086829c04d78df4499d2187e2cdd0d2d2e695a37e9b4ed766e78d6944"
+    },
+    {
+      "path": "Assets/BattleSpirits/Runtime/Visuals/BattleTheme.cs",
+      "sha256": "2e85fbbbabfc0d5eff58910e080552355e5eb7eaf61bef377bedab32d4fc4b24"
+    },
+    {
+      "path": "Assets/Scripts/Editor/BattleSpiritsWindowsPackage.cs",
+      "sha256": "c3c930c2db8829cfbd514ed40cf134e03a51d1df299f5b4c67b1f7085799c573"
+    },
+    {
+      "path": "Tools/BattleSpiritsAssets/render_character_standee_preview.py",
+      "sha256": "52c0ca4d0fbd4214f8fffff190bec2c12908d4845ebedc2836465e9363128135"
+    },
+    {
+      "path": "Tools/BattleSpiritsAssets/check_standee_sources.py",
+      "sha256": "9a1c4599add927e03b5e54d0ab80c5472377c5afc8086b178fb981981eba8f6a"
+    },
+    {
+      "path": "Data/BattleSpirits/standee-sources.json",
+      "sha256": "259af61db69a3758c16ecc3dc9c64649dd330697cf506dcfa34ba1f43e1fc7d9"
+    }
+  ],
+  "renders": [
+    {
+      "path": "Documentation/Previews/CharacterStandees/26RBS01-019-side.png",
+      "sha256": "efa18aa38638ee11ee67639f441ff81263f8daa9046991f7727bf459d61c4ff1"
+    },
+    {
+      "path": "Documentation/Previews/CharacterStandees/26RBS01-064.png",
+      "sha256": "ad7951ffc1fe3456596bfd1e87921f0e29f3e1711331ffa85093de7d0726cb1b"
+    },
+    {
+      "path": "Documentation/Previews/CharacterStandees/26RBS03-068.png",
+      "sha256": "44bac035c37109a743fc91770f95bc9fce6845ad0b2b7b60989411f276c24b2a"
+    },
+    {
+      "path": "Documentation/Previews/CharacterStandees/all-available-standees.png",
+      "sha256": "41e1e3870ea84a1be91af6d52860caf7ef72890d4c5a84a811297db448e3e2e7"
+    }
+  ]
+}

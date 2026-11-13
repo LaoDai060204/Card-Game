@@ -1,10 +1,12 @@
-# LaoDai Battle Spirits — Standard 0.7.0
+# LaoDai Battle Spirits — Standard 0.7.1
 
 Bản chuyển đổi từ **Card-Game/MDPro3** sang **Battle Spirits Nhật — Standard**, giao diện tiếng Việt, Unity **6000.0.24f1**. Theo yêu cầu ngày 06/11/2026, bản này giữ bố cục và khôi phục khung/nút cùng bảng màu giao diện gốc: đen, xám, viền sáng và điểm nhấn xanh lime. Thẻ, sân, luật và trình diễn tiếp tục dùng Battle Spirits; pet và wallpaper vẫn được giữ. Lớp ứng dụng overlay của bản 0.1.0 đã bỏ.
 
 Có **Solo đấu WindBot**, bộ bài, phòng LAN/IP trực tiếp, replay Solo và xem thử hoạt cảnh. Danh mục gồm **270 thẻ chính thức**; **19 thẻ Standard chơi được**: 16 Spirit không hiệu ứng và ba Spirit có Super Unleash đã triển khai. **251 thẻ khác không dùng trong trận Standard hiện tại**, gồm 21 thẻ Eternal đã có code tương thích. Đây chưa phải triển khai đầy đủ mọi thẻ và hiệu ứng Standard. Xem [phạm vi luật](Documentation/BATTLE_SPIRITS_SCOPE.md).
 
 Nhánh phát triển: `battle-spirits-mdpro3-ui`. Bản Card-Game/Yu-Gi-Oh cũ được giữ trên `main`.
+
+**0.7.1:** chuyển mặc định sang **standee giấy**: nhân vật trong suốt đứng trên đế oval có độ dày, mặt thẻ gốc nằm bên dưới. Có 18 cutout cho 19 Spirit Standard chơi được; lá chưa có cutout chỉ hiện mặt thẻ trong chế độ GIẤY. Nút **GIẤY / ẢNH** đổi cách hiển thị; nguồn model rig 0.7.0 được giữ để tra cứu. [Hướng dẫn, phạm vi ảnh và cách thử](Documentation/BATTLE_SPIRITS_CHARACTER_STANDEES.md).
 
 **0.7.0:** thêm **19 model 3D có rig**, tự dựng theo artwork của các Spirit Standard đang chơi được. Mặt thẻ vẫn nằm trên sân; model có chuyển động triệu hồi/tấn công/chặn/nhận đòn. Shader có ánh sáng khối, viền sáng và bóng tiếp xúc; BP lớn hơn, chữ sân đối thủ quay đúng chiều. Nút **3D / ẢNH** và **THẤP / VỪA / CAO** trên khung soi đổi cách hiển thị và giới hạn độ phân giải. Thẻ chưa có model dùng ảnh nổi đúng mã. [Hướng dẫn và ảnh dựng thử](Documentation/BATTLE_SPIRITS_3D_SPIRITS.md).
 
@@ -26,14 +28,14 @@ Màn **Nhấn để bắt đầu** của 0.6.0 đã ngừng dùng trong Boot the
 
 **Bản 0.5.0 đưa giao diện về phong cách ban đầu:** phục hồi có chọn lọc 141 tài nguyên UI dùng chung và 2.867 tham chiếu trong 31 tệp, thêm sáu biểu tượng màu, mặt sau bài BS và họa tiết sân Standard. [Chi tiết giao diện và nguồn ảnh](Documentation/BATTLE_SPIRITS_THEME.md).
 
-Phần triệu hồi của **0.4.0** được giữ: phóng to mặt thẻ, quét sáng, nâng ảnh minh họa rồi đưa lá bài xuống sân. Sau đó mặt thẻ nằm trên sân và ảnh minh họa của chính lá đó nổi phía trên. Hình nổi giữ nền minh họa, chưa phải cutout trong suốt hay model 3D. Có nút **BỎ QUA**. [Cách thử](Documentation/BATTLE_SPIRITS_SUMMON_PRESENTATION.md).
+Phần triệu hồi của **0.4.0** được giữ: phóng to mặt thẻ, quét sáng, nâng ảnh minh họa rồi đưa lá bài xuống sân. Sau đó mặt thẻ nằm trên sân và ảnh minh họa của chính lá đó nổi phía trên. Trong chế độ **ẢNH**, hình nổi vẫn giữ nền minh họa. Chế độ **GIẤY** mới dùng cutout trong suốt trên đế oval. Có nút **BỎ QUA**. [Cách thử](Documentation/BATTLE_SPIRITS_SUMMON_PRESENTATION.md).
 
 ## Cập nhật và mở dự án
 
 Đóng Unity trước khi cập nhật. Stash giữ chỉnh sửa và tệp chưa được Git theo dõi; dữ liệu cá nhân bị `.gitignore` loại trừ cần sao lưu riêng trước khi di chuyển hoặc xóa.
 
 ```bash
-git stash push -u -m "backup-before-standard-0.7.0-update"
+git stash push -u -m "backup-before-standard-0.7.1-update"
 git fetch origin
 git switch battle-spirits-mdpro3-ui
 git pull --ff-only origin battle-spirits-mdpro3-ui
@@ -42,10 +44,10 @@ git pull --ff-only origin battle-spirits-mdpro3-ui
 1. Mở thư mục dự án bằng **Unity 6000.0.24f1**, nền tảng Windows x64.
 2. Giữ `Data`, `Picture`, `Platforms`, `Sound` cùng cấp với `Assets`.
 3. Vào **Window → Asset Management → Addressables → Groups**, chọn **Play Mode Script → Use Asset Database** khi chạy từ source để dùng prefab mới.
-4. Mở `Assets/Scenes/Boot.unity`, nhấn Play. Sau khi tải đủ dữ liệu và wallpaper, game vào thẳng menu **0.7.0** theo kiểu MDPro3.
+4. Mở `Assets/Scenes/Boot.unity`, nhấn Play. Sau khi tải đủ dữ liệu và wallpaper, game vào thẳng menu **0.7.1** theo kiểu MDPro3.
 5. Vào **Bộ bài** chọn bộ Standard mẫu, rồi **Đấu với máy**. Sau khi chọn **GIỮ 4 LÁ**, đến Main thì bấm lá trên tay để xem thông tin, sau đó bấm **TRIỆU HỒI** để đặt xuống sân. Magic dùng nút **DÙNG MAGIC** khi luật cho phép. Chưa có thao tác kéo thả.
 6. Bấm lá trên sân của bất kỳ bên nào để soi BP, Lv, Core và trạng thái. Bấm **PHÓNG TO** hoặc ảnh thẻ trong khung trái để xem ảnh gốc lớn; **ĐÓNG** để tiếp tục.
-7. Trong trận, nút **3D** ở đầu khung trái bật model cho 19 Spirit được hỗ trợ; bấm để chuyển sang **ẢNH**. Nút **VỪA** đổi mức **CAO → THẤP → VỪA**; lựa chọn được lưu. Game không cần Blender hoặc tải model từ mạng.
+7. Trong trận, nút **GIẤY** ở đầu khung trái bật standee từ ảnh nhân vật trong suốt; bấm để chuyển sang **ẢNH** có nền minh họa. Nút **VỪA** đổi mức **CAO → THẤP → VỪA**; lựa chọn được lưu. Game không cần Blender hoặc tải model từ mạng.
 
 **Mã, dữ liệu, UI stand-in và TCP đã được kiểm tra; chưa chạy Play/render/build trong Unity Windows thật.** Xem [báo cáo kiểm tra](Documentation/BATTLE_SPIRITS_VALIDATION.md).
 
@@ -54,9 +56,9 @@ git pull --ff-only origin battle-spirits-mdpro3-ui
 - Các form **DeckEditorUI, SoloSelectorUI, OnlineServantUI, RoomServantUI, OcgCoreUI** và ba Parts dùng lại cấu trúc native; Bộ bài và sàn đấu điều chỉnh vị trí/kích thước runtime để phù hợp cửa sổ và luật Battle Spirits. Khung/nút/viền gốc được phục hồi theo manifest; nút Battle Spirits dùng chrome và màu lime tương ứng. Giữ font Source Han Sans cho tiếng Việt, không thêm Canvas ứng dụng phủ lên menu.
 - Deck giữ vùng bộ sưu tập, chi tiết và danh sách bài. Extra/Side được ẩn. Tìm theo mã/tên/hệ/hiệu ứng/loại/bộ, hoặc `cost:6`, `bp:6000`; có lọc màu, trạng thái và sắp xếp. Thẻ ngoài pool Standard bị từ chối khi thêm vào deck; thẻ chưa hỗ trợ bị từ chối lúc bắt đầu trận tự động.
 - Sáu biểu tượng màu dùng ở bộ lọc, chi tiết thẻ, triệu hồi và sân. Đây là màu thẻ, không phải sáu loại Core. Chồng Deck và tay đối thủ dùng mặt sau BS; tay đối thủ chỉ hiện số lá công khai, tối đa mười ảnh lưng bài kèm số dư.
-- Mặt thẻ nằm ở `Picture/Art/{mã-thẻ}.png`. Sân có vùng Life, Reserve, Trash, Deck, Spirit/Nexus và Core/Soul Core. 19 Spirit Standard có model 3D riêng; thẻ khác và chế độ ẢNH dùng minh họa nổi đúng mã. Chọn thẻ tại mặt lá bài trên sân để soi thông tin. Model tự dựng có phong cách stylized, không phải model trích từ Master Duel/Duel Links hay bản tái tạo chi tiết hoàn toàn artwork.
+- Mặt thẻ nằm ở `Picture/Art/{mã-thẻ}.png`. Sân có vùng Life, Reserve, Trash, Deck, Spirit/Nexus và Core/Soul Core. 18 trong 19 Spirit Standard chơi được có standee nhân vật trong suốt trên đế oval; lá thiếu cutout chỉ hiện mặt thẻ. Chế độ ẢNH dùng minh họa nổi có nền đúng mã. Chọn tại mặt thẻ trên sân để soi thông tin. Cutout có hỗ trợ AI và có thể khác chi tiết so với ảnh gốc; không phải model chính thức.
 - Pet và wallpaper được giữ: danh mục độc lập có **108 pet, 149 wallpaper**. Chọn pet ở **Đồng hành**, chọn wallpaper ở **Cài đặt → Hình nền**. Giữ bundle Mate, Wallpaper, shader chung bắt buộc và âm thanh `SE_MATE`; bootstrap không còn đọc CDB/CID hay danh mục nhân vật Yu-Gi-Oh để lấy tên chúng.
-- **Hoạt cảnh** có 19 mục **3D** để xem nhanh model Standard và hai mục **ẢNH** cũ cho **BS01-X01 / BS01-097**. Hai thẻ BS01 thuộc Eternal, **không vào deck Standard**. Nguồn model low-poly/closeup cũ vẫn được lưu riêng; model trên sân hiện tại dùng bộ skinned mesh 0.7.0.
+- **Hoạt cảnh** liệt kê các mục **GIẤY** đã có cutout và hai mục **ẢNH** cũ cho **BS01-X01 / BS01-097**. Hai thẻ BS01 thuộc Eternal, **không vào deck Standard**. Model khối/rig cũ được lưu riêng để tra cứu, không khởi tạo trên sân 0.7.1.
 - Nhạc nền và tám cue WAV mới ở `Sound/BattleSpirits`. Xem [nguồn tài nguyên tự tạo](Tools/BattleSpiritsAssets/README.md).
 
 Sân 0.5.0 dùng nền đen/xám, khung bạc và họa tiết viền/logo từ playmat Standard chính thức. Chỉ dẫn tiếng Nhật và khu Burst của mẫu sân cũ không được đưa lên thay luật Standard. Viền lime cho biết quyền quyết định của bạn, đỏ cho đối thủ.
@@ -132,3 +134,5 @@ Backup trước đợt chỉnh sàn đấu/soi thẻ 0.6.4: **`backup/2026-11-13
 Backup trước đợt chỉnh phong cách sàn đấu 0.6.5: **`backup/2026-11-13-before-master-duel-duel-style` → `e40118390`**.
 
 Backup trước đợt thêm model 3D 0.7.0: **`backup/2026-11-13-before-3d-spirit-presentation` → `8f8a6cad2`**.
+
+Backup trước đợt standee giấy 0.7.1: **`backup/2026-11-13-before-character-standees` → `05c3b9ff5`**.

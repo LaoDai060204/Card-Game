@@ -20,6 +20,14 @@ namespace LaoDai.BattleSpirits.NativeUI
         void LoadPortrait(string cardId, RawImage image);
     }
 
+    // Character-only RGBA assets are separate from the untouched printed face
+    // and legacy closeup renders. A missing cutout is not a full-card fallback.
+    public interface IBattleNativeStandeeSession
+    {
+        bool HasStandee(string cardId);
+        void LoadStandee(string cardId, RawImage image);
+    }
+
     public interface IBattleNativePreviewSession
     {
         bool IsPreview { get; }

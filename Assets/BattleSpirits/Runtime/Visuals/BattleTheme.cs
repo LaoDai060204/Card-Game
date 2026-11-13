@@ -13,6 +13,7 @@ namespace LaoDai.BattleSpirits.Visuals
         public const string CoreSkinConfig = "BattleSpiritsCoreSkin";
         public const string DefaultCoreSkin = "Blue";
         public const string SpiritModelConfig = "BattleSpiritsSpiritModels";
+        public const string StandeeModeConfig = "BattleSpiritsCharacterStandees";
         public const string DuelQualityConfig = "BattleSpiritsDuelQuality";
         public static readonly Color PanelBackground = new Color(0.15294118f, 0.15294118f, 0.1764706f, 1);
         public static readonly Color Frame = new Color(0.8f, 0.82f, 0.86f, 1);

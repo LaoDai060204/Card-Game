@@ -14,7 +14,7 @@ using Object = UnityEngine.Object;
 namespace LaoDai.BattleSpirits.Visuals
 {
     /// <summary>
-    /// Battle Spirits' open field, printed cards and card-specific 3D figures. The stage
+    /// Battle Spirits' open field, printed cards and character paper standees. The stage
     /// renders into the existing duel view, not a separate game Canvas.
     /// </summary>
     public sealed class BattleFieldVisuals : MonoBehaviour, IDisposable
@@ -62,8 +62,9 @@ namespace LaoDai.BattleSpirits.Visuals
         private string normalCoreSkin;
         private Mesh skinQuad;
         private Shader shader, artworkShader;
-        private BattleSpiritModelLibrary modelLibrary;
+        private BattleStandeeLibrary standeeLibrary;
         private Action<string, RawImage> artworkProvider;
+        private Action<string, RawImage> standeeProvider;
         private int viewer, generation;
         private bool disposed;
         private Font font;
@@ -76,8 +77,9 @@ namespace LaoDai.BattleSpirits.Visuals
         public string LastError { get; private set; } = string.Empty;
 
         public void SetArtworkProvider(Action<string, RawImage> provider) => artworkProvider = provider;
+        public void SetStandeeProvider(Action<string, RawImage> provider) => standeeProvider = provider;
 
-        // The cinematic card landing can reveal its already-created model
+        // The cinematic card landing can reveal its already-created standee
         // without replaying field audio, moving the printed card or changing
         // the authoritative snapshot.
         public bool RevealSpiritModel(int instanceId)
@@ -157,11 +159,9 @@ namespace LaoDai.BattleSpirits.Visuals
             artworkShader = Resources.Load<Shader>("BattleSpirits/CardArtwork");
             if (artworkShader == null) artworkShader = Shader.Find("LaoDai/BattleSpirits/CardArtwork");
             if (artworkShader == null) throw new InvalidOperationException("The Battle Spirits card artwork shader is missing.");
-            var modelShader = Resources.Load<Shader>("BattleSpirits/SpiritModel");
-            if (modelShader == null) modelShader = Shader.Find("LaoDai/BattleSpirits/SpiritModel");
-            // An unavailable optional model shader keeps the complete card/art
-            // fallback working instead of preventing a duel from opening.
-            if (modelShader != null) modelLibrary = new BattleSpiritModelLibrary(modelShader);
+            var standeeShader = Resources.Load<Shader>("BattleSpirits/PaperStandee");
+            if (standeeShader == null) standeeShader = Shader.Find("LaoDai/BattleSpirits/PaperStandee");
+            if (standeeShader != null) standeeLibrary = new BattleStandeeLibrary(standeeShader);
             dark = Material("Obsidian", new Color(0.018f, 0.026f, 0.038f));
             panel = Material("ArenaSlate", new Color(0.068f, 0.088f, 0.113f));
             trim = Material("BrushedChrome", new Color(0.29f, 0.39f, 0.45f), 0.12f);
@@ -524,7 +524,7 @@ namespace LaoDai.BattleSpirits.Visuals
                 : color == CardColor.Purple ? new Color(0.7f, 0.25f, 1)
                 : color == CardColor.Yellow ? new Color(1, 0.78f, 0.12f) : new Color(1, 0.2f, 0.12f);
             var figure = new BattleCardFigure(stage.transform, target.transform, spirit.cardId ?? string.Empty,
-                artworkShader, camera, accent, artworkProvider, IsNexus(spirit.cardId), modelLibrary);
+                artworkShader, camera, accent, artworkProvider, IsNexus(spirit.cardId), null, standeeLibrary, standeeProvider);
             var unit = new Unit { owner = owner, cardId = spirit.cardId, figure = figure, nexus = IsNexus(spirit.cardId) };
             Animate(unit, BattleVisualPose.Summon); return unit;
         }
@@ -726,7 +726,7 @@ namespace LaoDai.BattleSpirits.Visuals
             if (camera != null) camera.targetTexture = null;
             if (texture != null) { texture.Release(); Destroy(texture); }
             foreach (var unit in units.Values) unit.figure.Dispose();
-            modelLibrary?.Dispose(); modelLibrary = null;
+            standeeLibrary?.Dispose(); standeeLibrary = null;
             if (stage != null) Destroy(stage);
             foreach (var mesh in meshes) if (mesh != null) Destroy(mesh);
             foreach (var material in materials) if (material != null) Destroy(material);

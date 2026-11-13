@@ -94,7 +94,77 @@ namespace UnityEngine
         public void RecalculateNormals(){if(vertices==null)return;normals=new Vector3[vertices.Length];if(triangles!=null)for(int i=0;i+2<triangles.Length;i+=3){int a=triangles[i],b=triangles[i+1],c=triangles[i+2];var u=vertices[b]-vertices[a];var v=vertices[c]-vertices[a];var n=new Vector3(u.y*v.z-u.z*v.y,u.z*v.x-u.x*v.z,u.x*v.y-u.y*v.x);normals[a]=normals[a]+n;normals[b]=normals[b]+n;normals[c]=normals[c]+n;}for(int i=0;i<normals.Length;i++){float length=normals[i].magnitude;if(length>1e-12f)normals[i]=normals[i]*(1/length);}}
         public void RecalculateBounds(){if(vertices==null||vertices.Length==0){bounds=default;return;}float x0=vertices[0].x,x1=x0,y0=vertices[0].y,y1=y0,z0=vertices[0].z,z1=z0;foreach(var p in vertices){x0=Math.Min(x0,p.x);x1=Math.Max(x1,p.x);y0=Math.Min(y0,p.y);y1=Math.Max(y1,p.y);z0=Math.Min(z0,p.z);z1=Math.Max(z1,p.z);}bounds=new Bounds(new Vector3((x0+x1)*.5f,(y0+y1)*.5f,(z0+z1)*.5f),new Vector3(x1-x0,y1-y0,z1-z0));}
     }
-    public class MaterialPropertyBlock {public readonly Dictionary<string,float> Floats=new Dictionary<string,float>();public void SetFloat(string name,float value){Floats[name]=value;} }
+    public class MaterialPropertyBlock {public readonly Dictionary<string,float> Floats=new Dictionary<string,float>();public readonly Dictionary<string,Texture> Textures=new Dictionary<string,Texture>();public readonly Dictionary<string,Color> Colors=new Dictionary<string,Color>();public void SetFloat(string name,float value){Floats[name]=value;}public void SetTexture(string name,Texture value){Textures[name]=value;}public void SetColor(string name,Color value){Colors[name]=value;} }
+    // Test-only PNG decoding preserves alpha and Unity's bottom-left pixel
+    // ordering. It performs no segmentation or modification of source images.
+    public partial class Texture2D
+    {
+        private byte[] encodedPixels;
+        private Color32[] pixels;
+        public bool isReadable=true;
+        public int PixelReadCalls;
+        private void SetEncodedPixels(byte[] bytes,bool nonReadable){encodedPixels=bytes;pixels=null;isReadable=!nonReadable;}
+        public void SetPixels32(Color32[] values)
+        {
+            if(!isReadable)throw new InvalidOperationException("Texture is not readable.");
+            if(values==null||values.Length!=width*height)throw new ArgumentException("Pixel count differs from texture dimensions.");
+            pixels=(Color32[])values.Clone();encodedPixels=null;
+        }
+        public Color32[] GetPixels32()
+        {
+            if(!isReadable)throw new InvalidOperationException("Texture is not readable.");
+            PixelReadCalls++;
+            if(pixels==null)pixels=encodedPixels==null?Enumerable.Repeat(new Color32(0,0,0,255),width*height).ToArray():DecodePng(encodedPixels);
+            return (Color32[])pixels.Clone();
+        }
+        public void Apply(bool updateMipmaps=true,bool makeNoLongerReadable=false){if(makeNoLongerReadable)isReadable=false;}
+        private Color32[] DecodePng(byte[] bytes)
+        {
+            int Integer(int offset)=>(bytes[offset]<<24)|(bytes[offset+1]<<16)|(bytes[offset+2]<<8)|bytes[offset+3];
+            int bitDepth=bytes[24],colorType=bytes[25];
+            if(bitDepth!=8||bytes[28]!=0)throw new InvalidOperationException("Controlled alpha reader supports non-interlaced 8-bit PNGs.");
+            int channels=colorType==6?4:colorType==2?3:colorType==4?2:1;
+            if(colorType!=0&&colorType!=2&&colorType!=3&&colorType!=4&&colorType!=6)throw new InvalidOperationException("Unsupported PNG color type.");
+            byte[] palette=null,transparency=null;
+            using var compressed=new System.IO.MemoryStream();
+            for(int offset=8;offset+12<=bytes.Length;)
+            {
+                int size=Integer(offset);string kind=System.Text.Encoding.ASCII.GetString(bytes,offset+4,4);int start=offset+8;
+                if(size<0||start+size+4>bytes.Length)throw new System.IO.InvalidDataException("Truncated PNG chunk.");
+                if(kind=="IDAT")compressed.Write(bytes,start,size);
+                else if(kind=="PLTE"){palette=new byte[size];Array.Copy(bytes,start,palette,0,size);}
+                else if(kind=="tRNS"){transparency=new byte[size];Array.Copy(bytes,start,transparency,0,size);}
+                offset=start+size+4;
+            }
+            compressed.Position=0;
+            using var inflate=new System.IO.Compression.ZLibStream(compressed,System.IO.Compression.CompressionMode.Decompress);
+            int stride=width*channels;var previous=new byte[stride];var current=new byte[stride];var result=new Color32[width*height];
+            int Paeth(int a,int b,int c){int p=a+b-c,da=Math.Abs(p-a),db=Math.Abs(p-b),dc=Math.Abs(p-c);return da<=db&&da<=dc?a:db<=dc?b:c;}
+            for(int y=0;y<height;y++)
+            {
+                int filter=inflate.ReadByte();if(filter<0)throw new System.IO.EndOfStreamException();
+                for(int offset=0;offset<stride;){int read=inflate.Read(current,offset,stride-offset);if(read==0)throw new System.IO.EndOfStreamException();offset+=read;}
+                for(int i=0;i<stride;i++)
+                {
+                    int left=i>=channels?current[i-channels]:0,up=previous[i],upperLeft=i>=channels?previous[i-channels]:0;
+                    int predictor=filter==0?0:filter==1?left:filter==2?up:filter==3?(left+up)/2:filter==4?Paeth(left,up,upperLeft):throw new System.IO.InvalidDataException("Invalid PNG filter.");
+                    current[i]=unchecked((byte)(current[i]+predictor));
+                }
+                for(int x=0;x<width;x++)
+                {
+                    int p=x*channels;byte r,g,b,a=255;
+                    if(colorType==6){r=current[p];g=current[p+1];b=current[p+2];a=current[p+3];}
+                    else if(colorType==2){r=current[p];g=current[p+1];b=current[p+2];}
+                    else if(colorType==4){r=g=b=current[p];a=current[p+1];}
+                    else if(colorType==0){r=g=b=current[p];}
+                    else {int index=current[p];if(palette==null||index*3+2>=palette.Length)throw new System.IO.InvalidDataException("Missing PNG palette.");r=palette[index*3];g=palette[index*3+1];b=palette[index*3+2];a=transparency!=null&&index<transparency.Length?transparency[index]:(byte)255;}
+                    result[(height-y-1)*width+x]=new Color32(r,g,b,a);
+                }
+                var swap=previous;previous=current;current=swap;
+            }
+            return result;
+        }
+    }
     public static class Resources {
         public static string ProjectRoot;
         public static readonly Dictionary<string,Texture2D> Textures=new Dictionary<string,Texture2D>(StringComparer.Ordinal);

@@ -39,6 +39,7 @@ public sealed class BattleSpiritsWindowsPackage : IPostprocessBuildWithReport
         {
             CopyRelative(source, output, card.artPath);
             CopyOptional(Path.Combine(source, "Picture/Closeup", card.id + ".png"), Path.Combine(output, "Picture/Closeup", card.id + ".png"));
+            CopyOptional(Path.Combine(source, "Picture/Standee", card.id + ".png"), Path.Combine(output, "Picture/Standee", card.id + ".png"));
         }
         CopyRelative(source, output, "Picture/Art/bs-menu.png");
         CopyDirectory(Path.Combine(source, "Sound/BattleSpirits"), Path.Combine(output, "Sound/BattleSpirits"));

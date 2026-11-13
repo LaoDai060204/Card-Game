@@ -24,9 +24,12 @@ namespace LaoDai.BattleSpirits.Visuals
         private readonly Action<string, RawImage> loadArt;
         private readonly string cardId;
         private readonly Color accent;
-        private readonly BattleSpiritModelLibrary modelLibrary;
-        private BattleSpiritModel model;
-        private bool modelAttempted;
+        private readonly BattleStandeeLibrary standeeLibrary;
+        private readonly Action<string, RawImage> loadStandee;
+        private readonly RawImage standeeArtwork;
+        private BattleCharacterStandee standee;
+        private Texture triedStandeeTexture;
+        private bool standeeRequested, hadReadyStandeeTexture;
         private float modelRevealStarted = -1;
         private Texture assignedTexture;
         private bool hadReadyTexture;
@@ -35,10 +38,13 @@ namespace LaoDai.BattleSpirits.Visuals
 
         internal BattleCardFigure(Transform parent, Transform artworkParent, string cardId,
             Shader shader, Camera camera, Color accent, Action<string, RawImage> loadArt, bool nexus,
-            BattleSpiritModelLibrary modelLibrary = null)
+            BattleSpiritModelLibrary modelLibrary = null, BattleStandeeLibrary standeeLibrary = null,
+            Action<string, RawImage> loadStandee = null)
         {
             this.camera = camera; this.nexus = nexus; this.loadArt = loadArt; this.cardId = cardId;
-            this.accent = accent; this.modelLibrary = modelLibrary;
+            // Keep the old optional parameter for call-site compatibility; the
+            // rounded rig library is no longer used by the active presentation.
+            this.accent = accent; this.standeeLibrary = standeeLibrary; this.loadStandee = loadStandee;
             illustrationUv = BattleFieldVisuals.GetIllustrationUv(cardId);
             root = new GameObject("CardSpirit_" + cardId); root.layer = parent.gameObject.layer;
             root.transform.SetParent(parent, false);
@@ -64,6 +70,12 @@ namespace LaoDai.BattleSpirits.Visuals
             var carrier = new GameObject("BS_ArtworkCarrier_" + cardId, typeof(RectTransform));
             carrier.layer = artworkParent.gameObject.layer; carrier.transform.SetParent(artworkParent, false);
             artwork = carrier.AddComponent<RawImage>(); artwork.enabled = false; artwork.raycastTarget = false;
+            if (!nexus && loadStandee != null)
+            {
+                var cutoutCarrier = new GameObject("BS_StandeeCarrier_" + cardId, typeof(RectTransform));
+                cutoutCarrier.layer = artworkParent.gameObject.layer; cutoutCarrier.transform.SetParent(artworkParent, false);
+                standeeArtwork = cutoutCarrier.AddComponent<RawImage>(); standeeArtwork.enabled = false; standeeArtwork.raycastTarget = false;
+            }
             try { loadArt?.Invoke(cardId, artwork); }
             catch (Exception error) { Debug.LogWarning("Battle Spirits card artwork: " + error.Message); }
             RefreshArtwork();
@@ -88,7 +100,8 @@ namespace LaoDai.BattleSpirits.Visuals
 
         private void RefreshArtwork()
         {
-            bool modelVisible = RefreshModelMode();
+            bool paperMode = !nexus && Config.Get(BattleTheme.StandeeModeConfig, "1") != "0";
+            RefreshStandeeMode(paperMode);
             Texture candidate = artwork == null ? null : artwork.texture;
             // Inactive cached Servant screens may have their unpinned textures
             // evicted. Re-entering the duel must request that card again rather
@@ -101,7 +114,9 @@ namespace LaoDai.BattleSpirits.Visuals
                 candidate = artwork.texture;
             }
             bool ready = candidate != null && candidate != Texture2D.blackTexture;
-            cardRenderer.enabled = ready; illustrationRenderer.enabled = ready && !modelVisible;
+            // A missing/invalid character cutout leaves the printed card only.
+            // A rectangular crop with its scenery is never a paper standee.
+            cardRenderer.enabled = ready; illustrationRenderer.enabled = ready && !paperMode;
             if (!ready || candidate == assignedTexture) return;
             assignedTexture = candidate; hadReadyTexture = true;
             cardMaterial.mainTexture = illustrationMaterial.mainTexture = candidate;
@@ -115,23 +130,50 @@ namespace LaoDai.BattleSpirits.Visuals
             portraitWidth = portraitHeight * aspect;
         }
 
-        private bool RefreshModelMode()
+        private bool RefreshStandeeMode(bool? requestedMode = null)
         {
-            bool enabled = !nexus && modelLibrary != null && Config.Get(BattleTheme.SpiritModelConfig, "1") != "0";
-            if (enabled && !modelAttempted)
+            bool enabled = requestedMode ?? (!nexus && Config.Get(BattleTheme.StandeeModeConfig, "1") != "0");
+            if (enabled && standeeArtwork != null && standeeLibrary != null)
             {
-                modelAttempted = true;
-                try { modelLibrary.TryCreate(cardId, root.transform, out model); }
-                catch (Exception error) { Debug.LogWarning("Battle Spirits model " + cardId + ": " + error.Message); }
+                var candidate = standeeArtwork.texture as Texture2D;
+                if (candidate == null && hadReadyStandeeTexture)
+                {
+                    // A hidden screen may lose its borrowed texture to the LRU.
+                    // Permit one reload, not a file request every frame.
+                    hadReadyStandeeTexture = false; standeeRequested = false;
+                }
+                if (!standeeRequested)
+                {
+                    standeeRequested = true;
+                    try { loadStandee?.Invoke(cardId, standeeArtwork); }
+                    catch (Exception error) { Debug.LogWarning("Battle Spirits standee image " + cardId + ": " + error.Message); }
+                    candidate = standeeArtwork.texture as Texture2D;
+                }
+                if (candidate != null && candidate != Texture2D.blackTexture)
+                {
+                    hadReadyStandeeTexture = true;
+                    if (!ReferenceEquals(candidate, triedStandeeTexture))
+                    {
+                        triedStandeeTexture = candidate;
+                        standee?.Dispose(); standee = null;
+                        try
+                        {
+                            if (standeeLibrary.TryCreate(cardId, candidate, root.transform, accent, out standee))
+                                modelRevealStarted = Time.unscaledTime;
+                        }
+                        catch (Exception error) { Debug.LogWarning("Battle Spirits standee " + cardId + ": " + error.Message); }
+                    }
+                }
             }
-            if (model == null) return false;
-            model.Renderer.enabled = enabled;
-            return enabled;
+            if (standee == null) return false;
+            standee.Visible = enabled && standeeArtwork != null && standeeArtwork.texture != null
+                && ReferenceEquals(standee.template.texture, standeeArtwork.texture);
+            return standee.Visible;
         }
 
         internal bool RevealModel()
         {
-            if (disposed || !RefreshModelMode()) return false;
+            if (disposed || !RefreshStandeeMode()) return false;
             modelRevealStarted = Time.unscaledTime;
             return true;
         }
@@ -152,13 +194,13 @@ namespace LaoDai.BattleSpirits.Visuals
             root.transform.localPosition = position;
             root.transform.localRotation = Quaternion.identity;
             root.transform.localScale = Vector3.one * layoutScale;
-            bool modelVisible = model != null && model.Renderer.enabled;
+            bool modelVisible = standee != null && standee.Visible;
             if (modelVisible)
             {
                 float revealAge = Math.Max(0, Time.unscaledTime - modelRevealStarted);
                 if (modelRevealStarted >= 0 && (revealAge >= BattleVisualMotion.Duration(BattleVisualPose.Summon)
                     || (pose != BattleVisualPose.Idle && pose != BattleVisualPose.Summon))) modelRevealStarted = -1;
-                model.Animate(modelRevealStarted >= 0 ? BattleVisualPose.Summon : pose,
+                standee.Animate(modelRevealStarted >= 0 ? BattleVisualPose.Summon : pose,
                     modelRevealStarted >= 0 ? revealAge : age, clock, facing, exhausted);
             }
             floorPivot.localPosition = new Vector3(0, 0.04f + (summon ? (1 - reveal) * 2.8f : 0), 0);
@@ -199,7 +241,8 @@ namespace LaoDai.BattleSpirits.Visuals
         {
             if (disposed) return;
             disposed = true;
-            model?.Dispose(); model = null;
+            standee?.Dispose(); standee = null;
+            if (standeeArtwork != null) Object.Destroy(standeeArtwork.gameObject);
             if (artwork != null) Object.Destroy(artwork.gameObject);
             Object.Destroy(root); Object.Destroy(quad);
             Object.Destroy(cardMaterial); Object.Destroy(illustrationMaterial); Object.Destroy(haloMaterial);

@@ -44,7 +44,7 @@ internal static class Entry
         public IEnumerator<CardDefinition> GetEnumerator(){Enumerations++;return cards.GetEnumerator();}
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()=>GetEnumerator();
     }
-    private sealed class FakeSession:IBattleNativeSession,IBattleNativeReplaySession,IBattleNativePortraitSession,IBattleNativePresentationSession,IBattleNativeCinematicSession
+    private sealed class FakeSession:IBattleNativeSession,IBattleNativeReplaySession,IBattleNativePortraitSession,IBattleNativeStandeeSession,IBattleNativePresentationSession,IBattleNativeCinematicSession
     {
         public IReadOnlyList<CardDefinition> Cards{get;set;}
         public IReadOnlyList<DeckDefinition> Decks{get;set;}
@@ -61,12 +61,15 @@ internal static class Entry
         public readonly Dictionary<int,Rect> ScreenBounds=new Dictionary<int,Rect>();
         public readonly List<int> RevealedModels=new List<int>();
         public readonly Dictionary<string,Texture2D> ArtTextures=new Dictionary<string,Texture2D>();
+        public readonly Dictionary<string,Texture2D> StandeeTextures=new Dictionary<string,Texture2D>();
         public bool MissingArtwork;
+        public bool MissingStandee;
         public bool IsReplay{get;set;}
         public int ReplayDelta,Hosts,Joins,Starts,ReadyRequests,SoloStarts,Disconnected;
         public string HostName,JoinAddress;public int Port;
         public readonly List<string> RequestedArt=new List<string>();
         public readonly List<string> RequestedPortraits=new List<string>();
+        public readonly List<string> RequestedStandees=new List<string>();
         public readonly List<WireMessage> Commands=new List<WireMessage>();
         public DeckDefinition Saved;
         public event Action Changed;
@@ -88,6 +91,8 @@ internal static class Entry
         public void Send(WireMessage command)=>Commands.Add(command);
         public void LoadArt(string id,RawImage image){RequestedArt.Add(id);if(MissingArtwork){image.texture=Texture2D.blackTexture;return;}if(!ArtTextures.TryGetValue(id,out var texture)||texture==null){texture=new Texture2D(675,983,TextureFormat.RGBA32,false){name="Face:"+id};ArtTextures[id]=texture;}image.texture=texture;}
         public void LoadPortrait(string id,RawImage image){RequestedPortraits.Add(id);LoadArt(id,image);}
+        public bool HasStandee(string id)=>File.Exists(Path.Combine(sourceRoot,"Picture/Standee",id+".png"));
+        public void LoadStandee(string id,RawImage image){RequestedStandees.Add(id);if(MissingStandee){image.texture=null;return;}if(!StandeeTextures.TryGetValue(id,out var texture)||texture==null){texture=MaskTexture("Cutout:"+id);StandeeTextures[id]=texture;}image.texture=texture;}
         public void AttachField(RawImage image){image.texture=Texture2D.blackTexture;}
         public void Disconnect(){Disconnected++;IsConnected=false;View=null;PresentationReset?.Invoke();SetPresentationBusy(false);}
         public void StepReplay(int delta)=>ReplayDelta+=delta;
@@ -402,6 +407,54 @@ internal static class Entry
     private static bool Finite(Vector3 value)=>Finite(value.x)&&Finite(value.y)&&Finite(value.z);
     private static float Distance(Vector3 a,Vector3 b)=>(a-b).magnitude;
     private static float[] VectorArray(Vector3 value)=>new[]{value.x,value.y,value.z};
+    private static Texture2D MaskTexture(string name="HoledCharacter",int size=24)
+    {
+        var pixels=new Color32[size*size];
+        for(int y=3;y<size-3;y++)for(int x=4;x<size-4;x++)
+            if(!(x>=size/2-2&&x<size/2+2&&y>=size/2-2&&y<size/2+2))pixels[y*size+x]=new Color32((byte)(x*9),(byte)(y*9),200,255);
+        // A thin blade/feather remains connected to the silhouette.
+        for(int x=2;x<size/2;x++)pixels[(size-4)*size+x]=new Color32(220,150,60,255);
+        var texture=new Texture2D(size,size,TextureFormat.RGBA32,false){name=name};texture.SetPixels32(pixels);return texture;
+    }
+    private static Texture2D RealCutout(string id)
+    {
+        var texture=new Texture2D(2,2,TextureFormat.RGBA32,false){name="RealCutout:"+id};
+        Assert(texture.LoadImage(File.ReadAllBytes(Path.Combine(sourceRoot,"Picture/Standee",id+".png")),false),"Real transparent cutout failed PNG load.");return texture;
+    }
+    private static object MeshData(Mesh mesh)=>new {
+        vertices=mesh.vertices.Select(VectorArray).ToArray(),normals=mesh.normals.Select(VectorArray).ToArray(),
+        uv=mesh.uv.Select(value=>new[]{value.x,value.y}).ToArray(),colors=mesh.colors.Select(value=>new[]{value.r,value.g,value.b,value.a}).ToArray(),
+        triangles=mesh.triangles,bounds=new{center=VectorArray(mesh.bounds.center),size=VectorArray(mesh.bounds.size)}
+    };
+    private static void ExportCharacterStandees(string directory)
+    {
+        Directory.CreateDirectory(directory);var host=new GameObject("ProductionPaperExport");
+        var library=new BattleStandeeLibrary(Resources.Load<Shader>("BattleSpirits/PaperStandee"));var rows=new List<object>();
+        try
+        {
+            foreach(var card in catalog.cards.Where(card=>card.IsSpirit&&File.Exists(Path.Combine(sourceRoot,"Picture/Standee",card.id+".png"))).OrderBy(card=>card.id,StringComparer.Ordinal))
+            {
+                var texture=RealCutout(card.id);
+                // Match BattleFieldVisuals.Spirit's existing card-color accents.
+                Color accent=card.color==CardColor.White?new Color(.8f,.92f,1):card.color==CardColor.Blue?new Color(.1f,.5f,1)
+                    :card.color==CardColor.Green?new Color(.15f,1,.4f):card.color==CardColor.Purple?new Color(.7f,.25f,1)
+                    :card.color==CardColor.Yellow?new Color(1,.78f,.12f):new Color(1,.2f,.12f);
+                Assert(library.TryCreate(card.id,texture,host.transform,accent,out var standee),"Could not export real cutout "+card.id);
+                rows.Add(new{id=card.id,cutoutPath=Path.Combine(sourceRoot,"Picture/Standee",card.id+".png"),
+                    textureWidth=texture.width,textureHeight=texture.height,thickness=BattleStandeeLibrary.Thickness,
+                    paper=MeshData(standee.template.mesh),plinth=MeshData(library.baseMesh),paperOffset=VectorArray(standee.paper.localPosition),
+                    paperRotation=new[]{standee.paper.localRotation.x,standee.paper.localRotation.y,standee.paper.localRotation.z,standee.paper.localRotation.w},
+                    accent=new[]{accent.r,accent.g,accent.b},edgeSegments=standee.template.edgeSegments});
+                standee.Dispose();
+            }
+            string path=Path.Combine(directory,"production-standees.json");
+            File.WriteAllText(path,JsonConvert.SerializeObject(new{schema=1,
+                source="Production BattleStandeeLibrary geometry and exact cutout paths exported by the controlled native harness",
+                coordinates="Unity Y-up, front toward -Z; mesh coordinates and source PNG are unedited",
+                unityRenderingVerified=false,standees=rows}));Console.WriteLine("EXPORTED "+rows.Count+" production paper standees: "+path);
+        }
+        finally{Object.Destroy(host);library.Dispose();}
+    }
     private static void ExportSpiritModels(string directory)
     {
         Directory.CreateDirectory(directory);
@@ -451,8 +504,14 @@ internal static class Entry
         {
             string target=Path.Combine(temporary,card.artPath);Directory.CreateDirectory(Path.GetDirectoryName(target));File.Copy(Path.Combine(sourceRoot,card.artPath),target,true);
         }
+        string standeeDirectory=Path.Combine(sourceRoot,"Picture/Standee");
+        if(Directory.Exists(standeeDirectory))foreach(string path in Directory.GetFiles(standeeDirectory,"*.png"))
+        {string target=Path.Combine(temporary,"Picture/Standee",Path.GetFileName(path));Directory.CreateDirectory(Path.GetDirectoryName(target));File.Copy(path,target,true);}
         try
         {
+            string standeeExport=Environment.GetEnvironmentVariable("BATTLE_SPIRITS_STANDEE_EXPORT");
+            if(!string.IsNullOrEmpty(standeeExport))
+            {ExportCharacterStandees(standeeExport);if(args.Contains("--export-standees-only"))return 0;}
             string exportDirectory=Environment.GetEnvironmentVariable("BATTLE_SPIRITS_MODEL_EXPORT");
             if(!string.IsNullOrEmpty(exportDirectory))
             {
@@ -1174,6 +1233,100 @@ internal static class Entry
                 Assert(owned.All(item=>item==null)&&Field<Material>(field,"normalGemMaterial")==null&&Field<Material>(field,"soulGemMaterial")==null,"Core material ownership leaked on field disposal.");
                 Assert(blue!=null&&soulTexture!=null,"Disposing Core markers destroyed shared source gem images.");
             });
+            Case("Paper library rejects opaque framed art empty alpha and unreadable images",()=>{
+                var host=new GameObject("InvalidPaperSources");var library=new BattleStandeeLibrary(Resources.Load<Shader>("BattleSpirits/PaperStandee"));
+                var opaque=new Texture2D(24,24,TextureFormat.RGBA32,false);opaque.SetPixels32(Enumerable.Repeat(new Color32(255,255,255,255),24*24).ToArray());var empty=new Texture2D(24,24,TextureFormat.RGBA32,false);empty.SetPixels32(new Color32[24*24]);
+                var unreadable=MaskTexture();unreadable.Apply(false,true);
+                Assert(!library.TryCreate("framed-card",opaque,host.transform,BattleTheme.Accent,out _)
+                    &&!library.TryCreate("empty",empty,host.transform,BattleTheme.Accent,out _)
+                    &&!library.TryCreate("gpu-only",unreadable,host.transform,BattleTheme.Accent,out _)
+                    &&!library.TryCreate("",MaskTexture(),host.transform,BattleTheme.Accent,out _)
+                    &&library.MeshCount==0,"Non-cutout source became a paper character or entered the mesh cache.");
+                library.Dispose();
+            });
+            Case("Paper mesh preserves trimmed artwork UVs holes silhouette thickness and an oval 3D base",()=>{
+                var host=new GameObject("HoledPaperGeometry");var texture=MaskTexture();var library=new BattleStandeeLibrary(Resources.Load<Shader>("BattleSpirits/PaperStandee"));
+                Assert(library.TryCreate("character-with-hole",texture,host.transform,BattleTheme.Accent,out var standee),"Holed alpha fixture was rejected.");
+                var mesh=standee.template.mesh;var pixels=texture.GetPixels32();int size=texture.width;
+                int x0=size,y0=size,x1=-1,y1=-1;
+                for(int y=0;y<size;y++)for(int x=0;x<size;x++)if(pixels[y*size+x].a>=32){x0=Math.Min(x0,x);x1=Math.Max(x1,x);y0=Math.Min(y0,y);y1=Math.Max(y1,y);}
+                Assert(Math.Abs(mesh.uv[0].x-x0/(float)size)<1e-6&&Math.Abs(mesh.uv[0].y-y0/(float)size)<1e-6
+                    &&Math.Abs(mesh.uv[2].x-(x1+1)/(float)size)<1e-6&&Math.Abs(mesh.uv[2].y-(y1+1)/(float)size)<1e-6,"Paper face lost source UV alignment while trimming transparent margins.");
+                Assert(mesh.uv.Take(4).SequenceEqual(mesh.uv.Skip(4).Take(4))&&mesh.normals.Take(4).All(n=>n.z==-1)&&mesh.normals.Skip(4).Take(4).All(n=>n.z==1),"Physical reverse has another silhouette or incorrect facing.");
+                Assert(Math.Abs(mesh.bounds.size.z-BattleStandeeLibrary.Thickness)<1e-6&&mesh.colors.Take(8).All(c=>c.a==1)&&mesh.colors.Skip(8).All(c=>c.a==0),"Paper is a thick sculpted character or lacks distinct alpha-clipped face/stock edge flags.");
+                float innerX=standee.template.width*2f/(x1-x0+1),innerY=standee.template.height*(size/2f-y0)/(y1-y0+1);
+                Assert(mesh.vertices.Skip(8).Any(p=>Math.Abs(p.x)<innerX+.001f&&Math.Abs(p.y-innerY)<standee.template.height*.15f),"Alpha hole has no physical inner sidewalls; only the outer card rectangle was extruded.");
+                foreach(var geometry in new[]{mesh,library.baseMesh})
+                {
+                    Assert(geometry.vertices.All(Finite)&&geometry.normals.All(n=>Finite(n)&&Math.Abs(n.magnitude-1)<.001f),"Paper/base has invalid positions or normals.");
+                    for(int i=0;i<geometry.triangles.Length;i+=3)
+                    {int a=geometry.triangles[i],b=geometry.triangles[i+1],c=geometry.triangles[i+2];var u=geometry.vertices[b]-geometry.vertices[a];var v=geometry.vertices[c]-geometry.vertices[a];var n=new Vector3(u.y*v.z-u.z*v.y,u.z*v.x-u.x*v.z,u.x*v.y-u.y*v.x);var avg=geometry.normals[a]+geometry.normals[b]+geometry.normals[c];Assert(n.magnitude>1e-9&&n.x*avg.x+n.y*avg.y+n.z*avg.z>=-1e-8,"Paper/base has a degenerate or inward-wound triangle.");}
+                }
+                var bounds=library.baseMesh.bounds;Assert(bounds.size.x>bounds.size.z*1.5f&&bounds.size.y>.15f&&bounds.size.y<.25f&&bounds.min.y>=0,"Character base is not a thin physical oval.");
+                Assert(standee.root.GetComponentsInChildren<MeshRenderer>(true).Length==2&&standee.root.GetComponentsInChildren<SkinnedMeshRenderer>(true).Length==0,"Paper creates toy bones or one renderer per contour segment.");
+                standee.Dispose();library.Dispose();
+            });
+            Case("The generated real cutout retains transparent background and high resolution in production geometry",()=>{
+                const string id="26RBS01-064";string source=Path.Combine(sourceRoot,catalog.cards.Single(card=>card.id==id).artPath);byte[] before=SHA256.HashData(File.ReadAllBytes(source));
+                var texture=RealCutout(id);var pixels=texture.GetPixels32();int transparent=pixels.Count(p=>p.a==0),visible=pixels.Count(p=>p.a>=32);
+                Assert(texture.width>=1000&&texture.height>=1000&&transparent>pixels.Length*.4&&visible>pixels.Length*.1&&visible<pixels.Length*.8
+                    &&pixels.Any(p=>p.a>0&&p.a<255),"Actual cutout was reduced, opaque, empty or lost antialiased transparency.");
+                var library=new BattleStandeeLibrary(Resources.Load<Shader>("BattleSpirits/PaperStandee"));var host=new GameObject("ActualCharacterPaper");
+                Assert(library.TryCreate(id,texture,host.transform,BattleTheme.Accent,out var standee)&&standee.template.texture==texture&&standee.template.edgeSegments>100,"Actual transparent character failed its alpha silhouette mesh.");
+                Assert(standee.template.mesh.uv[0].x>0&&standee.template.mesh.uv[2].x<1&&standee.template.mesh.uv[0].y>=0&&standee.template.mesh.uv[2].y<=1,"Actual transparent margins are not trimmed around the visible character.");
+                Assert(standee.paperRenderer.propertyBlock.Textures["_MainTex"]==texture&&standee.paperRenderer.propertyBlock.Colors["_BaseColor"].r==1,"Paper recolors or substitutes the actual cutout texture.");
+                standee.Dispose();library.Dispose();Assert(before.SequenceEqual(SHA256.HashData(File.ReadAllBytes(source))),"Original full card artwork was rewritten while building its standee.");
+            });
+            Case("Every available character asset has an exact catalog Spirit ID and valid transparent paper geometry",()=>{
+                var paths=Directory.GetFiles(Path.Combine(sourceRoot,"Picture/Standee"),"*.png");Assert(paths.Length>0,"There are no actual character cutouts.");
+                var host=new GameObject("AllAuthoredPaperAssets");var library=new BattleStandeeLibrary(Resources.Load<Shader>("BattleSpirits/PaperStandee"));
+                foreach(string path in paths)
+                {
+                    string id=Path.GetFileNameWithoutExtension(path);Assert(catalog.cards.Any(card=>card.id==id&&card.IsSpirit),"Cutout filename has no exact Spirit identity: "+id);
+                    var texture=RealCutout(id);var pixels=texture.GetPixels32();
+                    Assert(pixels.Any(pixel=>pixel.a==0)&&pixels.Any(pixel=>pixel.a>=32)&&texture.width>=600&&texture.height>=600,"Actual cutout is opaque, empty or reduced below the reviewed art size: "+id);
+                    Assert(library.TryCreate(id,texture,host.transform,BattleTheme.Accent,out var standee)&&standee.template.mesh.vertices.All(Finite)
+                        &&standee.template.mesh.triangles.Length/3<20000&&standee.template.mesh.bounds.size.z<=.056f,"An actual cutout cannot produce bounded finite physical paper: "+id);
+                    standee.Dispose();Object.Destroy(texture);
+                }
+                Assert(library.MeshCount==paths.Length,"Different authored card identities shared an unrelated silhouette mesh.");library.Dispose();
+            });
+            Case("Paper instances share exact-ID geometry and material but retain independent tint and borrowed texture ownership",()=>{
+                var library=new BattleStandeeLibrary(Resources.Load<Shader>("BattleSpirits/PaperStandee"));var host=new GameObject("SharedPaper");var texture=MaskTexture();
+                library.TryCreate("exact-id",texture,host.transform,new Color(.9f,.2f,.3f),out var first);library.TryCreate("exact-id",texture,host.transform,new Color(.2f,.6f,.9f),out var second);
+                Assert(first.template==second.template&&first.paperRenderer.sharedMaterial==second.paperRenderer.sharedMaterial&&first.baseRenderer.GetComponent<MeshFilter>().sharedMesh==library.baseMesh&&library.MeshCount==1&&texture.PixelReadCalls==1,"Copies reread alpha or allocate another shared mesh/material.");
+                Assert(first.baseRenderer.propertyBlock.Colors["_BaseColor"].r!=second.baseRenderer.propertyBlock.Colors["_BaseColor"].r&&first.paperRenderer.propertyBlock.Textures["_MainTex"]==texture,"Instance tint leaked into shared material or lost the artwork.");
+                library.TryCreate("another-id",texture,host.transform,BattleTheme.Accent,out var differentId);var replacement=MaskTexture("Replacement");library.TryCreate("exact-id",replacement,host.transform,BattleTheme.Accent,out var replaced);
+                Assert(library.MeshCount==3&&differentId.template!=first.template&&replaced.template!=first.template,"Mesh cache confuses distinct IDs or same-ID replacement textures.");
+                var mesh=first.template.mesh;var material=library.Material;first.Dispose();Assert(mesh!=null&&material!=null&&texture!=null&&second.Visible,"Disposing one copy destroyed shared resources used by another.");
+                library.Dispose();Assert(mesh==null&&material==null&&texture!=null&&replacement!=null,"Library disposal leaks owned geometry/material or destroys borrowed session textures.");
+            });
+            Case("Paper motion uses finite lightweight transforms without alpha reads or geometry rebuilding",()=>{
+                var library=new BattleStandeeLibrary(Resources.Load<Shader>("BattleSpirits/PaperStandee"));var host=new GameObject("AnimatedPaper");var texture=MaskTexture();library.TryCreate("animated",texture,host.transform,BattleTheme.Accent,out var standee);
+                var mesh=standee.template.mesh;int objects=GameObject.All.Count,reads=texture.PixelReadCalls;
+                foreach(BattleVisualPose pose in Enum.GetValues(typeof(BattleVisualPose)))foreach(float value in new[]{-1f,0f,.2f,.8f,4f,float.NaN,float.PositiveInfinity})
+                {standee.Animate(pose,value,value,-1,true);Assert(Finite(standee.root.transform.localPosition)&&Finite(standee.root.transform.localScale)&&Finite(standee.paper.localPosition),"Paper pose produced nonfinite transforms.");}
+                Assert(GameObject.All.Count==objects&&texture.PixelReadCalls==reads&&library.MeshCount==1&&standee.template.mesh==mesh,"Motion rebuilt silhouette geometry/material or reread image pixels.");
+                standee.Visible=false;Assert(!standee.paperRenderer.enabled&&!standee.baseRenderer.enabled,"Hidden mode retains half the physical standee.");
+                standee.Dispose();standee.Animate(BattleVisualPose.Idle,0,0,1,false);library.Dispose();
+            });
+            Case("A pathological noisy alpha contour stays within the shared paper geometry budget",()=>{
+                const int size=96;var pixels=new Color32[size*size];for(int y=0;y<size;y++)for(int x=0;x<size;x++)if((x+y)%2==0)pixels[y*size+x]=new Color32(255,255,255,255);
+                var texture=new Texture2D(size,size,TextureFormat.RGBA32,false);texture.SetPixels32(pixels);var library=new BattleStandeeLibrary(Resources.Load<Shader>("BattleSpirits/PaperStandee"));var host=new GameObject("NoisyPaper");
+                Assert(library.TryCreate("noisy",texture,host.transform,BattleTheme.Accent,out var standee)&&standee.template.mesh.vertices.Length<65535&&standee.template.mesh.triangles.Length/3<20000,"Noisy alpha overflowed 16-bit indices or the paper triangle budget.");library.Dispose();
+            });
+            Case("Actual session separates readable paper PNGs from GPU-only faces and invalidates stale cutout targets",()=>{
+                const string id="26RBS01-064";var session=BattleNativeSession.Ensure();var face=new GameObject("PaperFullFace",typeof(RectTransform)).AddComponent<RawImage>();var image=new GameObject("ActualPaperCutout",typeof(RectTransform)).AddComponent<RawImage>();
+                Assert(session.HasStandee(id)&&!session.HasStandee("../26RBS01-064")&&!session.HasStandee("unknown"),"Standee availability accepts unrelated or escaping IDs.");session.LoadArt(id,face);session.LoadStandee(id,image);Pump(()=>face.texture!=null&&face.texture!=Texture2D.blackTexture&&image.texture!=null&&image.texture!=Texture2D.blackTexture);
+                var cutout=(Texture2D)image.texture;var textures=Field<Dictionary<string,Texture2D>>(session,"textures");
+                Assert(((Texture2D)face.texture).isReadable==false&&cutout.isReadable&&face.texture!=cutout&&textures[id]==face.texture&&textures["standee:"+id]==cutout&&cutout.GetPixels32().Any(pixel=>pixel.a==0),"Readable alpha cutout cache aliases the full card face.");
+                var target=new GameObject("SupersededCutoutTarget",typeof(RectTransform)).AddComponent<RawImage>();
+                string delayedId=catalog.cards.Where(card=>card.IsSpirit&&card.id!=id&&session.HasStandee(card.id)).Select(card=>card.id).FirstOrDefault();
+                session.LoadStandee(delayedId??id,target);session.LoadStandee("unknown",target);
+                if(delayedId!=null)Pump(()=>textures.ContainsKey("standee:"+delayedId));else Context.Drain();
+                Assert(target.texture==null&&Field<Dictionary<RawImage,string>>(session,"requestedArt")[target]=="standee:unknown","A missing newer cutout selection retains the previous character.");
+                Object.Destroy(face.gameObject);Object.Destroy(image.gameObject);Object.Destroy(target.gameObject);
+            });
             Case("Real model profiles cover exactly the nineteen playable Standard Spirits without claiming other cards",()=>{
                 var expected=catalog.cards.Where(card=>card.IsPlayableFor(BattleRulesFormat.Standard)&&card.IsSpirit).Select(card=>card.id).OrderBy(id=>id).ToArray();
                 Assert(expected.Length==19&&BattleSpiritModelLibrary.SupportedIds.OrderBy(id=>id).SequenceEqual(expected),"Model profiles are missing a playable Spirit or substitute an unsupported identity.");
@@ -1250,46 +1403,49 @@ internal static class Entry
                 }
                 library.Dispose();
             });
-            Case("Field model and artwork modes switch cached geometry without changing public state or artwork ownership",()=>{
-                var output=new GameObject("ModelField",typeof(RectTransform)).AddComponent<RawImage>();var field=output.gameObject.AddComponent<BattleFieldVisuals>();field.SetArtworkProvider(fake.LoadArt);field.SetCatalog(catalog.cards);field.Load(output);
-                string id=BattleSpiritModelLibrary.SupportedIds[2];var snapshot=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);
+            Case("Paper and artwork modes switch cached geometry without changing public state or borrowed textures",()=>{
+                var output=new GameObject("PaperField",typeof(RectTransform)).AddComponent<RawImage>();var field=output.gameObject.AddComponent<BattleFieldVisuals>();field.SetArtworkProvider(fake.LoadArt);field.SetStandeeProvider(fake.LoadStandee);field.SetCatalog(catalog.cards);field.Load(output);
+                const string id="26RBS01-064";var snapshot=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);
                 snapshot.players[0].field=new[]{new SpiritView{instanceId=501,cardId=id}};field.Render(snapshot);Time.unscaledTime=2;Call(field,"Update");
-                var units=(System.Collections.IDictionary)Field<object>(field,"units");var figure=Field<BattleCardFigure>(units[501],"figure");var model=Field<BattleSpiritModel>(figure,"model");
-                Assert(model!=null&&model.Renderer.enabled&&!Field<Renderer>(figure,"illustrationRenderer").enabled&&Field<Renderer>(figure,"cardRenderer").enabled,"Mapped Spirit does not show real geometry with its floor card.");
-                int objects=GameObject.All.Count,requests=fake.RequestedArt.Count;string state=JsonConvert.SerializeObject(snapshot);var mesh=model.Renderer.sharedMesh;
-                MDPro3.Config.Set(BattleTheme.SpiritModelConfig,"0");Call(field,"Update");
-                Assert(!model.Renderer.enabled&&Field<Renderer>(figure,"illustrationRenderer").enabled,"Artwork mode did not restore the original floating illustration.");
-                MDPro3.Config.Set(BattleTheme.SpiritModelConfig,"1");Call(field,"Update");
-                Assert(model.Renderer.enabled&&model.Renderer.sharedMesh==mesh&&GameObject.All.Count==objects&&fake.RequestedArt.Count==requests
-                    &&JsonConvert.SerializeObject(snapshot)==state,"Changing cosmetic mode recreated geometry, reloaded art or changed match data.");
-                Assert(field.RevealSpiritModel(501),"An active model cannot reveal after the card cinematic.");var floor=Field<Transform>(figure,"card");var scale=floor.localScale;
-                Call(field,"Update");Assert(floor.localScale.x==scale.x&&floor.localScale.y==scale.y,"Model reveal shrank or lifted the already-landed printed card.");
-                field.Dispose();Assert(mesh==null,"Disposing the field leaked its shared model mesh.");
+                var units=(System.Collections.IDictionary)Field<object>(field,"units");var figure=Field<BattleCardFigure>(units[501],"figure");var standee=Field<BattleCharacterStandee>(figure,"standee");
+                Assert(standee!=null&&standee.Visible&&!Field<Renderer>(figure,"illustrationRenderer").enabled&&Field<Renderer>(figure,"cardRenderer").enabled,"Default paper mode does not show the actual cutout with its floor card.");
+                Assert(standee.root.GetComponentsInChildren<SkinnedMeshRenderer>(true).Length==0,"Default presentation creates a rounded skinned replacement character.");
+                int objects=GameObject.All.Count,requests=fake.RequestedArt.Count,cutoutRequests=fake.RequestedStandees.Count;string state=JsonConvert.SerializeObject(snapshot);var mesh=standee.template.mesh;var borrowed=standee.template.texture;
+                MDPro3.Config.Set(BattleTheme.StandeeModeConfig,"0");Call(field,"Update");
+                Assert(!standee.Visible&&Field<Renderer>(figure,"illustrationRenderer").enabled,"Explicit artwork mode did not restore the old floating illustration.");
+                MDPro3.Config.Set(BattleTheme.StandeeModeConfig,"1");Call(field,"Update");
+                Assert(standee.Visible&&standee.template.mesh==mesh&&GameObject.All.Count==objects&&fake.RequestedArt.Count==requests&&fake.RequestedStandees.Count==cutoutRequests
+                    &&JsonConvert.SerializeObject(snapshot)==state,"A cosmetic mode recreated geometry, reloaded artwork or changed public state.");
+                Assert(field.RevealSpiritModel(501),"An active paper character cannot reveal after the card cinematic.");var floor=Field<Transform>(figure,"card");var scale=floor.localScale;
+                Call(field,"Update");Assert(floor.localScale.x==scale.x&&floor.localScale.y==scale.y,"Standee reveal shrank or lifted the already-landed printed card.");
+                field.Dispose();Assert(mesh==null&&borrowed!=null,"Field disposal leaked owned paper geometry or destroyed borrowed cutout artwork.");
             });
-            Case("Missing card art still permits mapped 3D geometry and unmodeled cards retain their own artwork fallback",()=>{
-                fake.MissingArtwork=true;var output=new GameObject("ModelMissingArt",typeof(RectTransform)).AddComponent<RawImage>();var field=output.gameObject.AddComponent<BattleFieldVisuals>();field.SetArtworkProvider(fake.LoadArt);field.SetCatalog(catalog.cards);field.Load(output);
-                string id=BattleSpiritModelLibrary.SupportedIds[0];var snapshot=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);
+            Case("Cutout loading is independent from floor art and missing paper stays a printed card",()=>{
+                fake.MissingArtwork=true;var output=new GameObject("PaperMissingArt",typeof(RectTransform)).AddComponent<RawImage>();var field=output.gameObject.AddComponent<BattleFieldVisuals>();field.SetArtworkProvider(fake.LoadArt);field.SetStandeeProvider(fake.LoadStandee);field.SetCatalog(catalog.cards);field.Load(output);
+                const string id="26RBS01-064";var snapshot=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);
                 snapshot.players[0].field=new[]{new SpiritView{instanceId=601,cardId=id}};field.Render(snapshot);var units=(System.Collections.IDictionary)Field<object>(field,"units");
-                var mapped=Field<BattleCardFigure>(units[601],"figure");Assert(Field<BattleSpiritModel>(mapped,"model")?.Renderer.enabled==true,"A texture delay unnecessarily hides real model geometry.");
-                fake.MissingArtwork=false;snapshot.players[0].field=new[]{new SpiritView{instanceId=602,cardId="BS01-X01"}};field.Render(snapshot);
-                var fallback=Field<BattleCardFigure>(units[602],"figure");Assert(Field<BattleSpiritModel>(fallback,"model")==null&&Field<Renderer>(fallback,"illustrationRenderer").enabled,"Unmodeled card acquired a generic model or lost its own artwork fallback.");field.Dispose();
+                var mapped=Field<BattleCardFigure>(units[601],"figure");Assert(Field<BattleCharacterStandee>(mapped,"standee")?.Visible==true,"A floor-art delay unnecessarily hides the independent cutout.");
+                fake.MissingArtwork=false;fake.MissingStandee=true;snapshot.players[0].field=new[]{new SpiritView{instanceId=602,cardId="BS01-X01"}};field.Render(snapshot);
+                var missing=Field<BattleCardFigure>(units[602],"figure");Assert(Field<BattleCharacterStandee>(missing,"standee")==null&&!Field<Renderer>(missing,"illustrationRenderer").enabled&&Field<Renderer>(missing,"cardRenderer").enabled,"Missing cutout shows a framed rectangular character or rounded substitute.");
+                int requests=fake.RequestedStandees.Count;for(int i=0;i<20;i++)Call(field,"Update");Assert(fake.RequestedStandees.Count==requests,"Missing cutout polls the filesystem every frame.");
+                MDPro3.Config.Set(BattleTheme.StandeeModeConfig,"0");Call(field,"Update");Assert(Field<Renderer>(missing,"illustrationRenderer").enabled,"Artwork mode cannot explicitly opt into the old illustration.");field.Dispose();
             });
-            Case("The field builds models only for public units and never requests hidden hand identities",()=>{
-                var output=new GameObject("PublicOnlyModels",typeof(RectTransform)).AddComponent<RawImage>();var field=output.gameObject.AddComponent<BattleFieldVisuals>();field.SetArtworkProvider(fake.LoadArt);field.SetCatalog(catalog.cards);field.Load(output);
-                var snapshot=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);string id=BattleSpiritModelLibrary.SupportedIds[3];
+            Case("The field builds paper only for public units and never requests hidden hand identities",()=>{
+                var output=new GameObject("PublicOnlyPaper",typeof(RectTransform)).AddComponent<RawImage>();var field=output.gameObject.AddComponent<BattleFieldVisuals>();field.SetArtworkProvider(fake.LoadArt);field.SetStandeeProvider(fake.LoadStandee);field.SetCatalog(catalog.cards);field.Load(output);
+                var snapshot=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);const string id="26RBS01-064";
                 snapshot.ownHand=new[]{"not-a-public-field-card"};snapshot.players[1].handCount=9;snapshot.players[1].field=new[]{new SpiritView{instanceId=603,cardId=id}};field.Render(snapshot);
-                Assert(Field<BattleSpiritModelLibrary>(field,"modelLibrary").MeshCount==1&&fake.RequestedArt.All(card=>card==id),"Field models or textures depend on private hand identities.");field.Dispose();
+                Assert(Field<BattleStandeeLibrary>(field,"standeeLibrary").MeshCount==1&&fake.RequestedArt.All(card=>card==id)&&fake.RequestedStandees.SequenceEqual(new[]{id}),"Paper meshes or cutout requests depend on private hand identities.");field.Dispose();
             });
             Case("Duel visual controls persist cosmetic choices and block hidden modal or presentation callbacks",()=>{
                 fake.View=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);var screen=Screen(BattleNativeScreen.Duel);
                 string state=JsonConvert.SerializeObject(fake.View);Click(screen.transform,"BS_ModelMode");Click(screen.transform,"BS_DuelQuality");
-                Assert(MDPro3.Config.Get(BattleTheme.SpiritModelConfig,"1")=="0"&&MDPro3.Config.Get(BattleTheme.DuelQualityConfig,"Balanced")=="High"
+                Assert(MDPro3.Config.Get(BattleTheme.StandeeModeConfig,"1")=="0"&&MDPro3.Config.Get(BattleTheme.DuelQualityConfig,"Balanced")=="High"
                     &&fake.Commands.Count==0&&JsonConvert.SerializeObject(fake.View)==state,"Visual settings issue gameplay commands or fail to persist.");
                 var mode=Find(screen.transform,"BS_ModelMode").GetComponent<Button>();var quality=Find(screen.transform,"BS_DuelQuality").GetComponent<Button>();
                 Click(screen.transform,"BS_Hand/BS_Card_"+fake.View.ownHand[0]);Click(screen.transform,"BS_InspectZoom");mode.onClick.Invoke();quality.onClick.Invoke();
-                Assert(MDPro3.Config.Get(BattleTheme.SpiritModelConfig,"1")=="0"&&MDPro3.Config.Get(BattleTheme.DuelQualityConfig,"Balanced")=="High","Modal settings callbacks remain active behind zoom.");
+                Assert(MDPro3.Config.Get(BattleTheme.StandeeModeConfig,"1")=="0"&&MDPro3.Config.Get(BattleTheme.DuelQualityConfig,"Balanced")=="High","Modal settings callbacks remain active behind zoom.");
                 Click(screen.transform,"BS_ZoomClose");fake.SetPresentationBusy(true);mode.onClick.Invoke();quality.onClick.Invoke();
-                Assert(MDPro3.Config.Get(BattleTheme.SpiritModelConfig,"1")=="0"&&MDPro3.Config.Get(BattleTheme.DuelQualityConfig,"Balanced")=="High","Presentation guard permits disruptive cosmetic changes.");
+                Assert(MDPro3.Config.Get(BattleTheme.StandeeModeConfig,"1")=="0"&&MDPro3.Config.Get(BattleTheme.DuelQualityConfig,"Balanced")=="High","Presentation guard permits disruptive cosmetic changes.");
             });
             Case("Low balanced and high render budgets resize once preserve aspect and release old targets",()=>{
                 var output=new GameObject("QualityBudgetField",typeof(RectTransform)).AddComponent<RawImage>();output.rectTransform.rect=new Rect(0,0,3200,1800);
@@ -1341,14 +1497,17 @@ internal static class Entry
                 Click(screen.transform,"BS_FieldCard_703");var detail=Find(screen.transform,"BS_InspectState").GetComponent<TextMeshProUGUI>();
                 Assert(detail.text.Contains("7000")&&detail.text.Contains("Soul Core")&&detail.text.Contains("ĐÃ MỆT"),"Compact field stats removed complete inspection information.");
             });
-            Case("The actual animation gallery exposes Standard models and opens a command-free 3D preview",()=>{
-                BattleSpiritsApp.ShowBossGallery();string id=BattleSpiritModelLibrary.SupportedIds[2];
-                string choice=MDPro3.UIManager.Popup.Single(item=>item.StartsWith("3D · "+id+" · ",StringComparison.Ordinal));
-                Assert(MDPro3.UIManager.Popup.Count(item=>item.StartsWith("3D · ",StringComparison.Ordinal))==19,"New 3D models are not discoverable in the actual native animation gallery.");
-                var selected=new GameObject("PreviewModelChoice",typeof(RectTransform));selected.AddComponent<SelectionButton>();selected.AddComponent<TextMeshProUGUI>().text=choice;
-                UnityEngine.EventSystems.EventSystem.current.currentSelectedGameObject=selected;MDPro3.UIManager.PopupSelected.Invoke();var session=BattleNativeSession.Ensure();
-                Assert(session.IsPreview&&!session.CanSendCommands&&session.View.rulesFormat=="Standard"&&session.View.players[0].field.Single().cardId==id,
-                    "Standard model preview was rejected by an Eternal-only filter or entered authoritative gameplay.");
+            Case("Animation gallery lists existing transparent cutouts and opens a command-free paper preview",()=>{
+                MDPro3.Config.Set(BattleTheme.StandeeModeConfig,"0");
+                BattleSpiritsApp.ShowBossGallery();const string id="26RBS01-064";
+                string choice=MDPro3.UIManager.Popup.Single(item=>item.StartsWith("GIẤY · "+id+" · ",StringComparison.Ordinal));
+                var session=BattleNativeSession.Ensure();int available=catalog.cards.Count(card=>card.IsSpirit&&session.HasStandee(card.id));
+                Assert(MDPro3.UIManager.Popup.Count(item=>item.StartsWith("GIẤY · ",StringComparison.Ordinal))==available,"Gallery claims paper models for missing or unrelated cutout images.");
+                var selected=new GameObject("PreviewPaperChoice",typeof(RectTransform));selected.AddComponent<SelectionButton>();selected.AddComponent<TextMeshProUGUI>().text=choice;
+                UnityEngine.EventSystems.EventSystem.current.currentSelectedGameObject=selected;MDPro3.UIManager.PopupSelected.Invoke();
+                Assert(session.IsPreview&&!session.CanSendCommands&&session.View.rulesFormat=="Standard"&&session.View.players[0].field.Single().cardId==id
+                    &&MDPro3.Config.Get(BattleTheme.StandeeModeConfig,"0")=="1",
+                    "Paper preview was rejected or entered authoritative gameplay.");
             });
             Case("Field viewport bounds follow the printed card and exhausted orientation",()=>{
                 var output=new GameObject("BoundsField",typeof(RectTransform)).AddComponent<RawImage>();var field=output.gameObject.AddComponent<BattleFieldVisuals>();field.SetArtworkProvider(fake.LoadArt);field.Load(output);

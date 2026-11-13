@@ -52,17 +52,23 @@ namespace LaoDai.BattleSpirits.Presentation
         {
             if (!Ready()) return;
             var session = BattleNativeSession.Ensure();
-            var bosses = session.Cards.Where(card => BattleSpiritModelLibrary.SupportedIds.Contains(card.id)
+            var bosses = session.Cards.Where(card => session.HasStandee(card.id)
                     || card.id == "BS01-X01" || card.id == "BS01-097")
-                .OrderByDescending(card => BattleSpiritModelLibrary.SupportedIds.Contains(card.id)).ThenBy(card => card.id, StringComparer.Ordinal)
-                .ToDictionary(card => (BattleSpiritModelLibrary.SupportedIds.Contains(card.id) ? "3D · " : "ẢNH · ")
+                .OrderByDescending(card => session.HasStandee(card.id)).ThenBy(card => card.id, StringComparer.Ordinal)
+                .ToDictionary(card => (session.HasStandee(card.id) ? "GIẤY · " : "ẢNH · ")
                     + card.id + " · " + card.DisplayName, card => card.id, StringComparer.Ordinal);
-            var selections = new List<string> { "HOẠT ẢNH TRIỆU HỒI", "19 Spirit Standard có model tự dựng. Hai thẻ BS01 cũ dùng artwork, chỉ xem thử và không vào deck Standard." };
+            var selections = new List<string> { "HOẠT ẢNH TRIỆU HỒI", "GIẤY dùng nhân vật đã tách nền trên đế thẻ. Các mục ẢNH chỉ có artwork; xem thử không cho phép đưa thẻ ngoài pool vào deck Standard." };
             selections.AddRange(bosses.Keys);
             UIManager.ShowPopupSelection(selections, () =>
             {
                 var selected = EventSystem.current?.currentSelectedGameObject?.GetComponent<SelectionButton>();
-                if (selected != null && bosses.TryGetValue(selected.GetButtonText(), out string id)) session.StartBossPreview(id);
+                if (selected != null && bosses.TryGetValue(selected.GetButtonText(), out string id))
+                {
+                    // The gallery entry explicitly selects paper or artwork,
+                    // even when the previous duel used the other visual mode.
+                    Config.Set(BattleTheme.StandeeModeConfig, session.HasStandee(id) ? "1" : "0");
+                    Config.Save(); session.StartBossPreview(id);
+                }
             }, null);
         }
 

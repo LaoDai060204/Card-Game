@@ -509,7 +509,7 @@ namespace LaoDai.BattleSpirits.NativeUI
         private void RefreshVisualControls()
         {
             if (modelMode == null || duelQuality == null) return;
-            BattleNativeWidgets.SetLabel(modelMode.transform, Config.Get(BattleTheme.SpiritModelConfig, "1") == "0" ? "ẢNH" : "3D");
+            BattleNativeWidgets.SetLabel(modelMode.transform, Config.Get(BattleTheme.StandeeModeConfig, "1") == "0" ? "ẢNH" : "GIẤY");
             string quality = Config.Get(BattleTheme.DuelQualityConfig, "Balanced");
             BattleNativeWidgets.SetLabel(duelQuality.transform, string.Equals(quality, "Low", StringComparison.OrdinalIgnoreCase) ? "THẤP"
                 : string.Equals(quality, "High", StringComparison.OrdinalIgnoreCase) ? "CAO" : "VỪA");
@@ -518,7 +518,7 @@ namespace LaoDai.BattleSpirits.NativeUI
         private void ToggleModelMode()
         {
             if (ZoomVisible || presentationSession?.IsPresentationBusy == true) return;
-            Config.Set(BattleTheme.SpiritModelConfig, Config.Get(BattleTheme.SpiritModelConfig, "1") == "0" ? "1" : "0");
+            Config.Set(BattleTheme.StandeeModeConfig, Config.Get(BattleTheme.StandeeModeConfig, "1") == "0" ? "1" : "0");
             Config.Save(); RefreshVisualControls();
         }
         private void CycleDuelQuality()

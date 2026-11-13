@@ -35,24 +35,25 @@ namespace UnityEngine {
   public static Quaternion LookRotation(Vector3 v){float yaw=(float)(Math.Atan2(v.x,v.z)*180/Math.PI);float pitch=(float)(-Math.Atan2(v.y,Math.Sqrt(v.x*v.x+v.z*v.z))*180/Math.PI);return Euler(pitch,yaw,0);}
  }
  public struct Color{public float r,g,b,a;public Color(float r,float g,float b,float a=1){this.r=r;this.g=g;this.b=b;this.a=a;}public static Color white=>new Color(1,1,1,1);public static Color clear=>default;}
+ public struct Color32{public byte r,g,b,a;public Color32(byte r,byte g,byte b,byte a){this.r=r;this.g=g;this.b=b;this.a=a;}public static implicit operator Color(Color32 c)=>new Color(c.r/255f,c.g/255f,c.b/255f,c.a/255f);public static implicit operator Color32(Color c)=>new Color32((byte)Math.Clamp((int)Math.Round(c.r*255),0,255),(byte)Math.Clamp((int)Math.Round(c.g*255),0,255),(byte)Math.Clamp((int)Math.Round(c.b*255),0,255),(byte)Math.Clamp((int)Math.Round(c.a*255),0,255));}
  public struct Vector4{public float x,y,z,w;public Vector4(float x,float y,float z,float w){this.x=x;this.y=y;this.z=z;this.w=w;}}
  public class Material:Object{public Material(){}public Material(Shader shader){}public Texture mainTexture;public readonly Dictionary<string,Texture> Textures=new Dictionary<string,Texture>();public readonly Dictionary<string,Vector4> Vectors=new Dictionary<string,Vector4>();public readonly Dictionary<string,float> Floats=new Dictionary<string,float>();public readonly Dictionary<string,Color> Colors=new Dictionary<string,Color>();public void SetColor(string n,Color c)=>Colors[n]=c;public void SetFloat(string n,float f)=>Floats[n]=f;public void SetTexture(string n,Texture t){Textures[n]=t;if(n=="_MainTex"||n=="_BaseMap")mainTexture=t;}public void SetVector(string n,Vector4 v)=>Vectors[n]=v;}
  public enum SpriteMeshType{FullRect}
  public class Sprite:Object{public Texture2D texture;public Rect rect;public Vector4 border;public static Sprite Create(Texture2D texture,Rect rect,Vector2 pivot,float pixelsPerUnit,uint extrude,SpriteMeshType meshType,Vector4 border)=>new Sprite{texture=texture,rect=rect,border=border};}
  public class Texture:Object{public int width{get;protected set;}public int height{get;protected set;}public string sourcePath;public FilterMode filterMode=FilterMode.Bilinear;public TextureWrapMode wrapMode=TextureWrapMode.Repeat;public int anisoLevel=1;}
- public enum TextureFormat{RGBA32}public class Texture2D:Texture{
+ public enum TextureFormat{RGBA32}public partial class Texture2D:Texture{
   public static readonly List<Texture2D> Created=new List<Texture2D>();
   public static readonly Texture2D blackTexture=new Texture2D(1,1,TextureFormat.RGBA32,false);
   public Texture2D(int width,int height,TextureFormat format,bool mipmap){this.width=width;this.height=height;Created.Add(this);}
   public bool LoadImage(byte[] data,bool markNonReadable=false){
    if(data==null||data.Length<4)return false;
-   if(data.Length>=24&&data[0]==137&&data[1]==80&&data[2]==78&&data[3]==71){width=(data[16]<<24)|(data[17]<<16)|(data[18]<<8)|data[19];height=(data[20]<<24)|(data[21]<<16)|(data[22]<<8)|data[23];return width>0&&height>0;}
+   if(data.Length>=24&&data[0]==137&&data[1]==80&&data[2]==78&&data[3]==71){width=(data[16]<<24)|(data[17]<<16)|(data[18]<<8)|data[19];height=(data[20]<<24)|(data[21]<<16)|(data[22]<<8)|data[23];SetEncodedPixels(data,markNonReadable);return width>0&&height>0;}
    if(data[0]!=255||data[1]!=216)return false;
    for(int pos=2;pos+3<data.Length;){
     if(data[pos++]!=255)continue;while(pos<data.Length&&data[pos]==255)pos++;if(pos>=data.Length)break;int marker=data[pos++];
     if(marker==216||marker==217||marker==1||marker>=208&&marker<=215)continue;
     if(pos+1>=data.Length)break;int length=(data[pos]<<8)|data[pos+1];if(length<2||pos+length>data.Length)break;
-    if(new[]{192,193,194,195,197,198,199,201,202,203,205,206,207}.Contains(marker)&&length>=7){height=(data[pos+3]<<8)|data[pos+4];width=(data[pos+5]<<8)|data[pos+6];return width>0&&height>0;}pos+=length;
+    if(new[]{192,193,194,195,197,198,199,201,202,203,205,206,207}.Contains(marker)&&length>=7){height=(data[pos+3]<<8)|data[pos+4];width=(data[pos+5]<<8)|data[pos+6];SetEncodedPixels(null,markNonReadable);return width>0&&height>0;}pos+=length;
    }return false;
   }
  }

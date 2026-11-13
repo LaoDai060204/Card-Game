@@ -17,7 +17,7 @@ namespace LaoDai.BattleSpirits.Integration
 {
     // Session controller only. All views are the original template's ServantUI
     // prefabs; this class never creates a Canvas or places a menu overlay.
-    public sealed class BattleNativeSession : MonoBehaviour, IBattleNativeSession, IBattleNativeReplaySession, IBattleNativePortraitSession, IBattleNativePreviewSession, IBattleNativePresentationSession, IBattleNativeCinematicSession
+    public sealed class BattleNativeSession : MonoBehaviour, IBattleNativeSession, IBattleNativeReplaySession, IBattleNativePortraitSession, IBattleNativeStandeeSession, IBattleNativePreviewSession, IBattleNativePresentationSession, IBattleNativeCinematicSession
     {
         private static BattleNativeSession instance;
         private string root;
@@ -343,6 +343,7 @@ namespace LaoDai.BattleSpirits.Integration
             }
             if (!fields.Contains(field)) fields.Add(field);
             field.SetArtworkProvider(LoadArt);
+            field.SetStandeeProvider(LoadStandee);
             field.Load(image);
             field.SetCatalog(Cards);
             if (View != null) field.Render(View);
@@ -365,10 +366,31 @@ namespace LaoDai.BattleSpirits.Integration
             LoadImage(id, image, available);
         }
 
-        private async void LoadImage(string cardId, RawImage image, bool portrait)
+        public bool HasStandee(string id)
+        {
+            if (string.IsNullOrEmpty(root) || string.IsNullOrEmpty(id) || !Cards.Any(card => card.id == id && card.IsSpirit)) return false;
+            string path = Path.GetFullPath(Path.Combine(root, "Picture/Standee", id + ".png"));
+            return path.StartsWith(root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) && File.Exists(path);
+        }
+
+        public void LoadStandee(string id, RawImage image)
+        {
+            if (image == null || string.IsNullOrEmpty(id)) return;
+            if (!HasStandee(id))
+            {
+                // Invalidate older pending work even when the new ID has no
+                // cutout; never paint the previous character into this target.
+                requestedArt[image] = "standee:" + id;
+                image.texture = null;
+                return;
+            }
+            LoadImage(id, image, false, true);
+        }
+
+        private async void LoadImage(string cardId, RawImage image, bool portrait, bool standee = false)
         {
             if (image == null || string.IsNullOrEmpty(cardId)) return;
-            string id = portrait ? "closeup:" + cardId : cardId;
+            string id = standee ? "standee:" + cardId : portrait ? "closeup:" + cardId : cardId;
             requestedArt[image] = id; imageAges[id] = ++imageClock;
             if (textures.TryGetValue(id, out var texture)) { AssignArtwork(image, texture); return; }
             image.texture = Texture2D.blackTexture;
@@ -379,7 +401,7 @@ namespace LaoDai.BattleSpirits.Integration
             {
                 var card = Cards.FirstOrDefault(item => item.id == cardId);
                 if (card == null) return;
-                string relative = portrait ? "Picture/Closeup/" + cardId + ".png"
+                string relative = standee ? "Picture/Standee/" + cardId + ".png" : portrait ? "Picture/Closeup/" + cardId + ".png"
                     : string.IsNullOrEmpty(card.artPath) ? "Picture/Art/" + cardId + ".png" : card.artPath;
                 string path = Path.GetFullPath(Path.Combine(root, relative));
                 if (!path.StartsWith(root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)) return;
@@ -392,7 +414,9 @@ namespace LaoDai.BattleSpirits.Integration
                     wrapMode = TextureWrapMode.Clamp,
                     anisoLevel = 8
                 };
-                if (!texture.LoadImage(bytes, true)) { Destroy(texture); texture = null; return; }
+                // The standee library traces alpha once when creating the
+                // physical paper edge. Ordinary card/portrait faces stay GPU-only.
+                if (!texture.LoadImage(bytes, !standee)) { Destroy(texture); texture = null; return; }
                 textures[id] = texture;
             }
             catch (Exception error) when (error is IOException || error is UnauthorizedAccessException) { Debug.LogWarning("Battle Spirits artwork: " + error.Message); }
@@ -493,13 +517,13 @@ namespace LaoDai.BattleSpirits.Integration
 
         public void StartBossPreview(string id)
         {
-            var card = Cards.FirstOrDefault(item => item.id == id && item.IsSpirit
-                && (item.IsPlayableFor(BattleSpiritsMode.RulesFormat) || item.IsPlayable));
+            var card = Cards.FirstOrDefault(item => item.id == id && item.IsSpirit && item.levels != null && item.levels.Count > 0
+                && (HasStandee(id) || item.IsPlayableFor(BattleSpiritsMode.RulesFormat) || item.IsPlayable));
             if (card == null) { SetStatus("Chưa có tài nguyên xem thử cho thẻ này."); return; }
             Disconnect(); IsPreview = true; Seat = 0;
             var level = card.levels[card.levels.Count - 1];
             View = new FilteredMatchView { viewer = 0, activePlayer = 0, decisionPlayer = -1, phase = "XEM HOẠT CẢNH",
-                rulesFormat = card.IsPlayableFor(BattleSpiritsMode.RulesFormat) ? "Standard" : "Eternal",
+                rulesFormat = card.IsEligibleFor(BattleSpiritsMode.RulesFormat) ? "Standard" : "Eternal",
                 players = new[] {
                     new PublicPlayerView { playerIndex = 0, name = card.DisplayName, life = 5, reserveNormal = 3, reserveSoul = true,
                         field = new[] { new SpiritView { instanceId = 1, cardId = card.id, level = card.levels.Count, bp = level.bp, normalCores = level.cores } } },
@@ -507,7 +531,7 @@ namespace LaoDai.BattleSpirits.Integration
                 } };
             BattleNativeNavigation.Open(BattleNativeScreen.Duel);
             ApplyView(View);
-            SetStatus("Bấm TRIỆU HỒI để xem thẻ xuất hiện. Nút 3D/ẢNH đổi cách hiện quái; các thẻ BS01 cũ chỉ có artwork.");
+            SetStatus("Bấm TRIỆU HỒI để xem thẻ xuất hiện. Nút GIẤY/ẢNH đổi cách hiện nhân vật; lá chưa có ảnh tách chỉ hiện mặt thẻ trong chế độ GIẤY.");
         }
 
         public void PlayPreview(string eventKind)
