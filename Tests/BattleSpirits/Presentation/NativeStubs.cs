@@ -35,6 +35,8 @@ namespace UnityEngine
         public static GameObject CreatePrimitive(PrimitiveType type) => new GameObject(type.ToString(),typeof(MeshRenderer),typeof(MeshFilter),typeof(Collider));
     }
     public partial class Transform {
+  public Matrix4x4 localToWorldMatrix=>(parent==null?Matrix4x4.identity:parent.localToWorldMatrix)*Matrix4x4.TRS(localPosition,localRotation,localScale);
+  public Matrix4x4 worldToLocalMatrix=>localToWorldMatrix.inverse;
   public void SetSiblingIndex(int index){if(parent==null)return;parent.children.Remove(this);parent.children.Insert(Math.Max(0,Math.Min(index,parent.children.Count)),this);}
   public Vector3 eulerAngles;
   public Vector3 TransformPoint(Vector3 value){var scaled=new Vector3(value.x*localScale.x,value.y*localScale.y,value.z*localScale.z);var local=localPosition+localRotation*scaled;return parent==null?local:parent.TransformPoint(local);}
@@ -66,12 +68,33 @@ namespace UnityEngine
     public class TextMesh:Component {public string text;public Font font;public int fontSize;public float characterSize;public TextAnchor anchor;public TextAlignment alignment;public Color color;}
     public enum PrimitiveType { Cube,Sphere,Cylinder }
     public class Shader:Object {public static Shader Find(string name)=>new Shader{name=name};}
-    public class Renderer:Component {public bool enabled=true;public Material sharedMaterial;public void SetPropertyBlock(MaterialPropertyBlock block){} }
+    public class Renderer:Component {public bool enabled=true,receiveShadows;public Material sharedMaterial;public Rendering.ShadowCastingMode shadowCastingMode;public MaterialPropertyBlock propertyBlock;public void SetPropertyBlock(MaterialPropertyBlock block){propertyBlock=block;} }
     public class MeshRenderer:Renderer { }
+    public enum SkinQuality { Auto,Bone1,Bone2,Bone4 }
+    public class SkinnedMeshRenderer:Renderer {public Mesh sharedMesh;public Transform[] bones;public Transform rootBone;public Bounds localBounds;public SkinQuality quality;public bool updateWhenOffscreen;}
     public class Collider:Component { }
     public class MeshFilter:Component {public Mesh sharedMesh;}
-    public class Mesh:Object {public Vector3[] vertices;public Vector2[] uv;public int[] triangles;public void RecalculateNormals(){}public void RecalculateBounds(){} }
-    public class MaterialPropertyBlock {public void SetFloat(string name,float value){} }
+    public struct BoneWeight {public int boneIndex0,boneIndex1,boneIndex2,boneIndex3;public float weight0,weight1,weight2,weight3;}
+    public struct Bounds {public Vector3 center,size;public Bounds(Vector3 center,Vector3 size){this.center=center;this.size=size;}public Vector3 extents=>size*.5f;public Vector3 min=>center-extents;public Vector3 max=>center+extents;}
+    // System.Numerics uses row vectors; reverse stored multiplication to match
+    // Unity's column-vector A*B convention, including nontrivial parent TRS.
+    public struct Matrix4x4 {
+        private System.Numerics.Matrix4x4 value;
+        private Matrix4x4(System.Numerics.Matrix4x4 value){this.value=value;}
+        public static Matrix4x4 identity=>new Matrix4x4(System.Numerics.Matrix4x4.Identity);
+        public Matrix4x4 inverse{get{if(!System.Numerics.Matrix4x4.Invert(value,out var result))throw new InvalidOperationException("Singular test transform.");return new Matrix4x4(result);}}
+        public static Matrix4x4 TRS(Vector3 position,Quaternion rotation,Vector3 scale)=>new Matrix4x4(System.Numerics.Matrix4x4.CreateScale(scale.x,scale.y,scale.z)*System.Numerics.Matrix4x4.CreateFromQuaternion(new System.Numerics.Quaternion(rotation.x,rotation.y,rotation.z,rotation.w))*System.Numerics.Matrix4x4.CreateTranslation(position.x,position.y,position.z));
+        public static Matrix4x4 Translate(Vector3 value)=>TRS(value,Quaternion.identity,Vector3.one);
+        public static Matrix4x4 operator*(Matrix4x4 a,Matrix4x4 b)=>new Matrix4x4(b.value*a.value);
+        public Vector3 MultiplyPoint3x4(Vector3 point){var result=System.Numerics.Vector3.Transform(new System.Numerics.Vector3(point.x,point.y,point.z),value);return new Vector3(result.X,result.Y,result.Z);}
+        public Vector3 MultiplyVector(Vector3 point){var result=System.Numerics.Vector3.TransformNormal(new System.Numerics.Vector3(point.x,point.y,point.z),value);return new Vector3(result.X,result.Y,result.Z);}
+    }
+    public class Mesh:Object {
+        public Vector3[] vertices,normals;public Vector2[] uv;public int[] triangles;public Color[] colors;public BoneWeight[] boneWeights;public Matrix4x4[] bindposes;public Bounds bounds;
+        public void RecalculateNormals(){if(vertices==null)return;normals=new Vector3[vertices.Length];if(triangles!=null)for(int i=0;i+2<triangles.Length;i+=3){int a=triangles[i],b=triangles[i+1],c=triangles[i+2];var u=vertices[b]-vertices[a];var v=vertices[c]-vertices[a];var n=new Vector3(u.y*v.z-u.z*v.y,u.z*v.x-u.x*v.z,u.x*v.y-u.y*v.x);normals[a]=normals[a]+n;normals[b]=normals[b]+n;normals[c]=normals[c]+n;}for(int i=0;i<normals.Length;i++){float length=normals[i].magnitude;if(length>1e-12f)normals[i]=normals[i]*(1/length);}}
+        public void RecalculateBounds(){if(vertices==null||vertices.Length==0){bounds=default;return;}float x0=vertices[0].x,x1=x0,y0=vertices[0].y,y1=y0,z0=vertices[0].z,z1=z0;foreach(var p in vertices){x0=Math.Min(x0,p.x);x1=Math.Max(x1,p.x);y0=Math.Min(y0,p.y);y1=Math.Max(y1,p.y);z0=Math.Min(z0,p.z);z1=Math.Max(z1,p.z);}bounds=new Bounds(new Vector3((x0+x1)*.5f,(y0+y1)*.5f,(z0+z1)*.5f),new Vector3(x1-x0,y1-y0,z1-z0));}
+    }
+    public class MaterialPropertyBlock {public readonly Dictionary<string,float> Floats=new Dictionary<string,float>();public void SetFloat(string name,float value){Floats[name]=value;} }
     public static class Resources {
         public static string ProjectRoot;
         public static readonly Dictionary<string,Texture2D> Textures=new Dictionary<string,Texture2D>(StringComparer.Ordinal);
@@ -92,6 +115,7 @@ namespace UnityEngine
     public class AudioSource:Behaviour {public bool loop,isPlaying;public float spatialBlend,volume;public AudioClip clip;public void Play()=>isPlaying=true;public void Stop()=>isPlaying=false;public void PlayOneShot(AudioClip value,float volume=1){} }
 }
 namespace UnityEngine.UI {public class Text:Graphic {public string text;public bool supportRichText,resizeTextForBestFit;public UnityEngine.Font font;public int fontSize,resizeTextMinSize,resizeTextMaxSize;public UnityEngine.FontStyle fontStyle;public UnityEngine.TextAnchor alignment;public UnityEngine.HorizontalWrapMode horizontalOverflow;public UnityEngine.VerticalWrapMode verticalOverflow;}}
+namespace UnityEngine.Rendering {public enum ShadowCastingMode{Off,On,TwoSided,ShadowsOnly}}
 namespace TMPro
 {
     public enum HorizontalAlignmentOptions{Left,Center,Right}

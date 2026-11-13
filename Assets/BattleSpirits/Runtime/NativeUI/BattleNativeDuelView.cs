@@ -41,7 +41,7 @@ namespace LaoDai.BattleSpirits.NativeUI
         private RawImage inspectArt, zoomArt;
         private RectTransform inspector, zoom;
         private ScrollRect inspectScroll;
-        private Button inspectPlay, inspectZoom;
+        private Button inspectPlay, inspectZoom, modelMode, duelQuality;
         private GameObject selectedBeforeZoom;
         private bool ZoomVisible => zoom != null && zoom.gameObject.activeSelf;
         private sealed class FieldSlot
@@ -157,6 +157,7 @@ namespace LaoDai.BattleSpirits.NativeUI
             }
             DrawHand(view); DrawOpponentHand(opponent); DrawField(field0, own, true); DrawField(field1, opponent, false);
             RefreshInspection(); Actions(view);
+            RefreshVisualControls();
         }
         internal void Tick()
         {
@@ -303,11 +304,11 @@ namespace LaoDai.BattleSpirits.NativeUI
                         slot.button.transition = Selectable.Transition.None;
                         slot.button.GetComponent<Image>().color = Color.clear;
                         var strip = BattleNativeWidgets.Rect(slot.button.transform, "BS_StatsBackdrop");
-                        BattleNativeWidgets.Place(strip, 0, 0, 1, .34f);
+                        BattleNativeWidgets.Place(strip, 0, 0, 1, .52f);
                         var face = strip.gameObject.AddComponent<Image>(); face.raycastTarget = false;
                         face.color = new Color(.015f, .025f, .035f, .94f);
-                        slot.stats = BattleNativeWidgets.Text(strip, "BS_Stats", string.Empty, 18);
-                        FitText(slot.stats, 11, 18);
+                        slot.stats = BattleNativeWidgets.Text(strip, "BS_Stats", string.Empty, 20);
+                        slot.stats.richText = true; FitText(slot.stats, 12, 20);
                         slot.selection = SelectionFrame(slot.button.transform, "BS_FieldSelection");
                     }
                     slot.instance = spirit.instanceId; slot.button.gameObject.name = "BS_FieldCard_" + spirit.instanceId;
@@ -322,8 +323,9 @@ namespace LaoDai.BattleSpirits.NativeUI
                     own ? .28f : .62f, .22f + (i + 1) * width - .005f, own ? .41f : .75f);
                 PlaceFieldSlot(slot);
                 bool nexus = cards.TryGetValue(spirit.cardId, out var definition) && definition.IsNexus;
-                slot.stats.text = (nexus ? "Nexus Lv" + spirit.level : "Lv" + spirit.level + " · " + spirit.bp + " BP")
-                    + "\nCore " + spirit.normalCores + (spirit.soulCore ? " + ◆" : "") + (spirit.exhausted ? " · MỆT" : "");
+                slot.stats.text = (nexus ? "NEXUS" : "<b>" + spirit.bp + "</b> BP")
+                    + "\n<size=75%>Lv" + spirit.level + " · C" + spirit.normalCores + (spirit.soulCore ? " + ◆" : "") + "</size>";
+                slot.stats.color = spirit.exhausted ? MutedText : LightText;
                 slot.selection.SetActive(inspectedInstance == spirit.instanceId);
             }
         }
@@ -444,10 +446,20 @@ namespace LaoDai.BattleSpirits.NativeUI
                 }
             }
             inspectName = BattleNativeWidgets.Text(inspector, "BS_InspectName", "THÔNG TIN THẺ", 24);
-            BattleNativeWidgets.Place(inspectName.rectTransform, .045f, .925f, .955f, .985f);
+            BattleNativeWidgets.Place(inspectName.rectTransform, .045f, .925f, .645f, .985f);
             inspectName.alignment = TextAlignmentOptions.MidlineLeft; inspectName.color = LightText;
             inspectName.overflowMode = TextOverflowModes.Ellipsis;
             FitText(inspectName, 16, 24);
+            modelMode = BattleNativeWidgets.Button(inspector, "BS_ModelMode", string.Empty, ToggleModelMode);
+            BattleNativeWidgets.Place(modelMode.transform as RectTransform, .665f, .935f, .795f, .982f);
+            duelQuality = BattleNativeWidgets.Button(inspector, "BS_DuelQuality", string.Empty, CycleDuelQuality);
+            BattleNativeWidgets.Place(duelQuality.transform as RectTransform, .81f, .935f, .97f, .982f);
+            foreach (var button in new[] { modelMode, duelQuality })
+            {
+                var caption = button.GetComponentInChildren<TextMeshProUGUI>(true);
+                if (caption != null) { caption.fontSize = 17; FitText(caption, 12, 17); }
+            }
+            RefreshVisualControls();
             inspectMeta = BattleNativeWidgets.Text(inspector, "BS_InspectMeta", string.Empty, 18);
             BattleNativeWidgets.Place(inspectMeta.rectTransform, .045f, .345f, .955f, .445f);
             inspectMeta.alignment = TextAlignmentOptions.TopLeft; inspectMeta.color = LightText;
@@ -494,6 +506,29 @@ namespace LaoDai.BattleSpirits.NativeUI
             BattleNativeWidgets.Place(inspectPlay.transform as RectTransform, .52f, .015f, .97f, .078f);
             BuildZoom(); ResetInspection(); detail.SetAsLastSibling();
         }
+        private void RefreshVisualControls()
+        {
+            if (modelMode == null || duelQuality == null) return;
+            BattleNativeWidgets.SetLabel(modelMode.transform, Config.Get(BattleTheme.SpiritModelConfig, "1") == "0" ? "ẢNH" : "3D");
+            string quality = Config.Get(BattleTheme.DuelQualityConfig, "Balanced");
+            BattleNativeWidgets.SetLabel(duelQuality.transform, string.Equals(quality, "Low", StringComparison.OrdinalIgnoreCase) ? "THẤP"
+                : string.Equals(quality, "High", StringComparison.OrdinalIgnoreCase) ? "CAO" : "VỪA");
+            modelMode.interactable = duelQuality.interactable = !ZoomVisible && presentationSession?.IsPresentationBusy != true;
+        }
+        private void ToggleModelMode()
+        {
+            if (ZoomVisible || presentationSession?.IsPresentationBusy == true) return;
+            Config.Set(BattleTheme.SpiritModelConfig, Config.Get(BattleTheme.SpiritModelConfig, "1") == "0" ? "1" : "0");
+            Config.Save(); RefreshVisualControls();
+        }
+        private void CycleDuelQuality()
+        {
+            if (ZoomVisible || presentationSession?.IsPresentationBusy == true) return;
+            string current = Config.Get(BattleTheme.DuelQualityConfig, "Balanced");
+            Config.Set(BattleTheme.DuelQualityConfig, string.Equals(current, "Low", StringComparison.OrdinalIgnoreCase) ? "Balanced"
+                : string.Equals(current, "High", StringComparison.OrdinalIgnoreCase) ? "Low" : "High");
+            Config.Save(); RefreshVisualControls();
+        }
         private void BuildZoom()
         {
             zoom = BattleNativeWidgets.Rect(root, "BS_CardZoom"); BattleNativeWidgets.Place(zoom, 0, 0, 1, 1);
@@ -516,6 +551,7 @@ namespace LaoDai.BattleSpirits.NativeUI
             zoom.gameObject.SetActive(true); zoom.SetAsLastSibling();
             session.LoadArt(inspectedId, zoomArt);
             EventSystem.current?.SetSelectedGameObject(zoom.Find("BS_ZoomClose")?.gameObject);
+            RefreshVisualControls();
         }
         private void CloseZoom()
         {
@@ -525,6 +561,7 @@ namespace LaoDai.BattleSpirits.NativeUI
             EventSystem.current?.SetSelectedGameObject(previous != null && previous.activeInHierarchy
                 && previous.GetComponent<Selectable>()?.interactable == true ? previous : null);
             RefreshInspection();
+            RefreshVisualControls();
         }
         internal bool TryCloseZoom()
         {

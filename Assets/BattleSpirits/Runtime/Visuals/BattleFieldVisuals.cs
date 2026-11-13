@@ -14,7 +14,7 @@ using Object = UnityEngine.Object;
 namespace LaoDai.BattleSpirits.Visuals
 {
     /// <summary>
-    /// Battle Spirits' open field, printed cards and floating illustrations. The stage
+    /// Battle Spirits' open field, printed cards and card-specific 3D figures. The stage
     /// renders into the existing duel view, not a separate game Canvas.
     /// </summary>
     public sealed class BattleFieldVisuals : MonoBehaviour, IDisposable
@@ -22,7 +22,6 @@ namespace LaoDai.BattleSpirits.Visuals
         private const int StageLayer = 31;
         private const float CameraPitch = 62;
         private const float CameraFocusZ = -2.5f;
-        private const int MaximumRenderEdge = 1920;
         private static readonly Vector3 StageOrigin = new Vector3(20000, 0, 0);
         private sealed class Unit
         {
@@ -49,6 +48,7 @@ namespace LaoDai.BattleSpirits.Visuals
         private readonly List<Mesh> meshes = new List<Mesh>();
         private readonly List<GameObject> poolCrystals = new List<GameObject>();
         private readonly List<int> expired = new List<int>();
+        private readonly HashSet<int> present = new HashSet<int>();
         private readonly TextMesh[,] counts = new TextMesh[2, 4];
         private readonly Mate[] mates = new Mate[2];
         private readonly Transform[] mateAnchors = new Transform[2];
@@ -62,6 +62,7 @@ namespace LaoDai.BattleSpirits.Visuals
         private string normalCoreSkin;
         private Mesh skinQuad;
         private Shader shader, artworkShader;
+        private BattleSpiritModelLibrary modelLibrary;
         private Action<string, RawImage> artworkProvider;
         private int viewer, generation;
         private bool disposed;
@@ -75,6 +76,15 @@ namespace LaoDai.BattleSpirits.Visuals
         public string LastError { get; private set; } = string.Empty;
 
         public void SetArtworkProvider(Action<string, RawImage> provider) => artworkProvider = provider;
+
+        // The cinematic card landing can reveal its already-created model
+        // without replaying field audio, moving the printed card or changing
+        // the authoritative snapshot.
+        public bool RevealSpiritModel(int instanceId)
+        {
+            if (disposed || stage == null || !units.TryGetValue(instanceId, out var unit) || unit.removed) return false;
+            return unit.figure.RevealModel();
+        }
 
         // Unity texture UV origin is bottom-left. These are illustration crops
         // from the official face, not fabricated transparent monster cutouts.
@@ -135,6 +145,7 @@ namespace LaoDai.BattleSpirits.Visuals
         {
             var result = new Material(shader) { name = "BS_" + name };
             result.SetColor("_BaseColor", color); result.SetFloat("_Glow", glow);
+            result.SetVector("_StageOrigin", new Vector4(StageOrigin.x, StageOrigin.y, StageOrigin.z, 0));
             materials.Add(result); return result;
         }
 
@@ -146,6 +157,11 @@ namespace LaoDai.BattleSpirits.Visuals
             artworkShader = Resources.Load<Shader>("BattleSpirits/CardArtwork");
             if (artworkShader == null) artworkShader = Shader.Find("LaoDai/BattleSpirits/CardArtwork");
             if (artworkShader == null) throw new InvalidOperationException("The Battle Spirits card artwork shader is missing.");
+            var modelShader = Resources.Load<Shader>("BattleSpirits/SpiritModel");
+            if (modelShader == null) modelShader = Shader.Find("LaoDai/BattleSpirits/SpiritModel");
+            // An unavailable optional model shader keeps the complete card/art
+            // fallback working instead of preventing a duel from opening.
+            if (modelShader != null) modelLibrary = new BattleSpiritModelLibrary(modelShader);
             dark = Material("Obsidian", new Color(0.018f, 0.026f, 0.038f));
             panel = Material("ArenaSlate", new Color(0.068f, 0.088f, 0.113f));
             trim = Material("BrushedChrome", new Color(0.29f, 0.39f, 0.45f), 0.12f);
@@ -208,8 +224,12 @@ namespace LaoDai.BattleSpirits.Visuals
                 if (texture != null) return;
                 width = 1280; height = 720;
             }
+            string quality = Config.Get(BattleTheme.DuelQualityConfig, "Balanced");
+            float resolutionScale = string.Equals(quality, "Low", StringComparison.OrdinalIgnoreCase) ? .8f
+                : string.Equals(quality, "High", StringComparison.OrdinalIgnoreCase) ? 1.35f : 1;
+            width *= resolutionScale; height *= resolutionScale;
             float aspect = width / height;
-            int edge = Math.Min(MaximumRenderEdge, (int)Math.Ceiling(Math.Max(640, Math.Max(width, height)) / 32) * 32);
+            int edge = Math.Min(RenderEdgeLimit(), (int)Math.Ceiling(Math.Max(640, Math.Max(width, height)) / 32) * 32);
             int desiredWidth = width >= height ? edge : Math.Max(1, (int)Math.Round(edge * aspect));
             int desiredHeight = width >= height ? Math.Max(1, (int)Math.Round(edge / aspect)) : edge;
             if (texture != null && texture.width == desiredWidth && texture.height == desiredHeight)
@@ -233,6 +253,13 @@ namespace LaoDai.BattleSpirits.Visuals
             pendingWidth = pendingHeight = 0;
             FitCamera((float)desiredWidth / desiredHeight);
             if (previous != null) { previous.Release(); Destroy(previous); }
+        }
+
+        private static int RenderEdgeLimit()
+        {
+            string quality = Config.Get(BattleTheme.DuelQualityConfig, "Balanced");
+            if (string.Equals(quality, "Low", StringComparison.OrdinalIgnoreCase)) return 1280;
+            return string.Equals(quality, "High", StringComparison.OrdinalIgnoreCase) ? 2560 : 1920;
         }
 
         private void FitCamera(float aspect)
@@ -285,6 +312,12 @@ namespace LaoDai.BattleSpirits.Visuals
                     corner.transform.localRotation = Quaternion.Euler(0, -sign * edge * 45, 0);
                     Part(stage.transform, "SideInlay", PrimitiveType.Cube,
                         new Vector3(sign * 14.6f, 0.055f, edge * 4.5f), new Vector3(0.035f, 0.025f, 8.3f), zoneFrame);
+                    // Small raised fixtures give the arena a room silhouette
+                    // without covering cards or creating point-light shadows.
+                    Part(stage.transform, "CornerPlinth", PrimitiveType.Cube,
+                        new Vector3(sign * 16.1f, .18f, edge * 12.1f), new Vector3(.72f, .32f, .72f), dark);
+                    Part(stage.transform, "CornerLens", PrimitiveType.Cube,
+                        new Vector3(sign * 16.1f, .35f, edge * 12.1f), new Vector3(.48f, .025f, .48f), guide);
                 }
                 int side = sign < 0 ? 0 : 1;
                 var half = BattleSpiritGeometry.Pivot(stage.transform, side == 0 ? "NearPlayerField" : "FarPlayerField", Vector3.zero);
@@ -297,10 +330,14 @@ namespace LaoDai.BattleSpirits.Visuals
                 for (int zone = 0; zone < 4; zone++)
                 {
                     poolRoots[side, zone] = BattleSpiritGeometry.Pivot(half, labels[zone], positions[zone]);
+                    Part(poolRoots[side, zone], "ZonePedestal", PrimitiveType.Cube, new Vector3(0, -.075f, 0),
+                        new Vector3(3.86f, .16f, 3.36f), dark);
                     Part(poolRoots[side, zone], "ZoneFrame", PrimitiveType.Cube, Vector3.zero,
                         new Vector3(3.7f, 0.055f, 3.2f), zoneFrame);
                     Part(poolRoots[side, zone], "ZonePanel", PrimitiveType.Cube, new Vector3(0, 0.035f, 0),
                         new Vector3(3.54f, 0.035f, 3.04f), zone == 0 ? panel : zoneSurface);
+                    Part(poolRoots[side, zone], "ZoneFrontLight", PrimitiveType.Cube, new Vector3(0, .066f, -1.46f),
+                        new Vector3(2.8f, .018f, .025f), guide);
                     counts[side, zone] = Label(half, labels[zone], positions[zone] + new Vector3(0, 0.17f, -sign * 1.4f), side);
                 }
                 mateAnchors[side] = BattleSpiritGeometry.Pivot(stage.transform, side == 0 ? "NearMate" : "FarMate", new Vector3(side == 0 ? -15.5f : 15.5f, 0.25f, sign * 3));
@@ -399,7 +436,9 @@ namespace LaoDai.BattleSpirits.Visuals
         {
             if (font == null) return null;
             var go = new GameObject("Label_" + value); go.layer = StageLayer; go.transform.SetParent(parent, false);
-            go.transform.localPosition = position; go.transform.localRotation = Quaternion.Euler(90, side == 0 ? 0 : 180, 0);
+            // Printed card orientation still reflects ownership; readable UI
+            // labels are always upright from the local camera's side.
+            go.transform.localPosition = position; go.transform.localRotation = Quaternion.Euler(90, 0, 0);
             var text = go.AddComponent<TextMesh>(); text.text = value; text.font = font; text.fontSize = 42;
             text.characterSize = 0.15f; text.anchor = TextAnchor.MiddleCenter; text.alignment = TextAlignment.Center;
             text.color = new Color(0.79f, 0.85f, 0.89f); go.GetComponent<MeshRenderer>().sharedMaterial = font.material;
@@ -411,7 +450,7 @@ namespace LaoDai.BattleSpirits.Visuals
             if (disposed || stage == null || view == null || view.players == null) return;
             RefreshCoreGemSkin();
             viewer = view.viewer;
-            var present = new HashSet<int>();
+            present.Clear();
             foreach (var player in view.players)
             {
                 if (player == null || player.playerIndex < 0 || player.playerIndex > 1) continue;
@@ -485,7 +524,7 @@ namespace LaoDai.BattleSpirits.Visuals
                 : color == CardColor.Purple ? new Color(0.7f, 0.25f, 1)
                 : color == CardColor.Yellow ? new Color(1, 0.78f, 0.12f) : new Color(1, 0.2f, 0.12f);
             var figure = new BattleCardFigure(stage.transform, target.transform, spirit.cardId ?? string.Empty,
-                artworkShader, camera, accent, artworkProvider, IsNexus(spirit.cardId));
+                artworkShader, camera, accent, artworkProvider, IsNexus(spirit.cardId), modelLibrary);
             var unit = new Unit { owner = owner, cardId = spirit.cardId, figure = figure, nexus = IsNexus(spirit.cardId) };
             Animate(unit, BattleVisualPose.Summon); return unit;
         }
@@ -687,10 +726,11 @@ namespace LaoDai.BattleSpirits.Visuals
             if (camera != null) camera.targetTexture = null;
             if (texture != null) { texture.Release(); Destroy(texture); }
             foreach (var unit in units.Values) unit.figure.Dispose();
+            modelLibrary?.Dispose(); modelLibrary = null;
             if (stage != null) Destroy(stage);
             foreach (var mesh in meshes) if (mesh != null) Destroy(mesh);
             foreach (var material in materials) if (material != null) Destroy(material);
-            meshes.Clear(); materials.Clear(); units.Clear(); poolCrystals.Clear(); expired.Clear();
+            meshes.Clear(); materials.Clear(); units.Clear(); poolCrystals.Clear(); expired.Clear(); present.Clear();
             for (int side = 0; side < 2; side++)
             { mates[side] = null; mateAnchors[side] = null; decisionRails[side] = null; for (int zone = 0; zone < 4; zone++) { counts[side, zone] = null; poolRoots[side, zone] = null; } }
             texture = null; camera = null; stage = null; poolSignature = null; skinQuad = null; cardBackMaterial = null;

@@ -1,4 +1,5 @@
 using System;
+using MDPro3;
 using UnityEngine;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
@@ -22,15 +23,22 @@ namespace LaoDai.BattleSpirits.Visuals
         private readonly Rect illustrationUv;
         private readonly Action<string, RawImage> loadArt;
         private readonly string cardId;
+        private readonly Color accent;
+        private readonly BattleSpiritModelLibrary modelLibrary;
+        private BattleSpiritModel model;
+        private bool modelAttempted;
+        private float modelRevealStarted = -1;
         private Texture assignedTexture;
         private bool hadReadyTexture;
         private float portraitWidth = 2.8f, portraitHeight = 2.5f;
         private bool disposed;
 
         internal BattleCardFigure(Transform parent, Transform artworkParent, string cardId,
-            Shader shader, Camera camera, Color accent, Action<string, RawImage> loadArt, bool nexus)
+            Shader shader, Camera camera, Color accent, Action<string, RawImage> loadArt, bool nexus,
+            BattleSpiritModelLibrary modelLibrary = null)
         {
             this.camera = camera; this.nexus = nexus; this.loadArt = loadArt; this.cardId = cardId;
+            this.accent = accent; this.modelLibrary = modelLibrary;
             illustrationUv = BattleFieldVisuals.GetIllustrationUv(cardId);
             root = new GameObject("CardSpirit_" + cardId); root.layer = parent.gameObject.layer;
             root.transform.SetParent(parent, false);
@@ -80,6 +88,7 @@ namespace LaoDai.BattleSpirits.Visuals
 
         private void RefreshArtwork()
         {
+            bool modelVisible = RefreshModelMode();
             Texture candidate = artwork == null ? null : artwork.texture;
             // Inactive cached Servant screens may have their unpinned textures
             // evicted. Re-entering the duel must request that card again rather
@@ -92,7 +101,7 @@ namespace LaoDai.BattleSpirits.Visuals
                 candidate = artwork.texture;
             }
             bool ready = candidate != null && candidate != Texture2D.blackTexture;
-            cardRenderer.enabled = illustrationRenderer.enabled = ready;
+            cardRenderer.enabled = ready; illustrationRenderer.enabled = ready && !modelVisible;
             if (!ready || candidate == assignedTexture) return;
             assignedTexture = candidate; hadReadyTexture = true;
             cardMaterial.mainTexture = illustrationMaterial.mainTexture = candidate;
@@ -104,6 +113,27 @@ namespace LaoDai.BattleSpirits.Visuals
             portraitWidth = nexus ? 2.1f : 2.8f;
             portraitHeight = Math.Min(nexus ? 2.2f : 3.3f, portraitWidth / aspect);
             portraitWidth = portraitHeight * aspect;
+        }
+
+        private bool RefreshModelMode()
+        {
+            bool enabled = !nexus && modelLibrary != null && Config.Get(BattleTheme.SpiritModelConfig, "1") != "0";
+            if (enabled && !modelAttempted)
+            {
+                modelAttempted = true;
+                try { modelLibrary.TryCreate(cardId, root.transform, out model); }
+                catch (Exception error) { Debug.LogWarning("Battle Spirits model " + cardId + ": " + error.Message); }
+            }
+            if (model == null) return false;
+            model.Renderer.enabled = enabled;
+            return enabled;
+        }
+
+        internal bool RevealModel()
+        {
+            if (disposed || !RefreshModelMode()) return false;
+            modelRevealStarted = Time.unscaledTime;
+            return true;
         }
 
         internal void Animate(BattleVisualPose pose, float age, float clock, Vector3 position,
@@ -122,6 +152,15 @@ namespace LaoDai.BattleSpirits.Visuals
             root.transform.localPosition = position;
             root.transform.localRotation = Quaternion.identity;
             root.transform.localScale = Vector3.one * layoutScale;
+            bool modelVisible = model != null && model.Renderer.enabled;
+            if (modelVisible)
+            {
+                float revealAge = Math.Max(0, Time.unscaledTime - modelRevealStarted);
+                if (modelRevealStarted >= 0 && (revealAge >= BattleVisualMotion.Duration(BattleVisualPose.Summon)
+                    || (pose != BattleVisualPose.Idle && pose != BattleVisualPose.Summon))) modelRevealStarted = -1;
+                model.Animate(modelRevealStarted >= 0 ? BattleVisualPose.Summon : pose,
+                    modelRevealStarted >= 0 ? revealAge : age, clock, facing, exhausted);
+            }
             floorPivot.localPosition = new Vector3(0, 0.04f + (summon ? (1 - reveal) * 2.8f : 0), 0);
             floorPivot.localRotation = Quaternion.Euler(0, (facing < 0 ? 180 : 0) + (exhausted ? 90 : 0), 0);
             float floorScale = summon ? 0.2f + reveal * 0.8f : 1;
@@ -144,18 +183,23 @@ namespace LaoDai.BattleSpirits.Visuals
             illustrationMaterial.SetFloat("_Opacity", fade * reveal * (exhausted ? 0.78f : 1));
             cardMaterial.SetFloat("_Glow", sample.glow * 0.2f);
             illustrationMaterial.SetFloat("_Glow", sample.glow * 0.45f);
-            haloRenderer.enabled = summon && t < 1;
-            halo.localPosition = new Vector3(0, 0.025f, 0);
+            bool summoning = summon && t < 1;
+            haloRenderer.enabled = summoning || modelVisible;
+            haloMaterial.SetFloat("_Ring", summoning ? 1 : 0);
+            haloMaterial.SetFloat("_Shadow", summoning ? 0 : 1);
+            haloMaterial.SetColor("_BaseColor", summoning ? accent : new Color(.005f, .008f, .015f, .8f));
+            halo.localPosition = new Vector3(0, .025f, summoning ? 0 : 1.1f);
             float radius = 2.5f + 4f * t;
-            halo.localScale = new Vector3(radius, radius, 1);
-            haloMaterial.SetFloat("_Opacity", (1 - t) * 0.9f);
-            haloMaterial.SetFloat("_Glow", 0.85f);
+            halo.localScale = summoning ? new Vector3(radius, radius, 1) : new Vector3(2.8f, 2.1f, 1);
+            haloMaterial.SetFloat("_Opacity", summoning ? (1 - t) * .9f : .48f * fade);
+            haloMaterial.SetFloat("_Glow", summoning ? .85f : 0);
         }
 
         public void Dispose()
         {
             if (disposed) return;
             disposed = true;
+            model?.Dispose(); model = null;
             if (artwork != null) Object.Destroy(artwork.gameObject);
             Object.Destroy(root); Object.Destroy(quad);
             Object.Destroy(cardMaterial); Object.Destroy(illustrationMaterial); Object.Destroy(haloMaterial);

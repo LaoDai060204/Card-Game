@@ -17,7 +17,7 @@ namespace LaoDai.BattleSpirits.Integration
 {
     // Session controller only. All views are the original template's ServantUI
     // prefabs; this class never creates a Canvas or places a menu overlay.
-    public sealed class BattleNativeSession : MonoBehaviour, IBattleNativeSession, IBattleNativeReplaySession, IBattleNativePortraitSession, IBattleNativePreviewSession, IBattleNativePresentationSession
+    public sealed class BattleNativeSession : MonoBehaviour, IBattleNativeSession, IBattleNativeReplaySession, IBattleNativePortraitSession, IBattleNativePreviewSession, IBattleNativePresentationSession, IBattleNativeCinematicSession
     {
         private static BattleNativeSession instance;
         private string root;
@@ -69,6 +69,29 @@ namespace LaoDai.BattleSpirits.Integration
             foreach (var field in fields)
                 if (field != null && !field.IsDisposed && field.TryGetCardViewport(instanceId, out bounds)) return true;
             bounds = default; return false;
+        }
+
+        public bool TryGetCardScreenViewport(int instanceId, out Rect bounds)
+        {
+            foreach (var field in fields)
+                if (field != null && !field.IsDisposed && field.TryGetCardViewport(instanceId, out Rect local))
+                {
+                    // The native field uses a zero-offset RectTransform under
+                    // the full-screen duel root, also used by its hit layers.
+                    var area = field.transform as RectTransform;
+                    if (area == null) { bounds = local; return true; }
+                    float width = area.anchorMax.x - area.anchorMin.x, height = area.anchorMax.y - area.anchorMin.y;
+                    bounds = new Rect(area.anchorMin.x + local.x * width, area.anchorMin.y + local.y * height,
+                        local.width * width, local.height * height);
+                    return true;
+                }
+            bounds = default; return false;
+        }
+
+        public void RevealSpiritModel(int instanceId)
+        {
+            foreach (var field in fields)
+                if (field != null && !field.IsDisposed) field.RevealSpiritModel(instanceId);
         }
 
         [Serializable] private sealed class RecordedAction { public int actor; public BattleCommand command; }
@@ -470,11 +493,13 @@ namespace LaoDai.BattleSpirits.Integration
 
         public void StartBossPreview(string id)
         {
-            var card = Cards.FirstOrDefault(item => item.id == id && item.IsPlayable && item.IsSpirit);
+            var card = Cards.FirstOrDefault(item => item.id == id && item.IsSpirit
+                && (item.IsPlayableFor(BattleSpiritsMode.RulesFormat) || item.IsPlayable));
             if (card == null) { SetStatus("Chưa có tài nguyên xem thử cho thẻ này."); return; }
             Disconnect(); IsPreview = true; Seat = 0;
             var level = card.levels[card.levels.Count - 1];
             View = new FilteredMatchView { viewer = 0, activePlayer = 0, decisionPlayer = -1, phase = "XEM HOẠT CẢNH",
+                rulesFormat = card.IsPlayableFor(BattleSpiritsMode.RulesFormat) ? "Standard" : "Eternal",
                 players = new[] {
                     new PublicPlayerView { playerIndex = 0, name = card.DisplayName, life = 5, reserveNormal = 3, reserveSoul = true,
                         field = new[] { new SpiritView { instanceId = 1, cardId = card.id, level = card.levels.Count, bp = level.bp, normalCores = level.cores } } },
@@ -482,7 +507,7 @@ namespace LaoDai.BattleSpirits.Integration
                 } };
             BattleNativeNavigation.Open(BattleNativeScreen.Duel);
             ApplyView(View);
-            SetStatus("Hoạt ảnh dùng artwork của lá bài; bấm TRIỆU HỒI để xem cách thẻ xuất hiện trên sân.");
+            SetStatus("Bấm TRIỆU HỒI để xem thẻ xuất hiện. Nút 3D/ẢNH đổi cách hiện quái; các thẻ BS01 cũ chỉ có artwork.");
         }
 
         public void PlayPreview(string eventKind)

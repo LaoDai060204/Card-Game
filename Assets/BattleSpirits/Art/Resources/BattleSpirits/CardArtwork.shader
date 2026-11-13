@@ -10,6 +10,7 @@ Shader "LaoDai/BattleSpirits/CardArtwork"
         _Glow ("Glow", Range(0,1)) = 0
         _Feather ("Soft artwork edge", Range(0,0.2)) = 0
         _Ring ("Summon halo", Float) = 0
+        _Shadow ("Soft model contact shadow", Float) = 0
     }
     SubShader
     {
@@ -28,7 +29,7 @@ Shader "LaoDai/BattleSpirits/CardArtwork"
             CBUFFER_START(UnityPerMaterial)
                 half4 _BaseColor, _Accent;
                 float4 _UvRect;
-                half _Opacity, _Glow, _Feather, _Ring;
+                half _Opacity, _Glow, _Feather, _Ring, _Shadow;
             CBUFFER_END
             struct Attributes { float4 positionOS : POSITION; float2 uv : TEXCOORD0; };
             struct Varyings { float4 positionCS : SV_POSITION; float2 uv : TEXCOORD0; };
@@ -40,6 +41,13 @@ Shader "LaoDai/BattleSpirits/CardArtwork"
             }
             half4 Frag(Varyings input) : SV_Target
             {
+                if (_Shadow > 0.5h)
+                {
+                    half radius = length(input.uv - 0.5h) * 2.0h;
+                    half alpha = (1.0h - smoothstep(0.08h, 1.0h, radius)) * _BaseColor.a * _Opacity;
+                    clip(alpha - 0.002h);
+                    return half4(_BaseColor.rgb, alpha);
+                }
                 half4 tex = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, _UvRect.xy + input.uv * _UvRect.zw);
                 half alpha = tex.a * _BaseColor.a * _Opacity;
                 if (_Feather > 0)

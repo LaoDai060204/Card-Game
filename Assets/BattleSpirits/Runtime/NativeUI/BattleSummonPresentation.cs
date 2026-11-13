@@ -40,6 +40,7 @@ namespace LaoDai.BattleSpirits.NativeUI
         private Request current;
         private float elapsed, artworkWait;
         private bool disposed;
+        private bool modelRevealed;
 
         public bool IsPlaying => current != null;
         public int PendingCount => pending.Count;
@@ -136,7 +137,7 @@ namespace LaoDai.BattleSpirits.NativeUI
         private void StartNext()
         {
             if (disposed || screen == null || pending.Count == 0) { Finish(); return; }
-            current = pending.Dequeue(); elapsed = artworkWait = 0;
+            current = pending.Dequeue(); elapsed = artworkWait = 0; modelRevealed = false;
             cardArt.texture = null; illustrationArt.texture = null;
             cardArt.color = illustrationArt.color = Color.clear;
             illustrationArt.uvRect = BattleFieldVisuals.GetIllustrationUv(current.id);
@@ -166,6 +167,7 @@ namespace LaoDai.BattleSpirits.NativeUI
                 return;
             }
             elapsed += delta;
+            if (elapsed >= 1.70f) RevealModel();
             UpdateAspectRatios(); Draw(BattleSummonMotion.Sample(elapsed));
             if (elapsed >= BattleSummonMotion.Duration) CompleteCurrent();
         }
@@ -200,7 +202,10 @@ namespace LaoDai.BattleSpirits.NativeUI
             }
 
             Rect destination = new Rect(0.45f, 0.30f, 0.10f, 0.11f);
-            if (session is IBattleNativePresentationSession presentation
+            if (session is IBattleNativeCinematicSession cinematic
+                && cinematic.TryGetCardScreenViewport(current.spirit, out Rect screenViewport)
+                && screenViewport.width > 0 && screenViewport.height > 0) destination = screenViewport;
+            else if (session is IBattleNativePresentationSession presentation
                 && presentation.TryGetCardViewport(current.spirit, out Rect viewport)
                 && viewport.width > 0 && viewport.height > 0) destination = viewport;
             else if (session.View != null && current.actor != session.View.viewer)
@@ -249,9 +254,17 @@ namespace LaoDai.BattleSpirits.NativeUI
 
         private void CompleteCurrent()
         {
+            RevealModel();
             if (current != null) scheduled.Remove(current.key);
             current = null;
             if (pending.Count > 0) StartNext(); else Finish();
+        }
+
+        private void RevealModel()
+        {
+            if (modelRevealed || current == null) return;
+            modelRevealed = true;
+            if (!current.nexus && session is IBattleNativeCinematicSession cinematic) cinematic.RevealSpiritModel(current.spirit);
         }
 
         private void SetBusy(bool busy)

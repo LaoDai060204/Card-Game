@@ -1,0 +1,534 @@
+{
+  "schema": 1,
+  "date": "2026-11-13",
+  "version": "0.7.0",
+  "creator": "LaoDai060204 project original procedural mesh and rig implementation",
+  "notice": "Original stylized fan interpretations based on the identified artwork. Not official Bandai meshes or assets extracted from Master Duel/Duel Links. Official names, designs and artwork retain their respective rights; existing repository and third-party notices remain applicable.",
+  "sourceFiles": [
+    {
+      "path": "Assets/BattleSpirits/Runtime/Visuals/BattleSpiritModel.cs",
+      "sha256": "0518c76409dd34803ce377ed6f1c889c7d2454876f360328c4819519d4e94ce4"
+    },
+    {
+      "path": "Assets/BattleSpirits/Runtime/Visuals/BattleSpiritModelProfiles.cs",
+      "sha256": "bd331d0e4501fdc8bcd74a88b07d724b36f0c8cda1f9023193ee242fc3287f9b"
+    },
+    {
+      "path": "Assets/BattleSpirits/Art/Resources/BattleSpirits/SpiritModel.shader",
+      "sha256": "c4a9bdf3b605929c932e3858f2af73ae549a29e9cab8d9351d79041b45cf1789"
+    },
+    {
+      "path": "Tools/BattleSpiritsAssets/render_spirit_model_preview.py",
+      "sha256": "c8c2b1d4a281ec840048a13c5860e7fdedab37216a346fa0cbac7f57ae352064"
+    }
+  ],
+  "referencePages": [
+    "https://www.konami.com/yugioh/masterduel/us/en/",
+    "https://www.konami.com/yugioh/duel_links/en/"
+  ],
+  "models": [
+    {
+      "id": "26RBS01-003",
+      "nameJa": "スカッドビースト",
+      "profile": "Scud Beast · cloud dragon",
+      "artPath": "Picture/Art/26RBS01-003.png",
+      "artSha256": "ae4856265f92c75c24571d8aca2439f6b49b920de722336c3be383a60c6343fb",
+      "sourceUrl": "https://www.battlespirits.com/cardlist/detail_iframe.php?card_no=26RBS01-003&card_no2=26RBS01-003",
+      "vertices": 4077,
+      "triangles": 4684,
+      "rigJoints": 10,
+      "bounds": {
+        "center": [
+          0.0,
+          0.8774609,
+          0.0
+        ],
+        "size": [
+          1.2970322,
+          1.7549218,
+          2.8
+        ]
+      },
+      "modelType": "original stylized skinned mesh interpretation",
+      "officialOrExtractedModel": false
+    },
+    {
+      "id": "26RBS01-019",
+      "nameJa": "ブルクレイテン",
+      "profile": "Bull Crayten · skeletal bull",
+      "artPath": "Picture/Art/26RBS01-019.png",
+      "artSha256": "7c59acb061b6e4888520d2c74b61b751d2fefab42128aa87f8d180208f4da405",
+      "sourceUrl": "https://www.battlespirits.com/cardlist/detail_iframe.php?card_no=26RBS01-019&card_no2=26RBS01-019",
+      "vertices": 5622,
+      "triangles": 6664,
+      "rigJoints": 10,
+      "bounds": {
+        "center": [
+          0.0,
+          1.0506722,
+          0.0
+        ],
+        "size": [
+          1.7275984,
+          2.1013443,
+          2.8
+        ]
+      },
+      "modelType": "original stylized skinned mesh interpretation",
+      "officialOrExtractedModel": false
+    },
+    {
+      "id": "26RBS01-064",
+      "nameJa": "ソーサリード",
+      "profile": "Sorceryd · crescent staff knight",
+      "artPath": "Picture/Art/26RBS01-064.png",
+      "artSha256": "ff6312562f3bfc44ffb7f1e8fc44f91937d9313fadabf745fde412f38caaa5e5",
+      "sourceUrl": "https://www.battlespirits.com/cardlist/detail_iframe.php?card_no=26RBS01-064&card_no2=26RBS01-064",
+      "vertices": 3404,
+      "triangles": 4308,
+      "rigJoints": 10,
+      "bounds": {
+        "center": [
+          0.0,
+          1.5168649,
+          0.0
+        ],
+        "size": [
+          2.2352254,
+          3.0337298,
+          0.89
+        ]
+      },
+      "modelType": "original stylized skinned mesh interpretation",
+      "officialOrExtractedModel": false
+    },
+    {
+      "id": "26RBS01-078",
+      "nameJa": "エリピデス",
+      "profile": "Eripides · ivy horn musician",
+      "artPath": "Picture/Art/26RBS01-078.png",
+      "artSha256": "16961ea56345bdc38bf962fda9b6749e66c5d497facaf85f5acc81e1f609edd5",
+      "sourceUrl": "https://www.battlespirits.com/cardlist/detail_iframe.php?card_no=26RBS01-078&card_no2=26RBS01-078",
+      "vertices": 3420,
+      "triangles": 4076,
+      "rigJoints": 10,
+      "bounds": {
+        "center": [
+          0.0,
+          1.5250001,
+          0.0
+        ],
+        "size": [
+          1.3159151,
+          3.0500002,
+          1.504286
+        ]
+      },
+      "modelType": "original stylized skinned mesh interpretation",
+      "officialOrExtractedModel": false
+    },
+    {
+      "id": "26RBS02-002",
+      "nameJa": "ロップ＝ヤーラ",
+      "profile": "Lop Yara · flame rabbit",
+      "artPath": "Picture/Art/26RBS02-002.png",
+      "artSha256": "fb51d32feedaf25b693a8a3484c88b1fa0c92f56edb4976ce27f4d1e5678f689",
+      "sourceUrl": "https://www.battlespirits.com/cardlist/detail_iframe.php?card_no=26RBS02-002&card_no2=26RBS02-002",
+      "vertices": 2459,
+      "triangles": 3256,
+      "rigJoints": 10,
+      "bounds": {
+        "center": [
+          0.0,
+          1.115,
+          0.0
+        ],
+        "size": [
+          2.64,
+          2.23,
+          1.285
+        ]
+      },
+      "modelType": "original stylized skinned mesh interpretation",
+      "officialOrExtractedModel": false
+    },
+    {
+      "id": "26RBS02-020",
+      "nameJa": "再起するドゥーブー",
+      "profile": "Dooboo · sword pierced werewolf",
+      "artPath": "Picture/Art/26RBS02-020.png",
+      "artSha256": "687ab1df7e4fcf06f747e831ffd26f5ffdac4d3c5a2c3224f2f799072823b734",
+      "sourceUrl": "https://www.battlespirits.com/cardlist/detail_iframe.php?card_no=26RBS02-020&card_no2=26RBS02-020",
+      "vertices": 3509,
+      "triangles": 4064,
+      "rigJoints": 10,
+      "bounds": {
+        "center": [
+          0.0,
+          1.4859886,
+          0.0
+        ],
+        "size": [
+          1.695595,
+          2.9719772,
+          1.6339607
+        ]
+      },
+      "modelType": "original stylized skinned mesh interpretation",
+      "officialOrExtractedModel": false
+    },
+    {
+      "id": "26RBS02-025",
+      "nameJa": "シゼリン",
+      "profile": "Shizerin · emerald jellyfish",
+      "artPath": "Picture/Art/26RBS02-025.png",
+      "artSha256": "a2f4fae297dc84e2aded958cc2d1cabb9931a25c4d8e669778612f4e439609c8",
+      "sourceUrl": "https://www.battlespirits.com/cardlist/detail_iframe.php?card_no=26RBS02-025&card_no2=26RBS02-025",
+      "vertices": 1729,
+      "triangles": 1904,
+      "rigJoints": 10,
+      "bounds": {
+        "center": [
+          0.0,
+          1.1514301,
+          0.0
+        ],
+        "size": [
+          1.94,
+          2.3028603,
+          1.5462747
+        ]
+      },
+      "modelType": "original stylized skinned mesh interpretation",
+      "officialOrExtractedModel": false
+    },
+    {
+      "id": "26RBS02-043",
+      "nameJa": "ファラキャトル",
+      "profile": "Pharacattle · crystal armored bull",
+      "artPath": "Picture/Art/26RBS02-043.png",
+      "artSha256": "c594a4c1b1f3802f2a2a9ffa8514a9f02a709c2059935bbb19e6b74e82754db2",
+      "sourceUrl": "https://www.battlespirits.com/cardlist/detail_iframe.php?card_no=26RBS02-043&card_no2=26RBS02-043",
+      "vertices": 3400,
+      "triangles": 4024,
+      "rigJoints": 10,
+      "bounds": {
+        "center": [
+          0.0,
+          1.0168655,
+          0.0
+        ],
+        "size": [
+          1.9248956,
+          2.033731,
+          2.8
+        ]
+      },
+      "modelType": "original stylized skinned mesh interpretation",
+      "officialOrExtractedModel": false
+    },
+    {
+      "id": "26RBS02-051",
+      "nameJa": "ソードオネット",
+      "profile": "Swordonette · wooden rapier puppet",
+      "artPath": "Picture/Art/26RBS02-051.png",
+      "artSha256": "861ba52fc6588f5b5a1a7097c2e54c1fbe57f62e92e9271803faac24a8cd61b8",
+      "sourceUrl": "https://www.battlespirits.com/cardlist/detail_iframe.php?card_no=26RBS02-051&card_no2=26RBS02-051",
+      "vertices": 3633,
+      "triangles": 4440,
+      "rigJoints": 10,
+      "bounds": {
+        "center": [
+          0.0,
+          1.5075,
+          0.0
+        ],
+        "size": [
+          1.77,
+          3.015,
+          0.63
+        ]
+      },
+      "modelType": "original stylized skinned mesh interpretation",
+      "officialOrExtractedModel": false
+    },
+    {
+      "id": "26RBS03-021",
+      "nameJa": "ベイルフォール",
+      "profile": "Bailfall · crystal troll",
+      "artPath": "Picture/Art/26RBS03-021.png",
+      "artSha256": "ef0534837deeac85faa554d369d2a6011c2e193257b8579b6efd75a94567f17f",
+      "sourceUrl": "https://www.battlespirits.com/cardlist/detail_iframe.php?card_no=26RBS03-021&card_no2=26RBS03-021",
+      "vertices": 3004,
+      "triangles": 3640,
+      "rigJoints": 10,
+      "bounds": {
+        "center": [
+          0.0,
+          1.445,
+          0.0
+        ],
+        "size": [
+          2.56,
+          2.89,
+          1.08
+        ]
+      },
+      "modelType": "original stylized skinned mesh interpretation",
+      "officialOrExtractedModel": false
+    },
+    {
+      "id": "26RBS03-025",
+      "nameJa": "フォーリノン",
+      "profile": "Forinon · jeweled sawfish",
+      "artPath": "Picture/Art/26RBS03-025.png",
+      "artSha256": "692c82ddaca3f5d4e9ad9b5dae5f5c88041fa23a79112daac1de04a287973a39",
+      "sourceUrl": "https://www.battlespirits.com/cardlist/detail_iframe.php?card_no=26RBS03-025&card_no2=26RBS03-025",
+      "vertices": 2023,
+      "triangles": 2124,
+      "rigJoints": 10,
+      "bounds": {
+        "center": [
+          0.0,
+          0.3325964,
+          0.0
+        ],
+        "size": [
+          1.737818,
+          0.6651928,
+          2.8
+        ]
+      },
+      "modelType": "original stylized skinned mesh interpretation",
+      "officialOrExtractedModel": false
+    },
+    {
+      "id": "26RBS03-052",
+      "nameJa": "インクトゥース",
+      "profile": "Inktooth · salamander swordsman",
+      "artPath": "Picture/Art/26RBS03-052.png",
+      "artSha256": "445f023e163cff09a3ec776eac997b356f7c1742e5810b000a2a25b1a418ae1c",
+      "sourceUrl": "https://www.battlespirits.com/cardlist/detail_iframe.php?card_no=26RBS03-052&card_no2=26RBS03-052",
+      "vertices": 2586,
+      "triangles": 3276,
+      "rigJoints": 10,
+      "bounds": {
+        "center": [
+          0.0,
+          1.2500001,
+          0.0
+        ],
+        "size": [
+          1.93,
+          2.5000002,
+          1.6056869
+        ]
+      },
+      "modelType": "original stylized skinned mesh interpretation",
+      "officialOrExtractedModel": false
+    },
+    {
+      "id": "26RBS03-061",
+      "nameJa": "ボチャック",
+      "profile": "Bochack · pumpkin axe scarecrow",
+      "artPath": "Picture/Art/26RBS03-061.png",
+      "artSha256": "5142eb5841925a06a0257ba5a0d06ead1ba12fdcfb1ccd384d7fe6aa37acbcab",
+      "sourceUrl": "https://www.battlespirits.com/cardlist/detail_iframe.php?card_no=26RBS03-061&card_no2=26RBS03-061",
+      "vertices": 2426,
+      "triangles": 2972,
+      "rigJoints": 10,
+      "bounds": {
+        "center": [
+          0.0,
+          1.4184163,
+          0.0
+        ],
+        "size": [
+          2.385,
+          2.8368325,
+          0.8356241
+        ]
+      },
+      "modelType": "original stylized skinned mesh interpretation",
+      "officialOrExtractedModel": false
+    },
+    {
+      "id": "26RBS03-065",
+      "nameJa": "ラカカル",
+      "profile": "Rakakal · leaf garland cat",
+      "artPath": "Picture/Art/26RBS03-065.png",
+      "artSha256": "285d17b4d119086489db0693728ddf849f203aa8702195c67492b9feb8f853a7",
+      "sourceUrl": "https://www.battlespirits.com/cardlist/detail_iframe.php?card_no=26RBS03-065&card_no2=26RBS03-065",
+      "vertices": 2477,
+      "triangles": 2952,
+      "rigJoints": 10,
+      "bounds": {
+        "center": [
+          0.0,
+          1.1905721,
+          0.0
+        ],
+        "size": [
+          1.5956652,
+          2.3811443,
+          1.3067594
+        ]
+      },
+      "modelType": "original stylized skinned mesh interpretation",
+      "officialOrExtractedModel": false
+    },
+    {
+      "id": "26RBS03-066",
+      "nameJa": "スピアリス",
+      "profile": "Spearish · hanging blue possum",
+      "artPath": "Picture/Art/26RBS03-066.png",
+      "artSha256": "3749cd69f7e38ff2777e4aaf3cd1e19aa49ef1b6ee659262cece115b6d9b747f",
+      "sourceUrl": "https://www.battlespirits.com/cardlist/detail_iframe.php?card_no=26RBS03-066&card_no2=26RBS03-066",
+      "vertices": 2789,
+      "triangles": 3512,
+      "rigJoints": 10,
+      "bounds": {
+        "center": [
+          0.0,
+          1.274867,
+          0.0
+        ],
+        "size": [
+          1.4200001,
+          2.549734,
+          0.755
+        ]
+      },
+      "modelType": "original stylized skinned mesh interpretation",
+      "officialOrExtractedModel": false
+    },
+    {
+      "id": "26RBS03-068",
+      "nameJa": "歩哨アルワリー",
+      "profile": "Alwary · rat horn sentinel",
+      "artPath": "Picture/Art/26RBS03-068.png",
+      "artSha256": "3b748ae20d334af062204754ab1c5fb6a441f0963dc5458875e2bebdd6423a43",
+      "sourceUrl": "https://www.battlespirits.com/cardlist/detail_iframe.php?card_no=26RBS03-068&card_no2=26RBS03-068",
+      "vertices": 3246,
+      "triangles": 3972,
+      "rigJoints": 10,
+      "bounds": {
+        "center": [
+          0.0,
+          1.362024,
+          0.0
+        ],
+        "size": [
+          1.64205,
+          2.724048,
+          1.6908567
+        ]
+      },
+      "modelType": "original stylized skinned mesh interpretation",
+      "officialOrExtractedModel": false
+    },
+    {
+      "id": "26RBS03-071",
+      "nameJa": "威嚇するミルメコティラ",
+      "profile": "Myrmecotira · raised claw anteater",
+      "artPath": "Picture/Art/26RBS03-071.png",
+      "artSha256": "779096e7b06ee9985808bb338bccff9ace0267d01e44589d4dfa98f4aae4c09c",
+      "sourceUrl": "https://www.battlespirits.com/cardlist/detail_iframe.php?card_no=26RBS03-071&card_no2=26RBS03-071",
+      "vertices": 3026,
+      "triangles": 3616,
+      "rigJoints": 10,
+      "bounds": {
+        "center": [
+          0.0,
+          1.5,
+          0.0
+        ],
+        "size": [
+          2.28,
+          3.0,
+          2.4445693
+        ]
+      },
+      "modelType": "original stylized skinned mesh interpretation",
+      "officialOrExtractedModel": false
+    },
+    {
+      "id": "26RBS03-072",
+      "nameJa": "グリロール",
+      "profile": "Grillol · armored cricket beetle",
+      "artPath": "Picture/Art/26RBS03-072.png",
+      "artSha256": "0f6328416391c60255876bdda57c7cc7aa502d0c0163708cf366ad062fabb1c7",
+      "sourceUrl": "https://www.battlespirits.com/cardlist/detail_iframe.php?card_no=26RBS03-072&card_no2=26RBS03-072",
+      "vertices": 3767,
+      "triangles": 4296,
+      "rigJoints": 10,
+      "bounds": {
+        "center": [
+          0.0,
+          1.2262266,
+          0.0
+        ],
+        "size": [
+          2.3,
+          2.4524531,
+          1.9606857
+        ]
+      },
+      "modelType": "original stylized skinned mesh interpretation",
+      "officialOrExtractedModel": false
+    },
+    {
+      "id": "26RBS03-074",
+      "nameJa": "グラズボイル",
+      "profile": "Glazboil · armored four jaw worm",
+      "artPath": "Picture/Art/26RBS03-074.png",
+      "artSha256": "83af93376d004dbf86083afc7c1dcfe23ba6c2d283a456033062b8e172744abf",
+      "sourceUrl": "https://www.battlespirits.com/cardlist/detail_iframe.php?card_no=26RBS03-074&card_no2=26RBS03-074",
+      "vertices": 3298,
+      "triangles": 3768,
+      "rigJoints": 10,
+      "bounds": {
+        "center": [
+          0.0,
+          1.5317585,
+          0.0
+        ],
+        "size": [
+          1.75,
+          3.063517,
+          1.7434552
+        ]
+      },
+      "modelType": "original stylized skinned mesh interpretation",
+      "officialOrExtractedModel": false
+    }
+  ],
+  "review": {
+    "renderer": "Blender 4.3.2/Cycles CPU",
+    "samples": 48,
+    "sourceMeshExportSha256": "08b24057be2c8fb99f344a3939b7ea3155b2291bbd8622daf8cf9fa3ae04b7d3",
+    "projectColorSpace": "Gamma",
+    "actualProductionVertices": true,
+    "allModelsRendered": true,
+    "studioLightingAndGroundNotProductionField": true,
+    "unityRenderingVerified": false,
+    "publishedArtifacts": [
+      {
+        "path": "Documentation/Previews/SpiritModels/production-model-contact-sheet.jpg",
+        "sha256": "87564e8dfb057b0f819f4c69c9b35c460a230ade9614f502053f0b884dce0a75"
+      },
+      {
+        "path": "Documentation/Previews/SpiritModels/26RBS01-064.png",
+        "sha256": "336ad52b46d2826d2eb745ad2d7ea97f57e6af5134894f98877c9caa5a33430c"
+      },
+      {
+        "path": "Documentation/Previews/SpiritModels/26RBS03-071.png",
+        "sha256": "76f0cc94dff594f5b399422bf471721bba23dd0d2b705c9ed8da1703a6eb9685"
+      },
+      {
+        "path": "Documentation/Previews/SpiritModels/26RBS03-072.png",
+        "sha256": "23dee076d0a4924369524e4c480d5488dfe8abc49e09f241e3a5da995b28d86c"
+      }
+    ]
+  }
+}

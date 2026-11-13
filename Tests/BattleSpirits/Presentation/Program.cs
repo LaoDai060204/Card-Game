@@ -44,7 +44,7 @@ internal static class Entry
         public IEnumerator<CardDefinition> GetEnumerator(){Enumerations++;return cards.GetEnumerator();}
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()=>GetEnumerator();
     }
-    private sealed class FakeSession:IBattleNativeSession,IBattleNativeReplaySession,IBattleNativePortraitSession,IBattleNativePresentationSession
+    private sealed class FakeSession:IBattleNativeSession,IBattleNativeReplaySession,IBattleNativePortraitSession,IBattleNativePresentationSession,IBattleNativeCinematicSession
     {
         public IReadOnlyList<CardDefinition> Cards{get;set;}
         public IReadOnlyList<DeckDefinition> Decks{get;set;}
@@ -58,6 +58,8 @@ internal static class Entry
         private bool commandsAllowed=true;public bool CanSendCommands{get=>commandsAllowed&&!IsPresentationBusy;set=>commandsAllowed=value;}
         public bool IsPresentationBusy{get;private set;}
         public readonly Dictionary<int,Rect> Bounds=new Dictionary<int,Rect>();
+        public readonly Dictionary<int,Rect> ScreenBounds=new Dictionary<int,Rect>();
+        public readonly List<int> RevealedModels=new List<int>();
         public readonly Dictionary<string,Texture2D> ArtTextures=new Dictionary<string,Texture2D>();
         public bool MissingArtwork;
         public bool IsReplay{get;set;}
@@ -72,6 +74,8 @@ internal static class Entry
         public event Action PresentationReset;
         public void SetPresentationBusy(bool busy){if(IsPresentationBusy==busy)return;IsPresentationBusy=busy;Changed?.Invoke();}
         public bool TryGetCardViewport(int id,out Rect bounds)=>Bounds.TryGetValue(id,out bounds);
+        public bool TryGetCardScreenViewport(int id,out Rect bounds)=>ScreenBounds.TryGetValue(id,out bounds);
+        public void RevealSpiritModel(int id)=>RevealedModels.Add(id);
         public void Emit(PublicBattleEvent value)=>PresentationEvent?.Invoke(value);
         public FakeSession(IReadOnlyList<CardDefinition> cards){Cards=cards;Decks=StarterDecks.CreatePair(cards, BattleRulesFormat.Standard);SelectedDeck=Decks[0];}
         public void SelectDeck(DeckDefinition deck){SelectedDeck=deck;Changed?.Invoke();}
@@ -394,6 +398,45 @@ internal static class Entry
         }
         throw new Exception("No legal deterministic summon fixture could be created.");
     }
+    private static bool Finite(float value)=>!float.IsNaN(value)&&!float.IsInfinity(value);
+    private static bool Finite(Vector3 value)=>Finite(value.x)&&Finite(value.y)&&Finite(value.z);
+    private static float Distance(Vector3 a,Vector3 b)=>(a-b).magnitude;
+    private static float[] VectorArray(Vector3 value)=>new[]{value.x,value.y,value.z};
+    private static void ExportSpiritModels(string directory)
+    {
+        Directory.CreateDirectory(directory);
+        var host=new GameObject("ProductionModelExport");
+        var library=new BattleSpiritModelLibrary(Resources.Load<Shader>("BattleSpirits/SpiritModel"));
+        var rows=new List<object>();
+        try
+        {
+            foreach(string id in BattleSpiritModelLibrary.SupportedIds.OrderBy(id=>id,StringComparer.Ordinal))
+            {
+                Assert(library.TryCreate(id,host.transform,out var model),"Export could not create production model "+id);
+                var mesh=model.Renderer.sharedMesh;
+                rows.Add(new {
+                    id, profile=model.template.profileName,
+                    vertices=mesh.vertices.Select(VectorArray).ToArray(),
+                    normals=mesh.normals.Select(VectorArray).ToArray(),
+                    colors=mesh.colors.Select(color=>new[]{color.r,color.g,color.b,color.a}).ToArray(),
+                    triangles=mesh.triangles,
+                    joints=model.template.joints.Select(VectorArray).ToArray(),
+                    weights=mesh.boneWeights.Select(weight=>new[]{(float)weight.boneIndex0,weight.weight0,(float)weight.boneIndex1,weight.weight1,(float)weight.boneIndex2,weight.weight2,(float)weight.boneIndex3,weight.weight3}).ToArray(),
+                    bounds=new{center=VectorArray(mesh.bounds.center),size=VectorArray(mesh.bounds.size)}
+                });
+                model.Dispose();
+            }
+            string path=Path.Combine(directory,"production-models.json");
+            File.WriteAllText(path,JsonConvert.SerializeObject(new {
+                schema=1,source="Production BattleSpiritModelLibrary sharedMesh exported by the controlled native harness",
+                coordinates="Unity Y-up; these are real mesh vertices, not card planes or rendered Unity pixels",
+                projectColorSpace=File.ReadAllText(Path.Combine(sourceRoot,"ProjectSettings/ProjectSettings.asset")).Contains("m_ActiveColorSpace: 0")?"Gamma":"Linear",
+                unityRenderingVerified=false,models=rows
+            }));
+            Console.WriteLine("EXPORTED "+rows.Count+" production skinned meshes: "+path);
+        }
+        finally{Object.Destroy(host);library.Dispose();}
+    }
     public static int Main(string[] args)
     {
         SynchronizationContext.SetSynchronizationContext(Context);
@@ -410,6 +453,12 @@ internal static class Entry
         }
         try
         {
+            string exportDirectory=Environment.GetEnvironmentVariable("BATTLE_SPIRITS_MODEL_EXPORT");
+            if(!string.IsNullOrEmpty(exportDirectory))
+            {
+                ExportSpiritModels(exportDirectory);
+                if(args.Contains("--export-models-only"))return 0;
+            }
             Case("Skin resources resolve the reviewed PNG and JPEG files with their original dimensions",()=>{
                 var manifest=Newtonsoft.Json.Linq.JObject.Parse(File.ReadAllText(Path.Combine(sourceRoot,"Data/BattleSpirits/skin-sources.json")));
                 int count=0;
@@ -1124,6 +1173,182 @@ internal static class Entry
                 var owned=materials.ToArray();var blue=BattleTheme.ColorIcon(CardColor.Blue);field.Dispose();
                 Assert(owned.All(item=>item==null)&&Field<Material>(field,"normalGemMaterial")==null&&Field<Material>(field,"soulGemMaterial")==null,"Core material ownership leaked on field disposal.");
                 Assert(blue!=null&&soulTexture!=null,"Disposing Core markers destroyed shared source gem images.");
+            });
+            Case("Real model profiles cover exactly the nineteen playable Standard Spirits without claiming other cards",()=>{
+                var expected=catalog.cards.Where(card=>card.IsPlayableFor(BattleRulesFormat.Standard)&&card.IsSpirit).Select(card=>card.id).OrderBy(id=>id).ToArray();
+                Assert(expected.Length==19&&BattleSpiritModelLibrary.SupportedIds.OrderBy(id=>id).SequenceEqual(expected),"Model profiles are missing a playable Spirit or substitute an unsupported identity.");
+                var library=new BattleSpiritModelLibrary(Resources.Load<Shader>("BattleSpirits/SpiritModel"));var host=new GameObject("ModelCatalog");
+                Assert(!library.TryCreate("BS01-X01",host.transform,out _)&&!library.TryCreate("unknown-card",host.transform,out _)
+                    &&library.MeshCount==0,"Unmapped artwork acquired a generic model or allocated a cached mesh.");library.Dispose();
+            });
+            Case("Production model meshes are volumetric bounded finite and correctly wound with valid bone weights",()=>{
+                var library=new BattleSpiritModelLibrary(Resources.Load<Shader>("BattleSpirits/SpiritModel"));var host=new GameObject("ModelGeometry");var signatures=new HashSet<string>();
+                foreach(string id in BattleSpiritModelLibrary.SupportedIds)
+                {
+                    Assert(library.TryCreate(id,host.transform,out var model),"Model could not be built: "+id);var mesh=model.Renderer.sharedMesh;
+                    Assert(mesh.vertices.Length>1000&&mesh.triangles.Length/3<12000&&mesh.normals.Length==mesh.vertices.Length
+                        &&mesh.colors.Length==mesh.vertices.Length&&mesh.boneWeights.Length==mesh.vertices.Length,"A model is a plane, exceeds its geometry budget or lacks normal/color/skin streams: "+id);
+                    Assert(mesh.bounds.size.x>0.5f&&mesh.bounds.size.y>.5f&&mesh.bounds.size.z>.4f&&mesh.bounds.size.x<=2.801f
+                        &&mesh.bounds.size.y<=3.601f&&mesh.bounds.size.z<=2.801f&&mesh.bounds.min.y>=-.001f,"Model bounds leave the field budget: "+id);
+                    Assert(mesh.vertices.All(Finite)&&mesh.normals.All(normal=>Finite(normal)&&Math.Abs(normal.magnitude-1)<.001f),"A model has nonfinite vertices or invalid normals: "+id);
+                    foreach(var weight in mesh.boneWeights)Assert(weight.boneIndex0>=0&&weight.boneIndex0<10&&weight.weight0==1
+                        &&weight.weight1==0&&weight.weight2==0&&weight.weight3==0,"A vertex lacks its normalized valid rig joint: "+id);
+                    for(int i=0;i<mesh.triangles.Length;i+=3)
+                    {
+                        int a=mesh.triangles[i],b=mesh.triangles[i+1],c=mesh.triangles[i+2];
+                        Assert(a>=0&&b>=0&&c>=0&&a<mesh.vertices.Length&&b<mesh.vertices.Length&&c<mesh.vertices.Length,"Model face references an invalid vertex: "+id);
+                        var u=mesh.vertices[b]-mesh.vertices[a];var v=mesh.vertices[c]-mesh.vertices[a];
+                        var n=new Vector3(u.y*v.z-u.z*v.y,u.z*v.x-u.x*v.z,u.x*v.y-u.y*v.x);var average=mesh.normals[a]+mesh.normals[b]+mesh.normals[c];
+                        Assert(n.magnitude>1e-8f&&n.x*average.x+n.y*average.y+n.z*average.z>=-1e-8f,"Degenerate or inward-facing model triangle: "+id);
+                    }
+                    Assert(model.root.GetComponentsInChildren<SkinnedMeshRenderer>(true).Length==1&&model.root.GetComponentsInChildren<Collider>(true).Length==0,"Model creates per-part renderers or unwanted colliders.");
+                    signatures.Add(Convert.ToHexString(SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(new{mesh.vertices,mesh.colors,mesh.triangles})))));model.Dispose();
+                }
+                Assert(signatures.Count==19,"Distinct card IDs were assigned identical generic monster geometry.");library.Dispose();
+            });
+            Case("Skinned rest bind poses retain the model under nontrivial parent translation rotation and scale",()=>{
+                var host=new GameObject("TransformedModelHost");host.transform.localPosition=new Vector3(27,4,-19);
+                host.transform.localRotation=Quaternion.Euler(13,31,-7);host.transform.localScale=new Vector3(1.6f,.8f,1.3f);
+                var library=new BattleSpiritModelLibrary(Resources.Load<Shader>("BattleSpirits/SpiritModel"));
+                foreach(string id in BattleSpiritModelLibrary.SupportedIds)
+                {
+                    library.TryCreate(id,host.transform,out var model);var mesh=model.Renderer.sharedMesh;
+                    Assert(mesh.bindposes.Length==10&&model.Renderer.bones.Length==10,"Model rig and bind pose counts differ.");
+                    for(int i=0;i<mesh.vertices.Length;i+=23)
+                    {
+                        int joint=mesh.boneWeights[i].boneIndex0;var matrix=model.Renderer.bones[joint].localToWorldMatrix*mesh.bindposes[joint];
+                        var skinned=matrix.MultiplyPoint3x4(mesh.vertices[i]);var expected=model.root.transform.TransformPoint(mesh.vertices[i]);
+                        Assert(Distance(skinned,expected)<.002f,"The initial rig collapses or moves vertices under a transformed parent: "+id);
+                    }
+                    model.Dispose();
+                }
+                library.Dispose();
+            });
+            Case("Copies share one model mesh and material while instance disposal preserves other rigs",()=>{
+                var library=new BattleSpiritModelLibrary(Resources.Load<Shader>("BattleSpirits/SpiritModel"));var host=new GameObject("SharedModels");string id=BattleSpiritModelLibrary.SupportedIds[0];
+                library.TryCreate(id,host.transform,out var first);library.TryCreate(id,host.transform,out var second);
+                var mesh=first.Renderer.sharedMesh;var material=first.Renderer.sharedMaterial;
+                Assert(second.Renderer.sharedMesh==mesh&&second.Renderer.sharedMaterial==material&&first.Renderer.bones[0]!=second.Renderer.bones[0]
+                    &&library.MeshCount==1,"Copies duplicate meshes/materials or incorrectly share animated transforms.");
+                first.Dispose();Assert(mesh!=null&&material!=null&&second.root!=null,"Removing one model destroyed shared resources.");
+                second.Animate(BattleVisualPose.Attack,.2f,1,1,false);second.Dispose();library.Dispose();
+                Assert(mesh==null&&material==null,"Field library leaked its owned mesh or material.");
+            });
+            Case("All model poses sanitize numeric extremes without creating new rigs or replacing geometry",()=>{
+                var library=new BattleSpiritModelLibrary(Resources.Load<Shader>("BattleSpirits/SpiritModel"));var host=new GameObject("AnimatedModels");
+                foreach(string id in BattleSpiritModelLibrary.SupportedIds)
+                {
+                    library.TryCreate(id,host.transform,out var model);int objects=GameObject.All.Count;var mesh=model.Renderer.sharedMesh;var material=model.Renderer.sharedMaterial;
+                    foreach(BattleVisualPose pose in Enum.GetValues(typeof(BattleVisualPose)))foreach(float time in new[]{0f,.3f,2f,-1f,float.MaxValue,float.NaN,float.PositiveInfinity})
+                    {
+                        model.Animate(pose,time,time,-1,true);
+                        Assert(Finite(model.root.transform.localPosition)&&Finite(model.root.transform.localScale)&&model.root.transform.localScale.x>0,"Model animation generated an invalid transform.");
+                        foreach(var joint in model.bones)Assert(Finite(joint.localRotation.x)&&Finite(joint.localRotation.y)&&Finite(joint.localRotation.z)&&Finite(joint.localRotation.w),"Model bone rotation is nonfinite.");
+                        Assert(model.Renderer.propertyBlock.Floats.Values.All(Finite),"Model shader properties are nonfinite.");
+                    }
+                    Assert(GameObject.All.Count==objects&&model.Renderer.sharedMesh==mesh&&model.Renderer.sharedMaterial==material,"An animation tick rebuilds rig/mesh/material resources.");model.Dispose();
+                }
+                library.Dispose();
+            });
+            Case("Field model and artwork modes switch cached geometry without changing public state or artwork ownership",()=>{
+                var output=new GameObject("ModelField",typeof(RectTransform)).AddComponent<RawImage>();var field=output.gameObject.AddComponent<BattleFieldVisuals>();field.SetArtworkProvider(fake.LoadArt);field.SetCatalog(catalog.cards);field.Load(output);
+                string id=BattleSpiritModelLibrary.SupportedIds[2];var snapshot=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);
+                snapshot.players[0].field=new[]{new SpiritView{instanceId=501,cardId=id}};field.Render(snapshot);Time.unscaledTime=2;Call(field,"Update");
+                var units=(System.Collections.IDictionary)Field<object>(field,"units");var figure=Field<BattleCardFigure>(units[501],"figure");var model=Field<BattleSpiritModel>(figure,"model");
+                Assert(model!=null&&model.Renderer.enabled&&!Field<Renderer>(figure,"illustrationRenderer").enabled&&Field<Renderer>(figure,"cardRenderer").enabled,"Mapped Spirit does not show real geometry with its floor card.");
+                int objects=GameObject.All.Count,requests=fake.RequestedArt.Count;string state=JsonConvert.SerializeObject(snapshot);var mesh=model.Renderer.sharedMesh;
+                MDPro3.Config.Set(BattleTheme.SpiritModelConfig,"0");Call(field,"Update");
+                Assert(!model.Renderer.enabled&&Field<Renderer>(figure,"illustrationRenderer").enabled,"Artwork mode did not restore the original floating illustration.");
+                MDPro3.Config.Set(BattleTheme.SpiritModelConfig,"1");Call(field,"Update");
+                Assert(model.Renderer.enabled&&model.Renderer.sharedMesh==mesh&&GameObject.All.Count==objects&&fake.RequestedArt.Count==requests
+                    &&JsonConvert.SerializeObject(snapshot)==state,"Changing cosmetic mode recreated geometry, reloaded art or changed match data.");
+                Assert(field.RevealSpiritModel(501),"An active model cannot reveal after the card cinematic.");var floor=Field<Transform>(figure,"card");var scale=floor.localScale;
+                Call(field,"Update");Assert(floor.localScale.x==scale.x&&floor.localScale.y==scale.y,"Model reveal shrank or lifted the already-landed printed card.");
+                field.Dispose();Assert(mesh==null,"Disposing the field leaked its shared model mesh.");
+            });
+            Case("Missing card art still permits mapped 3D geometry and unmodeled cards retain their own artwork fallback",()=>{
+                fake.MissingArtwork=true;var output=new GameObject("ModelMissingArt",typeof(RectTransform)).AddComponent<RawImage>();var field=output.gameObject.AddComponent<BattleFieldVisuals>();field.SetArtworkProvider(fake.LoadArt);field.SetCatalog(catalog.cards);field.Load(output);
+                string id=BattleSpiritModelLibrary.SupportedIds[0];var snapshot=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);
+                snapshot.players[0].field=new[]{new SpiritView{instanceId=601,cardId=id}};field.Render(snapshot);var units=(System.Collections.IDictionary)Field<object>(field,"units");
+                var mapped=Field<BattleCardFigure>(units[601],"figure");Assert(Field<BattleSpiritModel>(mapped,"model")?.Renderer.enabled==true,"A texture delay unnecessarily hides real model geometry.");
+                fake.MissingArtwork=false;snapshot.players[0].field=new[]{new SpiritView{instanceId=602,cardId="BS01-X01"}};field.Render(snapshot);
+                var fallback=Field<BattleCardFigure>(units[602],"figure");Assert(Field<BattleSpiritModel>(fallback,"model")==null&&Field<Renderer>(fallback,"illustrationRenderer").enabled,"Unmodeled card acquired a generic model or lost its own artwork fallback.");field.Dispose();
+            });
+            Case("The field builds models only for public units and never requests hidden hand identities",()=>{
+                var output=new GameObject("PublicOnlyModels",typeof(RectTransform)).AddComponent<RawImage>();var field=output.gameObject.AddComponent<BattleFieldVisuals>();field.SetArtworkProvider(fake.LoadArt);field.SetCatalog(catalog.cards);field.Load(output);
+                var snapshot=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);string id=BattleSpiritModelLibrary.SupportedIds[3];
+                snapshot.ownHand=new[]{"not-a-public-field-card"};snapshot.players[1].handCount=9;snapshot.players[1].field=new[]{new SpiritView{instanceId=603,cardId=id}};field.Render(snapshot);
+                Assert(Field<BattleSpiritModelLibrary>(field,"modelLibrary").MeshCount==1&&fake.RequestedArt.All(card=>card==id),"Field models or textures depend on private hand identities.");field.Dispose();
+            });
+            Case("Duel visual controls persist cosmetic choices and block hidden modal or presentation callbacks",()=>{
+                fake.View=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);var screen=Screen(BattleNativeScreen.Duel);
+                string state=JsonConvert.SerializeObject(fake.View);Click(screen.transform,"BS_ModelMode");Click(screen.transform,"BS_DuelQuality");
+                Assert(MDPro3.Config.Get(BattleTheme.SpiritModelConfig,"1")=="0"&&MDPro3.Config.Get(BattleTheme.DuelQualityConfig,"Balanced")=="High"
+                    &&fake.Commands.Count==0&&JsonConvert.SerializeObject(fake.View)==state,"Visual settings issue gameplay commands or fail to persist.");
+                var mode=Find(screen.transform,"BS_ModelMode").GetComponent<Button>();var quality=Find(screen.transform,"BS_DuelQuality").GetComponent<Button>();
+                Click(screen.transform,"BS_Hand/BS_Card_"+fake.View.ownHand[0]);Click(screen.transform,"BS_InspectZoom");mode.onClick.Invoke();quality.onClick.Invoke();
+                Assert(MDPro3.Config.Get(BattleTheme.SpiritModelConfig,"1")=="0"&&MDPro3.Config.Get(BattleTheme.DuelQualityConfig,"Balanced")=="High","Modal settings callbacks remain active behind zoom.");
+                Click(screen.transform,"BS_ZoomClose");fake.SetPresentationBusy(true);mode.onClick.Invoke();quality.onClick.Invoke();
+                Assert(MDPro3.Config.Get(BattleTheme.SpiritModelConfig,"1")=="0"&&MDPro3.Config.Get(BattleTheme.DuelQualityConfig,"Balanced")=="High","Presentation guard permits disruptive cosmetic changes.");
+            });
+            Case("Low balanced and high render budgets resize once preserve aspect and release old targets",()=>{
+                var output=new GameObject("QualityBudgetField",typeof(RectTransform)).AddComponent<RawImage>();output.rectTransform.rect=new Rect(0,0,3200,1800);
+                var field=output.gameObject.AddComponent<BattleFieldVisuals>();field.Load(output);Assert(output.texture.width==1920,"Balanced quality is not the default bounded render budget.");
+                foreach(var pair in new[]{new KeyValuePair<string,int>("Low",1280),new KeyValuePair<string,int>("High",2560),new KeyValuePair<string,int>("Balanced",1920)})
+                {
+                    var old=(RenderTexture)output.texture;MDPro3.Config.Set(BattleTheme.DuelQualityConfig,pair.Key);Call(field,"Update");Time.unscaledTime+=.13f;Call(field,"Update");
+                    var current=(RenderTexture)output.texture;Assert(current.width==pair.Value&&Math.Abs(current.width/(float)current.height-16f/9)<.005f&&old.released&&old==null,"Quality resize loses its budget/aspect or leaks its previous target.");
+                    Call(field,"Update");Assert(output.texture==current,"A stable quality setting recreates the target every frame.");
+                }
+                output.rectTransform.rect=new Rect(0,0,912,518);var sizes=new List<int>();
+                foreach(string quality in new[]{"Low","Balanced","High"})
+                { MDPro3.Config.Set(BattleTheme.DuelQualityConfig,quality);Call(field,"Update");Time.unscaledTime+=.13f;Call(field,"Update");sizes.Add(output.texture.width); }
+                Assert(sizes[0]<sizes[1]&&sizes[1]<sizes[2],"Quality choices do nothing on a normal-sized window below all caps.");
+                field.Dispose();
+            });
+            Case("Cinematic card landing uses the screen-mapped field rectangle and reveals a model only once",()=>{
+                fake.View=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);var screen=Screen(BattleNativeScreen.Duel);
+                string id=BattleSpiritModelLibrary.SupportedIds[0];fake.Bounds[701]=new Rect(.2f,.3f,.1f,.1f);fake.ScreenBounds[701]=new Rect(.392f,.396f,.076f,.072f);
+                var e=new PublicBattleEvent{kind="Summoned",actor=0,spiritId=701,cardId=id};fake.Emit(e);fake.Emit(e);
+                for(int i=0;i<7;i++)TickPresentation(.25f);var presenter=Field<BattleSummonPresentation>(Field<BattleNativeDuelView>(screen,"duel"),"summonPresentation");
+                var slot=Field<RectTransform>(presenter,"cardSlot");float landing=BattleSummonMotion.Sample(1.75f).landing;
+                float x=.31f+(.392f+.076f*.5f-.31f)*landing;float y=.53f+(.396f+.072f*.5f-.53f)*landing;
+                Assert(Math.Abs((slot.anchorMin.x+slot.anchorMax.x)*.5f-x)<.0001f&&Math.Abs((slot.anchorMin.y+slot.anchorMax.y)*.5f-y)<.0001f,"Card cinematic lands in field-local coordinates rather than the visible root.");
+                for(int i=0;i<5;i++)TickPresentation(.25f);Assert(fake.RevealedModels.SequenceEqual(new[]{701})&&fake.Commands.Count==0,"Model reveal duplicates public events or issues a gameplay command.");
+            });
+            Case("Actual session maps viewport through its field anchors and model reveal does not alter the snapshot",()=>{
+                var session=BattleNativeSession.Ensure();var output=new GameObject("CinematicMappedField",typeof(RectTransform)).AddComponent<RawImage>();
+                BattleNativeWidgets.Place(output.rectTransform,.24f,.18f,1,.90f);output.rectTransform.rect=new Rect(0,0,1459,778);
+                var field=output.gameObject.AddComponent<BattleFieldVisuals>();field.SetArtworkProvider(fake.LoadArt);field.SetCatalog(catalog.cards);field.Load(output);
+                var snapshot=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);snapshot.players[0].field=new[]{new SpiritView{instanceId=702,cardId=BattleSpiritModelLibrary.SupportedIds[0]}};
+                Field<List<BattleFieldVisuals>>(session,"fields").Add(field);Call(session,"ApplyView",snapshot,false);string state=JsonConvert.SerializeObject(snapshot);
+                Assert(field.TryGetCardViewport(702,out var local)&&session.TryGetCardScreenViewport(702,out var mapped)
+                    &&Math.Abs(mapped.x-(.24f+local.x*.76f))<.0001f&&Math.Abs(mapped.y-(.18f+local.y*.72f))<.0001f
+                    &&Math.Abs(mapped.width-local.width*.76f)<.0001f,"Production session did not convert the native field viewport to screen coordinates.");
+                session.RevealSpiritModel(702);Assert(JsonConvert.SerializeObject(snapshot)==state,"A purely visual reveal mutates the authoritative view.");field.Dispose();
+            });
+            Case("Duel status occupies the sidebar footer and does not overlay the hand faces",()=>{
+                fake.View=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);var screen=Screen(BattleNativeScreen.Duel);
+                var status=(RectTransform)Find(screen.transform,"BS_Status");var hand=(RectTransform)Find(screen.transform,"BS_Hand");
+                Assert(status.anchorMax.x<hand.anchorMin.x&&status.anchorMin.y>=0&&status.anchorMax.y<=.06f,"Long status text still draws across the player's hand.");
+            });
+            Case("Field BP is emphasized over compact Lv and Core while the complete state remains in inspection",()=>{
+                fake.View=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);
+                fake.View.players[0].field=new[]{new SpiritView{instanceId=703,cardId=BattleSpiritModelLibrary.SupportedIds[0],bp=7000,level=2,normalCores=3,soulCore=true,exhausted=true}};
+                var screen=Screen(BattleNativeScreen.Duel);var card=Find(screen.transform,"BS_FieldCard_703");var stats=Find(card,"BS_Stats").GetComponent<TextMeshProUGUI>();
+                Assert(stats.richText&&stats.text.Contains("<b>7000</b> BP")&&stats.text.Contains("Lv2")&&stats.text.Contains("C3")&&stats.text.Contains("◆")
+                    &&((RectTransform)stats.transform.parent).anchorMax.y>=.5f,"Field stats still bury BP inside a tiny two-line strip.");
+                Click(screen.transform,"BS_FieldCard_703");var detail=Find(screen.transform,"BS_InspectState").GetComponent<TextMeshProUGUI>();
+                Assert(detail.text.Contains("7000")&&detail.text.Contains("Soul Core")&&detail.text.Contains("ĐÃ MỆT"),"Compact field stats removed complete inspection information.");
+            });
+            Case("The actual animation gallery exposes Standard models and opens a command-free 3D preview",()=>{
+                BattleSpiritsApp.ShowBossGallery();string id=BattleSpiritModelLibrary.SupportedIds[2];
+                string choice=MDPro3.UIManager.Popup.Single(item=>item.StartsWith("3D · "+id+" · ",StringComparison.Ordinal));
+                Assert(MDPro3.UIManager.Popup.Count(item=>item.StartsWith("3D · ",StringComparison.Ordinal))==19,"New 3D models are not discoverable in the actual native animation gallery.");
+                var selected=new GameObject("PreviewModelChoice",typeof(RectTransform));selected.AddComponent<SelectionButton>();selected.AddComponent<TextMeshProUGUI>().text=choice;
+                UnityEngine.EventSystems.EventSystem.current.currentSelectedGameObject=selected;MDPro3.UIManager.PopupSelected.Invoke();var session=BattleNativeSession.Ensure();
+                Assert(session.IsPreview&&!session.CanSendCommands&&session.View.rulesFormat=="Standard"&&session.View.players[0].field.Single().cardId==id,
+                    "Standard model preview was rejected by an Eternal-only filter or entered authoritative gameplay.");
             });
             Case("Field viewport bounds follow the printed card and exhausted orientation",()=>{
                 var output=new GameObject("BoundsField",typeof(RectTransform)).AddComponent<RawImage>();var field=output.gameObject.AddComponent<BattleFieldVisuals>();field.SetArtworkProvider(fake.LoadArt);field.Load(output);

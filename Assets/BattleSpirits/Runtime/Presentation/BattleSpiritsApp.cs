@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using LaoDai.BattleSpirits.Integration;
 using LaoDai.BattleSpirits.NativeUI;
+using LaoDai.BattleSpirits.Visuals;
 using MDPro3;
 using MDPro3.UI;
 using MDPro3.UI.ServantUI;
@@ -51,9 +52,12 @@ namespace LaoDai.BattleSpirits.Presentation
         {
             if (!Ready()) return;
             var session = BattleNativeSession.Ensure();
-            var bosses = session.Cards.Where(card => card.id == "BS01-X01" || card.id == "BS01-097")
-                .ToDictionary(card => card.id + " · " + card.DisplayName, card => card.id, StringComparer.Ordinal);
-            var selections = new List<string> { "HOẠT ẢNH TRIỆU HỒI", "Xem hiệu ứng và artwork lá bài. Hai thẻ BS01 này thuộc Eternal, không dùng trong deck Standard." };
+            var bosses = session.Cards.Where(card => BattleSpiritModelLibrary.SupportedIds.Contains(card.id)
+                    || card.id == "BS01-X01" || card.id == "BS01-097")
+                .OrderByDescending(card => BattleSpiritModelLibrary.SupportedIds.Contains(card.id)).ThenBy(card => card.id, StringComparer.Ordinal)
+                .ToDictionary(card => (BattleSpiritModelLibrary.SupportedIds.Contains(card.id) ? "3D · " : "ẢNH · ")
+                    + card.id + " · " + card.DisplayName, card => card.id, StringComparer.Ordinal);
+            var selections = new List<string> { "HOẠT ẢNH TRIỆU HỒI", "19 Spirit Standard có model tự dựng. Hai thẻ BS01 cũ dùng artwork, chỉ xem thử và không vào deck Standard." };
             selections.AddRange(bosses.Keys);
             UIManager.ShowPopupSelection(selections, () =>
             {

@@ -45,7 +45,7 @@ namespace LaoDai.BattleSpirits.NativeUI
             status.enableWordWrapping = false;
             status.overflowMode = TextOverflowModes.Ellipsis;
             BattleNativeWidgets.Place(status.rectTransform, 0.02f, 0.005f, 0.98f, 0.045f);
-            if (screen == BattleNativeScreen.Duel) BattleNativeWidgets.Place(status.rectTransform, .245f, .005f, .85f, .035f);
+            if (screen == BattleNativeScreen.Duel) BattleNativeWidgets.Place(status.rectTransform, .012f, .008f, .225f, .05f);
             session.Changed += Refresh;
             Refresh();
         }

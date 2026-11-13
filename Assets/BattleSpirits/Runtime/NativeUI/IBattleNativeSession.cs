@@ -37,6 +37,14 @@ namespace LaoDai.BattleSpirits.NativeUI
         bool TryGetCardViewport(int instanceId, out Rect bounds);
     }
 
+    // Local cinematic coordinates differ from the field-relative picking rect.
+    // Revealing a model changes presentation only, without another game event.
+    public interface IBattleNativeCinematicSession
+    {
+        bool TryGetCardScreenViewport(int instanceId, out Rect bounds);
+        void RevealSpiritModel(int instanceId);
+    }
+
     // The original prefab views only consume the public/own-player snapshot.
     // They do not access BattleMatch internals or use YGO card/protocol objects.
     public interface IBattleNativeSession
