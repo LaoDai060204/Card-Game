@@ -55,6 +55,7 @@ namespace LaoDai.BattleSpirits.Visuals
         private readonly Transform[,] poolRoots = new Transform[2, 4];
         private readonly Renderer[] decisionRails = new Renderer[2];
         private Material dark, panel, trim, white, red, purple, green, blue, yellow, crystal, soul;
+        private Material zoneSurface, zoneFrame, guide;
         private Material playerAccent, opponentAccent;
         private Material cardBackMaterial;
         private Material normalGemMaterial, soulGemMaterial;
@@ -145,9 +146,12 @@ namespace LaoDai.BattleSpirits.Visuals
             artworkShader = Resources.Load<Shader>("BattleSpirits/CardArtwork");
             if (artworkShader == null) artworkShader = Shader.Find("LaoDai/BattleSpirits/CardArtwork");
             if (artworkShader == null) throw new InvalidOperationException("The Battle Spirits card artwork shader is missing.");
-            dark = Material("Obsidian", new Color(0.025f, 0.025f, 0.032f));
-            panel = Material("Charcoal", BattleTheme.PanelBackground);
-            trim = Material("SilverChrome", BattleTheme.Frame, 0.12f);
+            dark = Material("Obsidian", new Color(0.018f, 0.026f, 0.038f));
+            panel = Material("ArenaSlate", new Color(0.068f, 0.088f, 0.113f));
+            trim = Material("BrushedChrome", new Color(0.29f, 0.39f, 0.45f), 0.12f);
+            zoneSurface = Material("OpenZoneSlate", new Color(0.045f, 0.064f, 0.085f));
+            zoneFrame = Material("InsetFrame", new Color(0.105f, 0.15f, 0.18f));
+            guide = Material("CyanGuide", new Color(0.13f, 0.42f, 0.49f), 0.2f);
             playerAccent = Material("PlayerActionLime", BattleTheme.Accent, 0.35f);
             opponentAccent = Material("OpponentActionRed", BattleTheme.Red, 0.3f);
             white = Material("IvoryArmor", new Color(0.81f, 0.88f, 0.91f));
@@ -173,7 +177,7 @@ namespace LaoDai.BattleSpirits.Visuals
             camera.transform.localRotation = Quaternion.Euler(CameraPitch, 0, 0);
             camera.fieldOfView = 46; camera.nearClipPlane = 0.3f; camera.farClipPlane = 200;
             camera.cullingMask = 1 << StageLayer; camera.clearFlags = CameraClearFlags.SolidColor;
-            camera.backgroundColor = new Color(0.012f, 0.012f, 0.018f); camera.allowHDR = false; camera.allowMSAA = false;
+            camera.backgroundColor = new Color(0.008f, 0.013f, 0.022f); camera.allowHDR = false; camera.allowMSAA = false;
             var urp = cameraObject.AddComponent<UniversalAdditionalCameraData>(); urp.renderType = CameraRenderType.Base;
             urp.renderPostProcessing = false; urp.SetRenderer(0);
             // The field shader is self lit, but retained Master Duel cosmetics
@@ -261,13 +265,27 @@ namespace LaoDai.BattleSpirits.Visuals
         private void BuildField()
         {
             Part(stage.transform, "StandardArena", PrimitiveType.Cube, new Vector3(0, -0.4f, 0), new Vector3(35, 0.8f, 27), dark);
+            // Layered edges give the platform depth without restoring YGO slot
+            // meshes or competing with the card faces. All surfaces remain
+            // inside the camera's already fitted table bounds.
+            Part(stage.transform, "ArenaLowerBevel", PrimitiveType.Cube, new Vector3(0, -0.03f, 0), new Vector3(34.8f, 0.09f, 26.8f), zoneFrame);
             Part(stage.transform, "FieldInset", PrimitiveType.Cube, new Vector3(0, 0.015f, 0), new Vector3(33.6f, 0.06f, 25.6f), panel);
-            Part(stage.transform, "CenterLine", PrimitiveType.Cube, new Vector3(0, 0.07f, 0), new Vector3(32, 0.04f, 0.06f), trim);
+            Part(stage.transform, "CenterLine", PrimitiveType.Cube, new Vector3(0, 0.07f, 0), new Vector3(31.8f, 0.025f, 0.035f), guide);
             BuildPlaymatChrome();
             for (int sign = -1; sign <= 1; sign += 2)
             {
-                Part(stage.transform, "SideRail", PrimitiveType.Cube, new Vector3(sign * 17, 0.12f, 0), new Vector3(0.08f, 0.25f, 26), trim);
-                Part(stage.transform, "EndRail", PrimitiveType.Cube, new Vector3(0, 0.12f, sign * 13), new Vector3(34, 0.25f, 0.08f), trim);
+                Part(stage.transform, "SideRail", PrimitiveType.Cube, new Vector3(sign * 17, 0.12f, 0), new Vector3(0.12f, 0.25f, 26), trim);
+                Part(stage.transform, "EndRail", PrimitiveType.Cube, new Vector3(0, 0.12f, sign * 13), new Vector3(34, 0.25f, 0.12f), trim);
+                Part(stage.transform, "SideInnerRail", PrimitiveType.Cube, new Vector3(sign * 16.23f, 0.09f, 0), new Vector3(0.035f, 0.035f, 24.4f), guide);
+                Part(stage.transform, "EndInnerRail", PrimitiveType.Cube, new Vector3(0, 0.09f, sign * 12.23f), new Vector3(31.8f, 0.035f, 0.035f), guide);
+                for (int edge = -1; edge <= 1; edge += 2)
+                {
+                    var corner = Part(stage.transform, "CornerBrace", PrimitiveType.Cube,
+                        new Vector3(sign * 16.1f, 0.105f, edge * 12.1f), new Vector3(1.05f, 0.1f, 0.16f), zoneFrame);
+                    corner.transform.localRotation = Quaternion.Euler(0, -sign * edge * 45, 0);
+                    Part(stage.transform, "SideInlay", PrimitiveType.Cube,
+                        new Vector3(sign * 14.6f, 0.055f, edge * 4.5f), new Vector3(0.035f, 0.025f, 8.3f), zoneFrame);
+                }
                 int side = sign < 0 ? 0 : 1;
                 var half = BattleSpiritGeometry.Pivot(stage.transform, side == 0 ? "NearPlayerField" : "FarPlayerField", Vector3.zero);
                 Zone(half, "SPIRIT", new Vector3(0, 0.1f, sign * 3.8f), new Vector3(23, 0.12f, 4.8f), side);
@@ -280,9 +298,9 @@ namespace LaoDai.BattleSpirits.Visuals
                 {
                     poolRoots[side, zone] = BattleSpiritGeometry.Pivot(half, labels[zone], positions[zone]);
                     Part(poolRoots[side, zone], "ZoneFrame", PrimitiveType.Cube, Vector3.zero,
-                        new Vector3(3.7f, 0.055f, 3.2f), trim);
+                        new Vector3(3.7f, 0.055f, 3.2f), zoneFrame);
                     Part(poolRoots[side, zone], "ZonePanel", PrimitiveType.Cube, new Vector3(0, 0.035f, 0),
-                        new Vector3(3.54f, 0.035f, 3.04f), zone == 0 ? panel : dark);
+                        new Vector3(3.54f, 0.035f, 3.04f), zone == 0 ? panel : zoneSurface);
                     counts[side, zone] = Label(half, labels[zone], positions[zone] + new Vector3(0, 0.17f, -sign * 1.4f), side);
                 }
                 mateAnchors[side] = BattleSpiritGeometry.Pivot(stage.transform, side == 0 ? "NearMate" : "FarMate", new Vector3(side == 0 ? -15.5f : 15.5f, 0.25f, sign * 3));
@@ -316,6 +334,9 @@ namespace LaoDai.BattleSpirits.Visuals
             var bottom = ArtworkMaterial("PlaymatBottom", sheet, new Rect(0.035f, 0, 0.93f, 0.05f));
             var left = ArtworkMaterial("PlaymatLeft", sheet, new Rect(0, 0.05f, 0.035f, 0.90f));
             var right = ArtworkMaterial("PlaymatRight", sheet, new Rect(0.965f, 0.05f, 0.035f, 0.90f));
+            var ornamentTint = new Color(0.34f, 0.46f, 0.51f);
+            top.SetColor("_BaseColor", ornamentTint); bottom.SetColor("_BaseColor", ornamentTint);
+            left.SetColor("_BaseColor", ornamentTint); right.SetColor("_BaseColor", ornamentTint);
             TexturedPlane(stage.transform, "PlaymatBorderTop", new Vector3(0, 0.11f, halfDepth), new Vector2(halfWidth * 2 - edge, edge), top);
             TexturedPlane(stage.transform, "PlaymatBorderBottom", new Vector3(0, 0.11f, -halfDepth), new Vector2(halfWidth * 2 - edge, edge), bottom);
             TexturedPlane(stage.transform, "PlaymatBorderLeft", new Vector3(-halfWidth, 0.11f, 0), new Vector2(edge, halfDepth * 2 - edge), left);
@@ -324,13 +345,15 @@ namespace LaoDai.BattleSpirits.Visuals
                 for (int z = -1; z <= 1; z += 2)
                 {
                     var uv = new Rect(x < 0 ? 0 : 0.965f, z < 0 ? 0 : 0.95f, 0.035f, 0.05f);
+                    var corner = ArtworkMaterial("PlaymatCorner", sheet, uv); corner.SetColor("_BaseColor", ornamentTint);
                     TexturedPlane(stage.transform, "PlaymatCorner", new Vector3(x * halfWidth, 0.115f, z * halfDepth),
-                        new Vector2(edge, edge), ArtworkMaterial("PlaymatCorner", sheet, uv));
+                        new Vector2(edge, edge), corner);
                 }
             var logoUv = new Rect(0.30f, 0.60f, 0.40f, 0.16f);
             float logoHeight = 4.9f * sheet.height * logoUv.height / (sheet.width * logoUv.width);
+            var logo = ArtworkMaterial("PlaymatLogo", sheet, logoUv); logo.SetColor("_BaseColor", new Color(0.62f, 0.71f, 0.75f));
             TexturedPlane(stage.transform, "BattleSpiritsPlaymatLogo", new Vector3(0, 0.12f, 0.35f),
-                new Vector2(4.9f, logoHeight), ArtworkMaterial("PlaymatLogo", sheet, logoUv));
+                new Vector2(4.9f, logoHeight), logo);
         }
 
         private Material ArtworkMaterial(string name, Texture image, Rect uv)
@@ -362,9 +385,14 @@ namespace LaoDai.BattleSpirits.Visuals
 
         private void Zone(Transform parent, string text, Vector3 position, Vector3 scale, int side)
         {
-            Part(parent, text + "Border", PrimitiveType.Cube, position, scale, trim);
-            Part(parent, text + "OpenArea", PrimitiveType.Cube, position + Vector3.up * 0.07f, new Vector3(scale.x - 0.1f, scale.y, scale.z - 0.1f), dark);
-            Label(parent, text, position + new Vector3(-scale.x * 0.42f, 0.15f, 0), side);
+            Part(parent, text + "Border", PrimitiveType.Cube, position, scale, zoneFrame);
+            Part(parent, text + "OpenArea", PrimitiveType.Cube, position + Vector3.up * 0.07f, new Vector3(scale.x - 0.08f, scale.y, scale.z - 0.08f), zoneSurface);
+            // Thin edge markers describe an open Battle Spirits area; they do
+            // not divide the space into Yu-Gi-Oh monster/card slots.
+            float edge = scale.z * .5f - .12f;
+            Part(parent, text + "Guide", PrimitiveType.Cube, position + new Vector3(0, .145f, side == 0 ? -edge : edge),
+                new Vector3(scale.x - .24f, .015f, .025f), guide);
+            Label(parent, text, position + new Vector3(-scale.x * 0.40f, 0.15f, 0), side);
         }
 
         private TextMesh Label(Transform parent, string value, Vector3 position, int side)
@@ -373,8 +401,8 @@ namespace LaoDai.BattleSpirits.Visuals
             var go = new GameObject("Label_" + value); go.layer = StageLayer; go.transform.SetParent(parent, false);
             go.transform.localPosition = position; go.transform.localRotation = Quaternion.Euler(90, side == 0 ? 0 : 180, 0);
             var text = go.AddComponent<TextMesh>(); text.text = value; text.font = font; text.fontSize = 42;
-            text.characterSize = 0.09f; text.anchor = TextAnchor.MiddleCenter; text.alignment = TextAlignment.Center;
-            text.color = new Color(0.91f, 0.92f, 0.95f); go.GetComponent<MeshRenderer>().sharedMaterial = font.material;
+            text.characterSize = 0.15f; text.anchor = TextAnchor.MiddleCenter; text.alignment = TextAlignment.Center;
+            text.color = new Color(0.79f, 0.85f, 0.89f); go.GetComponent<MeshRenderer>().sharedMaterial = font.material;
             return text;
         }
 

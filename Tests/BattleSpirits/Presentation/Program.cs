@@ -115,6 +115,13 @@ internal static class Entry
         else if(node.GetComponent<SelectionButton>() is SelectionButton selection)selection.Click();
         else {var button=node.GetComponent<Button>();Assert(button!=null,"Button has no event API: "+suffix);button.onClick.Invoke();}
     }
+    private static void Pointer(Transform node,UnityEngine.EventSystems.EventTriggerType kind)
+    {
+        var trigger=node.GetComponent<UnityEngine.EventSystems.EventTrigger>();
+        var entry=trigger?.triggers?.SingleOrDefault(item=>item.eventID==kind);
+        Assert(entry!=null,"A hand card has no single pointer binding for "+kind);
+        entry.callback.Invoke(new UnityEngine.EventSystems.BaseEventData());
+    }
     private static void Input(Transform root,string suffix,string value)
     {
         var input=Find(root,suffix)?.GetComponent<TMP_InputField>();Assert(input!=null,"Missing actual prefab input: "+suffix);
@@ -1158,6 +1165,158 @@ internal static class Entry
                     &&scroll.viewport.anchorMax.x-scroll.viewport.anchorMin.x>.9f
                     &&scroll.viewport.anchorMax.y-scroll.viewport.anchorMin.y>.9f,"The original zero-size inspector viewport was not normalized into a scrollable region.");
                 Assert(screen.GetComponentsInChildren<Canvas>(true).Length==0,"Inspection created another Canvas over the native UI.");
+            });
+            Case("Native duel panel tints the actual white alpha mask dark and keeps inspection labels readable",()=>{
+                fake.View=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);
+                string id=catalog.cards.First(item=>item.IsPlayableFor(BattleRulesFormat.Standard)).id;fake.View.ownHand=new[]{id};
+                var screen=Screen(BattleNativeScreen.Duel);Click(screen.transform,"BS_Hand/BS_Card_"+id);
+                var window=Find(screen.transform,"CardDescription/Window");var face=window.GetComponent<Image>();
+                Assert(face.sprite==BattleTheme.PanelSprite&&face.sprite.texture==Resources.Load<Texture2D>("BattleSpirits/Skin/ChromePanel")
+                    &&face.color.a>=.9f&&Luminance(face.color)<.025,
+                    "The reviewed white alpha-mask panel is still rendered with a white or translucent background.");
+                foreach(string name in new[]{"BS_InspectName","BS_InspectMeta","BS_InspectState","Description Scroll View/Viewport/Content"})
+                {
+                    var label=Find(window,name)?.GetComponent<TextMeshProUGUI>();
+                    Assert(label!=null&&label.gameObject.activeInHierarchy&&label.color.a>.9f&&Contrast(label.color,face.color)>=4.5,
+                        "Inspector foreground loses declared contrast against its actual panel tint: "+name);
+                }
+                var button=Find(window,"BS_InspectZoom").GetComponent<Image>();
+                Assert(button.sprite==BattleTheme.ButtonSprite&&button.color.r==1&&button.color.g==1&&button.color.b==1,
+                    "Fixing the white panel also dark-tinted the original black-centered button artwork.");
+            });
+            Case("Duel hand uses complete card faces in a restrained fan and selected card is raised above its siblings",()=>{
+                fake.View=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);
+                fake.View.ownHand=catalog.cards.Where(item=>item.IsPlayableFor(BattleRulesFormat.Standard)).Take(4).Select(item=>item.id).ToArray();
+                var screen=Screen(BattleNativeScreen.Duel);var duel=Field<BattleNativeDuelView>(screen,"duel");var hand=Field<RectTransform>(duel,"hand");
+                hand.rect=new Rect(0,0,1000,240);Call(duel,"Tick");
+                var slots=Field<List<BattleNativeWidgets.CardSlot>>(duel,"handSlots");
+                foreach(var slot in slots)
+                {
+                    var rect=(RectTransform)slot.Button.transform;var area=(RectTransform)Find(rect,"BS_CardArtworkSlot");
+                    var visual=(RectTransform)Find(rect,"BS_HandVisual");
+                    Assert(!Find(rect,"BS_CardCode").gameObject.activeSelf&&area.anchorMin.y==0&&area.anchorMax.y==1,
+                        "A duel hand still reserves a tiny unreadable ID footer instead of the entire face.");
+                    Assert(rect.anchorMin.x>=-.001f&&rect.anchorMax.x<=1.001f&&visual!=null&&Math.Abs(visual.localEulerAngles.z)<=10,
+                        "The hand fan clips a whole slot horizontally or turns its official face too far.");
+                }
+                Assert(Math.Abs(Find(slots[0].Button.transform,"BS_HandVisual").localEulerAngles.z)>.1f
+                    &&Math.Abs(Find(slots[3].Button.transform,"BS_HandVisual").localEulerAngles.z)>.1f,"The hand is still a rigid horizontal thumbnail grid.");
+                var selected=slots[1];Click(screen.transform,"BS_Hand/BS_Card_"+selected.Id);var selectedRect=(RectTransform)Find(selected.Button.transform,"BS_HandVisual");
+                Assert(selectedRect.anchorMin.y>((RectTransform)Find(slots[0].Button.transform,"BS_HandVisual")).anchorMin.y
+                    &&selectedRect.localScale.x>1&&Math.Abs(selectedRect.localEulerAngles.z)<.001f
+                    &&hand.GetChild(hand.childCount-1)==selected.Button.transform&&fake.Commands.Count==0,
+                    "Selected fan card is not raised, straightened and placed in front without playing it.");
+            });
+            Case("Hand hover raises only the current pooled slot and never changes inspection selection or sends a command",()=>{
+                fake.View=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);fake.View.phase="Main";fake.View.decisionPlayer=0;
+                fake.View.ownHand=catalog.cards.Where(item=>item.IsPlayableFor(BattleRulesFormat.Standard)&&item.IsSpirit).Take(3).Select(item=>item.id).ToArray();
+                var screen=Screen(BattleNativeScreen.Duel);var duel=Field<BattleNativeDuelView>(screen,"duel");
+                var hand=Field<RectTransform>(duel,"hand");hand.rect=new Rect(0,0,1000,240);Call(duel,"Tick");
+                var slots=Field<List<BattleNativeWidgets.CardSlot>>(duel,"handSlots");Click(screen.transform,"BS_Hand/BS_Card_"+slots[0].Id);
+                var first=slots[0].Button.transform;var hovered=slots[2].Button.transform;
+                var visual=(RectTransform)Find(hovered,"BS_HandVisual");
+                float baseY=visual.anchorMin.y;string title=Find(screen.transform,"BS_InspectName").GetComponent<TextMeshProUGUI>().text;
+                int objects=GameObject.All.Count,requests=fake.RequestedArt.Count;
+                Pointer(hovered,UnityEngine.EventSystems.EventTriggerType.PointerEnter);
+                Assert(visual.anchorMin.y>baseY&&visual.localScale.x>1&&hand.GetChild(hand.childCount-1)==hovered
+                    &&Field<int>(duel,"selectedHand")==0&&Find(screen.transform,"BS_InspectName").GetComponent<TextMeshProUGUI>().text==title
+                    &&fake.Commands.Count==0&&fake.RequestedArt.Count==requests&&GameObject.All.Count==objects,
+                    "Hover rebuilt artwork, changed the selected identity, played a card or failed to raise the intended slot.");
+                Pointer(hovered,UnityEngine.EventSystems.EventTriggerType.PointerExit);
+                Assert(Math.Abs(visual.anchorMin.y-baseY)<.001f&&visual.localScale.x==1&&hand.GetChild(hand.childCount-1)==first,
+                    "Pointer exit failed to restore the selected card above its resting hand.");
+                fake.View.ownHand=fake.View.ownHand.Reverse().ToArray();fake.Refresh();
+                Pointer(slots[1].Button.transform,UnityEngine.EventSystems.EventTriggerType.PointerEnter);
+                Assert(Field<int>(duel,"hoveredHand")==1&&fake.Commands.Count==0,"Rebound hover retains a previous slot's logical index.");
+                slots[1].Button.onClick.Invoke();Click(screen.transform,"BS_InspectPlay");
+                Assert(fake.Commands.Single().action=="summon"&&fake.Commands.Single().index==1,
+                    "Hover or fan sibling order changed the logical index used for explicit play.");
+            });
+            Case("Hand hover animates only the visual under a stable raycast rectangle and respects modal presentation guards",()=>{
+                fake.View=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);
+                fake.View.ownHand=catalog.cards.Where(item=>item.IsPlayableFor(BattleRulesFormat.Standard)).Take(3).Select(item=>item.id).ToArray();
+                var screen=Screen(BattleNativeScreen.Duel);var duel=Field<BattleNativeDuelView>(screen,"duel");var hand=Field<RectTransform>(duel,"hand");
+                hand.rect=new Rect(0,0,1000,240);Call(duel,"Tick");var slots=Field<List<BattleNativeWidgets.CardSlot>>(duel,"handSlots");
+                var slot=slots[2];var hit=(RectTransform)slot.Button.transform;var visual=(RectTransform)Find(hit,"BS_HandVisual");
+                var min=hit.anchorMin;var max=hit.anchorMax;float before=visual.anchorMin.y;
+                void AssertStable()
+                {
+                    Assert(hit.anchorMin.x==min.x&&hit.anchorMin.y==min.y&&hit.anchorMax.x==max.x&&hit.anchorMax.y==max.y
+                        &&hit.localScale.x==1&&hit.localScale.y==1&&hit.localEulerAngles.z==0,
+                        "Raising a hovered card moves its hit rectangle and can cause pointer exit/reenter flicker.");
+                }
+                Assert(hit.GetComponent<Image>()?.raycastTarget==true&&!slot.Image.raycastTarget&&slot.Image.GetComponentInParent<Button>()==slot.Button,
+                    "The moving artwork, rather than the stable root, owns the card's hover hit surface.");
+                Pointer(hit,UnityEngine.EventSystems.EventTriggerType.PointerEnter);AssertStable();
+                Assert(visual.anchorMin.y>before&&visual.anchorMax.y<=1.01f,
+                    "The lifted card exceeds its stable vertical hit extent or never lifts its visual.");
+                Pointer(hit,UnityEngine.EventSystems.EventTriggerType.PointerExit);AssertStable();
+                Assert(Math.Abs(visual.anchorMin.y-before)<.001f,"Pointer exit did not restore the visual under its unchanged hit rectangle.");
+                fake.SetPresentationBusy(true);Pointer(hit,UnityEngine.EventSystems.EventTriggerType.PointerEnter);
+                Assert(Field<int>(duel,"hoveredHand")==-1,"Summon presentation permits another card to lift behind its input curtain.");
+                fake.SetPresentationBusy(false);Click(screen.transform,"BS_Hand/BS_Card_"+slots[0].Id);Click(screen.transform,"BS_InspectZoom");
+                Pointer(hit,UnityEngine.EventSystems.EventTriggerType.PointerEnter);
+                Assert(Field<int>(duel,"hoveredHand")==-1&&Field<int>(duel,"selectedHand")==0&&fake.Commands.Count==0,
+                    "Hover behind the card zoom changes its source selection or emits a command.");
+            });
+            Case("Dense duel hand reflows existing fan slots on resize without dropping identities or loading artwork",()=>{
+                fake.View=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);
+                var ids=catalog.cards.Where(item=>item.IsPlayableFor(BattleRulesFormat.Standard)).Take(4).Select(item=>item.id).ToArray();
+                fake.View.ownHand=Enumerable.Range(0,13).Select(i=>ids[i%ids.Length]).ToArray();string state=JsonConvert.SerializeObject(fake.View);
+                var screen=Screen(BattleNativeScreen.Duel);var duel=Field<BattleNativeDuelView>(screen,"duel");var hand=Field<RectTransform>(duel,"hand");
+                var slots=Field<List<BattleNativeWidgets.CardSlot>>(duel,"handSlots");int objects=GameObject.All.Count,requests=fake.RequestedArt.Count;
+                foreach(var size in new[]{new Vector2(1000,240),new Vector2(650,230),new Vector2(1500,260)})
+                {
+                    hand.rect=new Rect(0,0,size.x,size.y);Call(duel,"Tick");
+                    Assert(slots.Count==13&&slots.All(slot=>slot.Button.gameObject.activeSelf)
+                        &&slots.Select(slot=>slot.Id).SequenceEqual(fake.View.ownHand),"Dense hand lost a copy or reordered its logical identities.");
+                    foreach(var slot in slots)
+                    {
+                        var rect=(RectTransform)slot.Button.transform;
+                        Assert(rect.anchorMin.x>=-.001f&&rect.anchorMax.x<=1.001f,"Resizing a dense hand moves a card slot entirely outside its horizontal area.");
+                    }
+                }
+                Assert(GameObject.All.Count==objects&&fake.RequestedArt.Count==requests&&JsonConvert.SerializeObject(fake.View)==state,
+                    "A cosmetic fan resize allocates card widgets, requests faces again or changes the filtered snapshot.");
+            });
+            Case("Duel phase and action hints remain readable on owned dark strips without covering central card zones",()=>{
+                fake.View=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);
+                var screen=Screen(BattleNativeScreen.Duel);
+                foreach(var names in new[]{new[]{"BS_Phase","BS_PhaseBar"},new[]{"BS_ActionHint","BS_ActionHintBar"}})
+                {
+                    var label=Find(screen.transform,names[0])?.GetComponent<TextMeshProUGUI>();var bar=Find(screen.transform,names[1])?.GetComponent<Image>();
+                    Assert(label!=null&&bar!=null&&!label.raycastTarget&&!bar.raycastTarget&&bar.color.a>=.85f&&Contrast(label.color,bar.color)>=4.5,
+                        "A duel prompt relies on tiny text over an unowned or bright battlefield surface.");
+                }
+                var hint=Find(screen.transform,"BS_ActionHint").GetComponent<TextMeshProUGUI>();
+                var opponentHand=(RectTransform)Find(screen.transform,"BS_OpponentHand");
+                Assert(hint.rectTransform.anchorMin.y>=.86f&&hint.rectTransform.anchorMax.y<=opponentHand.anchorMin.y,
+                    "Action guidance overlaps the near Core pools or the opponent's public hand instead of the header gap.");
+                Assert(!string.IsNullOrWhiteSpace(hint.text),"Opening offers buttons but no short action guidance.");
+                fake.View.phase="Main";fake.View.decisionPlayer=0;fake.Refresh();
+                Assert(hint.text.IndexOf("thẻ",StringComparison.OrdinalIgnoreCase)>=0&&fake.Commands.Count==0,
+                    "Main-step cosmetic guidance is missing or executes a command while updating text.");
+            });
+            Case("Arena uses restrained navy insets and tinted unchanged Standard ornaments without state or resource churn",()=>{
+                var output=new GameObject("StyledArena",typeof(RectTransform)).AddComponent<RawImage>();
+                var field=output.gameObject.AddComponent<BattleFieldVisuals>();field.Load(output);var stage=Field<GameObject>(field,"stage");
+                foreach(string name in new[]{"StandardArena","FieldInset","SPIRITOpenArea","NEXUSOpenArea"})
+                {
+                    var renderer=stage.GetComponentsInChildren<MeshRenderer>(true).First(item=>item.name==name);var color=renderer.sharedMaterial.Colors["_BaseColor"];
+                    Assert(color.b>=color.r&&color.b>.02f&&Math.Max(color.r,Math.Max(color.g,color.b))<.2f,
+                        "A field surface is still a bright gray mat or pure black slab: "+name);
+                }
+                var ornaments=stage.GetComponentsInChildren<MeshRenderer>(true).Where(item=>item.name.StartsWith("PlaymatBorder",StringComparison.Ordinal)
+                    ||item.name=="PlaymatCorner"||item.name=="BattleSpiritsPlaymatLogo").ToArray();
+                Assert(ornaments.Length==9&&ornaments.All(item=>item.sharedMaterial.mainTexture==BattleTheme.PlaymatStandard
+                    &&Luminance(item.sharedMaterial.Colors["_BaseColor"])<.7),
+                    "The oversized white ornament remains untoned or uses substituted source artwork.");
+                var snapshot=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);string state=JsonConvert.SerializeObject(snapshot);
+                field.Render(snapshot);var materials=Field<List<Material>>(field,"materials");var meshes=Field<List<Mesh>>(field,"meshes");
+                int materialCount=materials.Count,meshCount=meshes.Count;field.Render(snapshot);Call(field,"Update");
+                Assert(materials.Count==materialCount&&meshes.Count==meshCount&&JsonConvert.SerializeObject(snapshot)==state&&fake.Commands.Count==0,
+                    "Arena chrome churns owned resources or alters gameplay on an unchanged snapshot.");
+                field.Dispose();
             });
             Case("Hand selection inspects safely and only the explicit play button summons the selected index",()=>{
                 fake.View=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);fake.View.phase="Main";fake.View.decisionPlayer=0;

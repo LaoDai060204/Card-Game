@@ -16,15 +16,22 @@ namespace LaoDai.BattleSpirits.NativeUI
     // Original OcgCoreUI LP/name/detail/button locations, driven by BS snapshots.
     internal sealed class BattleNativeDuelView
     {
+        private static readonly Color InspectorFill = new Color(.035f, .045f, .06f, .98f);
+        private static readonly Color InsetFill = new Color(.018f, .027f, .04f, .98f);
+        private static readonly Color LightText = new Color(.91f, .94f, .98f, 1);
+        private static readonly Color MutedText = new Color(.70f, .77f, .85f, 1);
         private readonly Transform root;
         private readonly IBattleNativeSession session;
         private readonly Dictionary<string, CardDefinition> cards;
         private RectTransform hand, opponentHand, field0, field1;
-        private TextMeshProUGUI phase;
+        private TextMeshProUGUI phase, actionHint;
         private int selectedSpirit = -1;
         private int selectedHand = -1, inspectedInstance = -1;
+        private int hoveredHand = -1;
+        private float handWidth, handHeight;
         private string inspectedId, handSignature;
         private readonly List<BattleNativeWidgets.CardSlot> handSlots = new List<BattleNativeWidgets.CardSlot>();
+        private readonly List<RectTransform> handVisuals = new List<RectTransform>();
         private readonly List<RawImage> opponentBacks = new List<RawImage>();
         private readonly Dictionary<int, FieldSlot> fieldSlots = new Dictionary<int, FieldSlot>();
         private readonly HashSet<int> presentFieldIds = new HashSet<int>();
@@ -71,10 +78,17 @@ namespace LaoDai.BattleSpirits.NativeUI
             // coordinates must not be interpreted against the full screen.
             field0 = BattleNativeWidgets.Rect(root, "BS_OwnField"); BattleNativeWidgets.Place(field0, .24f, .18f, 1, .90f);
             field1 = BattleNativeWidgets.Rect(root, "BS_OpponentField"); BattleNativeWidgets.Place(field1, .24f, .18f, 1, .90f);
-            hand = BattleNativeWidgets.Rect(root, "BS_Hand"); BattleNativeWidgets.Place(hand, .255f, .04f, .855f, .245f);
-            opponentHand = BattleNativeWidgets.Rect(root, "BS_OpponentHand"); BattleNativeWidgets.Place(opponentHand, .42f, .89f, .73f, .99f);
-            phase = BattleNativeWidgets.Text(root, "BS_Phase", string.Empty, 23); BattleNativeWidgets.Place(phase.rectTransform, .245f, .905f, .42f, .995f);
+            hand = BattleNativeWidgets.Rect(root, "BS_Hand"); BattleNativeWidgets.Place(hand, .285f, .006f, .855f, .255f);
+            opponentHand = BattleNativeWidgets.Rect(root, "BS_OpponentHand"); BattleNativeWidgets.Place(opponentHand, .47f, .90f, .72f, .995f);
+            Surface(root, "BS_PhaseBar", .245f, .905f, .445f, .995f, InspectorFill);
+            Surface(root, "BS_PhaseAccent", .245f, .905f, .247f, .995f, BattleTheme.Accent);
+            phase = BattleNativeWidgets.Text(root, "BS_Phase", string.Empty, 22); BattleNativeWidgets.Place(phase.rectTransform, .255f, .91f, .44f, .99f);
             phase.alignment = TextAlignmentOptions.MidlineLeft;
+            phase.color = LightText; FitText(phase, 15, 22);
+            Surface(root, "BS_ActionHintBar", .42f, .865f, .85f, .895f, new Color(.015f, .025f, .04f, .92f));
+            actionHint = BattleNativeWidgets.Text(root, "BS_ActionHint", string.Empty, 19);
+            BattleNativeWidgets.Place(actionHint.rectTransform, .43f, .866f, .84f, .894f);
+            actionHint.color = LightText; FitText(actionHint, 13, 19);
             ArrangeLife("LP0", .245f, .25f, .42f, .33f);
             ArrangeLife("LP1", .735f, .905f, .975f, .995f);
             BuildInspector();
@@ -112,6 +126,7 @@ namespace LaoDai.BattleSpirits.NativeUI
             if (view == null || view.players == null || view.players.Length != 2)
             {
                 summonPresentation?.Clear(); ResetInspection();
+                phase.text = "ĐANG CHỜ TRẬN ĐẤU"; actionHint.text = string.Empty;
                 foreach (var slot in handSlots) slot.Hide();
                 foreach (var slot in fieldSlots.Values) slot.button.gameObject.SetActive(false);
                 foreach (var back in opponentBacks) back.transform.parent.gameObject.SetActive(false);
@@ -124,8 +139,9 @@ namespace LaoDai.BattleSpirits.NativeUI
             BattleNativeWidgets.Label(root, "LP1/TextPlayer1LP", opponent.life.ToString());
             Name("LP0/NameBase/TextPlayer0Name", own); Name("LP1/NameBase/TextPlayer1Name", opponent);
             phase.text = view.winner >= 0 ? (view.winner == view.viewer ? "CHIẾN THẮNG" : "KẾT THÚC TRẬN")
-                : "LƯỢT " + view.turn + " · " + Phase(view.phase) + "\n" + (view.decisionPlayer == view.viewer ? "Đến lượt bạn chọn" : "Đang chờ đối thủ…");
+                : "LƯỢT " + view.turn + "\n" + Phase(view.phase);
             string signature = string.Join("\n", view.ownHand ?? Array.Empty<string>());
+            if (handSignature != signature) hoveredHand = -1;
             if (handSignature != signature && selectedHand >= 0) ResetInspection();
             handSignature = signature;
             if (inspectedInstance >= 0 && !view.players.Any(player => (player.field ?? Array.Empty<SpiritView>())
@@ -148,11 +164,14 @@ namespace LaoDai.BattleSpirits.NativeUI
             // Reproject the existing targets; do not rebuild any widgets/art.
             foreach (var slot in fieldSlots.Values)
                 if (slot.button.gameObject.activeSelf) PlaceFieldSlot(slot);
+            if (Math.Abs(hand.rect.width - handWidth) > .5f || Math.Abs(hand.rect.height - handHeight) > .5f) LayoutHand();
         }
         private void Name(string path, PublicPlayerView player)
         {
             BattleNativeWidgets.Label(root, path, player.name + "\nReserve " + player.reserveNormal + (player.reserveSoul ? " + ◆" : "") + " · Trash " + player.trashNormal + " · Deck " + player.deckCount);
-            var label = BattleNativeWidgets.Component<TextMeshProUGUI>(root, path); if (label != null) label.fontSize = 20;
+            var label = BattleNativeWidgets.Component<TextMeshProUGUI>(root, path);
+            if (label != null)
+            { label.fontSize = 18; label.color = LightText; label.enableWordWrapping = false; label.overflowMode = TextOverflowModes.Ellipsis; }
         }
         private void DrawHand(FilteredMatchView view)
         {
@@ -165,20 +184,71 @@ namespace LaoDai.BattleSpirits.NativeUI
                     var created = BattleNativeWidgets.CreateCardSlot(hand, session);
                     created.Button.transition = Selectable.Transition.None;
                     var surface = created.Button.gameObject.AddComponent<Image>();
-                    surface.raycastTarget = true; surface.color = new Color(.02f, .03f, .04f, .85f);
-                    SelectionFrame(created.Button.transform, "BS_HandSelection");
+                    surface.raycastTarget = true; surface.color = Color.clear;
+                    var visual = BattleNativeWidgets.Rect(created.Button.transform, "BS_HandVisual");
+                    created.Image.raycastTarget = false;
+                    // A hand is the full printed face; IDs belong in the detail
+                    // panel, rather than consuming a footer on every small card.
+                    BattleNativeWidgets.Active(created.Button.transform, "BS_CardCode", false);
+                    var artArea = BattleNativeWidgets.Find(created.Button.transform, "BS_CardArtworkSlot") as RectTransform;
+                    if (artArea != null)
+                    { artArea.SetParent(visual, false); BattleNativeWidgets.Place(artArea, 0, 0, 1, 1); }
+                    SelectionFrame(visual, "BS_HandSelection");
+                    var pointer = created.Button.gameObject.AddComponent<EventTrigger>();
+                    var enter = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
+                    enter.callback.AddListener(_ => HoverHand(created, true)); pointer.triggers.Add(enter);
+                    var exit = new EventTrigger.Entry { eventID = EventTriggerType.PointerExit };
+                    exit.callback.AddListener(_ => HoverHand(created, false)); pointer.triggers.Add(exit);
                     handSlots.Add(created);
+                    handVisuals.Add(visual);
                 }
                 var slot = handSlots[i]; string id = view.ownHand[i];
-                slot.Bind(id, () => SelectHand(index, id));
-                float width = Math.Min(.16f, 1f / Math.Max(1, count));
-                float start = (1 - count * width) * .5f;
-                BattleNativeWidgets.Place(slot.Button.transform as RectTransform, start + i * width, 0,
-                    start + (i + 1) * width - .003f, 1);
+                slot.Index = i; slot.Bind(id, () => SelectHand(index, id));
                 slot.Button.interactable = presentationSession?.IsPresentationBusy != true;
                 BattleNativeWidgets.Active(slot.Button.transform, "BS_HandSelection", selectedHand == i);
             }
             for (int i = count; i < handSlots.Count; i++) handSlots[i].Hide();
+            LayoutHand();
+        }
+        private void HoverHand(BattleNativeWidgets.CardSlot slot, bool entered)
+        {
+            if (entered)
+            {
+                if (ZoomVisible || presentationSession?.IsPresentationBusy == true || !slot.Button.gameObject.activeInHierarchy) return;
+                hoveredHand = slot.Index;
+            }
+            else if (hoveredHand == slot.Index) hoveredHand = -1;
+            LayoutHand();
+        }
+        private void LayoutHand()
+        {
+            if (hand == null) return;
+            handWidth = hand.rect.width; handHeight = hand.rect.height;
+            int count = session.View?.ownHand?.Length ?? 0;
+            // Use the real area aspect so the selectable frame fits the face.
+            // Dense hands overlap naturally; all identities remain in the view.
+            float width = handWidth > 1 && handHeight > 1 ? handHeight * (675f / 983) * .90f / handWidth : .17f;
+            width = Math.Max(.06f, Math.Min(.24f, width));
+            float step = count <= 1 ? 0 : Math.Min(width * .84f, Math.Max(0, 1 - width) / (count - 1));
+            float span = width + step * Math.Max(0, count - 1), start = (1 - span) * .5f;
+            int raised = hoveredHand >= 0 ? hoveredHand : selectedHand;
+            for (int i = 0; i < Math.Min(count, handSlots.Count); i++)
+            {
+                var rect = handSlots[i].Button.transform as RectTransform;
+                bool focus = i == raised;
+                float side = count <= 1 ? 0 : (i - (count - 1) * .5f) / Math.Max(1, (count - 1) * .5f);
+                float lift = focus ? .13f : .025f * (1 - side * side);
+                // Keep pointer hit areas stationary. Lifting the Button itself
+                // makes a cursor near its bottom repeatedly enter/exit the card.
+                BattleNativeWidgets.Place(rect, start + i * step, 0, start + i * step + width, 1.10f);
+                rect.localEulerAngles = Vector3.zero; rect.localScale = Vector3.one;
+                var visual = handVisuals[i];
+                BattleNativeWidgets.Place(visual, 0, lift / 1.10f, 1, (lift + .90f) / 1.10f);
+                visual.localEulerAngles = new Vector3(0, 0, focus ? 0 : -side * 7);
+                visual.localScale = Vector3.one * (focus ? 1.08f : 1);
+                rect.SetAsLastSibling();
+            }
+            if (raised >= 0 && raised < count && raised < handSlots.Count) handSlots[raised].Button.transform.SetAsLastSibling();
         }
         private void DrawOpponentHand(PublicPlayerView player)
         {
@@ -283,6 +353,13 @@ namespace LaoDai.BattleSpirits.NativeUI
         {
             for (int i = 0; i < handSlots.Count; i++) BattleNativeWidgets.Active(handSlots[i].Button.transform, "BS_HandSelection", selectedHand == i);
             foreach (var slot in fieldSlots.Values) slot.selection.SetActive(inspectedInstance == slot.instance);
+            LayoutHand();
+        }
+        private static Image Surface(Transform parent, string name, float left, float bottom, float right, float top, Color color)
+        {
+            var rect = BattleNativeWidgets.Rect(parent, name); BattleNativeWidgets.Place(rect, left, bottom, right, top);
+            var image = rect.gameObject.AddComponent<Image>(); image.color = color; image.raycastTarget = false;
+            return image;
         }
         private static void Normalize(RectTransform rect, float left, float bottom, float right, float top)
         {
@@ -306,6 +383,11 @@ namespace LaoDai.BattleSpirits.NativeUI
             string value = path == "LP0" ? "TextPlayer0LP" : "TextPlayer1LP";
             Normalize(area.Find(value) as RectTransform, .29f, .02f, .98f, .42f);
             var label = BattleNativeWidgets.Component<TextMeshProUGUI>(area, value); if (label != null) label.fontSize = 26;
+            var hud = area.GetComponent<Image>() ?? area.gameObject.AddComponent<Image>();
+            hud.material = null; hud.sprite = BattleTheme.PanelSprite; hud.type = Image.Type.Sliced;
+            hud.color = InspectorFill; hud.raycastTarget = false;
+            Surface(area, "BS_LifeAccent", 0, .01f, .012f, .99f,
+                path == "LP0" ? new Color(.25f, .70f, 1, 1) : new Color(1, .28f, .35f, 1));
         }
         private static GameObject SelectionFrame(Transform parent, string name)
         {
@@ -335,9 +417,18 @@ namespace LaoDai.BattleSpirits.NativeUI
             { group.alpha = 1; group.blocksRaycasts = true; }
             var panel = inspector.GetComponent<Image>() ?? inspector.gameObject.AddComponent<Image>();
             panel.material = null; panel.sprite = BattleTheme.PanelSprite; panel.type = Image.Type.Sliced;
-            panel.color = panel.sprite == null ? BattleTheme.PanelBackground : Color.white; panel.raycastTarget = true;
+            // ChromePanel is a white alpha mask, unlike ChromeButton's black
+            // face. Tint the panel even when the source sprite exists.
+            panel.color = InspectorFill; panel.raycastTarget = true;
+            Surface(inspector, "BS_InspectorHeader", .012f, .915f, .988f, .995f, new Color(.065f, .085f, .115f, 1));
+            Surface(inspector, "BS_InspectorHeaderAccent", .025f, .915f, .975f, .918f, BattleTheme.Accent);
+            Surface(inspector, "BS_InspectCardWell", .025f, .455f, .975f, .91f, InsetFill);
+            Surface(inspector, "BS_InspectMetaWell", .025f, .338f, .975f, .45f, new Color(.05f, .067f, .09f, 1));
+            Surface(inspector, "BS_InspectStateWell", .025f, .272f, .975f, .332f, InsetFill);
+            Surface(inspector, "BS_InspectStateAccent", .025f, .272f, .032f, .332f, BattleTheme.Accent);
+            Surface(inspector, "BS_InspectDivider", .03f, .263f, .97f, .265f, new Color(.20f, .27f, .35f, 1));
             var artArea = BattleNativeWidgets.Rect(inspector, "BS_InspectArtArea");
-            BattleNativeWidgets.Place(artArea, .035f, .47f, .965f, .90f);
+            BattleNativeWidgets.Place(artArea, .09f, .465f, .91f, .90f);
             inspectArt = inspector.Find("Card")?.GetComponent<RawImage>();
             if (inspectArt != null)
             {
@@ -353,19 +444,20 @@ namespace LaoDai.BattleSpirits.NativeUI
                 }
             }
             inspectName = BattleNativeWidgets.Text(inspector, "BS_InspectName", "THÔNG TIN THẺ", 24);
-            BattleNativeWidgets.Place(inspectName.rectTransform, .03f, .91f, .97f, .99f);
+            BattleNativeWidgets.Place(inspectName.rectTransform, .045f, .925f, .955f, .985f);
+            inspectName.alignment = TextAlignmentOptions.MidlineLeft; inspectName.color = LightText;
             inspectName.overflowMode = TextOverflowModes.Ellipsis;
             FitText(inspectName, 16, 24);
             inspectMeta = BattleNativeWidgets.Text(inspector, "BS_InspectMeta", string.Empty, 18);
-            BattleNativeWidgets.Place(inspectMeta.rectTransform, .035f, .35f, .965f, .465f);
-            inspectMeta.alignment = TextAlignmentOptions.TopLeft;
+            BattleNativeWidgets.Place(inspectMeta.rectTransform, .045f, .345f, .955f, .445f);
+            inspectMeta.alignment = TextAlignmentOptions.TopLeft; inspectMeta.color = LightText;
             FitText(inspectMeta, 12, 18);
             inspectState = BattleNativeWidgets.Text(inspector, "BS_InspectState", string.Empty, 18);
-            BattleNativeWidgets.Place(inspectState.rectTransform, .035f, .285f, .965f, .35f);
-            inspectState.alignment = TextAlignmentOptions.TopLeft; inspectState.color = BattleTheme.Accent;
+            BattleNativeWidgets.Place(inspectState.rectTransform, .045f, .277f, .955f, .327f);
+            inspectState.alignment = TextAlignmentOptions.TopLeft; inspectState.color = MutedText;
             FitText(inspectState, 12, 18);
             var scrollNode = inspector.Find("Description Scroll View") as RectTransform;
-            Normalize(scrollNode, .035f, .075f, .965f, .28f);
+            Normalize(scrollNode, .035f, .09f, .965f, .258f);
             inspectScroll = scrollNode?.GetComponent<ScrollRect>();
             if (inspectScroll != null)
             {
@@ -380,7 +472,7 @@ namespace LaoDai.BattleSpirits.NativeUI
                 {
                     if (viewport.GetComponent<RectMask2D>() == null) viewport.gameObject.AddComponent<RectMask2D>();
                     var surface = viewport.GetComponent<Image>() ?? viewport.gameObject.AddComponent<Image>();
-                    surface.enabled = true; surface.color = new Color(.015f, .025f, .035f, .45f); surface.raycastTarget = true;
+                    surface.enabled = true; surface.color = InsetFill; surface.raycastTarget = true;
                     inspectScroll.viewport = viewport;
                     var content = viewport.Find("Content") as RectTransform;
                     if (content != null)
@@ -392,14 +484,14 @@ namespace LaoDai.BattleSpirits.NativeUI
                         fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
                         inspectText = content.GetComponent<TextMeshProUGUI>();
                         if (inspectText != null)
-                        { inspectText.enabled = true; inspectText.fontSize = 21; inspectText.alignment = TextAlignmentOptions.TopLeft; inspectText.richText = false; inspectText.enableWordWrapping = true; inspectText.raycastTarget = false; inspectText.color = Color.white; }
+                        { inspectText.enabled = true; inspectText.fontSize = 21; inspectText.alignment = TextAlignmentOptions.TopLeft; inspectText.richText = false; inspectText.enableWordWrapping = true; inspectText.raycastTarget = false; inspectText.color = LightText; }
                     }
                 }
             }
             inspectZoom = BattleNativeWidgets.Button(inspector, "BS_InspectZoom", "PHÓNG TO", OpenZoom);
-            BattleNativeWidgets.Place(inspectZoom.transform as RectTransform, .03f, .008f, .48f, .065f);
+            BattleNativeWidgets.Place(inspectZoom.transform as RectTransform, .03f, .015f, .48f, .078f);
             inspectPlay = BattleNativeWidgets.Button(inspector, "BS_InspectPlay", "CHỌN THẺ", UseSelectedHand);
-            BattleNativeWidgets.Place(inspectPlay.transform as RectTransform, .52f, .008f, .97f, .065f);
+            BattleNativeWidgets.Place(inspectPlay.transform as RectTransform, .52f, .015f, .97f, .078f);
             BuildZoom(); ResetInspection(); detail.SetAsLastSibling();
         }
         private void BuildZoom()
@@ -441,7 +533,7 @@ namespace LaoDai.BattleSpirits.NativeUI
         }
         private void ResetInspection()
         {
-            selectedSpirit = selectedHand = inspectedInstance = -1; inspectedId = null;
+            selectedSpirit = selectedHand = inspectedInstance = hoveredHand = -1; inspectedId = null;
             CloseZoom();
             if (inspectName != null) inspectName.text = "THÔNG TIN THẺ";
             if (inspectMeta != null) inspectMeta.text = string.Empty;
@@ -485,6 +577,7 @@ namespace LaoDai.BattleSpirits.NativeUI
             bool main = view?.phase == "Main" || view?.phase == "SecondMain";
             bool flash = view?.phase == "FlashBeforeBlock" || view?.phase == "FlashAfterBlock";
             inspectPlay.interactable = inHand && CanAct(view) && presentationSession?.IsPresentationBusy != true && (main || card.IsMagic && flash);
+            inspectState.color = inspectPlay.interactable ? BattleTheme.Accent : MutedText;
             BattleNativeWidgets.SetLabel(inspectPlay.transform, inHand ? card.IsMagic ? "DÙNG MAGIC" : "TRIỆU HỒI" : "ĐANG SOI THẺ");
             inspectZoom.interactable = presentationSession?.IsPresentationBusy != true;
             if (inHand)
@@ -565,6 +658,7 @@ namespace LaoDai.BattleSpirits.NativeUI
         private void Actions(FilteredMatchView view)
         {
             if (view == null) return;
+            RefreshActionHint(view);
             foreach (var name in new[] { "ButtonInfo", "ButtonTiming", "ButtonAttachedEffect", "ButtonLog", "ButtonSetting" }) BattleNativeWidgets.Active(root, "Buttons/" + name, false);
             if (presentationSession?.IsPresentationBusy == true) return;
             if (session is IBattleNativePreviewSession preview && preview.IsPreview)
@@ -617,6 +711,24 @@ namespace LaoDai.BattleSpirits.NativeUI
                     SetButton("ButtonTiming", "BỎ QUA FLASH", () => Dispatch("passFlash"));
                     SetButton("ButtonAttachedEffect", "THỨC TỈNH", AwakenMenu);
                     break;
+            }
+        }
+        private void RefreshActionHint(FilteredMatchView view)
+        {
+            if (actionHint == null) return;
+            if (presentationSession?.IsPresentationBusy == true) actionHint.text = "HOẠT ẢNH TRIỆU HỒI · CÓ THỂ BỎ QUA";
+            else if (session is IBattleNativePreviewSession preview && preview.IsPreview) actionHint.text = "XEM THỬ HOẠT ẢNH";
+            else if (session is IBattleNativeReplaySession replay && replay.IsReplay) actionHint.text = "XEM LẠI TRẬN · BẤM THẺ ĐỂ SOI";
+            else if (view.winner >= 0) actionHint.text = "TRẬN ĐẤU ĐÃ KẾT THÚC";
+            else if (view.decisionPlayer != view.viewer) actionHint.text = "ĐANG CHỜ ĐỐI THỦ · BẤM THẺ ĐỂ SOI";
+            else switch (view.phase)
+            {
+                case "Opening": actionHint.text = "CHỌN BÀI MỞ ĐẦU · GIỮ 4 LÁ / ĐỔI 4 LÁ"; break;
+                case "Main": case "SecondMain": actionHint.text = "CHỌN LÁ TRÊN TAY · SOI THẺ RỒI TRIỆU HỒI"; break;
+                case "Attack": actionHint.text = selectedSpirit >= 0 ? "SPIRIT ĐÃ CHỌN · BẤM TẤN CÔNG" : "CHỌN SPIRIT TRÊN SÂN ĐỂ TẤN CÔNG"; break;
+                case "Block": actionHint.text = "CHỌN SPIRIT ĐỂ CHẶN / NHẬN SÁT THƯƠNG"; break;
+                case "FlashBeforeBlock": case "FlashAfterBlock": actionHint.text = "FLASH TIMING · DÙNG MAGIC / BỎ QUA"; break;
+                default: actionHint.text = "BẤM THẺ TRÊN TAY / SÂN ĐỂ XEM THÔNG TIN"; break;
             }
         }
         private bool HasSelected() => session.View?.players?.FirstOrDefault(player => player.playerIndex == session.View.viewer)?.field?.Any(spirit => spirit.instanceId == selectedSpirit && !spirit.exhausted

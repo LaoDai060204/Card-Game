@@ -1,5 +1,7 @@
 # Sàn đấu và soi thẻ — 0.6.4
 
+**Bản hiện tại 0.6.5** sửa nền khung trắng và chỉnh tay bài/sân/HUD theo [hướng dẫn phong cách mới](BATTLE_SPIRITS_MASTER_DUEL_STYLE.md). Tài liệu này giữ mô tả tính năng soi/đánh bài của 0.6.4.
+
 Sàn đấu dùng lại form OcgCoreUI và khung CardDescription của MDPro3. Khung cũ được lưu ngoài mép trái (`Window` ở x ≈ -420); controller Battle Spirits nay đặt khung này vào vùng nhìn thấy, sửa viewport cuộn và thay các chỉ số Yu-Gi-Oh bằng thông tin Battle Spirits.
 
 - Bên trái có toàn bộ ảnh thẻ, mã/tên, loại/màu, Cost, giảm Cost, Symbol, các mức Lv/Core/BP và hiệu ứng gốc. Cuộn phần hiệu ứng để đọc tiếp. Ảnh dùng mặt thẻ đầy đủ, không dùng ảnh closeup đã cắt.
