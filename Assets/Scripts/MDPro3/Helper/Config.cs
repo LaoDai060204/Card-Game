@@ -23,34 +23,11 @@ namespace MDPro3
         public static void Initialize(string path)
         {
             Config.path = path;
+            translations.Clear();
             if (!File.Exists(path))
-            {
                 File.Create(path).Close();
-                if (Application.systemLanguage == SystemLanguage.ChineseSimplified)
-                    Language.SetConfig(Language.SimplifiedChinese);
-                else if (Application.systemLanguage == SystemLanguage.ChineseTraditional)
-                    Language.SetConfig(Language.TraditionalChinese);
-                else if (Application.systemLanguage == SystemLanguage.Spanish)
-                    Language.SetConfig(Language.Spanish);
-                else if (Application.systemLanguage == SystemLanguage.Japanese)
-                    Language.SetConfig(Language.Japanese);
-                else if (Application.systemLanguage == SystemLanguage.Korean)
-                    Language.SetConfig(Language.Korean);
-                else if (Application.systemLanguage == SystemLanguage.French)
-                    Language.SetConfig(Language.French);
-                else if (Application.systemLanguage == SystemLanguage.German)
-                    Language.SetConfig(Language.German);
-                else if (Application.systemLanguage == SystemLanguage.Italian)
-                    Language.SetConfig(Language.Italian);
-                else if (Application.systemLanguage == SystemLanguage.Portuguese)
-                    Language.SetConfig(Language.Portuguese);
-                else
-                    Set(Language.ConfigName, Language.English);
-                Save();
-            }
             var txtString = File.ReadAllText(path);
             var lines = txtString.Replace("\r", "").Split('\n');
-            translations.Clear();
             for (var i = 0; i < lines.Length; i++)
             {
                 var mats = Regex.Split(lines[i], SEPARATOR);
@@ -64,6 +41,16 @@ namespace MDPro3
                     translations.Add(s);
                 }
             }
+            // Default this restored baseline to English. Existing supported
+            // language choices remain; migrate the removed locale preference.
+            bool changed = false;
+            foreach (string key in new[] { Language.ConfigName, Language.CardConfigName, Language.PrereleaseName })
+                if (!Have(key) || Get(key, Language.English) == "vi-VN")
+                {
+                    Set(key, Language.English);
+                    changed = true;
+                }
+            if (changed) Save();
         }
 
         public static bool Have(string original)

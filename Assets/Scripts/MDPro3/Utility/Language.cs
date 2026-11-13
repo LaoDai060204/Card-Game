@@ -22,7 +22,7 @@ namespace MDPro3.Utility
 
         public static string GetConfig()
         {
-            return Config.Get(ConfigName, SimplifiedChinese);
+            return Config.Get(ConfigName, English);
         }
 
         public static void SetConfig(string language)
@@ -32,7 +32,7 @@ namespace MDPro3.Utility
 
         public static string GetCardConfig()
         {
-            return Config.Get(CardConfigName, SimplifiedChinese);
+            return Config.Get(CardConfigName, English);
         }
 
         public static void SetCardConfig(string language)
@@ -42,7 +42,7 @@ namespace MDPro3.Utility
 
         public static string GetPrereleaseConfig()
         {
-            return Config.Get(PrereleaseName, SimplifiedChinese);
+            return Config.Get(PrereleaseName, English);
         }
 
         public static void SetPrereleaseConfig(string language)
