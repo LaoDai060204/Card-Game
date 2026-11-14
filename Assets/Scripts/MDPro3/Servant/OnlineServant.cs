@@ -277,7 +277,11 @@ namespace MDPro3.Servant
                     var avatarTask = Tools.DownloadImageAsync(avatarAddress);
                     while (!avatarTask.IsCompleted)
                         yield return null;
-                    MyCard.avatar = avatarTask.Result;
+                    if (!avatarTask.IsCanceled && !avatarTask.IsFaulted)
+                        MyCard.avatar = avatarTask.Result;
+                    else if (avatarTask.IsFaulted)
+                        Debug.LogWarning("Optional profile image could not be loaded: "
+                            + avatarTask.Exception.GetBaseException().Message);
                 }
             }
 

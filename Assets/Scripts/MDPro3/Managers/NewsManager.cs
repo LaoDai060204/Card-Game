@@ -4,7 +4,9 @@ using MDPro3;
 using MDPro3.Net;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using MDPro3.Utility;
@@ -19,7 +21,11 @@ public class NewsManager : Manager
     public Text textCount;
     public bool showing;
 
-    private News[] Entries => news?.EnglishUS ?? Array.Empty<News>();
+    private News[] loadedEntries;
+    private News[] Entries => loadedEntries ?? news?.EnglishUS ?? Array.Empty<News>();
+    private CancellationTokenSource imageLoadCancellation;
+    private int imageLoadGeneration;
+    private bool closeRequested;
 
     private List<Texture2D> newsPics = new List<Texture2D>();
     private float width = 455f;
@@ -80,30 +86,83 @@ public class NewsManager : Manager
 
     public void LoadNews()
     {
-        if (GetMax() == 0)
-        {
-            Hide();
-            return;
-        }
-        _ = LoadNewsImageAsync();
-    }
-
-    async Task LoadNewsImageAsync()
-    {
+        CancelImageLoad();
         Hide();
-        for (int i = 0; i < Entries.Length && i < maxLoad; i++)
+        ClearImages();
+        currentNewsIndex = 0;
+        closeRequested = false;
+        // Keep titles, images and links from the same feed snapshot. A reload
+        // cannot pair a late old thumbnail with a new news item's link.
+        loadedEntries = (news?.EnglishUS ?? Array.Empty<News>())
+            .Where(entry => entry != null).Take(maxLoad)
+            .Select(entry => new News { title = entry.title, image = entry.image, url = entry.url }).ToArray();
+        if (loadedEntries.Length == 0) return;
+        imageLoadCancellation = new CancellationTokenSource();
+        _ = LoadNewsImageAsync(loadedEntries, imageLoadGeneration, imageLoadCancellation.Token);
+    }
+
+    private async Task LoadNewsImageAsync(News[] snapshot, int generation, CancellationToken cancellationToken)
+    {
+        for (int i = 0; i < snapshot.Length; i++)
         {
-            var load = Tools.DownloadImageAsync(Entries[i].image);
-
-            await TaskUtility.WaitUntil(() => load.IsCompleted);
-            if (!Application.isPlaying)
+            Texture2D texture = null;
+            try
+            {
+                texture = await Tools.DownloadImageAsync(snapshot[i].image, cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
                 return;
-
-            newsPics.Add(load.Result);
-            if (i == 0)
-                Show();
+            }
+            catch (Exception error)
+            {
+                // Only the optional thumbnail task is guarded. UI binding and
+                // unrelated application errors are not swallowed here.
+                Debug.LogWarning("News thumbnail could not be loaded: " + error.Message);
+            }
+            if (generation != imageLoadGeneration || !Application.isPlaying)
+            {
+                ReleaseImage(texture);
+                return;
+            }
+            // A local neutral background keeps the English title/link usable
+            // when an upstream image host is missing or its image is invalid.
+            newsPics.Add(texture != null ? texture : Texture2D.blackTexture);
+            if (i == 0 && !closeRequested) Show();
         }
     }
+
+    private static void ReleaseImage(Texture2D texture)
+    {
+        if (texture != null && texture != Texture2D.blackTexture)
+            UnityEngine.Object.Destroy(texture);
+    }
+
+    private void ClearImages()
+    {
+        if (newsPic != null) newsPic.texture = null;
+        if (newsPic2 != null) newsPic2.texture = null;
+        foreach (var texture in newsPics.Distinct()) ReleaseImage(texture);
+        newsPics.Clear();
+    }
+
+    private void CancelImageLoad()
+    {
+        imageLoadGeneration++;
+        if (imageLoadCancellation == null) return;
+        imageLoadCancellation.Cancel();
+        imageLoadCancellation.Dispose();
+        imageLoadCancellation = null;
+    }
+
+    private void OnDestroy()
+    {
+        CancelImageLoad();
+        ClearImages();
+    }
+
+    private Texture2D NewsImage(int index) => index >= 0 && index < newsPics.Count
+        ? newsPics[index] : Texture2D.blackTexture;
 
     int currentNewsIndex = 0;
     public void OnRight(float moveTime = 0.1f)
@@ -114,16 +173,10 @@ public class NewsManager : Manager
 
         var next = (currentNewsIndex + 1) % GetMax();
 
-        if (newsPics.Count < currentNewsIndex + 1)
-            newsPic.texture = null;
-        else
-            newsPic.texture = newsPics[currentNewsIndex];
+        newsPic.texture = NewsImage(currentNewsIndex);
         newsText.text = Entries[currentNewsIndex].title;
 
-        if (newsPics.Count < next + 1)
-            newsPic2.texture = null;
-        else
-            newsPic2.texture = newsPics[next];
+        newsPic2.texture = NewsImage(next);
         newsText2.text = Entries[next].title;
 
         currentNewsIndex = next;
@@ -145,16 +198,10 @@ public class NewsManager : Manager
         var max = GetMax();
         var next = (max + currentNewsIndex - 1) % max;
 
-        if (newsPics.Count < currentNewsIndex + 1)
-            newsPic.texture = null;
-        else
-            newsPic.texture = newsPics[currentNewsIndex];
+        newsPic.texture = NewsImage(currentNewsIndex);
 
         newsText.text = Entries[currentNewsIndex].title;
-        if(newsPics.Count < next + 1)
-            newsPic2.texture = null;
-        else
-            newsPic2.texture = newsPics[next];
+        newsPic2.texture = NewsImage(next);
         newsText2.text = Entries[next].title;
         currentNewsIndex = next;
         textCount.text = $"{currentNewsIndex + 1}/{GetMax()}";
@@ -169,11 +216,13 @@ public class NewsManager : Manager
     public void OnNewsClick()
     {
         if (currentNewsIndex < 0 || currentNewsIndex >= GetMax()) return;
-        Application.OpenURL(Entries[currentNewsIndex].url.Replace("ygobbs.com", "ygobbs2.com"));
+        string url = Entries[currentNewsIndex].url;
+        if (!string.IsNullOrEmpty(url)) Application.OpenURL(url.Replace("ygobbs.com", "ygobbs2.com"));
     }
 
     public void OnClose()
     {
+        closeRequested = true;
         Hide();
     }
 }

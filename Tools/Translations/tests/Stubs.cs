@@ -1,9 +1,41 @@
 using System;
+using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 namespace UnityEngine
 {
-    public class MonoBehaviour { public T GetComponent<T>() where T:new()=>new T(); }
-    public class Texture2D { }
+    public class Object
+    {
+        public bool IsDestroyed;
+        public static readonly List<Object> DestroyedObjects = new List<Object>();
+        public static void Destroy(Object value)
+        {
+            if (value == null) return;
+            value.IsDestroyed = true;
+            DestroyedObjects.Add(value);
+        }
+    }
+    public class GameObject { public bool activeInHierarchy = true; }
+    public class MonoBehaviour : Object
+    {
+        private readonly Dictionary<Type, object> components = new Dictionary<Type, object>();
+        public readonly GameObject gameObject = new GameObject();
+        public bool isActiveAndEnabled = true;
+        public T GetComponent<T>() where T : new()
+        {
+            if (!components.TryGetValue(typeof(T), out var component))
+                components[typeof(T)] = component = new T();
+            return (T)component;
+        }
+    }
+    public class Texture2D : Object
+    {
+        public string name;
+        public Texture2D(string name = null) { this.name = name; }
+        public static readonly Texture2D blackTexture = new Texture2D("Built-in black");
+        public static readonly Texture2D whiteTexture = new Texture2D("Built-in white");
+        public static readonly Texture2D grayTexture = new Texture2D("Built-in gray");
+    }
     public class Transform { public Vector3 localPosition; }
     public struct Vector2 { public float x,y;public Vector2(float x,float y){this.x=x;this.y=y;}public static implicit operator Vector3(Vector2 v)=>new Vector3{ x=v.x,y=v.y }; }
     public struct Vector3 {public float x,y,z;}
@@ -12,7 +44,12 @@ namespace UnityEngine
     public class CanvasGroup {public float alpha;public bool blocksRaycasts;}
     public static class Time {public static float deltaTime;}
     public static class Application { public static bool isPlaying=true;public static string LastURL;public static void OpenURL(string url)=>LastURL=url; }
-    public static class Debug {public static void Log(object value){}public static void LogWarning(object value){} }
+    public static class Debug
+    {
+        public static readonly List<string> Warnings = new List<string>();
+        public static void Log(object value) { }
+        public static void LogWarning(object value) => Warnings.Add(value?.ToString());
+    }
 }
 namespace UnityEngine.UI
 {
@@ -30,7 +67,27 @@ namespace MDPro3
     }
     public class Selector {public string DeckType="";}
     public class Menu {public bool showing=true;}
-    public static class Tools { public static Task<UnityEngine.Texture2D> DownloadImageAsync(string url)=>Task.FromResult(new UnityEngine.Texture2D()); }
+    public static class Tools
+    {
+        public sealed class ImageRequest
+        {
+            public string Url;
+            public CancellationToken Token;
+        }
+        public static readonly List<ImageRequest> ImageRequests = new List<ImageRequest>();
+        public static Func<string, CancellationToken, Task<UnityEngine.Texture2D>> ImageDownloadOverride;
+        public static Task<UnityEngine.Texture2D> DownloadImageAsync(string url, CancellationToken cancellationToken = default)
+        {
+            ImageRequests.Add(new ImageRequest { Url = url, Token = cancellationToken });
+            return ImageDownloadOverride != null ? ImageDownloadOverride(url, cancellationToken)
+                : Task.FromResult(new UnityEngine.Texture2D(url));
+        }
+        public static void ResetImages()
+        {
+            ImageRequests.Clear();
+            ImageDownloadOverride = null;
+        }
+    }
 }
 namespace MDPro3.Utility {public static class TaskUtility {public static Task WaitUntil(Func<bool> ready){if(!ready())throw new Exception("Fake download did not complete.");return Task.CompletedTask;} } }
 namespace MDPro3.Net

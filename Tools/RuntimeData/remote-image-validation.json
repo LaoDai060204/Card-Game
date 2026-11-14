@@ -1,0 +1,67 @@
+{
+  "date": "2026-11-14",
+  "branch": "mdpro3-english",
+  "baseline": "d750d615332cf92e602f5c576bbf27e648288f5e",
+  "backupBranch": "backup/2026-11-14-before-remote-image-fallback",
+  "backupVerifiedOnOriginBeforeEdits": true,
+  "observedCause": {
+    "feedUrl": "https://cdntx.moecube.com/apps.json",
+    "record": "ygopro.news.en-US[0]",
+    "title": "MyCard V3 User Guide",
+    "imageUrl": "http://pic.4j4j.cn/upload/pic/20140327/af650cf463.jpg",
+    "articleUrl": "https://ygobbs2.com/t/MyCard-V3-User-Guide/82335",
+    "publicFeedSha256": "b9880bc11ab5e40e401de9b67c08d1850c0429e543d5cf5c671cba85b92fb923",
+    "dnsLookupInAuditEnvironment": "EAI_NONAME"
+  },
+  "downloaderScenarios": 21,
+  "productionLocaleAndNewsScenarios": 23,
+  "testApis": "controlled Unity/network/texture/task APIs; actual production source",
+  "originalEnglishMigrationScenariosRetained": 12,
+  "requestTimeoutSeconds": 10,
+  "warningCacheCapacity": 128,
+  "fallback": "Unity built-in black texture; original English title and link retained",
+  "lifecycleCases": [
+    "reload generation",
+    "cancellation",
+    "stale completion",
+    "owner disposal",
+    "no destruction of shared fallback",
+    "close before load",
+    "stop Play"
+  ],
+  "tlsVerificationUnchanged": true,
+  "upstreamImageRepairedByThisChange": false,
+  "cSharp9Syntax": {
+    "productionFiles": 4,
+    "profiles": 3,
+    "errors": 0,
+    "unityApiCompilation": false
+  },
+  "newHelperGuidUnique": true,
+  "existingMetadataUnchanged": true,
+  "gameplayCardsRulesAndPacketsUnchanged": true,
+  "sourceFiles": [
+    {
+      "path": "Assets/Scripts/MDPro3/Game/Tools.cs",
+      "sha256": "27698739ea874381ec21f3666b66237540aba341166f4c75e159aee46a0ee0c9"
+    },
+    {
+      "path": "Assets/Scripts/MDPro3/Managers/NewsManager.cs",
+      "sha256": "80eacafff7a98e25c93dfcd8bcab4b24f7568a2e052049b943600fd15bdefa5d"
+    },
+    {
+      "path": "Assets/Scripts/MDPro3/Servant/OnlineServant.cs",
+      "sha256": "d4a8b4a15ef9d5ae1588f4fc10fb61b9402c86537b4f111e1ce8852ad090ae07"
+    },
+    {
+      "path": "Assets/Scripts/MDPro3/Utility/RemoteImageDownloader.cs",
+      "sha256": "a50066114737258e16c03a6c2e66e64285367125c1f1604e7a281e1e07267fc2"
+    }
+  ],
+  "notVerified": [
+    "Unity Play/render",
+    "Native image decoding",
+    "Real request timeout duration",
+    "Windows player build"
+  ]
+}

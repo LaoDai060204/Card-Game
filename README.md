@@ -50,3 +50,7 @@ does not require a separately downloaded full `cards.json`. See
 
 WindBot also fits long names into the existing PlayerInfo field without changing
 the selected bot/deck. See [handshake fix and test limits](Tools/RuntimeData/WINDBOT_HANDSHAKE.md).
+
+Optional news/avatar images now fail gracefully: English news keeps its title
+and link over a local fallback when the upstream thumbnail is unavailable. See
+[remote image diagnostics and validation](Tools/RuntimeData/REMOTE_IMAGES.md).
