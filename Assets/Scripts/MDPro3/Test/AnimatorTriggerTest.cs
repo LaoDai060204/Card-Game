@@ -13,7 +13,7 @@ public class AnimatorTriggerTest : MonoBehaviour
         animator = transform.GetComponent<Animator>();
         AnimatorControllerParameter[] parameters = animator.parameters;
         foreach (var param in parameters)
-            Debug.Log(": 参数名称：" + param.name + " 参数类型：" + param.type);
+            Debug.Log(": Parameter name: " + param.name + " Parameter type: " + param.type);
 
     }
 

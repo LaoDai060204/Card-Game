@@ -126,7 +126,7 @@ namespace MDPro3
             catch
             {
                 if (Program.instance.solo.showing)
-                    MessageManager.messageFromSubString = InterString.Get("端口被占用， 请尝试修改端口后再尝试。端口号应大于0，小于65535。");
+                    MessageManager.messageFromSubString = InterString.Get("The port is occupied. Please try modifying the port before attempting again. The port number should be greater than 0 and less than 65535.");
             }
         }
 
@@ -277,16 +277,16 @@ namespace MDPro3
                 {
                     Program.instance.room.duelEnded = true;
                     Program.instance.ocgcore.ForceMSquit();
-                    MessageManager.Cast(InterString.Get("对方已离开游戏，您现在可以离开。"));
+                    MessageManager.Cast(InterString.Get("Your opponent has left the game. You may leave now."));
                 }
                 else if (Program.instance.deckEditor.showing)
                 {
-                    MessageManager.Cast(InterString.Get("对方已离开游戏，您现在可以离开。"));
+                    MessageManager.Cast(InterString.Get("Your opponent has left the game. You may leave now."));
                     Program.instance.ShiftToServant(Program.instance.online);
                 }
                 else if (!Program.instance.online.showing && !Program.instance.solo.showing)
                 {
-                    MessageManager.Cast(InterString.Get("连接被断开。"));
+                    MessageManager.Cast(InterString.Get("You were disconnected."));
                     if (Program.instance.room.showing)
                         Program.instance.room.OnExit();
                 }
@@ -644,7 +644,7 @@ namespace MDPro3
         {
             if (port < IPEndPoint.MinPort || port > IPEndPoint.MaxPort)
             {
-                throw new ArgumentException($"指定的端口号 {port} 超出有效范围。");
+                throw new ArgumentException($"The specified port number {port} is out of range.");
             }
 
             bool? systemQueryResult = IsPortOccupiedBySystem(port);
@@ -831,7 +831,7 @@ namespace MDPro3
             if (cardToRefresh == null)
             {
                 //if(code != 0)
-                //    Debug.Log("TcpHelper未找到：" + CardsManager.Get(code).Name);
+                //    Debug.Log("TcpHelper could not find: " + CardsManager.Get(code).Name);
                 return;
             }
 
@@ -984,29 +984,29 @@ namespace MDPro3
             connected = false;
             exception = null;
             var thread = new Thread(BeginConnect);
-            thread.IsBackground = true; // 作为后台线程处理
-                                        // 不会占用机器太长的时间
+            thread.IsBackground = true; // Run as a background thread.
+                                        // Do not keep the process alive longer than necessary.
             thread.Start();
 
-            // 等待如下的时间
+            // Wait for the configured timeout.
             thread.Join(_timeout_milliseconds);
 
             if (connected)
             {
-                // 如果成功就返回TcpClient对象
+                // Return the TcpClient if the connection succeeds.
                 thread.Abort();
                 return connection;
             }
 
             if (exception != null)
             {
-                // 如果失败就抛出错误
+                // Throw an error if the connection fails.
                 thread.Abort();
                 TcpHelper.onDisConnected = true;
                 throw exception;
             }
 
-            // 同样地抛出错误
+            // Also propagate connection errors.
             thread.Abort();
             var message = string.Format("TcpClient connection to {0}:{1} timed out",
                 _hostname, _port);
@@ -1019,12 +1019,12 @@ namespace MDPro3
             try
             {
                 connection = new TcpClient(_hostname, _port);
-                // 标记成功，返回调用者
+                // Mark success and return to the caller.
                 connected = true;
             }
             catch (Exception ex)
             {
-                // 标记失败
+                // Mark failure.
                 exception = ex;
             }
         }

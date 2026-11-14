@@ -1,0 +1,190 @@
+MDPro3 v1.4.8 Update:
+1. Fixed card data initialization failing when the client had not yet created the Expansions folder.
+2. Fixed loading errors caused by some older files.
+3. The larger update has been postponed.
+
+MDPro3 v1.4.7 Update:
+1. Added cloud saving for locally saved card collections and card rarity information.
+	The next version will include major changes and require reinstalling MDPro3. To avoid losing this data, especially on mobile, install this version and enter the game at least once while connected to the Internet.
+
+MDPro3 v1.4.6 Update:
+1. Added the "Data/FileGroups.json" configuration file. It supports customizing some asset paths and reading overframe card artwork and animated card artwork videos from ZIP archives.
+	See the Note entries in the configuration file for more information.
+2. Improved pre-release card download speed.
+3. Fixed disabled field zones not resetting when restarting a duel without reloading the field.
+
+MDPro3 v1.4.5 Update:
+1. New contributed animations: Masked HERO Goka [58147549],
+	Masked HERO Fountain [66206748],
+	Miracle Ejector [30875635],
+	Favorite HERO Flame Wingman [13243124],
+	Favorite HERO Shining Flare Wingman [87758525].
+2. Added categories to Puzzle mode, with support for puzzle files in subfolders of the Puzzle directory.
+3. Moved [Card Effect Animation Preview] and [Final Attack Animation Preview] puzzles into their respective subfolder categories, and added a [Special Victory Animation Preview] category.
+4. New card effects: Triple Tactics Thrust [35269905] and Fusion Deployment [6498707].
+5. Sped up the animation when multiple cards move to the Deck during a duel.
+6. Added overframe artwork support to card rarity materials.
+7. Fixed Pendulum Scale numbers not appearing on Pendulum Cards on the field.
+
+MDPro3 v1.4.4 Update:
+1. Added an option to view your Deck from the in-duel settings page, including the Deck after siding.
+	Only local Decks can be viewed. Some duel modes where the server supplies the Deck are not supported.
+
+MDPro3 v1.4.3.2 Update:
+1. Fixed pre-release cards in a Deck being replaced with official card IDs before their official data update was available.
+
+MDPro3 v1.4.3.1 Update:
+1. Fixed occasional incorrect card positions when quickly dragging cards in your hand during a duel.
+2. Fixed occasional incorrect card positions when shuffling your hand during a duel.
+
+MDPro3 v1.4.3 Update:
+1. Added filters for Rush Duel-exclusive Types and Maximum Monsters.
+2. Fixed display and filtering errors affecting Rush Duel Ritual Monsters.
+3. Custom card filtering now excludes Rush Duel and pre-release cards. Rush Duel cards have their own tag.
+4. Added support for servers included in expansion packs to the server list in [Online].
+5. Added a Deck synchronization option under [Game Settings] - [System Settings].
+6. Added a button in the lower-right corner during duels to view card effects that use PlayerHint, commonly including lingering restrictions.
+	Not all restriction effects use this function.
+	Card script authors are encouraged to use PlayerHint with the EFFECT_FLAG_CLIENT_HINT flag.
+7. Adjusted the in-duel UI layout on mobile.
+8. Fixed card points not refreshing when switching the Genesys banlist.
+
+MDPro3 v1.4.2 Update:
+1. You can now create your own card collection lists.
+2. Added an overframe artwork filter to card filtering.
+3. You can now convert expired pre-release cards to official cards. An Internet connection is required.
+4. Fixed cards appearing solid white while loading their artwork during duels.
+5. Optimized the display structure for opaque overframe card artwork.
+
+MDPro3 v1.4.1 Update:
+1. New Duel Links voice characters: Yuro Goha [0713] and Saburamen [0719].
+2. Added support for overframe card artwork. Only a limited selection is available; preview examples: [1186448] [41350418].
+3. The various [Random] appearance settings now randomize again whenever you enter a room.
+4. Added a [Retry] button above [Surrender] in local AI duels.
+5. MDPro3 now exchanges users' appearance information through chat during online duels. Other clients receive a shorter message to reduce disruption.
+6. The field's duel-ending animation no longer waits for the duel result banner animation.
+7. Added a three-column display mode when viewing cards in locations such as the Extra Deck and Graveyard during a duel.
+8. Card searches are now case-insensitive and ignore full-width/half-width and kana differences.
+9. Added support for whitelist banlists.
+10. Deluxe Mates, identified by yellow-background icons, now support their in-duel transformation effects, as in Master Duel.
+11. Improved animated card artwork performance.
+12. Changing the Deck display mode to Genesys now automatically selects the Genesys banlist.
+13. When a card's name changes during a duel, such as through Neo Galaxy-Eyes Cipher Dragon, the name is appended to the card name information on the left.
+14. Added rendering for the Legend icon and Maximum ATK on Rush Duel cards.
+15. Fixed returning immediately after opening the Add AI menu causing you to leave the room.
+16. Fixed some sleeves extending outside the list boundaries in appearance settings.
+
+MDPro3 v1.4.0 Update:
+1. New card effect: Called by the Grave [24224831].
+2. New background: 4th Anniversary.
+3. New Duel Links voice characters: Nash [0416] and Nash [0447].
+4. Fixed Mates not appearing in puzzles.
+
+MDPro3 v1.3.9 Update:
+1. New animated card artwork: Red-Eyes Dark Dragoon [37818794],
+	Dark Magician Girl [38033128], Dark Magician [46986427],
+	Red-Eyes Black Dragon [74677430] and Blue-Eyes White Dragon [89631149].
+2. New Duel Links voice characters: Strings [0028], Joey Wheeler [0043] (alternate artwork), Girag [0441] and Alito [0442].
+3. Added a new cloud storage download link under [Game Settings - About Game - About Updates].
+4. Fixed being unable to select no cards when a card selection allowed choosing none.
+5. Fixed duel messages sometimes showing the wrong player name.
+6. Fixed being able to exit a duel by clicking the upper-left corner during the transition into the duel.
+
+MDPro3 v1.3.8 Update:
+1. Added reading text to Attribute icons when rendering cards in languages other than Chinese.
+2. Clicking the Spell & Trap Zone during a duel now retracts that player's hand to reveal the zone on screens wider than 16:9.
+3. Added left and right swiping to the card details page in the mobile Deck editor.
+4. Added support and effects for creating cards during a duel with Duel.CreateToken when the created card is not a Token.
+5. Improved card activation and negation animations during duels to more closely match Master Duel.
+6. Added Deck grouping.
+7. New Duel Links characters: Téa Gardner [0045], Mokuba Kaiba [0046],
+	Marin [0417], Marin [0448], Graves [0869] and Immi Imimi [0906].
+8. Fixed the missing Genesys points icon on the card details page in the mobile Deck editor.
+9. Fixed puzzle replays not playing.
+10. Fixed incorrect playback of some Spine animations.
+
+MDPro3 v1.3.7 Update:
+1. Restored the [Test] button in the Deck editor. It starts an unshuffled duel against the first WindBot.
+2. Reduced startup loading time.
+3. Added Duel Links voice support for alternate-art characters Yami Yugi [0041] and Seto Kaiba [0042].
+4. Player-contributed Cut-in animations are now shown in gray text under [Watch Animations].
+5. Fixed the [Not Set] and [Random] wallpaper options not working in appearance settings.
+6. Fixed missing Spine animation assets for Invoked Mechaba [75286622] on non-Windows platforms.
+
+MDPro3 v1.3.6 Update:
+1. New card effect: Droll & Lock Bird [94145021].
+2. Fixed cards sometimes floating above the field after a monster was summoned.
+3. Fixed the characters speaking the [My Turn] voice line being reversed.
+4. Fixed custom backgrounds not taking effect.
+
+MDPro3 v1.3.5 Update:
+1. Added animated card artwork:
+	① MP4 videos can be used as card artwork at Video/Art/<CardID>.mp4.
+	② Added an animated artwork option to card filtering.
+	③ Added an animated artwork toggle in settings.
+	④ Added support for importing animated card artwork videos.
+2. New animated card artwork: Ash Blossom & Joyous Spring [14558127][14558128] and A Bao A Qu, the Lightless Shadow [4731783].
+	① Animated artwork uses substantial memory and storage, so update packages do not include all artwork videos.
+	② Download them from the "Animated Card Artwork" folder in this cloud storage: <link="https://pan.quark.cn/s/ca2e4e7a8c63"><#0080F8><u>Update Downloads</u></color></link>
+	③ Place the files in the game directory described above, or use the import function.
+	④ Animated artwork updates are released from time to time. Check the update download folder for new files.
+	⑤ Previously released animated artwork videos may also be updated.
+	⑥ Avoid loading too many animated artwork videos at once.
+3. Added Genesys points to card searches and sorting options.
+4. New contributed animations: Frightfur Tiger [464362] and Kewl Tune Cue [16387555].
+5. Fixed duel buttons in the banished zone not responding to clicks.
+
+MDPro3 v1.3.4 Update:
+1. Added a new Info type to the Deck editor's first top button: Genesys points mode.
+2. Duel Links updates:
+	New characters: Rebecca Hawkins, Serenity Wheeler, Noah Kaiba and Tiadosia "Tiger" Kallister.
+	Updated voices: Yami Yugi, Seto Kaiba and Yugi Muto.
+3. New contributed animations: Darkuriboh, Vision HERO Adoration, alternate-art Masked HERO Dark Law,
+	Masked HERO Dusk Crow, Masked HERO Furnace, Masked HERO Atomic, Destiny HERO - Dogma,
+	Evil HERO Darkest Knight, Evil HERO Infernal Sniper, Evil HERO Vicious Claws,
+	Evil HERO Lightning Golem, Evil HERO Inferno Wing - Backfire, Phantom of Yubel,
+	Elemental HERO Darkbright, Elemental HERO Tempest, Elemental HERO Inferno,
+	Elemental HERO Plasma Vice, Elemental HERO Phoenix Enforcer, Elemental HERO Wild Wingman,
+	Elemental HERO Thunder Giant, Elemental HERO Thunder Giant - Voltic Thunder, Elemental HERO Mudballman,
+	Elemental HERO Shining Phoenix Enforcer, Elemental HERO Necroid Shaman, Elemental HERO Rampart Blaster,
+	Elemental HERO Neos Knight and Elemental HERO Steam Healer.
+4. Fixed the SortCard duel message not receiving a response.
+
+MDPro3 v1.3.3 Update:
+1. Duel message processing is now asynchronous to reduce stuttering when loading effects.
+
+MDPro3 v1.3.2 Update:
+1. Improved the card bounce animation, where cards on the field are lifted when a monster lands after being summoned.
+2. New card effects: Dominus Purge [97045737], Dominus Impulse [40366667], Invocation [74063034] and Mulcharmy Meowls [87126721].
+3. New Duel Links voice character: Yuka Goha [0715].
+4. Downloading expansion packs from links now supports links with certificate errors, subject to manual confirmation.
+5. Fixed duplicate buttons being created when clicking an interactive Extra Deck while a popup was temporarily hidden during a duel.
+6. Fixed the duel log not incorporating the ocgcore GameMessage.CofirmCards update.
+7. Fixed incorrect display of some unusual characters on cards.
+8. Fixed Main Deck, Extra Deck or Side Deck card counts not refreshing in the Deck editor when the corresponding section was empty.
+9. Fixed Smart Timing behaving the same as Always Chain during a duel.
+10. Fixed the Clear Expansions button in settings not working.
+11. Fixed online Decks not being viewable.
+
+MDPro3 v1.3.1 Update:
+1. Added automatic downloading and installation of custom card packs from a URL under [Settings - Expansion Packs].
+2. New contributed content: animated wallpapers and MonsterCutin animations:
+	① Sky Striker Ace - Raye (alternate artwork)
+	② Firewall Dragon (alternate artwork)
+	③ Kashtira Unicorn
+	④ Number 107: Galaxy-Eyes Tachyon Dragon
+2. Fixed the game freezing on Linux when a duel needed to show the "Tribute Monster" effect.
+3.* Fixed local duels not working on Macs without Apple Silicon.
+4. Fixed missing Cross Duel pet icons in appearance settings on Android and Linux.
+5. Fixed online Decks not synchronizing after game startup.
+6. Fixed spectating ending after saving or discarding the current duel's replay when the server had already disconnected, preventing spectating the next duel.
+7. Fixed some puzzles getting stuck when both players' LP triggered a new background music track.
+8. Fixed occasional freezes when entering a duel with appearance settings set to Random.
+
+MDPro3 v1.3.0 Update:
+0. This update skips v1.2.8 and is available only as a full installation package.
+1. Added Linux and macOS support.
+2. Pre-release card updates now automatically use the current interface language.
+3. Pre-release card artwork rendering now uses the pre-release language, which is the interface language at the time of updating, rather than the card artwork language setting.
+4. Fixed MyCard login failing when the account name or password contained special characters.
+5. Fixed some fields using unexpected background music.

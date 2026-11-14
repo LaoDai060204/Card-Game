@@ -36,15 +36,15 @@ namespace MDPro3
         public int code;
 
         public PlayableDirector directorA;//a_summon    A
-        public PlayableDirector directorB;//b_destroy      BD BOSS站立被破坏
-        public PlayableDirector directorD;//d_attack        D 直接攻击
+        public PlayableDirector directorB;//b_destroy      BD Boss destroyed while standing
+        public PlayableDirector directorD;//d_attack        D Direct attack
         public PlayableDirector directorE;//e_attack         
         public PlayableDirector directorI;//i_spSummon   SP
-        public PlayableDirector directorJ;//j_destroy        JD BOSS倒地被破坏
-        public PlayableDirector directorK;//k_down          KD BOSS倒地
-        public PlayableDirector directorM;//m_bossAttack   BA BOSS重攻击 另有 m_attack 艾克佐迪亞
-        public PlayableDirector directorN;//n_attack        NA BOSS范围攻击
-        public PlayableDirector directorO;//o_attack        NA BOSS轻攻击
+        public PlayableDirector directorJ;//j_destroy        JD Boss destroyed while down
+        public PlayableDirector directorK;//k_down          KD Boss falls down
+        public PlayableDirector directorM;//m_bossAttack   BA Boss heavy attack; Exodia also has m_attack
+        public PlayableDirector directorN;//n_attack        NA Boss area attack
+        public PlayableDirector directorO;//o_attack        NA Boss light attack
         BoxCollider m_collider;
         SkinnedMeshRenderer mesh;
         private readonly Dictionary<Animator, HashSet<string>> masterDuelTriggersByAnimator = new();
@@ -410,7 +410,7 @@ namespace MDPro3
                                         break;
                                 }
                             }
-                            else if (directorM != null)//艾克佐迪亞
+                            else if (directorM != null)//Exodia
                             {
                                 directorM.Play();
                                 MateViewer.PlayCrossDuelSe(directorM.name.Replace("(Clone)", string.Empty));

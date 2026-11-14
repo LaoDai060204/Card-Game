@@ -117,12 +117,12 @@ namespace MDPro3
 
             if (Language.GetConfig() == Language.Korean)
             {
-                var monsterHeader = InterString.Get("【怪兽效果】");
+                var monsterHeader = InterString.Get("[Monster Effect]");
                 if (!data.HasType(CardType.Effect))
-                    monsterHeader = InterString.Get("【怪兽描述】");
+                    monsterHeader = InterString.Get("[Monster Description]");
 
                 monsterHeader = Card.NormalizeBracketLabel(monsterHeader);
-                var pendulumHeader = Card.NormalizeBracketLabel(InterString.Get("【灵摆效果】"));
+                var pendulumHeader = Card.NormalizeBracketLabel(InterString.Get("[Pendulum Effect]"));
                 var pendulumBlock = pendulumHeader + "\n" + (pendulumText ?? string.Empty);
                 var monsterBlock = monsterHeader + "\n" + (monsterText ?? string.Empty);
 
@@ -134,7 +134,7 @@ namespace MDPro3
                 return data.GetDescription(true);
             }
 
-            var pendulumHeaderDefault = Card.NormalizeBracketLabel(InterString.Get("【灵摆效果】"));
+            var pendulumHeaderDefault = Card.NormalizeBracketLabel(InterString.Get("[Pendulum Effect]"));
             var result = setName;
 
             if (!string.IsNullOrEmpty(monsterText))

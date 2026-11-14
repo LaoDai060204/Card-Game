@@ -10,6 +10,10 @@ to English. Known URP/texture compatibility settings are retained; optimization
 and a new Battle Spirits conversion are deferred. See [restore notes](RESTORE_ENGLISH.md)
 for the exact baseline, backup, preserved branches and validation limits.
 
+The deep English migration also converts application comments, Editor menus,
+lookup keys and authored prefab text to English. Legacy input keys and original
+multilingual card/locale data remain compatible. See [English migration details](ENGLISH_MIGRATION.md).
+
 ### Other required folders
 
 * Platforms: https://code.mycard.moe/sherry_chaos/mdpro3-assetbundles

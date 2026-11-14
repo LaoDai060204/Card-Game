@@ -268,7 +268,7 @@ namespace MDPro3.UI
             foreach(var card in results)
                 cards.Add(card.Id);
 
-            ButtonSearch.SetButtonText(cards.Count == 0 ? InterString.Get("搜索") : cards.Count.ToString());
+            ButtonSearch.SetButtonText(cards.Count == 0 ? InterString.Get("Search") : cards.Count.ToString());
 
             PrintCards(cards);
         }
@@ -282,7 +282,7 @@ namespace MDPro3.UI
             foreach (var card in results)
                 cards.Add(card.Id);
 
-            ButtonSearch.SetButtonText(cards.Count == 0 ? InterString.Get("搜索") : cards.Count.ToString());
+            ButtonSearch.SetButtonText(cards.Count == 0 ? InterString.Get("Search") : cards.Count.ToString());
 
             PrintCards(cards);
         }
@@ -300,7 +300,7 @@ namespace MDPro3.UI
             foreach (var card in results)
                 cards.Add(card.Id);
 
-            ButtonSearch.SetButtonText(cards.Count == 0 ? InterString.Get("搜索") : cards.Count.ToString());
+            ButtonSearch.SetButtonText(cards.Count == 0 ? InterString.Get("Search") : cards.Count.ToString());
 
             PrintCards(cards);
         }
@@ -353,7 +353,7 @@ namespace MDPro3.UI
 
         public void RefreshBookmarkTab()
         {
-            bookmarkTabText = string.IsNullOrEmpty(bookmarkTabText) ? InterString.Get("卡片收藏") : bookmarkTabText;
+            bookmarkTabText = string.IsNullOrEmpty(bookmarkTabText) ? InterString.Get("Bookmarks") : bookmarkTabText;
             var count = CardRarity.GetBookCards().Count;
             ToggleBookmark.SetButtonText($"{bookmarkTabText} ({count})");
             RefreshBookmarkListPanel();
@@ -480,7 +480,7 @@ namespace MDPro3.UI
             RelatedArea.SetActive(true);
             ButtonRelatedCard.GetComponent<CardRawImageHandler>()
                 .SetCard(data);
-            TextRelatedCard.text = InterString.Get("「[?]」的相关卡片", data.Name);
+            TextRelatedCard.text = InterString.Get("Cards related to \"[?]\"", data.Name);
             PrintRelatedCards(data);
         }
 
@@ -672,7 +672,7 @@ namespace MDPro3.UI
 
             var selections = new List<string>
             {
-                InterString.Get("收藏列表"),
+                InterString.Get("Bookmark Lists"),
                 GetBookmarkDropdownButtonText()
             };
 
@@ -692,11 +692,11 @@ namespace MDPro3.UI
                     string.Equals(CardRarity.GetCurrentBookListName(), capturedName, StringComparison.InvariantCultureIgnoreCase) ? "g" : string.Empty);
             }
 
-            AddBookmarkListMenuEntry(selections, CreateBookmarkList, InterString.Get("新建收藏列表"), "b");
+            AddBookmarkListMenuEntry(selections, CreateBookmarkList, InterString.Get("Create Bookmark List"), "b");
             if (!string.IsNullOrEmpty(CardRarity.GetCurrentBookListName()))
             {
-                AddBookmarkListMenuEntry(selections, RenameBookmarkList, InterString.Get("重命名收藏列表"), "b");
-                AddBookmarkListMenuEntry(selections, DeleteActiveBookmarkList, InterString.Get("删除收藏列表"), "r");
+                AddBookmarkListMenuEntry(selections, RenameBookmarkList, InterString.Get("Rename Bookmark List"), "b");
+                AddBookmarkListMenuEntry(selections, DeleteActiveBookmarkList, InterString.Get("Delete Bookmark List"), "r");
             }
 
             UIManager.ShowPopupSelection(selections, OnBookmarkListMenuSelection);
@@ -756,14 +756,14 @@ namespace MDPro3.UI
 
         private string GetDefaultBookmarkListDisplayName()
         {
-            return InterString.Get("默认收藏列表");
+            return InterString.Get("Default Bookmark List");
         }
 
         private void CreateBookmarkList()
         {
             var selections = new List<string>
             {
-                InterString.Get("新建收藏列表"),
+                InterString.Get("Create Bookmark List"),
                 string.Empty
             };
             UIManager.ShowPopupInput(selections, CreateBookmarkList, null, TmpInputValidation.ValidationType.None);
@@ -775,7 +775,7 @@ namespace MDPro3.UI
                 return;
             if (!CardRarity.AddBookmarkList(normalized))
             {
-                MessageManager.Cast(InterString.Get("该收藏列表已存在！"));
+                MessageManager.Cast(InterString.Get("This favorites list already exists!"));
                 return;
             }
 
@@ -786,7 +786,7 @@ namespace MDPro3.UI
         {
             var selections = new List<string>
             {
-                InterString.Get("重命名收藏列表"),
+                InterString.Get("Rename Bookmark List"),
                 CardRarity.GetCurrentBookListName()
             };
             UIManager.ShowPopupInput(selections, RenameActiveBookmarkList, null, TmpInputValidation.ValidationType.None);
@@ -801,7 +801,7 @@ namespace MDPro3.UI
                 return;
             if (!CardRarity.RenameBookmarkList(activeBookmarkList, normalized))
             {
-                MessageManager.Cast(InterString.Get("该收藏列表已存在！"));
+                MessageManager.Cast(InterString.Get("This favorites list already exists!"));
                 return;
             }
 
@@ -819,10 +819,10 @@ namespace MDPro3.UI
 
             var selections = new List<string>
             {
-                InterString.Get("删除收藏列表"),
-                InterString.Get("该收藏列表包含[?]张卡片，是否确认删除？", CardRarity.GetBookCards().Count.ToString()),
-                InterString.Get("确认"),
-                InterString.Get("取消")
+                InterString.Get("Delete Bookmark List"),
+                InterString.Get("This bookmark list contains [?] cards. Are you sure you want to delete it?", CardRarity.GetBookCards().Count.ToString()),
+                InterString.Get("Confirm"),
+                InterString.Get("Cancel")
             };
             UIManager.ShowPopupYesOrNo(selections, ConfirmDeleteActiveBookmarkList, null);
         }
@@ -845,17 +845,17 @@ namespace MDPro3.UI
             normalized = NormalizeBookmarkListName(listName);
             if (normalized == string.Empty)
             {
-                MessageManager.Cast(InterString.Get("收藏列表名不能为空！"));
+                MessageManager.Cast(InterString.Get("The favorites list name cannot be empty!"));
                 return false;
             }
             if (normalized.Contains(":"))
             {
-                MessageManager.Cast(InterString.Get("收藏列表名不能包含“:”！"));
+                MessageManager.Cast(InterString.Get("The favorites list name cannot contain \":\"!"));
                 return false;
             }
             if (normalized.Contains("\n") || normalized.Contains("\r"))
             {
-                MessageManager.Cast(InterString.Get("收藏列表名不能换行！"));
+                MessageManager.Cast(InterString.Get("The favorites list name cannot contain line breaks!"));
                 return false;
             }
 
@@ -863,7 +863,7 @@ namespace MDPro3.UI
             if (!string.Equals(normalized, ignored, StringComparison.InvariantCultureIgnoreCase)
                 && CardRarity.BookmarkListExists(normalized))
             {
-                MessageManager.Cast(InterString.Get("该收藏列表已存在！"));
+                MessageManager.Cast(InterString.Get("This favorites list already exists!"));
                 return false;
             }
 

@@ -7,15 +7,15 @@ namespace MDPro3.Data
     public class FileGroup
     {
         /// <summary>
-        /// 注释
+        /// Description
         /// </summary>
         public string Note;
         /// <summary>
-        /// 以/结尾，表示目录。否则表示文件路径。
+        /// A trailing slash indicates a directory; otherwise this is a file path.
         /// </summary>
         public string[] Paths;
         /// <summary>
-        /// 文件扩展名，表示目录中应索引的文件类型。
+        /// File extensions to index within each directory.
         /// </summary>
         public string[] Extensions;
 

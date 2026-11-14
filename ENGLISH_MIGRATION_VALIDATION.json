@@ -1,0 +1,98 @@
+{
+  "date": "2026-11-14",
+  "branch": "mdpro3-english",
+  "baseline": "e9ba63fa647b881de531c6216a5335d9d6e985b9",
+  "backupBranch": "backup/2026-11-14-before-deep-english-migration",
+  "backupVerifiedOnOriginBeforeEdits": true,
+  "status": "PASS for recorded source/data/reference checks; Unity verification pending",
+  "unityTarget": "6000.0.24f1 Windows x64",
+  "applicationVersion": "MDPro3 1.4.7",
+  "lookupAliases": 752,
+  "localeFiles": 10,
+  "localeValuesUnchanged": true,
+  "csvOriginalLanguageColumnsUnchanged": 11,
+  "cSharp9Syntax": {
+    "changedProductionFiles": 122,
+    "profiles": 3,
+    "errors": 0,
+    "rawAndDecodedHanStrings": 0,
+    "namespacePreservation": true,
+    "unityApiCompilation": false
+  },
+  "compiledProductionSourceScenarios": {
+    "count": 12,
+    "files": [
+      "Config.cs",
+      "Language.cs",
+      "InterString.cs",
+      "LegacyTextContracts.cs",
+      "NewsManager.cs"
+    ],
+    "allTenLocalesCanonicalAndLegacyLookups": true,
+    "lookupChecksOver": 7000,
+    "unityAndHttpApis": "controlled stubs"
+  },
+  "resources": {
+    "sourceFilesScanned": 3301,
+    "hanSourceFiles": 0,
+    "hanFileNames": 0,
+    "serializedTextFieldsChanged": 988,
+    "serializedFilesWithTextChanges": 91,
+    "serializedStructuresCompared": 92,
+    "guidFileIdAndHierarchyPreserved": true,
+    "originalMetadataFilesUnchanged": true,
+    "metadataFilesCheckedForNewGuidCollisions": 15984,
+    "newAssetGuidsUnique": 2,
+    "creatorTextExceptions": 10,
+    "englishPatchNotesAddressableRegistered": true
+  },
+  "shaderAndToolLogic": {
+    "status": "PASS",
+    "shaderComputeFiles": 11,
+    "tokensUnchanged": true,
+    "pythonToolAstUnchanged": true
+  },
+  "sourceEncodingConversions": {
+    "Assets/Shaders/ImageMerger.shader": "GB18030 -> UTF-8 (English comments only)",
+    "Assets/AssetBundles/Shaders/Ygom_Effect_C_ParticleAdd.shader": "GB18030 -> UTF-8 (English comments only)",
+    "Assets/AssetBundles/Shaders/Ygom_Effect_C_ParticleBlend.shader": "GB18030 -> UTF-8 (English comments only)",
+    "Assets/AssetBundles/Shaders/Ygom_Effect_C_ParticleBlendZW.shader": "GB18030 -> UTF-8 (English comments only)"
+  },
+  "reviewedExecutableTokenDifferences": [
+    "Assets/Scripts/CrossDuel/TextMeshProEx.cs",
+    "Assets/Scripts/MDPro3/Duel/YGOSharp/Card.cs",
+    "Assets/Scripts/MDPro3/Duel/YGOSharp/CardsManager.cs",
+    "Assets/Scripts/MDPro3/Game/VersionIntroduction.cs",
+    "Assets/Scripts/MDPro3/Helper/InterString.cs",
+    "Assets/Scripts/MDPro3/Helper/StringHelper.cs",
+    "Assets/Scripts/MDPro3/Managers/NewsManager.cs",
+    "Assets/Scripts/MDPro3/UI/ServantUI/PuzzleSelectorUI.cs",
+    "Assets/Scripts/MDPro3/UI/ServantUI/SettingServantUI.cs",
+    "Assets/Scripts/MDPro3/Utility/LegacyTextContracts.cs (new)"
+  ],
+  "referenceMigrationReview": {
+    "lookupKeyChanges": "C# callsites, text resources, all locale dictionaries, reverse lookups and old/downloaded input normalization agree on canonical English keys.",
+    "editorMenuPaths": 19,
+    "enumName": "Unused retains numeric value2",
+    "parserGrammar": "CDB terms match original arrays byte for byte, behind semantic data keys.",
+    "news": "Count/captions/images/links all select EnglishUS; missingEnglishfeedhidden.",
+    "patchNotes": "EnglishresourceexistsandGUIDmatchesAddressablesentry."
+  },
+  "preserved": [
+    "Main and Battle Spirits branches",
+    "Original CDB/card identities and game protocol values",
+    "Original locale translations",
+    "Fonts, card pictures, sound, platform bundles and WindBot data",
+    "Original creator attribution"
+  ],
+  "notVerified": [
+    "Unity Editor API compilation",
+    "Unity Play/render/input",
+    "Shader compilation",
+    "Live news API contents",
+    "Windows player build",
+    "Rebuilt external bundles or Addressables content",
+    "Original gameplay/Puzzle/AI fixes"
+  ],
+  "sourceManifestSha256": "eecebad91eca5f3f3643228cf79409ef5a238a3976e9ec3e9970a41afa2edcb3"
+}

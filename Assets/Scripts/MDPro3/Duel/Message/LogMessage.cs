@@ -81,36 +81,36 @@ namespace MDPro3.Duel
         private string GetMoveReasonText(GPS from, GPS to, uint reason)
         {
             if ((reason & (uint)CardReason.DESTROY) > 0)
-                return InterString.Get("破坏");
+                return InterString.Get("Destroy");
             if ((reason & (uint)CardReason.RELEASE) > 0)
-                return InterString.Get("解放");
+                return InterString.Get("Tribute");
             if ((reason & (uint)CardReason.BATTLE) > 0)
-                return InterString.Get("战斗破坏");
+                return InterString.Get("Destroyed by battle");
             if ((reason & (uint)CardReason.FLIP) > 0)
-                return InterString.Get("反转");
+                return InterString.Get("Flip Effect");
             if (to.InLocation(CardLocation.Hand))
             {
-                var textReason = InterString.Get("回到");
+                var textReason = InterString.Get("Return");
                 if (from.InLocation(CardLocation.Deck, CardLocation.Extra))
-                    textReason = InterString.Get("加入");
+                    textReason = InterString.Get("Add");
                 if (from.InLocation(CardLocation.Grave, CardLocation.Removed))
-                    textReason = InterString.Get("回收");
+                    textReason = InterString.Get("Recycle");
                 return textReason;
             }
             if (to.InLocation(CardLocation.SpellZone)
                 && !from.InLocation(CardLocation.SpellZone)
                 && !from.InLocation(CardLocation.Hand))
-                return InterString.Get("放置");
+                return InterString.Get("Place");
             if (from.InLocation(CardLocation.SpellZone)
                 && to.InLocation(CardLocation.SpellZone))
-                return InterString.Get("移动");
+                return InterString.Get("Move");
             if (from.InLocation(CardLocation.MonsterZone)
                 && to.InLocation(CardLocation.MonsterZone))
-                return InterString.Get("移动");
+                return InterString.Get("Move");
             if (to.InLocation(CardLocation.MonsterZone)
                 && !from.InLocation(CardLocation.MonsterZone))
-                return InterString.Get("回到");
-            return InterString.Get("送至");
+                return InterString.Get("Return");
+            return InterString.Get("To");
         }
 
         #endregion
@@ -155,7 +155,7 @@ namespace MDPro3.Duel
 
             var item = ABLoader.LoadMasterDuelGameObject("DuelLogNewTurn");
             item.transform.GetChild(1).GetComponent<Image>().color = myTurn ? DuelLog.myColor : DuelLog.opColor;
-            item.transform.GetChild(2).GetComponent<Text>().text = InterString.Get("第[?]回合", turns.ToString());
+            item.transform.GetChild(2).GetComponent<Text>().text = InterString.Get("Turn [?]", turns.ToString());
             item.transform.GetChild(3).GetComponent<Image>().material = Core.GetUI<OcgCoreUI>().AvatarPlayer0.material;
             item.transform.GetChild(4).GetComponent<Image>().material = Core.GetUI<OcgCoreUI>().AvatarPlayer1.material;
             item.transform.GetChild(3).GetComponent<Image>().sprite = Core.GetUI<OcgCoreUI>().AvatarPlayer0.sprite;
@@ -172,12 +172,12 @@ namespace MDPro3.Duel
             duelPhase = (DuelPhase)reader.ReadInt16();
             string textPhase = duelPhase switch
             {
-                DuelPhase.Draw => InterString.Get("抽卡阶段"),
-                DuelPhase.Standby => InterString.Get("准备阶段"),
-                DuelPhase.Main1 => InterString.Get("主要阶段1"),
-                DuelPhase.Battle => InterString.Get("战斗阶段"),
-                DuelPhase.Main2 => InterString.Get("主要阶段2"),
-                DuelPhase.End => InterString.Get("结束阶段"),
+                DuelPhase.Draw => InterString.Get("Draw Phase"),
+                DuelPhase.Standby => InterString.Get("Standby Phase"),
+                DuelPhase.Main1 => InterString.Get("Main Phase 1"),
+                DuelPhase.Battle => InterString.Get("Battle Phase"),
+                DuelPhase.Main2 => InterString.Get("Main Phase 2"),
+                DuelPhase.End => InterString.Get("End Phase"),
                 _ => string.Empty,
             };
 
@@ -204,7 +204,7 @@ namespace MDPro3.Duel
             {
                 if(from.location == 0)
                 {
-                    //召唤衍生物
+                    //Summon a Token.
                 }
                 else
                 {
@@ -220,14 +220,14 @@ namespace MDPro3.Duel
             else
                 data = card.GetData();
 
-            //不记录召唤怪兽的移动
+            //Do not log movement during a Normal Summon.
             if (to.InPosition(CardPosition.FaceUp)
                 && to.InLocation(CardLocation.MonsterZone)
                 && from.InLocation(CardLocation.Hand)
                 && !to.InLocation(CardLocation.Overlay))
                 return UniTask.CompletedTask;
 
-            //不记录特殊召唤怪兽的移动
+            //Do not log movement during a Special Summon.
             if ((reason & (uint)CardReason.SPSUMMON) > 0
                 && to.InLocation(CardLocation.MonsterZone)
                 && !from.InLocation(CardLocation.MonsterZone)
@@ -237,14 +237,14 @@ namespace MDPro3.Duel
                 return UniTask.CompletedTask;
             }
 
-            //不记录手卡发动魔陷的移动
+            //Do not log movement when activating a Spell/Trap from the hand.
             if (from.InLocation(CardLocation.Hand)
                 && to.InLocation(CardLocation.SpellZone)
                 && to.InPosition(CardPosition.FaceUp)
                 && !data.HasType(CardType.Monster))
                 return UniTask.CompletedTask;
 
-            //不记录手卡发动的灵摆卡的移动
+            //Do not log movement when activating a Pendulum card from the hand.
             if (from.InLocation(CardLocation.Hand)
                 && to.InLocation(CardLocation.SpellZone)
                 && to.InPosition(CardPosition.FaceUp)
@@ -252,31 +252,31 @@ namespace MDPro3.Duel
                 && to.InPendulumSequence())
                 return UniTask.CompletedTask;
 
-            //不记录发动过的魔陷自动送墓的移动
+            //Do not log activated Spells/Traps being automatically sent to the Graveyard.
             if(from.InLocation(CardLocation.SpellZone)
                 && !to.InLocation(CardLocation.SpellZone)
                 && !data.HasType(CardType.Monster)
                 && (reason & (uint)CardReason.RULE) > 0)
                 return UniTask.CompletedTask;
 
-            //不记录成为超量素材的卡的移动
+            //Do not log cards being attached as Xyz Material.
             if (from.InLocation(CardLocation.Overlay)
                 && to.InLocation(CardLocation.Overlay))
                 return UniTask.CompletedTask;
 
-            //不记录卡组洗牌的卡的移动
+            //Do not log movement caused by shuffling the Deck.
             if (from.InLocation(CardLocation.Deck)
                 && to.InLocation(CardLocation.Deck))
                 return UniTask.CompletedTask;
 
-            //不记录场上被盖放的卡的移动
+            //Do not log cards being Set on the field.
             if (to.InLocation(CardLocation.Onfield)
                 && to.InPosition(CardPosition.FaceDown))
                 return UniTask.CompletedTask;
 
             var boxed = (reason & (uint)CardReason.COST) > 0;
             if (boxed)
-                AddMoveHeader(InterString.Get("代价"));
+                AddMoveHeader(InterString.Get("Cost"));
             var textReason = GetMoveReasonText(from, to, reason & ~(uint)CardReason.COST);
 
             if (data.HasType(CardType.Token))
@@ -301,28 +301,28 @@ namespace MDPro3.Duel
             var data = card.GetData();
             string textReason;
             if(OcgCore.currentMessage == GameMessage.Summoning)
-                textReason = InterString.Get("召唤");
+                textReason = InterString.Get("Summon");
             else if (OcgCore.currentMessage == GameMessage.SpSummoning)
             {
                 if ((lastSpSummonReason & (uint)CardReason.Ritual) > 0)
-                    textReason = InterString.Get("仪式召唤");
+                    textReason = InterString.Get("Ritual Summon");
                 else if ((lastSpSummonReason & (uint)CardReason.Fusion) > 0)
-                    textReason = InterString.Get("融合召唤");
+                    textReason = InterString.Get("Fusion Summon");
                 else if ((lastSpSummonReason & (uint)CardReason.Synchro) > 0)
-                    textReason = InterString.Get("同调召唤");
+                    textReason = InterString.Get("Synchro Summon");
                 else if ((lastSpSummonReason & (uint)CardReason.Xyz) > 0)
-                    textReason = InterString.Get("超量召唤");
+                    textReason = InterString.Get("XYZ Summon");
                 else if ((lastSpSummonReason & (uint)CardReason.Link) > 0)
-                    textReason = InterString.Get("连接召唤");
+                    textReason = InterString.Get("Link Summon");
                 else if (inPendulumSummon)
-                    textReason = InterString.Get("灵摆召唤");
+                    textReason = InterString.Get("Pendulum Summon");
                 else
-                    textReason = InterString.Get("特殊召唤");
+                    textReason = InterString.Get("Special Summon");
             }
             else if (OcgCore.currentMessage == GameMessage.FlipSummoning)
-                textReason = InterString.Get("反转召唤");
+                textReason = InterString.Get("Flip Summon");
             else
-                textReason = InterString.Get("送至");
+                textReason = InterString.Get("To");
 
             if (data.HasType(CardType.Token))
                 DuelLog.AddSingleCardMessageToLog(code, null, gps, textReason);
@@ -351,7 +351,7 @@ namespace MDPro3.Duel
                 return UniTask.CompletedTask;
             }
 
-            string textReason = InterString.Get("盖放");
+            string textReason = InterString.Get("Set");
             DuelLog.AddSingleCardMessageToLog(card.GetData().Id, card.cacheP, card.p, textReason);
             return UniTask.CompletedTask;
         }
@@ -381,14 +381,14 @@ namespace MDPro3.Duel
                 item.transform.GetChild(1).GetChild(0).GetComponent<Text>().text = cardsInChain.Count.ToString();
                 item.transform.GetChild(1).GetChild(0).GetComponent<Text>().color =
                     card.p.controller == 0 ? DuelLog.myChainColor : DuelLog.opChainColor;
-                item.transform.GetChild(2).GetComponent<Text>().text = InterString.Get("连锁");
+                item.transform.GetChild(2).GetComponent<Text>().text = InterString.Get("Chain");
                 _ = Program.instance.texture_.LoadCardToRawImageWithoutMaterialAsync(
                     item.transform.GetChild(3).GetComponent<RawImage>(), code);
                 DuelLog.ConfigureChainingItem(item);
                 DuelLog.AddLog(item);
             }
             
-            var textReason = InterString.Get("发动");
+            var textReason = InterString.Get("Activate");
             if(card.cacheP != null 
                 && card.cacheP.InLocation(CardLocation.Hand)
                 && gps.InLocation(CardLocation.SpellZone)
@@ -397,7 +397,7 @@ namespace MDPro3.Duel
                 && gps.InPendulumSequence()
                 && card == lastMoveCard
                 && card != lastConfirmedCard)
-                textReason = InterString.Get("灵摆发动");
+                textReason = InterString.Get("Activate as Pendulum Scale");
 
             if(card == lastMoveCard
                 && card != lastConfirmedCard
@@ -429,10 +429,10 @@ namespace MDPro3.Duel
                 return UniTask.CompletedTask;
             }
 
-            var textReason = InterString.Get("发动无效");
+            var textReason = InterString.Get("Activating Invalid");
             if (OcgCore.currentMessage == GameMessage.ChainDisabled)
             {
-                textReason = InterString.Get("效果无效");
+                textReason = InterString.Get("Effect Invalid");
                 if(card.negated)
                     return UniTask.CompletedTask;
             }
@@ -463,7 +463,7 @@ namespace MDPro3.Duel
                 codes.Add(code);
             }
 
-            var textReason = InterString.Get("抽卡");
+            var textReason = InterString.Get("Draw");
             if (turns == 0 && count > 1)
             {
                 DuelLog.AddOpeningDrawMessageToLog(codes, gps, textReason);
@@ -495,7 +495,7 @@ namespace MDPro3.Duel
             var count = reader.ReadByte();
             var item = ABLoader.LoadMasterDuelGameObject(cardsInChain.Count > 0 ? "DuelLogText2" : "DuelLogText");
 
-            item.transform.GetChild(1).GetComponent<Text>().text = InterString.Get("对象");
+            item.transform.GetChild(1).GetComponent<Text>().text = InterString.Get("Target");
             DuelLog.AddLog(item);
             for(int i = 0; i < count; i++)
             {
@@ -548,7 +548,7 @@ namespace MDPro3.Duel
                 return UniTask.CompletedTask;
 
             var item = ABLoader.LoadMasterDuelGameObject(cardsInChain.Count > 0 ? "DuelLogText2" : "DuelLogText");
-            item.transform.GetChild(1).GetComponent<Text>().text = InterString.Get("对象");
+            item.transform.GetChild(1).GetComponent<Text>().text = InterString.Get("Target");
             DuelLog.AddLog(item);
             for (int i = 0; i < tempList.Count; i++)
                 DuelLog.AddSingleCardMessageToLog(tempList[i].GetData().Id, null, tempList[i].p, string.Empty, true);
@@ -563,7 +563,7 @@ namespace MDPro3.Duel
                 DebugNoCard();
                 return UniTask.CompletedTask;
             }
-            var textReason = InterString.Get("攻击被无效");
+            var textReason = InterString.Get("Negate Attack");
             DuelLog.AddSingleCardMessageToLog(attackingCard.GetData().Id, null, attackingCard.p, textReason);
 
             return UniTask.CompletedTask;
@@ -578,7 +578,7 @@ namespace MDPro3.Duel
             {
                 var code = reader.ReadInt32();
                 var gps = reader.ReadShortGPS();
-                var textReason = InterString.Get("公开卡组");
+                var textReason = InterString.Get("Show Card (Deck)");
                 DuelLog.AddSingleCardMessageToLog(code, null, gps, textReason);
             }
 
@@ -615,11 +615,11 @@ namespace MDPro3.Duel
             {
                 var code = reader.ReadInt32();
                 var gps = reader.ReadShortGPS();
-                var textReason = InterString.Get("公开");
+                var textReason = InterString.Get("Show");
                 if (gps.InLocation(CardLocation.Hand))
-                    textReason = InterString.Get("公开手卡");
+                    textReason = InterString.Get("Show Card (Hand)");
                 else if (gps.InLocation(CardLocation.Onfield))
-                    textReason = InterString.Get("公开盖卡");
+                    textReason = InterString.Get("Show Card (Set)");
                 DuelLog.AddSingleCardMessageToLog(code, null, gps, textReason);
             }
             return UniTask.CompletedTask;
@@ -630,13 +630,13 @@ namespace MDPro3.Duel
             var code = reader.ReadInt32();
             var from = reader.ReadGPS();
 
-            var textReason = InterString.Get("更改表示形式");
+            var textReason = InterString.Get("Position Change");
             if(from.InLocation(CardLocation.SpellZone)
                 && from.InPosition(CardPosition.FaceUp))
-                textReason = InterString.Get("盖放");
+                textReason = InterString.Get("Set");
             if (from.InLocation(CardLocation.SpellZone)
                 && from.InPosition(CardPosition.FaceDown))
-                textReason = InterString.Get("盖放");
+                textReason = InterString.Get("Set");
 
             if(code == 0)
             {
@@ -672,7 +672,7 @@ namespace MDPro3.Duel
                 position = from.position
             };
 
-            var textReason = InterString.Get(from.controller == to.controller ? "移动" : "转移控制权");
+            var textReason = InterString.Get(from.controller == to.controller ? "Move" : "Control Transfer");
             DuelLog.AddSingleCardMessageToLog(code, from, to2, textReason);
             DuelLog.AddSingleCardMessageToLog(code2, to, from2, textReason);
 
@@ -702,7 +702,7 @@ namespace MDPro3.Duel
             item.transform.GetChild(1).GetChild(0).GetComponent<Text>().text = chainSolvingIndex.ToString();
             item.transform.GetChild(1).GetChild(0).GetComponent<Text>().color =
                 card.p.controller == 0 ? DuelLog.myChainColor : DuelLog.opChainColor;
-            item.transform.GetChild(2).GetComponent<Text>().text = InterString.Get("效果处理");
+            item.transform.GetChild(2).GetComponent<Text>().text = InterString.Get("Effect Resolution");
             _ = Program.instance.texture_.LoadCardToRawImageWithoutMaterialAsync(
                 item.transform.GetChild(3).GetComponent<RawImage>(), card.GetData().Id);
             DuelLog.ConfigureChainingItem(item);
@@ -719,7 +719,7 @@ namespace MDPro3.Duel
             var item = ABLoader.LoadMasterDuelGameObject("DuelLogChaining");
             item.transform.GetChild(1).gameObject.SetActive(false);
             item.transform.GetChild(3).gameObject.SetActive(false);
-            var textReason = InterString.Get(chainSolvingIndex > 1 ? "连锁结束" : "处理结束");
+            var textReason = InterString.Get(chainSolvingIndex > 1 ? "Chain End" : "Resolution Completed");
             item.transform.GetChild(2).GetComponent<Text>().text = textReason;
             chainSolvingIndex = 0;
             DuelLog.ConfigureChainingItem(item);
@@ -744,7 +744,7 @@ namespace MDPro3.Duel
             var targetColor = from.InMyControl() ? DuelLog.myColor : DuelLog.opColor;
             targetColor.a = 0.75f;
             item.transform.GetChild(1).GetComponent<Image>().color = targetColor;
-            item.transform.GetChild(2).GetComponent<Text>().text = InterString.Get("攻击");
+            item.transform.GetChild(2).GetComponent<Text>().text = InterString.Get("Attack");
             var cardFace1 = item.transform.GetChild(3).GetComponent<RawImage>();
             _ = Program.instance.texture_.LoadCardToRawImageWithoutMaterialAsync(cardFace1, code, true);
             if(from.InPosition(CardPosition.Defence))
@@ -809,7 +809,7 @@ namespace MDPro3.Duel
                 cardsBeTarget.Clear();
                 
                 var item = ABLoader.LoadMasterDuelGameObject(chainSolvingIndex > 0 ? "DuelLogText2" : "DuelLogText");
-                item.transform.GetChild(1).GetComponent<Text>().text = InterString.Get("灵摆召唤结束");
+                item.transform.GetChild(1).GetComponent<Text>().text = InterString.Get("Pendulum Summon Completed");
                 DuelLog.AddLog(item);
             }
 
@@ -830,9 +830,9 @@ namespace MDPro3.Duel
             {
                 item = ABLoader.LoadMasterDuelGameObject(cardsInChain.Count > 0 ? "DuelLogTextWithCard2" : "DuelLogTextWithCard");
                 if (type == 8)
-                    hint = InterString.Get("宣言卡片：[?]", CardsManager.Get(data).Name);
+                    hint = InterString.Get("Declaration Card: [?]", CardsManager.Get(data).Name);
                 else if (type == 10)
-                    hint = InterString.Get("效果适用：[?]", CardsManager.Get(data).Name);
+                    hint = InterString.Get("Effect: [?]", CardsManager.Get(data).Name);
             }
             else if(type >= 2
                 && type <= 11
@@ -843,20 +843,20 @@ namespace MDPro3.Duel
                 if (type == 2)
                     hint = StringHelper.Get(data);
                 else if (type == 4)
-                    hint = InterString.Get("效果选择：[?]", StringHelper.Get(data));
+                    hint = InterString.Get("Effect Choose：[?]", StringHelper.Get(data));
                 else if (type == 5)
                     hint = StringHelper.Get(data);
                 else if (type == 6)
-                    hint = InterString.Get("种族选择：[?]", StringHelper.Race(data));
+                    hint = InterString.Get("Select Type: [?]", StringHelper.Race(data));
                 else if (type == 7)
-                    hint = InterString.Get("属性选择：[?]", StringHelper.Attribute(data));
+                    hint = InterString.Get("Select Attribute: [?]", StringHelper.Attribute(data));
                 else if (type == 9)
-                    hint = InterString.Get("数字选择：[?]", data.ToString());
+                    hint = InterString.Get("Select Number: [?]", data.ToString());
                 else if (type == 11)
                 {
                     if (player == 1)
                         data = (data >> 16) | (data << 16);
-                    hint = InterString.Get("区域选择：[?]", StringHelper.Zone(data));
+                    hint = InterString.Get("Select Zone: [?]", StringHelper.Zone(data));
                 }
             }
 
@@ -938,7 +938,7 @@ namespace MDPro3.Duel
         {
             var player = LocalPlayer(reader.ReadByte());
             var value = reader.ReadInt32();
-            var textReason = InterString.Get("伤害");
+            var textReason = InterString.Get("Damage");
 
             if(player == 0)
                 life0 -= value;
@@ -953,7 +953,7 @@ namespace MDPro3.Duel
         {
             var player = LocalPlayer(reader.ReadByte());
             var value = reader.ReadInt32();
-            var textReason = InterString.Get("代价");
+            var textReason = InterString.Get("Cost");
             if (player == 0)
                 life0 -= value;
             else
@@ -967,7 +967,7 @@ namespace MDPro3.Duel
         {
             var player = LocalPlayer(reader.ReadByte());
             var value = reader.ReadInt32();
-            var textReason = InterString.Get("回复");
+            var textReason = InterString.Get("Restore");
             if (player == 0)
                 life0 += value;
             else
@@ -981,7 +981,7 @@ namespace MDPro3.Duel
         {
             var player = LocalPlayer(reader.ReadByte());
             var value = reader.ReadInt32();
-            var textReason = InterString.Get("基本分改变");
+            var textReason = InterString.Get("LP Change");
 
             var diff = player == 0 ? value - life0 : value - life1;
             if(player == 0)

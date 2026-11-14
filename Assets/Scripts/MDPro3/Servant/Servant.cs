@@ -78,7 +78,7 @@ namespace MDPro3.Servant
         }
 
         /// <summary>
-        /// 响应后退动作：鼠标右键、键盘Esc键、手柄East键等。
+        /// Handle back actions such as right-click, Escape or the controller East button.
         /// </summary>
         public virtual void OnReturn()
         {
@@ -93,7 +93,7 @@ namespace MDPro3.Servant
         }
 
         /// <summary>
-        /// 退出当前Servant。
+        /// Exit the current Servant.
         /// </summary>
         public virtual void OnExit()
         {

@@ -14,8 +14,13 @@ Do not commit generated Unity caches, local configuration, decks or credentials.
 - Current baseline: original MDPro3 1.4.7 from `47c3adb6e`, before the Vietnamese
   interface and LaoDai branding were introduced. Work on `mdpro3-english`.
 - Target Unity **6000.0.24f1**, Windows x64. Start at `Assets/Scenes/Boot.unity`.
-- English is the default UI, card and prerelease language. Keep other original
-  language choices and upstream Chinese translation keys/protocol identifiers.
+- English is the default UI, card and prerelease language. Application code and
+  translation lookup keys use canonical English. Keep original locale values,
+  protocol IDs and the explicitly documented legacy input adapters in
+  `Data/locales/legacy-ui-keys.json` and `legacy-text-contracts.json`.
+- After localization/ref changes, run `Tools/Translations/validate_english.py`
+  and the production-source harness described in `Tools/Translations/README.md`.
+  Preserve Unity GUIDs/fileIDs, original card data and exact creator credits.
 - Preserve the compatibility fixes removing the unsupported URP editor reference
   and disabling compression on nine UI textures. See `RESTORE_ENGLISH.md`.
 - The owner will request optimization and a fresh Battle Spirits conversion

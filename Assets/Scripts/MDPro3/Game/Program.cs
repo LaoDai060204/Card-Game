@@ -160,10 +160,10 @@ namespace MDPro3
                 //"6ace for win!"
 
             //    "-d",
-            //    "LL铁兽",
+            //    "Lyrilusc Tri-Brigade",
 
             //    "-n",
-            //    "赤子奈落",
+            //    "Sample Player",
 
             //    "-h",
             //    "mygo.superpre.pro",

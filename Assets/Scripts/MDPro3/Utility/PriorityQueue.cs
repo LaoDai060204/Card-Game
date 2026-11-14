@@ -4,9 +4,9 @@ using System.Collections.Generic;
 namespace MDPro3.Utility
 {
     /// <summary>
-    /// 自定义优先级队列实现
+    /// Custom priority queue implementation
     /// </summary>
-    /// <typeparam name="T">队列元素类型</typeparam>
+    /// <typeparam name="T">Queue element type</typeparam>
     public class PriorityQueue<T>
     {
         private readonly List<T> data;

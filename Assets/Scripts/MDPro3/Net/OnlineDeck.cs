@@ -140,7 +140,7 @@ namespace MDPro3.Net
             }
             else
             {
-                MessageManager.Cast(InterString.Get("获取MyCard卡组失败：") + request.error);
+                MessageManager.Cast(InterString.Get("Failed to download MyCard deck:") + request.error);
                 return null;
             }
         }
@@ -162,15 +162,15 @@ namespace MDPro3.Net
             {
                 var responseData = JsonUtility.FromJson<ResponseSingleData>(request.downloadHandler.text);
                 if (responseData.code == 0)
-                    MessageManager.Cast(InterString.Get("点赞卡组成功。"));
+                    MessageManager.Cast(InterString.Get("Deck liked successfully."));
                 else
-                    MessageManager.Cast(InterString.Get("点赞卡组失败：") +
+                    MessageManager.Cast(InterString.Get("Failed to like deck:") +
                         //InterString.Get(responseData.message, responseData.messageValue)
                         responseData.message
                         );
             }
             else
-                MessageManager.Cast(InterString.Get("点赞卡组失败：") + request.error);
+                MessageManager.Cast(InterString.Get("Failed to like deck:") + request.error);
         }
 
         #endregion
@@ -198,7 +198,7 @@ namespace MDPro3.Net
             }
             else
             {
-                MessageManager.Cast(InterString.Get("上传卡组失败：") + getIDs.error);
+                MessageManager.Cast(InterString.Get("Failed to Upload Deck:") + getIDs.error);
                 return false;
             }
 
@@ -215,10 +215,10 @@ namespace MDPro3.Net
                 var newName = deckNames[i];
                 if (DeckNameExist(oldName, decks[i].type))
                 {
-                    newName += " - " + InterString.Get("复制");
+                    newName += " - " + InterString.Get("Copy deck");
                     while (File.Exists(Program.PATH_DECK + (decks[i].type == string.Empty ? string.Empty : $"{decks[i].type}/")
                         + newName + Program.EXPANSION_YDK))
-                        newName += " - " + InterString.Get("复制");
+                        newName += " - " + InterString.Get("Copy deck");
                     File.Delete(Program.PATH_DECK + (decks[i].type == string.Empty ? string.Empty : $"{decks[i].type}/") + oldName + Program.EXPANSION_YDK);
                 }
 
@@ -267,7 +267,7 @@ namespace MDPro3.Net
             }
             else
             {
-                MessageManager.Cast(InterString.Get("上传卡组失败：") + request.error);
+                MessageManager.Cast(InterString.Get("Failed to Upload Deck:") + request.error);
                 return false;
             }
         }
@@ -310,13 +310,13 @@ namespace MDPro3.Net
             {
                 var responseData = JsonUtility.FromJson<SyncResponseSingleData>(request.downloadHandler.text);
                 if (showHint)
-                    MessageManager.Cast(InterString.Get("云端卡组「[?]」已同步。", deckName));
+                    MessageManager.Cast(InterString.Get("Online deck \"[?]\" synchronized.", deckName));
                 deck.Save(deckName, DateTime.UtcNow, false);
                 return true;
             }
             else
             {
-                MessageManager.Cast(InterString.Get("云端卡组同步失败：") + request.error);
+                MessageManager.Cast(InterString.Get("Online Deck Synchronization Failed:") + request.error);
                 return false;
             }
         }
@@ -363,7 +363,7 @@ namespace MDPro3.Net
 
             if (request.result == UnityWebRequest.Result.Success)
             {
-                //MessageManager.Cast(InterString.Get("云端卡组删除成功"));
+                //MessageManager.Cast(InterString.Get("Online deck deleted successfully."));
 #if UNITY_EDITOR
                 var responseData = JsonUtility.FromJson<ResponseMultiData>(request.downloadHandler.text);
                 MessageManager.Cast(string.Format("Deck Delete: {0}/{1}", responseData.data, ids.Count));
@@ -373,7 +373,7 @@ namespace MDPro3.Net
             }
             else
             {
-                MessageManager.Cast(InterString.Get("删除云端卡组失败：") + request.error);
+                MessageManager.Cast(InterString.Get("Failed to delete the online deck:") + request.error);
                 return false;
             }
         }

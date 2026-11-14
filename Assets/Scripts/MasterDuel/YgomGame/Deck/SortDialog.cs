@@ -14,17 +14,17 @@ namespace YgomGame.Deck
 
 		private const string LABEL_RT_SORTBUTTONAREA = "SortButtonsArea";
 
-		private const string Label_Obtained = "入";
+		private const string Label_Obtained = "Obtained";
 
-		private const string Label_Inventroy = "所\ufffd";
+		private const string Label_Inventroy = "Inventroy";
 
-		private const string Label_Rarity = "レ\ufffd";
+		private const string Label_Rarity = "Rarity";
 
-		private const string Label_Stars = "レベル\ufffd";
+		private const string Label_Stars = "Stars";
 
-		private const string Label_Atk = "攻\ufffd";
+		private const string Label_Atk = "Atk";
 
-		private const string Label_Def = "守\ufffd";
+		private const string Label_Def = "Def";
 
 		private SorterToggle template;
 

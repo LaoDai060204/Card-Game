@@ -171,9 +171,9 @@ namespace MDPro3.UI
                 manager.GetElement("IconSideDeck").SetActive(location == DeckView.DeckLocation.SideDeck);
                 manager.GetElement<TextMeshProUGUI>("TextDeck").text = location switch
                 {
-                    DeckView.DeckLocation.MainDeck => InterString.Get("主卡组"),
-                    DeckView.DeckLocation.ExtraDeck => InterString.Get("额外卡组"),
-                    DeckView.DeckLocation.SideDeck => InterString.Get("副卡组"),
+                    DeckView.DeckLocation.MainDeck => InterString.Get("Main Deck"),
+                    DeckView.DeckLocation.ExtraDeck => InterString.Get("Extra Deck"),
+                    DeckView.DeckLocation.SideDeck => InterString.Get("Side Deck"),
                     _ => string.Empty
                 };
             }

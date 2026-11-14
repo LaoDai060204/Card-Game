@@ -19,7 +19,7 @@ namespace MDPro3
         private const string INSTALL_PATH_VALUE_NAME = "InstallPath";
 #endif
 
-        private const string NOTICE_TEXT = "<#FF0000>本软件完全免费，如果您通过付费途径获取本软件，请立即进行举报。</color>";
+        private const string NOTICE_TEXT = "<#FF0000>This software is completely free. If you paid to obtain it, please report the seller.</color>";
 
         public static void Show()
         {
@@ -29,9 +29,6 @@ namespace MDPro3
 
         private static bool NeedShow()
         {
-            var language = Language.GetConfig();
-            if(language != Language.SimplifiedChinese)
-                return false;
             var version = Application.version;
             var configName = $"{version}Notified";
             var config = Config.GetBool(configName, false);
@@ -61,14 +58,14 @@ namespace MDPro3
 
         private static void Load()
         {
-            var handle = Addressables.LoadAssetAsync<TextAsset>("UpdateContent");
+            var handle = Addressables.LoadAssetAsync<TextAsset>(Language.UseChinese() ? "UpdateContent" : "UpdateContent_en");
             handle.Completed += (result) =>
             {
                 var text = NOTICE_TEXT + "\n\n" + GetLatest(result.Result.text);
 
                 var tasks = new List<string>()
                 {
-                    "新版本内容",
+                    "What is new",
                     text,
                     string.Empty
                 };

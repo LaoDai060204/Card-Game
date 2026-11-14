@@ -38,16 +38,16 @@ namespace MDPro3
 
             var extensions = new[]
             {
-                new ExtensionFilter(InterString.Get("所有文件"), "*"),
-                new ExtensionFilter(InterString.Get("卡组码文件"), "ydk"),
-                new ExtensionFilter(InterString.Get("回放文件"), "yrp", "yrp3d"),
-                new ExtensionFilter(InterString.Get("扩展卡文件"), "ypk"),
-                new ExtensionFilter(InterString.Get("数据库文件"), "cdb"),
-                new ExtensionFilter(InterString.Get("字段文件"), "conf"),
-                new ExtensionFilter(InterString.Get("图片文件"), "png", "jpg"),
-                new ExtensionFilter(InterString.Get("动态卡图"), "mp4"),
+                new ExtensionFilter(InterString.Get("All Files"), "*"),
+                new ExtensionFilter(InterString.Get("Deck File"), "ydk"),
+                new ExtensionFilter(InterString.Get("Replay File"), "yrp", "yrp3d"),
+                new ExtensionFilter(InterString.Get("Expansion File"), "ypk"),
+                new ExtensionFilter(InterString.Get("Database File"), "cdb"),
+                new ExtensionFilter(InterString.Get("String File"), "conf"),
+                new ExtensionFilter(InterString.Get("Image File"), "png", "jpg"),
+                new ExtensionFilter(InterString.Get("Animated Card Art"), "mp4"),
             };
-            StandaloneFileBrowser.OpenFilePanelAsync(InterString.Get("请选择需要导入的文件"), "", extensions, true, (string[] paths) =>
+            StandaloneFileBrowser.OpenFilePanelAsync(InterString.Get("Please select a file to import"), "", extensions, true, (string[] paths) =>
             {
                 CopyFilesToGame(paths);
             });
@@ -61,9 +61,9 @@ namespace MDPro3
 
             var extensions = new[]
             {
-                new ExtensionFilter(InterString.Get("图片文件"), "png", "jpg")
+                new ExtensionFilter(InterString.Get("Image File"), "png", "jpg")
             };
-            StandaloneFileBrowser.OpenFilePanelAsync(InterString.Get("请选择需要导入的文件"), "", extensions, false, (string[] paths) =>
+            StandaloneFileBrowser.OpenFilePanelAsync(InterString.Get("Please select a file to import"), "", extensions, false, (string[] paths) =>
             {
                 CopyBGToGame(paths);
             });
@@ -78,7 +78,7 @@ namespace MDPro3
                 if(File.Exists(bgPath))
                     File.Delete(bgPath);
                 File.Copy(path, bgPath);
-                MessageManager.Cast(InterString.Get("导入背景图成功。"));
+                MessageManager.Cast(InterString.Get("Background image imported successfully."));
                 Program.instance.background_.Refresh();
             }
         }
@@ -100,33 +100,33 @@ namespace MDPro3
                     if (path.ToLower().EndsWith(Program.EXPANSION_YDK))
                     {
                         File.Copy(path, Program.PATH_DECK + fileName, true);
-                        MessageManager.Cast(InterString.Get("导入卡组「[?]」成功。", fileName.Replace(Program.EXPANSION_YDK, string.Empty)));
+                        MessageManager.Cast(InterString.Get("Deck \"[?]\" imported successfully.", fileName.Replace(Program.EXPANSION_YDK, string.Empty)));
                     }
                     else if (path.ToLower().EndsWith(Program.EXPANSION_YRP) || path.ToLower().EndsWith(Program.EXPANSION_YRP3D))
                     {
                         File.Copy(path, Program.PATH_REPLAY + fileName, true);
-                        MessageManager.Cast(InterString.Get("导入回放「[?]」成功。", fileName));
+                        MessageManager.Cast(InterString.Get("Replay \"[?]\" imported successfully.", fileName));
                     }
                     else if (path.ToLower().EndsWith(".ypk") || path.ToLower().EndsWith(".zip") || path.ToLower().EndsWith(".cdb") || path.ToLower().EndsWith(".conf"))
                     {
                         File.Copy(path, Program.PATH_EXPANSIONS + fileName, true);
                         newDataAdded = true;
                         if (fileName.ToLower().EndsWith(".ypk") || fileName.ToLower().EndsWith(".zip"))
-                            MessageManager.Cast(InterString.Get("导入扩展卡文件「[?]」成功。", fileName));
+                            MessageManager.Cast(InterString.Get("Expansion file \"[?]\" imported successfully.", fileName));
                         else if (fileName.ToLower().EndsWith(".cdb"))
-                            MessageManager.Cast(InterString.Get("导入卡片数据库「[?]」成功。", fileName));
+                            MessageManager.Cast(InterString.Get("Database file \"[?]\" imported successfully.", fileName));
                         else if (fileName.ToLower().EndsWith(".conf"))
-                            MessageManager.Cast(InterString.Get("导入字段文件「[?]」成功。", fileName));
+                            MessageManager.Cast(InterString.Get("String file \"[?]\" imported successfully.", fileName));
                     }
                     else if (path.ToLower().EndsWith(Program.EXPANSION_PNG) || path.ToLower().EndsWith(Program.EXPANSION_JPG))
                     {
                         File.Copy(path, Program.PATH_ALT_ART + Path.GetFileName(path), true);
-                        MessageManager.Cast(InterString.Get("导入自定义卡图「[?]」成功。", fileName));
+                        MessageManager.Cast(InterString.Get("Custom card art \"[?]\" imported successfully.", fileName));
                     }
                     else if (path.ToLower().EndsWith(Program.EXPANSION_MP4))
                     {
                         File.Copy(path, Program.PATH_VIDEO_ART + Path.GetFileName(path), true);
-                        MessageManager.Cast(InterString.Get("导入动态卡图「[?]」成功。", fileName));
+                        MessageManager.Cast(InterString.Get("Animated card art \"[?]\" imported successfully.", fileName));
                         newArtVideosAdded = true;
                     }
                 }
@@ -173,13 +173,13 @@ namespace MDPro3
         {
             if (sucess)
             {
-                MessageManager.Cast(InterString.Get("导出成功。"));
+                MessageManager.Cast(InterString.Get("Export successful."));
                 foreach(var file in filesToDelete)
                     File.Delete(file);
                 filesToDelete.Clear();
             }
             else
-                MessageManager.Cast(InterString.Get("导出失败。"));
+                MessageManager.Cast(InterString.Get("Export failed."));
         }
 
         public static void ExportAllDecks()
@@ -211,7 +211,7 @@ namespace MDPro3
             if(!copy)
                 filesToDelete = filePaths.ToList();
 #else
-            StandaloneFileBrowser.OpenFolderPanelAsync(InterString.Get("请选择导出目录"), "", false, (string[] paths) =>
+            StandaloneFileBrowser.OpenFolderPanelAsync(InterString.Get("Please select an export directory"), "", false, (string[] paths) =>
             {
                 ExportFiles(paths, filePaths, copy);
             });

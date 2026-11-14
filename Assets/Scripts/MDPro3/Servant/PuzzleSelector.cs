@@ -61,7 +61,7 @@ namespace MDPro3.Servant
 
         public void StartCurrentPuzzle(bool check = true)
         {
-            //防止多次点击
+            //Prevent repeated clicks.
             if (check && Program.instance.currentServant != Program.instance.puzzle)
                 return;
 

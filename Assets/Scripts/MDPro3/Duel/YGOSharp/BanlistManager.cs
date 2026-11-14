@@ -94,11 +94,11 @@ namespace MDPro3.Duel.YGOSharp
                 {
                     if (string.IsNullOrWhiteSpace(line))
                         continue;
-                    var trimedLine = line.Trim();                     // 去掉首尾空白
-                    if (trimedLine[0] == '#')                    // 注释行
+                    var trimedLine = line.Trim();                     // Trim leading and trailing whitespace.
+                    if (trimedLine[0] == '#')                    // Comment line.
                         continue;
 
-                    if (trimedLine[0] == '!')                    // 新列表开始
+                    if (trimedLine[0] == '!')                    // Start a new list.
                     {
                         current = new Banlist
                         {
@@ -108,19 +108,19 @@ namespace MDPro3.Duel.YGOSharp
                         continue;
                     }
 
-                    if (current == null)                   // 尚未有激活的列表
+                    if (current == null)                   // No list is active yet.
                         continue;
 
-                    if (trimedLine[0] == '$')                    // $ 开头的行
+                    if (trimedLine[0] == '$')                    // Line beginning with $.
                     {
                         string rest = trimedLine[1..].Trim();
-                        // 白名单模式指令：$whitelist
+                        // Whitelist mode directive: $whitelist
                         if (rest.StartsWith("whitelist", StringComparison.OrdinalIgnoreCase))
                         {
                             current.EnableWhitelistMode();
                             continue;
                         }
-                        // 否则解析为全局信用额度：$key value
+                        // Otherwise parse a global credit budget: $key value
                         string[] parts = rest.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
                         if (parts.Length >= 2)
                         {
@@ -131,12 +131,12 @@ namespace MDPro3.Duel.YGOSharp
                         continue;
                     }
 
-                    // 普通行：可能是传统限制行，也可能是卡牌信用消耗行
+                    // A normal line can specify a card limit or a card credit cost.
                     string[] data = trimedLine.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
                     if (data.Length < 2)
                         continue;
 
-                    // 检查是否包含 $（信用消耗行）
+                    // Check for $ to identify a credit-cost entry.
                     bool isCreditLine = false;
                     int dollarIndex = -1;
                     for (int i = 0; i < data.Length; i++)
@@ -151,18 +151,18 @@ namespace MDPro3.Duel.YGOSharp
 
                     if (isCreditLine)
                     {
-                        // 格式：卡号 $信用类型 消耗值
+                        // Format: card_id $credit_type cost
                         if (dollarIndex + 1 >= data.Length)
                             continue;
                         if (int.TryParse(data[0], out int cardId) && int.TryParse(data[dollarIndex + 1], out int value))
                         {
-                            string key = data[dollarIndex][1..]; // 去掉 $
+                            string key = data[dollarIndex][1..]; // Remove the $ prefix.
                             current.AddCardCredit(cardId, key, value);
                         }
                     }
                     else
                     {
-                        // 传统格式：卡号 数量
+                        // Legacy format: card_id count
                         if (int.TryParse(data[0], out int id) && int.TryParse(data[1], out int count))
                             current.Add(id, count);
                     }
@@ -186,11 +186,11 @@ namespace MDPro3.Duel.YGOSharp
                 {
                     if (string.IsNullOrWhiteSpace(line))
                         continue;
-                    line = line.Trim();                     // 去掉首尾空白
-                    if (line[0] == '#')                    // 注释行
+                    line = line.Trim();                     // Trim leading and trailing whitespace.
+                    if (line[0] == '#')                    // Comment line.
                         continue;
 
-                    if (line[0] == '!')                    // 新列表开始
+                    if (line[0] == '!')                    // Start a new list.
                     {
                         current = new Banlist
                         {
@@ -200,19 +200,19 @@ namespace MDPro3.Duel.YGOSharp
                         continue;
                     }
 
-                    if (current == null)                   // 尚未有激活的列表
+                    if (current == null)                   // No list is active yet.
                         continue;
 
-                    if (line[0] == '$')                    // $ 开头的行
+                    if (line[0] == '$')                    // Line beginning with $.
                     {
                         string rest = line[1..].Trim();
-                        // 白名单模式指令：$whitelist
+                        // Whitelist mode directive: $whitelist
                         if (rest.StartsWith("whitelist", StringComparison.OrdinalIgnoreCase))
                         {
                             current.EnableWhitelistMode();
                             continue;
                         }
-                        // 否则解析为全局信用额度：$key value
+                        // Otherwise parse a global credit budget: $key value
                         string[] parts = rest.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
                         if (parts.Length >= 2)
                         {
@@ -223,12 +223,12 @@ namespace MDPro3.Duel.YGOSharp
                         continue;
                     }
 
-                    // 普通行：可能是传统限制行，也可能是卡牌信用消耗行
+                    // A normal line can specify a card limit or a card credit cost.
                     string[] data = line.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
                     if (data.Length < 2)
                         continue;
 
-                    // 检查是否包含 $（信用消耗行）
+                    // Check for $ to identify a credit-cost entry.
                     bool isCreditLine = false;
                     int dollarIndex = -1;
                     for (int i = 0; i < data.Length; i++)
@@ -243,18 +243,18 @@ namespace MDPro3.Duel.YGOSharp
 
                     if (isCreditLine)
                     {
-                        // 格式：卡号 $信用类型 消耗值
+                        // Format: card_id $credit_type cost
                         if (dollarIndex + 1 >= data.Length)
                             continue;
                         if (int.TryParse(data[0], out int cardId) && int.TryParse(data[dollarIndex + 1], out int value))
                         {
-                            string key = data[dollarIndex][1..]; // 去掉 $
+                            string key = data[dollarIndex][1..]; // Remove the $ prefix.
                             current.AddCardCredit(cardId, key, value);
                         }
                     }
                     else
                     {
-                        // 传统格式：卡号 数量
+                        // Legacy format: card_id count
                         if (int.TryParse(data[0], out int id) && int.TryParse(data[1], out int count))
                             current.Add(id, count);
                     }
@@ -375,7 +375,7 @@ namespace MDPro3.Duel.YGOSharp
             for (int i = 0; i < Banlists.Count; i++)
                 if (Banlists[i].Hash == hash)
                     return Banlists[i].Name;
-            return InterString.Get("未知卡表");
+            return InterString.Get("Unknown Banlist");
         }
 
         public static List<string> GetAllNames(bool includeGenesys = false)

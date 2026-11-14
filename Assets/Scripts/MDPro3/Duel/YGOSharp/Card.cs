@@ -383,8 +383,7 @@ namespace MDPro3.Duel.YGOSharp
 
             bool isEnglishMaximum = trimmed.StartsWith("Maximum ATK", StringComparison.OrdinalIgnoreCase);
             bool isChineseMaximum = UsesLegacyRushDescriptionStrip(language)
-                && (trimmed.StartsWith("极大攻击", StringComparison.Ordinal)
-                    || trimmed.StartsWith("極大攻擊", StringComparison.Ordinal));
+                && LegacyTextContracts.StartsWith("RushMaximumAttackPrefixes", trimmed);
             if (!isEnglishMaximum && !isChineseMaximum)
                 return false;
 
@@ -520,7 +519,7 @@ namespace MDPro3.Duel.YGOSharp
             // Monster text (no header) -> separator -> [Pendulum Effect] -> pendulum text
             if (language != Language.Korean)
             {
-                var pendulumHeader = NormalizeBracketLabel(InterString.Get("【灵摆效果】"));
+                var pendulumHeader = NormalizeBracketLabel(InterString.Get("[Pendulum Effect]"));
 
                 var result = setName + (monsterText ?? string.Empty);
 
@@ -538,11 +537,11 @@ namespace MDPro3.Duel.YGOSharp
             }
 
             // Korean: keep the old behavior (already working for you)
-            string monsterHeader = InterString.Get("【怪兽效果】");
+            string monsterHeader = InterString.Get("[Monster Effect]");
             if (!HasType(CardType.Effect))
-                monsterHeader = InterString.Get("【怪兽描述】");
+                monsterHeader = InterString.Get("[Monster Description]");
 
-            var pendulumHeaderK = NormalizeBracketLabel(InterString.Get("【灵摆效果】"));
+            var pendulumHeaderK = NormalizeBracketLabel(InterString.Get("[Pendulum Effect]"));
             monsterHeader = NormalizeBracketLabel(monsterHeader);
 
             return setName
@@ -591,7 +590,7 @@ namespace MDPro3.Duel.YGOSharp
         }
 
         /// <summary>
-        /// 仅在卡片是灵摆卡时使用
+        /// Use only for Pendulum cards.
         /// </summary>
         /// <param name="render"></param>
         /// <returns></returns>
@@ -662,18 +661,18 @@ namespace MDPro3.Duel.YGOSharp
         }
 
         /// <summary>
-        /// 获取卡片的字段。
+        /// Get the card archetypes.
         /// </summary>
-        /// <returns>e.g: "No.|未来皇 霍普\r\n"</returns>
+        /// <returns>e.g: "No.|Utopic Future\r\n"</returns>
         public string GetSetName()
         {
             return StringHelper.GetSetName(Setcode);
         }
 
         /// <summary>
-        /// 获取卡片的字段，用于卡片描述中，不为空时以换行符结尾。
+        /// Get the card archetypes for its description, ending with a newline when nonempty.
         /// </summary>
-        /// <returns>e.g: "<color=#FFF000>系列：No.|未来皇 霍普</color>\r\n"</returns>
+        /// <returns>e.g: "<color=#FFF000>Archetypes: No.|Utopic Future</color>\r\n"</returns>
         public string GetSetNameWithColor()
         {
             var returnValue = GetSetName();
@@ -685,9 +684,9 @@ namespace MDPro3.Duel.YGOSharp
         }
 
         /// <summary>
-        /// 获取卡片的字段，用于卡片详情页中。
+        /// Get the card archetypes for the card details page.
         /// </summary>
-        /// <returns>e.g: "【No.|未来皇 霍普】"</returns>
+        /// <returns>e.g: "【No.|Utopic Future】"</returns>
         public string GetSetNameWithBracket()
         {
             var returnValue = GetSetName();
@@ -759,26 +758,26 @@ namespace MDPro3.Duel.YGOSharp
             if ((cardType & (int)CardType.Spell) > 0)
             {
                 if ((cardType & (int)CardType.Field) > 0)
-                    return InterString.Get("场地魔法", type);
+                    return InterString.Get("Field Spell", type);
                 else if ((cardType & (int)CardType.QuickPlay) > 0)
-                    return InterString.Get("速攻魔法", type);
+                    return InterString.Get("Quick-Play Spell", type);
                 else if ((cardType & (int)CardType.Continuous) > 0)
-                    return InterString.Get("永续魔法", type);
+                    return InterString.Get("Continuous Spell", type);
                 else if ((cardType & (int)CardType.Equip) > 0)
-                    return InterString.Get("装备魔法", type);
+                    return InterString.Get("Equip Spell", type);
                 else if ((cardType & (int)CardType.Ritual) > 0)
-                    return InterString.Get("仪式魔法", type);
+                    return InterString.Get("Ritual Spell", type);
                 else
-                    return InterString.Get("通常魔法", type);
+                    return InterString.Get("Normal Spell", type);
             }
             else if ((cardType & (int)CardType.Trap) > 0)
             {
                 if ((cardType & (int)CardType.Continuous) > 0)
-                    return InterString.Get("永续陷阱", type);
+                    return InterString.Get("Continuous Trap", type);
                 else if ((cardType & (int)CardType.Counter) > 0)
-                    return InterString.Get("反击陷阱", type);
+                    return InterString.Get("Counter Trap", type);
                 else
-                    return InterString.Get("通常陷阱", type);
+                    return InterString.Get("Normal Trap", type);
             }
             return string.Empty;
         }
@@ -822,9 +821,9 @@ namespace MDPro3.Duel.YGOSharp
                     type = 2;
                 re = bracketLeft;
                 if (HasType(CardType.Spell))
-                    re += InterString.Get("魔法卡", type);
+                    re += InterString.Get("SPELL CARD", type);
                 else
-                    re += InterString.Get("陷阱卡", type);
+                    re += InterString.Get("TRAP CARD", type);
                 var secondType = GetSecondType(true);
                 if (secondType != StringHelper.GetUnsafe(1054, type))
                     re += Program.STRING_SLASH + secondType + GetSpellTrapTypeIconCode();
@@ -852,9 +851,9 @@ namespace MDPro3.Duel.YGOSharp
             }
             re = bracketLeft;
             if (HasType(CardType.Spell))
-                re += InterString.Get("魔法卡", isPre ? 2 : 1);
+                re += InterString.Get("SPELL CARD", isPre ? 2 : 1);
             else
-                re += InterString.Get("陷阱卡", isPre ? 2 : 1);
+                re += InterString.Get("TRAP CARD", isPre ? 2 : 1);
             re += GetSpellTrapTypeIconCode() + bracketRight;
 
             return re;

@@ -1160,9 +1160,9 @@ namespace MDPro3
                 && CardsManager.Get(data.Id).HasType(CardType.Monster)
                 && (CardsManager.Get(data.Id).Type & 0x68020C0) > 0
                 && p.InLocation(CardLocation.Grave, CardLocation.Removed))
-                AddStringTail(InterString.Get("未正规登场"));
+                AddStringTail(InterString.Get("Not Properly Summoned"));
             else
-                RemoveStringTail(InterString.Get("未正规登场"), true);
+                RemoveStringTail(InterString.Get("Not Properly Summoned"), true);
             //Debug.LogFormat("{0}: reason: {1:X} location: {2:X}", data.Name, p.reason, p.location);
 
             for (int i = 0; i < overlays.Count; i++)
@@ -1394,7 +1394,7 @@ namespace MDPro3
                 Destroy(model);
                 var director = fx.GetComponent<PlayableDirector>();
                 _ = director.AutoDestroy();
-                //TODO 送去墓地的特效
+                //TODO: Add the effect for sending a card to the Graveyard.
                 await UniTask.WaitForSeconds(0.2f);
                 return;
             }

@@ -116,7 +116,7 @@ namespace MDPro3.UI.ServantUI
             switch (condition)
             {
                 case Condition.ChangePickup:
-                    Title.text = InterString.Get("变更三大代表卡");
+                    Title.text = InterString.Get("Change Three Main Cards");
                     LoadOptionalArea(LABEL_WIDGET_PICKUP, 1);
                     break;
             }

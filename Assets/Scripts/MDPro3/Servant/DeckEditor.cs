@@ -275,10 +275,10 @@ namespace MDPro3.Servant
 
                 var selections = new List<string>
                 {
-                    InterString.Get("卡组未保存"),
-                    InterString.Get("卡组已修改，是否保存？"),
-                    InterString.Get("保存"),
-                    InterString.Get("不保存")
+                    InterString.Get("Deck not saved"),
+                    InterString.Get("This deck has been modified.@nDo you want to save it?"),
+                    InterString.Get("Save"),
+                    InterString.Get("Don't Save")
                 };
                 UIManager.ShowPopupYesOrNo(selections, GetUI<DeckEditorUI>().OnSave, OnExit);
             }

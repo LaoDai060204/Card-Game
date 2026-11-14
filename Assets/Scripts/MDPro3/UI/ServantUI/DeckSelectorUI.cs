@@ -106,19 +106,19 @@ namespace MDPro3.UI.ServantUI
             {
                 case Condition.ForEdit:
                     ButtonOnline.gameObject.SetActive(true);
-                    Title.text = InterString.Get("编辑卡组");
+                    Title.text = InterString.Get("DECK");
                     break;
                 case Condition.ForDuel:
                     ButtonOnline.gameObject.SetActive(false);
-                    Title.text = InterString.Get("选择卡组");
+                    Title.text = InterString.Get("Select Deck");
                     break;
                 case Condition.ForSolo:
                     ButtonOnline.gameObject.SetActive(false);
-                    Title.text = InterString.Get("选择卡组");
+                    Title.text = InterString.Get("Select Deck");
                     break;
                 case Condition.MyCard:
                     ButtonOnline.gameObject.SetActive(false);
-                    Title.text = InterString.Get("选择卡组");
+                    Title.text = InterString.Get("Select Deck");
                     break;
             }
 
@@ -276,7 +276,7 @@ namespace MDPro3.UI.ServantUI
             SwitchToDefaultLayout();
             var selections = new List<string>()
             {
-                InterString.Get("请输入卡组名。@n创建卡组时会自动导入剪切板中的卡组码。"),
+                InterString.Get("Please enter a deck name.@n@nThe deck code in your clipboard will be imported automatically."),
                 string.Empty
             };
             UIManager.ShowPopupInput(selections, DeckCheck, null, TmpInputValidation.ValidationType.Path);
@@ -291,10 +291,10 @@ namespace MDPro3.UI.ServantUI
                 deckInUse = deckName;
                 List<string> tasks = new()
                 {
-                    InterString.Get("该卡组名已存在"),
-                    InterString.Get("该卡组名的文件已存在，是否直接覆盖创建？"),
-                    InterString.Get("覆盖"),
-                    InterString.Get("取消")
+                    InterString.Get("Deck name already exists"),
+                    InterString.Get("A file with this deck name already exists. Overwrite it?"),
+                    InterString.Get("Overwrite"),
+                    InterString.Get("Cancel")
                 };
                 DOTween.To(v => { }, 0, 0, 0.6f).OnComplete(() =>
                 {
@@ -339,7 +339,7 @@ namespace MDPro3.UI.ServantUI
             catch (Exception e)
             {
                 Debug.LogException(e);
-                MessageManager.Cast(InterString.Get("创建卡组失败！请检查文件夹权限。"));
+                MessageManager.Cast(InterString.Get("Failed to create deck! Please check folder permissions."));
             }
         }
 
@@ -372,14 +372,14 @@ namespace MDPro3.UI.ServantUI
             var folders = GetAllDeckTypes();
             var types = new List<string>
             {
-                InterString.Get("卡组分组"),
-                InterString.Get("彩色选项为功能选项，白色选项为卡组分组。"),
-                "g:" + InterString.Get("新建分组"),
-                "r:" + InterString.Get("删除分组"),
-                "b:" + InterString.Get("重命名分组"),
-                "b:" + InterString.Get("移动到分组"),
-                "b:" + InterString.Get("复制到分组"),
-                InterString.Get("默认分组")
+                InterString.Get("Deck Grouping"),
+                InterString.Get("Colored options are function options; white options are deck groups."),
+                "g:" + InterString.Get("Create New Group"),
+                "r:" + InterString.Get("Delete Group"),
+                "b:" + InterString.Get("Rename Group"),
+                "b:" + InterString.Get("Move to Group"),
+                "b:" + InterString.Get("Copy to Group"),
+                InterString.Get("Default Group")
             };
             types.AddRange(folders);
 
@@ -395,21 +395,21 @@ namespace MDPro3.UI.ServantUI
 
             if(color != Color.white)
             {
-                if (selected == InterString.Get("新建分组"))
+                if (selected == InterString.Get("Create New Group"))
                     AddDeckType();
-                if (selected == InterString.Get("删除分组"))
+                if (selected == InterString.Get("Delete Group"))
                     RemoveDeckType();
-                if (selected == InterString.Get("重命名分组"))
+                if (selected == InterString.Get("Rename Group"))
                     RenameDeckType();
-                if (selected == InterString.Get("移动到分组"))
+                if (selected == InterString.Get("Move to Group"))
                     MoveToType();
-                if (selected == InterString.Get("复制到分组"))
+                if (selected == InterString.Get("Copy to Group"))
                     CopyToType();
                 return;
             }
 
             var type = selected;
-            if(selected == InterString.Get("默认分组"))
+            if(selected == InterString.Get("Default Group"))
                 type = string.Empty;
             deckType = type;
             RefreshList();
@@ -419,7 +419,7 @@ namespace MDPro3.UI.ServantUI
         {
             var selections = new List<string>()
                 {
-                    InterString.Get("添加新卡组分组"),
+                    InterString.Get("Add New Deck Group"),
                     string.Empty
                 };
             UIManager.ShowPopupInput(selections, AddDeckType, null, TmpInputValidation.ValidationType.Path);
@@ -433,7 +433,7 @@ namespace MDPro3.UI.ServantUI
             var path = Program.PATH_DECK + type + "/";
             if (Directory.Exists(path))
             {
-                MessageManager.Cast(InterString.Get("该分组已存在！"));
+                MessageManager.Cast(InterString.Get("This group already exists!"));
                 return;
             }
             Directory.CreateDirectory(path);
@@ -446,7 +446,7 @@ namespace MDPro3.UI.ServantUI
             var folders = GetAllDeckTypes();
             var types = new List<string>
             {
-                InterString.Get("删除分组"),
+                InterString.Get("Delete Group"),
                 string.Empty,
             };
             types.AddRange(folders);
@@ -465,10 +465,10 @@ namespace MDPro3.UI.ServantUI
             {
                 var selections = new List<string>
                 {
-                    InterString.Get("删除分组"),
-                    InterString.Get("该卡组分类包含[?]个卡组，是否确认删除？", files.Length.ToString()),
-                    InterString.Get("确认"),
-                    InterString.Get("取消")
+                    InterString.Get("Delete Group"),
+                    InterString.Get("This deck category contains [?] decks. Are you sure you want to delete it?", files.Length.ToString()),
+                    InterString.Get("Confirm"),
+                    InterString.Get("Cancel")
                 };
                 UIManager.ShowPopupYesOrNo(selections, () => DeleteDeckType(type), null);
             }
@@ -510,7 +510,7 @@ namespace MDPro3.UI.ServantUI
             var folders = GetAllDeckTypes();
             var types = new List<string>
             {
-                InterString.Get("重命名分组"),
+                InterString.Get("Rename Group"),
                 string.Empty,
             };
             types.AddRange(folders);
@@ -523,7 +523,7 @@ namespace MDPro3.UI.ServantUI
                 currentSelectedGameObject.GetComponent<SelectionButton>().GetButtonText();
             var selections = new List<string>()
                 {
-                    InterString.Get("重命名分组"),
+                    InterString.Get("Rename Group"),
                     selectedType
                 };
             UIManager.ShowPopupInput(selections, CheckRenamedDeckType, null, TmpInputValidation.ValidationType.Path);
@@ -537,7 +537,7 @@ namespace MDPro3.UI.ServantUI
             bool exists = allTypes.Any(type=> type != selectedType && type == newType);
             if (exists)
             {
-                MessageManager.Cast(InterString.Get("该分组已存在！"));
+                MessageManager.Cast(InterString.Get("This group already exists!"));
                 return;
             }
 
@@ -564,11 +564,11 @@ namespace MDPro3.UI.ServantUI
             var folders = GetAllDeckTypes(deckType);
             var types = new List<string>
             {
-                InterString.Get("移动到分组"),
+                InterString.Get("Move to Group"),
                 string.Empty
             };
             if (deckType != string.Empty)
-                types.Add(InterString.Get("默认分组"));
+                types.Add(InterString.Get("Default Group"));
             types.AddRange(folders);
             UIManager.ShowPopupSelection(types, OnMoveToType, null);
         }
@@ -578,11 +578,11 @@ namespace MDPro3.UI.ServantUI
             var folders = GetAllDeckTypes(deckType);
             var types = new List<string>
             {
-                InterString.Get("复制到分组"),
+                InterString.Get("Copy to Group"),
                 string.Empty
             };
             if (deckType != string.Empty)
-                types.Add(InterString.Get("默认分组"));
+                types.Add(InterString.Get("Default Group"));
             types.AddRange(folders);
             UIManager.ShowPopupSelection(types, OnCopyToType, null);
         }
@@ -598,7 +598,7 @@ namespace MDPro3.UI.ServantUI
         private string GetTypeName(string type)
         {
             if(type == string.Empty)
-                return InterString.Get("默认分组");
+                return InterString.Get("Default Group");
             else
                 return type;
         }
@@ -683,7 +683,7 @@ namespace MDPro3.UI.ServantUI
             if (buttonLayoutSwitching) return;
             selectedType = UnityEngine.EventSystems.EventSystem.current.
                 currentSelectedGameObject.GetComponent<SelectionButton>().GetButtonText();
-            if(selectedType == InterString.Get("默认分组"))
+            if(selectedType == InterString.Get("Default Group"))
                 selectedType = string.Empty;
             SwitchButtonLayouts(LayoutType.MoveToType);
         }
@@ -700,7 +700,7 @@ namespace MDPro3.UI.ServantUI
                     var newPath = GetDeckPath(superScrollView.items[i].args[0], selectedType);
                     if(File.Exists(newPath))
                     {
-                        MessageManager.Cast(InterString.Get("操作失败，目标分组已存在同名卡组：[[?]]。", superScrollView.items[i].args[0]));
+                        MessageManager.Cast(InterString.Get("Operation failed: a deck with the same name already exists in the target group: \"[?]\".", superScrollView.items[i].args[0]));
                         continue;
                     }
 
@@ -736,7 +736,7 @@ namespace MDPro3.UI.ServantUI
             if (buttonLayoutSwitching) return;
             selectedType = UnityEngine.EventSystems.EventSystem.current.
                 currentSelectedGameObject.GetComponent<SelectionButton>().GetButtonText();
-            if (selectedType == InterString.Get("默认分组"))
+            if (selectedType == InterString.Get("Default Group"))
                 selectedType = string.Empty;
             SwitchButtonLayouts(LayoutType.CopyToType);
         }
@@ -752,7 +752,7 @@ namespace MDPro3.UI.ServantUI
                     var newPath = GetDeckPath(superScrollView.items[i].args[0], selectedType);
                     if (File.Exists(newPath))
                     {
-                        MessageManager.Cast(InterString.Get("操作失败，目标分组已存在同名卡组：[[?]]。", superScrollView.items[i].args[0]));
+                        MessageManager.Cast(InterString.Get("Operation failed: a deck with the same name already exists in the target group: \"[?]\".", superScrollView.items[i].args[0]));
                         continue;
                     }
 
@@ -802,7 +802,7 @@ namespace MDPro3.UI.ServantUI
             ButtonType.gameObject.SetActive(false);
 
             ButtonCancel.ShowIcon(true);
-            ButtonConfirm.SetButtonText(InterString.Get("确认删除"));
+            ButtonConfirm.SetButtonText(InterString.Get("Confirm Delete"));
         }
 
         private void ShowMoveOrCopyButtons()
@@ -815,7 +815,7 @@ namespace MDPro3.UI.ServantUI
             ButtonType.gameObject.SetActive(false);
 
             ButtonCancel.ShowIcon(false);
-            ButtonConfirm.SetButtonText(InterString.Get("确认"));
+            ButtonConfirm.SetButtonText(InterString.Get("Confirm"));
         }
 
         private void UpdateDeckNum()
@@ -859,10 +859,10 @@ namespace MDPro3.UI.ServantUI
                         }
                     Title.text = layoutType switch
                     {
-                        LayoutType.MoveToType => InterString.Get("移动到分组") + $" [{GetTypeName(selectedType)}]",
-                        LayoutType.CopyToType => InterString.Get("复制到分组") + $" [{GetTypeName(selectedType)}]",
-                        LayoutType.Delete => InterString.Get("删除卡组"),
-                        _ => InterString.Get("编辑卡组")
+                        LayoutType.MoveToType => InterString.Get("Move to Group") + $" [{GetTypeName(selectedType)}]",
+                        LayoutType.CopyToType => InterString.Get("Copy to Group") + $" [{GetTypeName(selectedType)}]",
+                        LayoutType.Delete => InterString.Get("Delete Deck"),
+                        _ => InterString.Get("DECK")
                     };
                 }))
                 .Join(footer.DOAnchorPosY(PropertyOverrider.NeedMobileLayout() ? -186f : -140f, 0.2f))

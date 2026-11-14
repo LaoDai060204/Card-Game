@@ -239,7 +239,7 @@ namespace MDPro3
         private static string FormatRace(string race, int type = 0)
         {
             if (Language.NeedRaceSuffix(GetLanguage(type)))
-                return race + "族";
+                return race + LegacyTextContracts.First("ChineseRaceSuffix");
             return race;
         }
 
@@ -467,9 +467,9 @@ namespace MDPro3
 
                         re = bracketLeft;
                         if (data.HasType(CardType.Spell))
-                            re += InterString.Get("魔法卡", translationType);
+                            re += InterString.Get("SPELL CARD", translationType);
                         else
-                            re += InterString.Get("陷阱卡", translationType);
+                            re += InterString.Get("TRAP CARD", translationType);
 
                         re = re.Replace("SPELL CARD", "Spell Card")
                                     .Replace("TRAP CARD", "Trap Card")
@@ -506,9 +506,9 @@ namespace MDPro3
 
                             re = bracketLeft;
                             if (data.HasType(CardType.Spell))
-                                re += InterString.Get("魔法卡", translationType);
+                                re += InterString.Get("SPELL CARD", translationType);
                             else
-                                re += InterString.Get("陷阱卡", translationType);
+                                re += InterString.Get("TRAP CARD", translationType);
 
                             var secondType = SecondType(data.Type, 2);
                             if (secondType != GetUnsafe(1054, 2))

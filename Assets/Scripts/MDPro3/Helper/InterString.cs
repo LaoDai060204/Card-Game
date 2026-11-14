@@ -1,8 +1,8 @@
-using System.Text.RegularExpressions;
+using System;
+using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.IO;
 using MDPro3.Utility;
-using System.Diagnostics;
 
 namespace MDPro3
 {
@@ -15,6 +15,8 @@ namespace MDPro3
         private const string PATH_CONF_FILE = "/translation.conf";
 
         private static readonly Dictionary<string, string> translations = new();
+        private static readonly Dictionary<string, string> englishTranslations = new();
+        private static Dictionary<string, string> legacyKeys = new();
         private static Dictionary<string, string> translationsForRender = new();
         private static Dictionary<string, string> translationsForPrerelease = new();
 
@@ -25,86 +27,87 @@ namespace MDPro3
         public static void Initialize()
         {
             translations.Clear();
-            translationsForRender.Clear();
-            translationsForPrerelease.Clear();
-
-            path = Program.PATH_LOCALES + Language.GetConfig() + PATH_CONF_FILE;
-            if (!File.Exists(path))
-                File.Create(path).Close();
-            InitializeContent(File.ReadAllText(path), 0);
-
+            englishTranslations.Clear();
+            translationsForRender = new();
+            translationsForPrerelease = new();
+            legacyKeys = new();
+            string legacyPath = Path.Combine(Program.PATH_LOCALES, "legacy-ui-keys.json");
+            try
+            {
+                legacyKeys = JsonConvert.DeserializeObject<Dictionary<string, string>>(File.ReadAllText(legacyPath))
+                    ?? new Dictionary<string, string>();
+            }
+            catch (Exception error) when (error is IOException || error is UnauthorizedAccessException || error is JsonException)
+            {
+                UnityEngine.Debug.LogWarning("Legacy UI key compatibility data could not be loaded: " + error.Message);
+            }
+            ReadLanguage(Language.English, englishTranslations);
+            path = ReadLanguage(Language.GetConfig(), translations);
             if (Language.GetCardConfig() == Language.GetConfig())
             {
                 pathForRender = path;
                 translationsForRender = translations;
             }
-            else
-            {
-                pathForRender = Program.PATH_LOCALES + Language.GetCardConfig() + PATH_CONF_FILE;
-                translationsForRender = new();
-                if (!File.Exists(pathForRender))
-                    File.Create(pathForRender).Close();
-                InitializeContent(File.ReadAllText(pathForRender), 1);
-            }
-
+            else pathForRender = ReadLanguage(Language.GetCardConfig(), translationsForRender);
             if (Language.GetPrereleaseConfig() == Language.GetConfig())
             {
                 pathForPrerelease = path;
                 translationsForPrerelease = translations;
             }
-            else if(Language.GetPrereleaseConfig() == Language.GetCardConfig())
+            else if (Language.GetPrereleaseConfig() == Language.GetCardConfig())
             {
                 pathForPrerelease = pathForRender;
                 translationsForPrerelease = translationsForRender;
             }
-            else
-            {
-                pathForPrerelease = Program.PATH_LOCALES + Language.GetPrereleaseConfig() + PATH_CONF_FILE;
-                translationsForPrerelease = new();
-                if (!File.Exists(pathForPrerelease))
-                    File.Create(pathForPrerelease).Close();
-                InitializeContent(File.ReadAllText(pathForPrerelease), 2);
-            }
+            else pathForPrerelease = ReadLanguage(Language.GetPrereleaseConfig(), translationsForPrerelease);
         }
 
-        private static void InitializeContent(string text, int type)
+        private static string CanonicalKey(string key) => legacyKeys.TryGetValue(key, out string canonical) ? canonical : key;
+
+        private static string ReadLanguage(string language, Dictionary<string, string> target)
         {
-            var dic = GetTranslations(type);
-            var lines = text.Replace("\r", string.Empty).Split('\n');
-            for (var i = 0; i < lines.Length; i++)
+            string file = Program.PATH_LOCALES + language + PATH_CONF_FILE;
+            if (File.Exists(file)) InitializeContent(File.ReadAllText(file), target);
+            return file;
+        }
+
+        private static void InitializeContent(string text, Dictionary<string, string> target)
+        {
+            foreach (string line in text.Replace("\r", string.Empty).Split('\n'))
             {
-                var mats = Regex.Split(lines[i], SEPARATOR);
-                if (mats.Length == 2)
-                    if (!dic.ContainsKey(mats[0]))
-                        dic.Add(mats[0], mats[1]);
+                int separator = line.IndexOf(SEPARATOR, StringComparison.Ordinal);
+                if (separator < 0 || line.IndexOf(SEPARATOR, separator + SEPARATOR.Length, StringComparison.Ordinal) >= 0) continue;
+                string key = CanonicalKey(line.Substring(0, separator));
+                if (!target.ContainsKey(key)) target.Add(key, line.Substring(separator + SEPARATOR.Length));
             }
         }
 
         public static string Get(string original, int type = 0)
         {
-            var returnValue = original;
-            var targetTranslations = GetTranslations(type);
-            if (targetTranslations.TryGetValue(original, out returnValue))
-                return returnValue.Replace(CONFIG_LINE_BREAK, Program.STRING_LINE_BREAK).Replace(STRING_EMPTY, string.Empty);
-
-            if (original != string.Empty)
+            if (string.IsNullOrEmpty(original)) return original ?? string.Empty;
+            string key = CanonicalKey(original);
+            var target = GetTranslations(type);
+            if (target.TryGetValue(key, out string translated)) return Format(translated);
+            if (!englishTranslations.TryGetValue(key, out translated)) translated = key;
+            UnityEngine.Debug.Log($"Undefined translation {target.Count}: {key}");
+            string savePath = GetSavePath(type);
+            if (!string.IsNullOrEmpty(savePath))
             {
-                UnityEngine.Debug.Log($"Undefined translation {targetTranslations.Count}: {original}");
-
                 try
                 {
-                    File.AppendAllText(GetSavePath(type), original + SEPARATOR + original + Program.STRING_LINE_BREAK);
+                    Directory.CreateDirectory(Path.GetDirectoryName(savePath));
+                    File.AppendAllText(savePath, key + SEPARATOR + translated + Program.STRING_LINE_BREAK);
                 }
-                catch
+                catch (Exception error) when (error is IOException || error is UnauthorizedAccessException)
                 {
                     Program.noAccess = true;
                 }
-
-                targetTranslations.Add(original, original);
-                return original.Replace(CONFIG_LINE_BREAK, Program.STRING_LINE_BREAK).Replace(STRING_EMPTY, string.Empty);
             }
-            return original;
+            target[key] = translated;
+            return Format(translated);
         }
+
+        private static string Format(string text) => text.Replace(CONFIG_LINE_BREAK, Program.STRING_LINE_BREAK).Replace(STRING_EMPTY, string.Empty);
 
         public static string Get(string original, string replace, int type = 0)
         {

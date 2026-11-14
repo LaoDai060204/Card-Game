@@ -372,7 +372,7 @@ namespace MDPro3.UI.ServantUI
             var onlineDeckData = task.Result;
             if (onlineDeckData == null)
             {
-                MessageManager.Cast(InterString.Get("网络异常，获取在线卡组失败。"));
+                MessageManager.Cast(InterString.Get("Network error. Failed to retrieve the online deck."));
                 yield break;
             }
 
@@ -393,7 +393,7 @@ namespace MDPro3.UI.ServantUI
         }
 
         /// <summary>
-        /// +1按钮、CardInDeck中键添加卡片
+        /// Add a card through the +1 button or a middle click on CardInDeck.
         /// </summary>
         public void AddCard(Card data)
         {
@@ -405,7 +405,7 @@ namespace MDPro3.UI.ServantUI
         }
 
         /// <summary>
-        /// 拖动CollectionCard添加进卡组
+        /// Add a CollectionCard to the deck by dragging it.
         /// </summary>
         /// <param name="code"></param>
         public void AddCardFromCollection(Card data)
@@ -418,7 +418,7 @@ namespace MDPro3.UI.ServantUI
         }
 
         /// <summary>
-        /// 右击CollectionCard添加进卡组
+        /// Add a CollectionCard to the deck by right-clicking it.
         /// </summary>
         /// <param name="code"></param>
         /// <param name="position"></param>
@@ -432,7 +432,7 @@ namespace MDPro3.UI.ServantUI
         }
 
         /// <summary>
-        /// -1按钮删除卡片
+        /// Remove a card through the -1 button.
         /// </summary>
         /// <param name="data"></param>
         public void RemoveCard(Card data)
@@ -443,7 +443,7 @@ namespace MDPro3.UI.ServantUI
             var card = DeckView.GetCardByData(data);
             if (card == null)
             {
-                MessageManager.Toast(InterString.Get("无法删除更多卡片"));
+                MessageManager.Toast(InterString.Get("Cannot delete any more cards"));
                 return;
             }
 
@@ -451,8 +451,8 @@ namespace MDPro3.UI.ServantUI
         }
 
         /// <summary>
-        /// -1按钮 调用此方法
-        /// CardInDeck右键删除卡片
+        /// Called by the -1 button.
+        /// Remove a CardInDeck by right-clicking it.
         /// </summary>
         /// <param name="card"></param>
         public void RemoveCardWithAnimation(SelectionButton_CardInDeck card)
@@ -494,7 +494,7 @@ namespace MDPro3.UI.ServantUI
         }
 
         /// <summary>
-        /// 拖动Card到DropArea删除卡片
+        /// Remove a card by dragging it into the DropArea.
         /// </summary>
         /// <param name="card"></param>
         public void RemoveCardByDrag(SelectionButton_CardInDeck card)
@@ -598,7 +598,7 @@ namespace MDPro3.UI.ServantUI
             if (DeckView.GetDirty() || !DeckIsFromLocal)
             {
                 if (condition != Condition.ChangeSide)
-                    MessageManager.Toast(InterString.Get("请先保存卡组"));
+                    MessageManager.Toast(InterString.Get("Please save the deck first"));
                 return;
             }
 
@@ -632,14 +632,14 @@ namespace MDPro3.UI.ServantUI
                         else
                         {
                             if (onlineDeck.isPublic)
-                                text = InterString.Get("公开中");
+                                text = InterString.Get("Public");
                             else
-                                text = InterString.Get("非公开中");
+                                text = InterString.Get("Private");
                         }
                     }
                     else
                     {
-                        text = InterString.Get("停止同步中");
+                        text = InterString.Get("Stopping sync");
                     }
                 }
             }
@@ -647,7 +647,7 @@ namespace MDPro3.UI.ServantUI
             {
                 if (condition == Condition.OnlineDeck)
                 {
-                    text = InterString.Get("点赞");
+                    text = InterString.Get("Like");
                     if (deckLiked)
                     {
                         DeckView.ButtonDeck.gameObject.SetActive(false);
@@ -702,15 +702,15 @@ namespace MDPro3.UI.ServantUI
 
             var selections = new List<string>
             {
-                InterString.Get("收藏列表"),
-                InterString.Get("选择一个列表来添加或移除卡片")
+                InterString.Get("Bookmark Lists"),
+                InterString.Get("Choose a list to add to or remove from")
             };
 
             var added = CardRarity.CardInBookmarkList(code, string.Empty);
             AddBookmarkCardMenuEntry(
                 selections,
                 () => ToggleCardBookmarkList(string.Empty),
-                InterString.Get("默认收藏列表"),
+                InterString.Get("Default Bookmark List"),
                 added ? "g" : string.Empty);
 
             foreach (var listName in CardRarity.GetBookmarkListNames())
@@ -724,7 +724,7 @@ namespace MDPro3.UI.ServantUI
                     added2 ? "g" : string.Empty);
             }
 
-            AddBookmarkCardMenuEntry(selections, CreateBookmarkListForCard, InterString.Get("新建列表并加入"), "b");
+            AddBookmarkCardMenuEntry(selections, CreateBookmarkListForCard, InterString.Get("Create New List and Add"), "b");
             UIManager.ShowPopupSelection(selections, OnBookmarkCardMenuSelection);
         }
 
@@ -750,9 +750,9 @@ namespace MDPro3.UI.ServantUI
         {
             var result = CardRarity.ToggleCardTo(bookmarkCardMenuCode, listName);
             if(result == 1)
-                MessageManager.Toast(InterString.Get("已加入收藏列表「[?]」。", listName));
+                MessageManager.Toast(InterString.Get("Added to bookmark list \"[?]\".", listName));
             else if(result == 2)
-                MessageManager.Toast(InterString.Get("已从收藏列表「[?]」移除。", listName));
+                MessageManager.Toast(InterString.Get("Removed from bookmark list \"[?]\".", listName));
 
             RefreshBookmarkViews();
         }
@@ -761,7 +761,7 @@ namespace MDPro3.UI.ServantUI
         {
             var selections = new List<string>
             {
-                InterString.Get("新建收藏列表"),
+                InterString.Get("Create Bookmark List"),
                 string.Empty
             };
             UIManager.ShowPopupInput(selections, CreateBookmarkListForCard, null, TmpInputValidation.ValidationType.None);
@@ -773,7 +773,7 @@ namespace MDPro3.UI.ServantUI
                 return;
             if (!CardRarity.AddBookmarkList(normalized))
             {
-                MessageManager.Cast(InterString.Get("该收藏列表已存在！"));
+                MessageManager.Cast(InterString.Get("This favorites list already exists!"));
                 return;
             }
 
@@ -788,22 +788,22 @@ namespace MDPro3.UI.ServantUI
             normalized = listName == null ? string.Empty : listName.Trim();
             if (normalized == string.Empty)
             {
-                MessageManager.Cast(InterString.Get("收藏列表名不能为空！"));
+                MessageManager.Cast(InterString.Get("The favorites list name cannot be empty!"));
                 return false;
             }
             if (normalized.Contains(":"))
             {
-                MessageManager.Cast(InterString.Get("收藏列表名不能包含“:”！"));
+                MessageManager.Cast(InterString.Get("The favorites list name cannot contain \":\"!"));
                 return false;
             }
             if (normalized.Contains("\n") || normalized.Contains("\r"))
             {
-                MessageManager.Cast(InterString.Get("收藏列表名不能换行！"));
+                MessageManager.Cast(InterString.Get("The favorites list name cannot contain line breaks!"));
                 return false;
             }
             if (CardRarity.BookmarkListExists(normalized))
             {
-                MessageManager.Cast(InterString.Get("该收藏列表已存在！"));
+                MessageManager.Cast(InterString.Get("This favorites list already exists!"));
                 return false;
             }
 
@@ -866,7 +866,7 @@ namespace MDPro3.UI.ServantUI
             else
             {
                 Destroy(ButtonChangeSide.gameObject);
-                ButtonTest.SetButtonText(InterString.Get("手牌测试"));
+                ButtonTest.SetButtonText(InterString.Get("Test Hand"));
             }
         }
 
@@ -882,16 +882,16 @@ namespace MDPro3.UI.ServantUI
             switch (cardInfoType)
             {
                 case CardInfoType.None:
-                    MessageManager.Toast(InterString.Get("切换到简单显示"));
+                    MessageManager.Toast(InterString.Get("Switch to Simple Display"));
                     break;
                 case CardInfoType.Detail:
-                    MessageManager.Toast(InterString.Get("切换到详情显示"));
+                    MessageManager.Toast(InterString.Get("Switch to Detail Display"));
                     break;
                 case CardInfoType.Pool:
-                    MessageManager.Toast(InterString.Get("切换到归属显示"));
+                    MessageManager.Toast(InterString.Get("Switch to Card Pool Display"));
                     break;
                 case CardInfoType.Genesys:
-                    MessageManager.Toast(InterString.Get("切换到Genesys积分显示"));
+                    MessageManager.Toast(InterString.Get("Switch to Genesys Points Display"));
                     break;
             }
             DeckView.SetCardInfoType(type);
@@ -923,7 +923,7 @@ namespace MDPro3.UI.ServantUI
             AudioManager.PlaySE("SE_MENU_DECIDE");
             List<string> selections = new()
             {
-                InterString.Get("禁限卡表"),
+                InterString.Get("Forbidden & Limited Lists"),
                 string.Empty
             };
             var names = cardInfoType == CardInfoType.Genesys ? 
@@ -949,7 +949,7 @@ namespace MDPro3.UI.ServantUI
             if (!DeckView.deckLoaded) return;
             var menus = new List<string>()
                 {
-                    InterString.Get("副菜单")
+                    InterString.Get("Submenu")
                 };
             var actions = new List<Action>()
                 {
@@ -958,7 +958,7 @@ namespace MDPro3.UI.ServantUI
 
             if (condition != Condition.ChangeSide)
             {
-                menus.Add(InterString.Get("手牌测试设置"));
+                menus.Add(InterString.Get("Hand Test Settings"));
                 actions.Add(OnHandTestSettings);
                 menus.Add("YDKE");
                 actions.Add(OnYdke);
@@ -966,8 +966,8 @@ namespace MDPro3.UI.ServantUI
 
             menus.AddRange(new List<string>
             {
-                InterString.Get("重置"),
-                InterString.Get("打乱")
+                InterString.Get("Reset"),
+                InterString.Get("Shuffle")
             });
             actions.AddRange(new List<Action>()
             {
@@ -979,9 +979,9 @@ namespace MDPro3.UI.ServantUI
             {
                 menus.AddRange(new List<string>
                 {
-                    InterString.Get("复制"),
-                    InterString.Get("分享"),
-                    InterString.Get("清空")
+                    InterString.Get("Copy deck"),
+                    InterString.Get("Share"),
+                    InterString.Get("Clear deck")
                 });
                 actions.AddRange(new List<Action>()
                 {
@@ -1004,8 +1004,8 @@ namespace MDPro3.UI.ServantUI
                     {
                         List<string> tasks = new()
                         {
-                            InterString.Get("保存失败"),
-                            InterString.Get("卡组内卡片张数超过限制。@n如需无视限制，请将禁限卡表设置为无（N/A）。")
+                            InterString.Get("Save Failed"),
+                            InterString.Get("Your deck contains cards that exceed the limit.@nTo ignore restrictions, set Forbidden & Limited Lists to N/A.")
                         };
                         UIManager.ShowPopupConfirm(tasks);
                         callExit = false;
@@ -1017,10 +1017,10 @@ namespace MDPro3.UI.ServantUI
             {
                 List<string> tasks = new()
                 {
-                    InterString.Get("该卡组名已存在"),
-                    InterString.Get("该卡组名的文件已存在，是否直接覆盖创建？"),
-                    InterString.Get("覆盖"),
-                    InterString.Get("取消")
+                    InterString.Get("Deck name already exists"),
+                    InterString.Get("A file with this deck name already exists. Overwrite it?"),
+                    InterString.Get("Overwrite"),
+                    InterString.Get("Cancel")
                 };
 
                 UIManager.ShowPopupYesOrNo(tasks, OnSaveConfirmed, () => { callExit = false; });
@@ -1114,7 +1114,7 @@ namespace MDPro3.UI.ServantUI
                 return false;
             if (!DeckIsFromLocal)
             {
-                MessageManager.Toast(InterString.Get("请先保存卡组"));
+                MessageManager.Toast(InterString.Get("Please save the deck first"));
                 return false;
             }
 
@@ -1264,7 +1264,7 @@ namespace MDPro3.UI.ServantUI
             if (!DeckIsFromLocal)
             {
                 if (condition != Condition.ChangeSide)
-                    MessageManager.Toast(InterString.Get("请先保存卡组"));
+                    MessageManager.Toast(InterString.Get("Please save the deck first"));
                 return;
             }
             gotoAppearance = true;

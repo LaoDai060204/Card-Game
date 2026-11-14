@@ -72,3 +72,11 @@ Data/cards.json
 Data/FileGroups.json
 Data/cards_Lite.json
 /.workbuddy
+
+# English migration test build output (outside Unity Assets)
+/Tools/Translations/tests/**/bin/
+/Tools/Translations/tests/**/obj/
+
+# Python validation bytecode
+__pycache__/
+*.pyc

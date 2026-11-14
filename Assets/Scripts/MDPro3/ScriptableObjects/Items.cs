@@ -59,7 +59,7 @@ namespace MDPro3
                     if(diy && !descriptionLoaded)
                     {
                         if(m_description.Contains("@"))
-                            m_description = InterString.Get("由「[?]」投稿。", m_description);
+                            m_description = InterString.Get("Contributed by \"[?]\".", m_description);
                     }
                     return m_description;
                 }

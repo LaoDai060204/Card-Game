@@ -39,16 +39,16 @@ namespace MDPro3.UI
 
             m_Tracker.Add(this, RectTransform, DrivenTransformProperties.SizeDeltaX);
 
-            // 计算原始目标宽度
+            // Calculate the initial target width.
             float targetWidth = horizontalFit == FitMode.MinSize ?
                 LayoutUtility.GetMinWidth(RectTransform) :
                 LayoutUtility.GetPreferredWidth(RectTransform);
 
-            // 应用最小和最大宽度约束
+            // Apply minimum and maximum width constraints.
             if (m_MinWidth > 0)
-                targetWidth = Mathf.Max(targetWidth, m_MinWidth); // 确保不小于最小值
+                targetWidth = Mathf.Max(targetWidth, m_MinWidth); // Keep the width at or above the minimum.
             if (m_MaxWidth > 0)
-                targetWidth = Mathf.Min(targetWidth, m_MaxWidth); // 确保不大于最大值
+                targetWidth = Mathf.Min(targetWidth, m_MaxWidth); // Keep the width at or below the maximum.
 
             RectTransform.SetSizeWithCurrentAnchors(
                 RectTransform.Axis.Horizontal,

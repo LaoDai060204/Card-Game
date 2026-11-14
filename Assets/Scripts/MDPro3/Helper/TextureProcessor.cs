@@ -14,11 +14,11 @@ public static class TextureProcessor
 
     public enum BlendMode
     {
-        Multiply,    // 相乘
-        Replace,     // 替换
-        Additive,    // 相加
-        Subtractive, // 相减
-        Overwrite    // 完全覆盖
+        Multiply,    // Multiply
+        Replace,     // Replace
+        Additive,    // Add
+        Subtractive, // Subtract
+        Overwrite    // Overwrite all channels
     }
 
     private static ComputeShader LoadComputeShader(string path)
@@ -64,7 +64,7 @@ public static class TextureProcessor
             2 => color.b,
             // A
             3 => color.a,
-            _ => color.a,// 默认使用alpha通道
+            _ => color.a,// Use the alpha channel by default
         };
     }
 
@@ -73,7 +73,7 @@ public static class TextureProcessor
         if (width == 0 || height == 0)
             return Color.clear;
 
-        // 计算双线性采样坐标
+        // Calculate bilinear sampling coordinates
         float x = u * (width - 1);
         float y = v * (height - 1);
 
@@ -82,29 +82,29 @@ public static class TextureProcessor
         int xCeil = Mathf.Min(xFloor + 1, width - 1);
         int yCeil = Mathf.Min(yFloor + 1, height - 1);
 
-        // 获取四个采样点的颜色索引
+        // Get the color indices of the four sample points
         int index00 = yFloor * width + xFloor;
         int index10 = yFloor * width + xCeil;
         int index01 = yCeil * width + xFloor;
         int index11 = yCeil * width + xCeil;
 
-        // 获取颜色（注意：数组可能越界，需要检查）
+        // Read colors with bounds checks
         Color32 c00 = (index00 >= 0 && index00 < pixels.Length) ? pixels[index00] : new Color32(0, 0, 0, 0);
         Color32 c10 = (index10 >= 0 && index10 < pixels.Length) ? pixels[index10] : new Color32(0, 0, 0, 0);
         Color32 c01 = (index01 >= 0 && index01 < pixels.Length) ? pixels[index01] : new Color32(0, 0, 0, 0);
         Color32 c11 = (index11 >= 0 && index11 < pixels.Length) ? pixels[index11] : new Color32(0, 0, 0, 0);
 
-        // 计算权重
+        // Calculate interpolation weights
         float xWeight = x - xFloor;
         float yWeight = y - yFloor;
 
-        // 将Color32转换为Color进行插值
+        // Convert Color32 to Color for interpolation
         Color color00 = c00;
         Color color10 = c10;
         Color color01 = c01;
         Color color11 = c11;
 
-        // 双线性插值
+        // Bilinear interpolation
         Color top = Color.Lerp(color00, color10, xWeight);
         Color bottom = Color.Lerp(color01, color11, xWeight);
         return Color.Lerp(top, bottom, yWeight);
@@ -174,11 +174,11 @@ public static class TextureProcessor
         int maskChannel = 3
     )
     {
-        // 1. 参数检查
+        // 1. Validate arguments
         if (sourceTex == null || maskTex == null)
             throw new ArgumentNullException("Source and mask textures cannot be null.");
 
-        // 2. 检查长宽比
+        // 2. Check the aspect ratio
         float sourceAspect = (float)sourceTex.width / sourceTex.height;
         float maskAspect = (float)maskTex.width / maskTex.height;
 
@@ -188,42 +188,42 @@ public static class TextureProcessor
                            " Results may be distorted.");
         }
 
-        // 检查平台是否支持Compute Shader
+        // Check whether the platform supports compute shaders
         if (!SystemInfo.supportsComputeShaders)
         {
             Debug.LogWarning("Current platform does not support Compute Shaders. Falling back to CPU method.");
             return ApplyMaskToAlpha_CPU(sourceTex, maskTex, blendMode, threshold, invertMask, maskChannel);
         }
 
-        // 3. 准备Compute Shader
+        // 3. Prepare the compute shader
         ComputeShader shader = ShaderApplyMaskAlpha;
         int kernelHandle = shader.FindKernel("CSMain");
 
-        // 4. 创建输出纹理
+        // 4. Create the output texture
         RenderTexture outputRT = RenderTexturePool.Get(sourceTex.width, sourceTex.height);
 
-        // 5. 设置Compute Shader参数
+        // 5. Set compute shader parameters
         shader.SetTexture(kernelHandle, "SourceTex", sourceTex);
         shader.SetTexture(kernelHandle, "MaskTex", maskTex);
         shader.SetTexture(kernelHandle, "Result", outputRT);
 
-        // 设置纹理尺寸
+        // Set texture dimensions
         shader.SetFloats("SourceSize", new float[] { sourceTex.width, sourceTex.height });
         shader.SetFloats("MaskSize", new float[] { maskTex.width, maskTex.height });
 
-        // 设置混合模式和其他参数
+        // Set the blend mode and other parameters
         shader.SetInt("_BlendMode", (int)blendMode);
         shader.SetFloat("_Threshold", threshold);
         shader.SetFloat("_InvertMask", invertMask ? 1.0f : 0.0f);
         shader.SetInt("_MaskChannel", maskChannel);
 
-        // 6. 调度线程组
+        // 6. Dispatch thread groups
         DispatchComputeShader(shader, kernelHandle, sourceTex);
 
-        // 7. 转换回Texture2D
+        // 7. Convert back to Texture2D
         Texture2D resultTex = RenderTextureToTexture2D(outputRT, sourceTex);
 
-        // 8. 清理
+        // 8. Clean up
         RenderTexturePool.Return(outputRT);
 
         return resultTex;
@@ -238,11 +238,11 @@ public static class TextureProcessor
         int maskChannel = 3
     )
     {
-        // 确保纹理可读写
+        // Ensure textures are readable and writable
         Texture2D sourceReadable = EnsureTextureReadable(sourceTex);
         Texture2D maskReadable = EnsureTextureReadable(maskTex);
 
-        // 使用32位颜色数组
+        // Use 32-bit color arrays
         Color32[] sourcePixels = sourceReadable.GetPixels32();
         Color32[] maskPixels = maskReadable.GetPixels32();
 
@@ -252,10 +252,10 @@ public static class TextureProcessor
         int maskHeight = maskReadable.height;
         bool sameSize = (sourceWidth == maskWidth) && (sourceHeight == maskHeight);
 
-        // 创建结果像素数组
+        // Create the output pixel array
         Color32[] resultPixels = new Color32[sourcePixels.Length];
 
-        // 使用并行处理提高性能
+        // Process pixels in parallel for better performance
         Parallel.For(0, sourceHeight, y =>
         {
             for (int x = 0; x < sourceWidth; x++)
@@ -266,43 +266,43 @@ public static class TextureProcessor
 
                 if (sameSize)
                 {
-                    // 尺寸完全一致时，直接通过相同坐标访问，无需UV映射和采样
+                    // For matching dimensions, read the same coordinates without UV mapping or sampling
                     int maskIndex = y * maskWidth + x;
                     maskColor = maskPixels[maskIndex];
                 }
                 else
                 {
-                    // 尺寸不一致时，计算对应的mask UV坐标
+                    // For different dimensions, calculate the corresponding mask UV coordinates
                     float u = sourceWidth > 1 ? x / (float)(sourceWidth - 1) : 0.5f;
                     float v = sourceHeight > 1 ? y / (float)(sourceHeight - 1) : 0.5f;
 
-                    // 获取mask颜色（使用双线性采样）
+                    // Sample the mask color using bilinear interpolation
                     maskColor = SampleTextureBilinear(maskPixels, maskWidth, maskHeight, u, v);
                 }
 
-                // 根据指定通道获取mask值
+                // Read the mask value from the selected channel
                 float maskValue = GetChannelValue(maskColor, maskChannel);
 
-                // 应用阈值
+                // Apply the threshold
                 if (threshold > 0)
                 {
                     maskValue = maskValue >= threshold ? 1.0f : 0.0f;
                 }
 
-                // 反转mask
+                // Invert the mask
                 if (invertMask)
                 {
                     maskValue = 1.0f - maskValue;
                 }
 
-                // 应用混合模式
-                float sourceAlpha = sourceColor.a / 255f; // 转换为0-1范围
+                // Apply the blend mode
+                float sourceAlpha = sourceColor.a / 255f; // Convert to the 0-1 range
                 float newAlphaFloat = ApplyBlendMode(sourceAlpha, maskValue, blendMode);
 
-                // 转换为byte
+                // Convert to a byte
                 byte newAlpha = (byte)Mathf.Clamp(Mathf.RoundToInt(newAlphaFloat * 255), 0, 255);
 
-                // 保持原RGB，只修改Alpha
+                // Preserve RGB and modify alpha only
                 resultPixels[sourceIndex] = new Color32(
                     sourceColor.r,
                     sourceColor.g,
@@ -316,7 +316,7 @@ public static class TextureProcessor
         result.SetPixels32(resultPixels);
         result.Apply();
 
-        // 清理临时纹理
+        // Clean up temporary textures
         CleanupTemporaryTextures(sourceReadable, sourceTex, maskReadable, maskTex);
 
         return result;
@@ -380,22 +380,22 @@ public static class TextureProcessor
         int width = texture.width;
         int height = texture.height;
 
-        // 创建目标纹理
+        // Create the destination texture
         Texture2D resultTexture = new(width, height, TextureFormat.ARGB32, false);
 
-        // 使用GetPixels32获取像素数据
+        // Read pixel data with GetPixels32
         Color32[] pixels = texture.GetPixels32();
 
-        // 使用Parallel.For进行并行处理（提高性能）
+        // Process pixels with Parallel.For to improve performance
         Parallel.For(0, pixels.Length, i =>
         {
             Color32 original = pixels[i];
-            // 反转alpha值，保持RGB不变
+            // Invert alpha while preserving RGB
             pixels[i] = new Color32(original.r, original.g, original.b,
                                   (byte)(255 - original.a));
         });
 
-        // 应用修改到纹理
+        // Apply the changes to the texture
         resultTexture.SetPixels32(pixels);
         resultTexture.Apply();
         return resultTexture;
@@ -571,7 +571,7 @@ public static class TextureProcessor
         resultBuffer.GetData(data);
         resultBuffer.Release();
 
-        return data[0] == 0; // 0 = 全不透明，1 = 存在透明像素
+        return data[0] == 0; // 0 = All pixels are opaque，1 = At least one transparent pixel exists
     }
 
     private static bool IsFullyOpaque_CPU(Texture2D texture, byte threshold)
@@ -579,11 +579,11 @@ public static class TextureProcessor
         if (!texture.isReadable)
             throw new System.ArgumentException("CPU fallback requires texture Read/Write enabled.", nameof(texture));
 
-        // 无 Alpha 通道的格式默认全部不透明
+        // Formats without an alpha channel are treated as fully opaque
         if (!HasAlphaChannel(texture.format))
             return true;
 
-        // 仅支持每像素 4 字节的 RGBA 类格式
+        // Only RGBA-like formats with four bytes per pixel are supported
         if (!TryGetPixelInfo(texture.format, out int bytesPerPixel, out int alphaOffset))
         {
             Debug.LogWarning($"Unsupported texture format for CPU: {texture.format}. Converting to RGBA32.");
@@ -596,8 +596,8 @@ public static class TextureProcessor
         NativeArray<byte> pixelData = texture.GetPixelData<byte>(0);
         int pixelCount = texture.width * texture.height;
 
-        // 根据像素数量选择单线程或 Job 并行
-        if (pixelCount > 65536) // 大于 256x256
+        // Choose single-threaded or parallel job processing based on the pixel count
+        if (pixelCount > 65536) // More than 256x256 pixels
         {
             return CheckWithJobs(pixelData, bytesPerPixel, alphaOffset, threshold, pixelCount);
         }
@@ -814,7 +814,7 @@ public static class TextureProcessor
         Parallel.For(0, pixels.Length, i =>
         {
             Color32 original = pixels[i];
-            // 只修改 Alpha，RGB 不变
+            // Modify alpha only and preserve RGB
             pixels[i] = new Color32(original.r, original.g, original.b, 255);
         });
 

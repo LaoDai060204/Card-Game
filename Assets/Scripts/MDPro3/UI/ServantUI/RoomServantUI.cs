@@ -133,20 +133,20 @@ namespace MDPro3.UI.ServantUI
             if (RoomServant.FromLocalHost)
             {
                 foreach (var ip in Tools.GetLocalIPv4())
-                    roomInfo += InterString.Get("本机地址：") + Language.GetBlankIfNeed() + ip + rn;
-                roomInfo += InterString.Get("端口：") + Language.GetBlankIfNeed() + "7911" + rn;
+                    roomInfo += InterString.Get("Local Address:") + Language.GetBlankIfNeed() + ip + rn;
+                roomInfo += InterString.Get("Port:") + Language.GetBlankIfNeed() + "7911" + rn;
             }
-            roomInfo += StringHelper.GetUnsafe(1227) + Language.GetBlankIfNeed() + StringHelper.GetUnsafe(1244 + RoomServant.Mode) + rn;//决斗模式：
-            roomInfo += StringHelper.GetUnsafe(1236) + Language.GetBlankIfNeed() + StringHelper.GetUnsafe(1259 + OcgCore.MasterRule) + rn;//规则：
-            roomInfo += StringHelper.GetUnsafe(1225) + Language.GetBlankIfNeed() + StringHelper.GetUnsafe(1481 + RoomServant.Rule) + rn;//卡片允许：
-            roomInfo += StringHelper.GetUnsafe(1226) + Language.GetBlankIfNeed() + BanlistManager.GetName(RoomServant.LFList) + rn;//禁限卡表
-            roomInfo += StringHelper.GetUnsafe(1231) + Language.GetBlankIfNeed() + RoomServant.StartLp + rn;//初始基本分：
-            roomInfo += StringHelper.GetUnsafe(1232) + Language.GetBlankIfNeed() + RoomServant.StartHand + rn;//初始手卡数：
-            roomInfo += StringHelper.GetUnsafe(1233) + Language.GetBlankIfNeed() + RoomServant.DrawCount + rn;//每回合抽卡：
-            roomInfo += StringHelper.GetUnsafe(1237) + Language.GetBlankIfNeed() + RoomServant.TimeLimit + rn;//每回合时间：
-            roomInfo += StringHelper.GetUnsafe(1253) + Language.GetBlankIfNeed() + RoomServant.ObserverCount + rn;//当前观战人数：
-            if (RoomServant.NoCheckDeck) roomInfo += StringHelper.GetUnsafe(1229) + rn;//不检查卡组
-            if (RoomServant.NoShuffleDeck) roomInfo += StringHelper.GetUnsafe(1230);//不洗切卡组
+            roomInfo += StringHelper.GetUnsafe(1227) + Language.GetBlankIfNeed() + StringHelper.GetUnsafe(1244 + RoomServant.Mode) + rn;//Duel mode:
+            roomInfo += StringHelper.GetUnsafe(1236) + Language.GetBlankIfNeed() + StringHelper.GetUnsafe(1259 + OcgCore.MasterRule) + rn;//Rules:
+            roomInfo += StringHelper.GetUnsafe(1225) + Language.GetBlankIfNeed() + StringHelper.GetUnsafe(1481 + RoomServant.Rule) + rn;//Allowed card pool:
+            roomInfo += StringHelper.GetUnsafe(1226) + Language.GetBlankIfNeed() + BanlistManager.GetName(RoomServant.LFList) + rn;//Forbidden and Limited List
+            roomInfo += StringHelper.GetUnsafe(1231) + Language.GetBlankIfNeed() + RoomServant.StartLp + rn;//Starting LP:
+            roomInfo += StringHelper.GetUnsafe(1232) + Language.GetBlankIfNeed() + RoomServant.StartHand + rn;//Starting hand size:
+            roomInfo += StringHelper.GetUnsafe(1233) + Language.GetBlankIfNeed() + RoomServant.DrawCount + rn;//Cards drawn per turn:
+            roomInfo += StringHelper.GetUnsafe(1237) + Language.GetBlankIfNeed() + RoomServant.TimeLimit + rn;//Turn time limit:
+            roomInfo += StringHelper.GetUnsafe(1253) + Language.GetBlankIfNeed() + RoomServant.ObserverCount + rn;//Current spectator count:
+            if (RoomServant.NoCheckDeck) roomInfo += StringHelper.GetUnsafe(1229) + rn;//Skip deck validation
+            if (RoomServant.NoShuffleDeck) roomInfo += StringHelper.GetUnsafe(1230);//Do not shuffle the deck
             TextRoomInfo.text = roomInfo;
 
             if (!Appearance.loaded)
@@ -229,7 +229,7 @@ namespace MDPro3.UI.ServantUI
 
         public void RefreshDeckSelector()
         {
-            ButtonDeckSelector.SetConfigDeck(InterString.Get("请点击此处选择卡组"));
+            ButtonDeckSelector.SetConfigDeck(InterString.Get("Select Your Deck"));
         }
 
         public void OnReady()
@@ -247,7 +247,7 @@ namespace MDPro3.UI.ServantUI
                     TcpHelper.CtosMessage_HsReady();
                 }
                 else
-                    MessageManager.Cast(InterString.Get("请先选择有效的卡组。"));
+                    MessageManager.Cast(InterString.Get("Please select a valid deck."));
             }
         }
 
@@ -275,7 +275,7 @@ namespace MDPro3.UI.ServantUI
         {
             if (Program.instance.room.RoomIsFull())
             {
-                MessageManager.Toast(InterString.Get("房间已满，无法继续添加AI。"));
+                MessageManager.Toast(InterString.Get("The room is full. You cannot add another AI bot."));
             }
             else
             {

@@ -23,43 +23,13 @@ namespace MDPro3.Duel.YGOSharp
         private const CompareOptions SearchCompareOptions =
             CompareOptions.IgnoreCase | CompareOptions.IgnoreWidth | CompareOptions.IgnoreKanaType;
 
-        public static List<string> setNameHead = new()
-        {
-            "带有"
-        };
+        public static List<string> setNameHead = new(LegacyTextContracts.Get("CardSetNamePrefixes"));
 
-        public static List<string> setNameTail = new()
-        {
-            "、",
-            "卡",
-            "怪兽",
-            "魔法",
-            "陷阱",
-            "通常",
-            "效果怪兽",
-            "融合",
-            "仪式",
-            "灵魂",
-            "同盟",
-            "二重",
-            "调整",
-            "同调",
-            "衍生物",
-            "速攻",
-            "永续",
-            "装备",
-            "场地",
-            "反击",
-            "反转",
-            "卡通",
-            "超量",
-            "灵摆",
-            "连接",
-        };
+        public static List<string> setNameTail = new(LegacyTextContracts.Get("CardSetNameSuffixes"));
 
         internal static void Initialize()
         {
-            nullName = InterString.Get("未知卡片");
+            nullName = InterString.Get("Unknown Card");
 
             var preCards = _cards;
             var preRenderCards = _cardsForRender;

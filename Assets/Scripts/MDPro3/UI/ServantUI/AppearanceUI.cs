@@ -229,16 +229,16 @@ namespace MDPro3.UI.ServantUI
             switch (condition)
             {
                 case Condition.Duel:
-                    Title.text = InterString.Get("决斗外观");
+                    Title.text = InterString.Get("Duel Appearance");
                     break;
                 case Condition.Watch:
-                    Title.text = InterString.Get("观战外观");
+                    Title.text = InterString.Get("Spectate Appearance");
                     break;
                 case Condition.Replay:
-                    Title.text = InterString.Get("回放外观");
+                    Title.text = InterString.Get("Replay Appearance");
                     break;
                 case Condition.DeckEditor:
-                    Title.text = InterString.Get("卡组外观");
+                    Title.text = InterString.Get("Deck Appearance");
                     break;
             }
 
@@ -337,13 +337,13 @@ namespace MDPro3.UI.ServantUI
 
                 InputPlayerName.text = Config.Get(condition.ToString() + currentContent + player, Config.EMPTY_STRING);
                 if (player == "0")
-                    TextInputHint.text = InterString.Get("请输入您的昵称：");
+                    TextInputHint.text = InterString.Get("Please enter your player name:");
                 else if (player == "1")
-                    TextInputHint.text = InterString.Get("请输入对方的昵称，留空则显示真实昵称：");
+                    TextInputHint.text = InterString.Get("Enter a nickname for your opponent. Leave it blank to show their real nickname:");
                 else if (player == "0Tag")
-                    TextInputHint.text = InterString.Get("请输入您的队友的昵称，留空则显示真实昵称：");
+                    TextInputHint.text = InterString.Get("Enter a nickname for your teammate. Leave it blank to show their real nickname:");
                 else if (player == "1Tag")
-                    TextInputHint.text = InterString.Get("请输入对方的队友的昵称，留空则显示真实昵称：");
+                    TextInputHint.text = InterString.Get("Enter a nickname for your opponent's teammate. Leave it blank to show their real nickname:");
                 return;
             }
             else if (currentContent == "Pickup")
@@ -442,8 +442,8 @@ namespace MDPro3.UI.ServantUI
                         var itemMono = item.GetComponent<SelectionToggle_AppearanceItem>();
                         itemMono.index = itemCount++;
                         itemMono.itemID = Items.CODE_NONE;
-                        itemMono.description = InterString.Get("该项设置将设置为无。");
-                        itemMono.itemName = InterString.Get("不设置");
+                        itemMono.description = InterString.Get("This setting will use no image.");
+                        itemMono.itemName = InterString.Get("No Image");
                         itemMono.path = Items.PATH_ICON_NONE;
                         itemMono.transform.SetParent(ScrollRect.content, false);
                         itemMono.Refresh();
@@ -457,8 +457,8 @@ namespace MDPro3.UI.ServantUI
                         var itemMono = item.GetComponent<SelectionToggle_AppearanceItem>();
                         itemMono.index = itemCount++;
                         itemMono.itemID = Items.CODE_RANDOM;
-                        itemMono.description = InterString.Get("该项设置将随机设置。");
-                        itemMono.itemName = InterString.Get("随机");
+                        itemMono.description = InterString.Get("Randomize this setting.");
+                        itemMono.itemName = InterString.Get("Random");
                         itemMono.path = Items.PATH_ICON_RANDOM;
                         itemMono.transform.SetParent(ScrollRect.content, false);
                         itemMono.Refresh();
@@ -472,8 +472,8 @@ namespace MDPro3.UI.ServantUI
                         var itemMono = item.GetComponent<SelectionToggle_AppearanceItem>();
                         itemMono.index = itemCount++;
                         itemMono.itemID = Items.CODE_SAME;
-                        itemMono.description = InterString.Get("该项设置将与场地设置保持一致。");
-                        itemMono.itemName = InterString.Get("一致");
+                        itemMono.description = InterString.Get("This setting will match the Duel Field.");
+                        itemMono.itemName = InterString.Get("Match Duel Field");
                         itemMono.path = Items.PATH_ICON_SAME;
                         itemMono.transform.SetParent(ScrollRect.content, false);
                         itemMono.Refresh();
@@ -487,15 +487,15 @@ namespace MDPro3.UI.ServantUI
                         var itemMono = item.GetComponent<SelectionToggle_AppearanceItem>();
                         itemMono.index = itemCount++;
                         itemMono.itemID = Items.CODE_DIY;
-                        itemMono.description = InterString.Get("我方头像：") +
+                        itemMono.description = InterString.Get("Player Avatar:") +
                                                                 Program.PATH_DIY + meString + Program.EXPANSION_PNG + "\n" +
-                                                                InterString.Get("对方头像：") +
+                                                                InterString.Get("Opponent Avatar:") +
                                                                 Program.PATH_DIY + opString + Program.EXPANSION_PNG + "\n" +
-                                                                InterString.Get("我方队友头像：") +
+                                                                InterString.Get("Teammate Avatar:") +
                                                                 Program.PATH_DIY + meTagString + Program.EXPANSION_PNG + "\n" +
-                                                                InterString.Get("对方队友头像：") +
+                                                                InterString.Get("Opponent's Teammate Avatar:") +
                                                                 Program.PATH_DIY + opTagString + Program.EXPANSION_PNG;
-                        itemMono.itemName = InterString.Get("自定义");
+                        itemMono.itemName = InterString.Get("DIY");
                         itemMono.path = Items.PATH_ICON_DIY;
                         itemMono.transform.SetParent(ScrollRect.content, false);
                         itemMono.Refresh();
@@ -509,8 +509,8 @@ namespace MDPro3.UI.ServantUI
                         var itemMono = item.GetComponent<SelectionToggle_AppearanceItem>();
                         itemMono.index = itemCount++;
                         itemMono.itemID = Items.CODE_SAME;
-                        itemMono.description = InterString.Get("该项设置将与我方场地设置保持一致。");
-                        itemMono.itemName = InterString.Get("一致");
+                        itemMono.description = InterString.Get("This setting will match your Duel Field.");
+                        itemMono.itemName = InterString.Get("Match Duel Field");
                         itemMono.path = Items.PATH_ICON_SAME;
                         itemMono.transform.SetParent(ScrollRect.content, false);
                         itemMono.Refresh();

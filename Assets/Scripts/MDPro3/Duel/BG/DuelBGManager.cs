@@ -2748,19 +2748,19 @@ namespace MDPro3.Duel
             
             var code = card.GetData().GetOriginalID();
             var cardCode = card.GetData().Id;
-            if (cardCode == 83764719)//死者苏生 异画
+            if (cardCode == 83764719)// Monster Reborn (alternate artwork)
                 code = 83764719;
-            if (cardCode == 63166096)//闪刀起动-交闪 异画
+            if (cardCode == 63166096)// Sky Striker Mobilize - Engage! (alternate artwork)
                 code = 63166096;
-            if (cardCode == 32807848)//增援 异画
+            if (cardCode == 32807848)// Reinforcement of the Army (alternate artwork)
                 code = 32807848;
-            if (cardCode == 49238329)//强欲而金满之壶 异画
+            if (cardCode == 49238329)// Pot of Extravagance (alternate artwork)
                 code = 49238329;
-            if (cardCode == 24224831)//墓穴的指名者 异画
+            if (cardCode == 24224831)// Called by the Grave (alternate artwork)
                 code = 24224831;
-            if (cardCode == 6498707)//融合派兵 异画
+            if (cardCode == 6498707)// Fusion Deployment (alternate artwork)
                 code = 6498707;
-            if (cardCode == 35269905)//三战之号 异画
+            if (cardCode == 35269905)// Triple Tactics Thrust (alternate artwork)
                 code = 35269905;
 
             var targetFolder = Program.root + "MasterDuel/Card/" + code.ToString();
@@ -2783,7 +2783,7 @@ namespace MDPro3.Duel
 
                 GameObject effect = null;
 
-                // 旋风
+                // Mystical Space Typhoon
                 if (code == 5318639)
                 {
                     if (card.effectTargets.Count > 0 && card.effectTargets[0].model != null)
@@ -2797,7 +2797,7 @@ namespace MDPro3.Duel
                     else
                         return;
                 }
-                // 月女神之镞
+                // Ultimate Slayer
                 else if (code == 2263869)
                 {
                     if (card.effectTargets.Count > 0 && card.effectTargets[0].model != null)
@@ -2808,7 +2808,7 @@ namespace MDPro3.Duel
                     else
                         return;
                 }
-                // 雷击
+                // Raigeki
                 else if (code == 12580477)
                 {
                     AudioManager.PlaySE("SE_EV_RAIGEKI");
@@ -2818,7 +2818,7 @@ namespace MDPro3.Duel
                         CameraManager.ShakeCamera(true);
                     });
                 }
-                // 灰流丽
+                // Ash Blossom & Joyous Spring
                 else if (code == 14558127)
                 {
                     if (chainSolvingIndex > 1)
@@ -2830,74 +2830,74 @@ namespace MDPro3.Duel
                     else
                         return;
                 }
-                // 鹰身女妖的羽毛扫
+                // Harpie's Feather Duster
                 else if (code == 18144506)
                 {
                     AudioManager.PlaySE("SE_EV_HARPIESFEATHER_DUSTER_3D");
                     effect = GetCardEffectPrefab(card.p.InMyControl() ? "Ef04678" : "Ef04678Op");
                     effect.transform.DestroyChildrenByName("DistPlane");
                 }
-                // 红色重启
+                // Red Reboot
                 else if (code == 23002292)
                 {
                     AudioManager.PlaySE("SE_EV_REDREBOOT");
                     effect = GetCardEffectPrefab("Ef13622");
                 }
-                // 墓穴的指名者
+                // Called by the Grave
                 else if (code == 24224830)
                 {
                     AudioManager.PlaySE("SE_EV_CALLED_GRAVE");
                     effect = GetCardEffectPrefab(card.p.InMyControl() ? "Ef13619" : "Ef13619Op");
                 }
-                // 墓穴的指名者 异画
+                // Called by the Grave (alternate artwork)
                 else if (code == 24224831)
                 {
                     AudioManager.PlaySE(card.p.InMyControl() ? "SE_EV_EF21233_R" : "SE_EV_EF21233_P");
                     effect = GetCardEffectPrefab(card.p.InMyControl() ? Tools.IsAspectRatioWidescreen() ? "Ef21233_Op" : "Ef21233_Op_4x3" : "Ef21233");
                 }
-                // 禁忌的一滴
+                // Forbidden Droplet
                 else if (code == 24299458)
                 {
                     AudioManager.PlaySE("SE_EV_FORBIDDEN_DROPLET");
                     effect = GetCardEffectPrefab(card.p.InMyControl() ? "Ef15299_Far" : "Ef15299_Near");
                 }
-                // 三战之才
+                // Triple Tactics Talent
                 else if (code == 25311006)
                 {
                     AudioManager.PlaySE("SE_EV_TRIPLETACTICS_TALENT");
                     effect = GetCardEffectPrefab("Ef15296");
                 }
-                // 神之宣告
+                // Solemn Judgment
                 else if (code == 41420027)
                 {
                     AudioManager.PlaySE("SE_EV_SOLEMNJUDGMENT");
                     effect = GetCardEffectPrefab("Ef04861");
                 }
-                // 神圣防护罩 -反射镜力-
+                // Mirror Force
                 else if (code == 44095762)
                 {
                     AudioManager.PlaySE("SE_EV_MIRRORFORCE");
                     effect = GetCardEffectPrefab(card.p.InMyControl() ? "Ef04887" : "Ef04887Op");
                 }
-                // 黑洞
+                // Dark Hole
                 else if (code == 53129443)
                 {
                     AudioManager.PlaySE("SE_EV_BLACKHOLE");
                     effect = GetCardEffectPrefab("Ef04342");
                 }
-                // 冥王结界波
+                // Dark Ruler No More
                 else if (code == 54693926)
                 {
                     AudioManager.PlaySE("SE_EV_DARKRULER_NOMORE");
                     effect = GetCardEffectPrefab(card.p.InMyControl() ? "Ef14742" : "Ef14742Op");
                 }
-                // 王宫的敕命
+                // Imperial Order
                 else if (code == 61740673)
                 {
                     AudioManager.PlaySE("SE_EV_IMPERIAL_ORDER");
                     effect = GetCardEffectPrefab("Ef04960");
                 }
-                // 魔法筒
+                // Magic Cylinder
                 else if (code == 62279055)
                 {
                     AudioManager.PlaySE("SE_EV_MAGIC_CYLINDER");
@@ -2908,7 +2908,7 @@ namespace MDPro3.Duel
 
                     //Tools.ChangeLayer(effect, "Default");
                 }
-                // 千把刀
+                // Thousand Knives
                 else if (code == 63391643)
                 {
                     if (card.effectTargets.Count > 0 && card.effectTargets[0].model != null)
@@ -2922,31 +2922,31 @@ namespace MDPro3.Duel
                     else
                         return;
                 }
-                // 抹杀之指名者
+                // Crossout Designator
                 else if (code == 65681983)
                 {
                     AudioManager.PlaySE("SE_EV_CROSSOUT_DESIGNATOR");
                     effect = GetCardEffectPrefab(card.p.InMyControl() ? "Ef14627_Far" : "Ef14627_Near");
                 }
-                // 光之护封剑
+                // Swords of Revealing Light
                 else if (code == 72302403)
                 {
                     AudioManager.PlaySE("SE_EV_GOFUKEN");
                     effect = GetCardEffectPrefab(card.p.InMyControl() ? "Ef04354" : "Ef04354Op");
                 }
-                // 封印之黄金柜
+                // Gold Sarcophagus
                 else if (code == 75500286)
                 {
                     AudioManager.PlaySE("SE_EV_GOLD_SARCOPHAGUS");
                     effect = GetCardEffectPrefab("Ef06161");
                 }
-                // 死者苏生
+                // Monster Reborn
                 else if (code == 83764718 || code == 83764719)
                 {
                     AudioManager.PlaySE("SE_EV_MONSTER_REBORN");
                     effect = GetCardEffectPrefab("Ef" + code);
                 }
-                // 闪刀起动-交闪
+                // Sky Striker Mobilize - Engage!
                 else if (code == 63166095 || code == 63166096)
                 {
                     nextMoveActionDuration = 2.2f + 5f;
@@ -2986,31 +2986,31 @@ namespace MDPro3.Duel
 
                     return;
                 }
-                // 大风暴
+                // Heavy Storm
                 else if (code == 19613556)
                 {
                     AudioManager.PlaySE("SE_EV_HEAVY_STORM");
                     effect = GetCardEffectPrefab("Ef04891");
                 }
-                // 天霆号 阿宙斯
+                // Divine Arsenal AA-ZEUS - Sky Thunder
                 else if (code == 90448279)
                 {
                     AudioManager.PlaySE("SE_EV_AZEUS");
                     effect = GetCardEffectPrefab("Ef15524");
                 }
-                // 增援
+                // Reinforcement of the Army
                 else if (code == 32807846)
                 {
                     AudioManager.PlaySE("SE_EV_039_NORMAL");
                     effect = GetCardEffectPrefab("Ef05328");
                 }
-                // 增援 异画
+                // Reinforcement of the Army (alternate artwork)
                 else if (code == 32807848)
                 {
                     AudioManager.PlaySE("SE_EV_039_SPECIAL");
                     effect = GetCardEffectPrefab("Ef20040");
                 }
-                // 幽鬼兔
+                // Ghost Ogre & Snow Rabbit
                 else if (code == 59438930)
                 {
                     if (chainSolvingIndex > 1)
@@ -3031,7 +3031,7 @@ namespace MDPro3.Duel
                     else
                         return;
                 }
-                // 欢聚友伴·抖抖海月水母
+                // Mulcharmy Purulia
                 else if (code == 84192580)
                 {
                     AudioManager.PlaySE("SE_EV_040_NORMAL");
@@ -3039,7 +3039,7 @@ namespace MDPro3.Duel
                     var manager = effect.GetComponent<ElementObjectManager>();
                     UnityEngine.Object.Destroy(manager.GetElement(card.p.InMyControl() ? "Hand01" : "EnHand01"));
                 }
-                // 欢聚友伴·茸茸长尾山雀
+                // Mulcharmy Fuwalos
                 else if (code == 42141493)
                 {
                     AudioManager.PlaySE("SE_EV_041_NORMAL");
@@ -3065,7 +3065,7 @@ namespace MDPro3.Duel
                             , Core.GetLocationCardCount(CardLocation.Extra, 0), myExtra);
                     }
                 }
-                // 欢聚友伴·喵喵豹猫
+                // Mulcharmy Meowls
                 else if (code == 87126721)
                 {
                     AudioManager.PlaySE("SE_EV_042_NORMAL");
@@ -3079,7 +3079,7 @@ namespace MDPro3.Duel
                     else
                         UnityEngine.Object.Destroy(effect.transform.GetChildByName("EnGraveSet").gameObject);
                 }
-                // 灵王的波动
+                // Dominus Impulse
                 else if (code == 40366667)
                 {
                     if (chainSolvingIndex > 1)
@@ -3100,7 +3100,7 @@ namespace MDPro3.Duel
                     }
                     return;
                 }
-                // 圣王的粉碎
+                // Dominus Purge
                 else if (code == 97045737)
                 {
                     if (chainSolvingIndex > 1)
@@ -3119,7 +3119,7 @@ namespace MDPro3.Duel
                     }
                     return;
                 }
-                // 小丑与锁鸟
+                // Droll & Lock Bird
                 else if (code == 94145021)
                 {
                     AudioManager.PlaySE("SE_EV_EF09279_v1");
@@ -3139,19 +3139,19 @@ namespace MDPro3.Duel
                             , Core.GetLocationCardCount(CardLocation.Deck, 0), myDeck);
                     }
                 }
-                // 强欲而金满之壶 异画
+                // Pot of Extravagance (alternate artwork)
                 else if (code == 49238329)
                 {
                     AudioManager.PlaySE("SE_EV_EF14144_v2");
                     effect = GetCardEffectPrefab("Ef21234");
                 }
-                // 融合派兵 异画
+                // Fusion Deployment (alternate artwork)
                 else if (code == 6498707)
                 {
                     AudioManager.PlaySE("SE_EV_EF22188");
                     effect = GetCardEffectPrefab("Ef22188");
                 }
-                // 三战之号 异画
+                // Triple Tactics Thrust (alternate artwork)
                 else if (code == 35269905)
                 {
                     AudioManager.PlaySE("SE_EV_EF22189");
@@ -3163,7 +3163,7 @@ namespace MDPro3.Duel
             }
             else
             {
-                // 技能抽取
+                // Skill Drain
                 if (code == 82732705)
                 {
                     if (card.model == null)
@@ -3180,7 +3180,7 @@ namespace MDPro3.Duel
                     UnityEngine.Object.Destroy(effArea);
                     UnityEngine.Object.Destroy(effCard);
                 }
-                // 无限泡影
+                // Infinite Impermanence
                 else if (code == 10045474)
                 {
                     if (card.effectTargets.Count == 0 || card.effectTargets[0].model == null)
@@ -3218,7 +3218,7 @@ namespace MDPro3.Duel
                     await UniTask.WaitForSeconds(time);
                     UnityEngine.Object.Destroy(effCard);
                 }
-                // 闪电风暴
+                // Lightning Storm
                 else if (code == 14532163)
                 {
                     var eff = await ABLoader.LoadFromFolderAsync<ParticleSystem>("MasterDuel/Effects/MagicTrapEffects/fxp_14876", true, true);
@@ -3236,7 +3236,7 @@ namespace MDPro3.Duel
                     await UniTask.WaitForSeconds(1f);
                     UnityEngine.Object.Destroy(eff);
                 }
-                // 效果遮蒙者
+                // Effect Veiler
                 else if (code == 97268402)
                 {
                     if (card.effectTargets.Count == 0 || card.effectTargets[0].model == null)
@@ -3247,7 +3247,7 @@ namespace MDPro3.Duel
                     await UniTask.WaitForSeconds(1f);
                     UnityEngine.Object.Destroy(eff);
                 }
-                // 屋敷童
+                // Ghost Belle & Haunted Mansion
                 else if (code == 73642296)
                 {
                     if (chainSolvingIndex < 2)

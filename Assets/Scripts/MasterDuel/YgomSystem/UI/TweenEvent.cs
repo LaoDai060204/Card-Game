@@ -4,8 +4,8 @@ namespace YgomSystem.UI
 	{
 		protected override void OnSetValue(float par)
 		{
-            // 事件型 Tween：不修改任何属性，仅依赖基类的 onFinished 回调
-            // （常用于在 prefab 中作为延迟/链式节点，通过 onFinished 驱动后续 Tween）
+            // Event-only tween: leave properties unchanged and use the base onFinished callback.
+            // Prefabs can use this as a delay or chain node to start the next tween.
         }
 	}
 }

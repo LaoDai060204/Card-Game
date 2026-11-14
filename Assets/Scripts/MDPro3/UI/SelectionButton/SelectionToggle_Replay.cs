@@ -80,13 +80,13 @@ namespace MDPro3.UI
                 bool tag = false;
                 if ((yrp.opt & 0x20) > 0)
                 {
-                    description += StringHelper.GetUnsafe(1246) + Program.STRING_LINE_BREAK;//双打模式
+                    description += StringHelper.GetUnsafe(1246) + Program.STRING_LINE_BREAK;//Tag Duel mode
                     tag = true;
                 }
-                description += StringHelper.GetUnsafe((int)(1259 + (yrp.opt >> 16))) + Program.STRING_LINE_BREAK;//规则
-                description += StringHelper.GetUnsafe(1231) + yrp.StartLp + Program.STRING_LINE_BREAK;//初始基本分：
-                description += StringHelper.GetUnsafe(1232) + yrp.StartHand + Program.STRING_LINE_BREAK;//初始手卡数：
-                description += StringHelper.GetUnsafe(1233) + yrp.DrawCount + Program.STRING_LINE_BREAK;//每回合抽卡：
+                description += StringHelper.GetUnsafe((int)(1259 + (yrp.opt >> 16))) + Program.STRING_LINE_BREAK;//Rules
+                description += StringHelper.GetUnsafe(1231) + yrp.StartLp + Program.STRING_LINE_BREAK;//Starting LP:
+                description += StringHelper.GetUnsafe(1232) + yrp.StartHand + Program.STRING_LINE_BREAK;//Starting hand size:
+                description += StringHelper.GetUnsafe(1233) + yrp.DrawCount + Program.STRING_LINE_BREAK;//Cards drawn per turn:
                 if ((yrp.opt & 0x10) > 0)
                     description += StringHelper.GetUnsafe(1230) + Program.STRING_LINE_BREAK;
 

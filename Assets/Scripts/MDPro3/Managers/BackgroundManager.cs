@@ -128,7 +128,7 @@ namespace MDPro3
         public int GetIDByName(string bgName)
         {
             var id = 0;
-            if(bgName == InterString.Get("随机"))
+            if(bgName == InterString.Get("Random"))
                 return 0;
             foreach (var background in backgrounds)
             {

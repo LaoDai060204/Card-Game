@@ -33,7 +33,7 @@ float ApplyBlendMode(float sourceAlpha, float maskValue, int blendMode)
     }
 }
 
-// 获取指定通道的值
+// Read the selected color channel
 float GetChannelValue(float4 color, int channel)
 {
     if (channel == 0)
@@ -42,7 +42,7 @@ float GetChannelValue(float4 color, int channel)
         return color.g; // G
     if (channel == 2)
         return color.b; // B
-    return color.a; // A (默认)
+    return color.a; // A (default)
 }
 
 [numthreads(8, 8, 1)]
@@ -52,45 +52,45 @@ void CSMain(uint3 id : SV_DispatchThreadID)
     uint2 sourceSize = (uint2)SourceSize;
     uint2 maskSize = (uint2)MaskSize;
     
-    // 确保不超出边界
+    // Keep pixel coordinates within the texture bounds
     if (pixel.x >= sourceSize.x || pixel.y >= sourceSize.y)
         return;
     
-    // 读取原纹理颜色
+    // Read the source pixel color
     float4 color = SourceTex[pixel];
     
     float4 maskColor;
     
-    // 当纹理尺寸一致时，直接通过像素坐标访问，避免采样开销
+    // Use direct pixel access for equal-sized textures to avoid sampling overhead
     if (sourceSize.x == maskSize.x && sourceSize.y == maskSize.y)
     {
         maskColor = MaskTex[pixel];
     }
     else
     {
-        // 尺寸不一致时，使用UV采样
+        // Use UV sampling when the texture sizes differ
         float2 uv = float2((float)pixel.x / (float)sourceSize.x, (float)pixel.y / (float)sourceSize.y);
         maskColor = MaskTex.SampleLevel(linear_clamp_sampler, uv, 0);
     }
     
-    // 获取指定通道的mask值
+    // Read the mask value from the selected channel
     float maskValue = GetChannelValue(maskColor, _MaskChannel);
     
-    // 应用阈值
+    // Apply the threshold
     if (_Threshold > 0.0)
     {
         maskValue = maskValue >= _Threshold ? 1.0 : 0.0;
     }
     
-    // 反转mask
+    // Invert the mask
     if (_InvertMask > 0.5)
     {
         maskValue = 1.0 - maskValue;
     }
     
-    // 应用混合模式
+    // Apply the blend mode
     color.a = ApplyBlendMode(color.a, maskValue, _BlendMode);
     
-    // 输出结果
+    // Write the result
     Result[pixel] = color;
 }

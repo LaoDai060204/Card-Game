@@ -337,7 +337,7 @@ namespace MDPro3.UI
         {
             var selections = new List<string>()
             {
-                InterString.Get("请输入预设名称"),
+                InterString.Get("Please enter a preset name"),
                 string.Empty
             };
             UIManager.ShowPopupInput(selections, AddAddress, null, TmpInputValidation.ValidationType.NoSpace);

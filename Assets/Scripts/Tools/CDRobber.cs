@@ -137,9 +137,9 @@ public class CDRobber : MonoBehaviour
             }
         }
         if(point.Count == 0)
-            Debug.Log("没找到: " +  name);
+            Debug.Log("Not found: " +  name);
         else if(point.Count > 1)
-            Debug.Log("找到多个: " + name);
+            Debug.Log("Multiple matches: " + name);
         else
         {
             bool still = true;

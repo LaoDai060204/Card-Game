@@ -109,7 +109,7 @@ namespace MDPro3.UI
         {
             List<string> selections = new()
             {
-                InterString.Get("禁限卡表"),
+                InterString.Get("Forbidden & Limited Lists"),
                 string.Empty
             };
             selections.AddRange(BanlistManager.GetAllNames(true));
@@ -127,7 +127,7 @@ namespace MDPro3.UI
         {
             List<string> selections = new()
             {
-                InterString.Get("卡片允许"),
+                InterString.Get("Allowed Cards"),
                 string.Empty
             };
             for (int i = 1481; i < 1487; i++)
@@ -146,7 +146,7 @@ namespace MDPro3.UI
         {
             List<string> selections = new()
             {
-                InterString.Get("决斗模式"),
+                InterString.Get("Duel Mode"),
                 string.Empty
             };
             for (int i = 1244; i < 1247; i++)
@@ -170,7 +170,7 @@ namespace MDPro3.UI
         {
             return new List<string>()
             {
-                InterString.Get("创建主机"),
+                InterString.Get("Create Host"),
                 ButtonRegulation.GetButtonText(),
                 ButtonPool.GetButtonText(),
                 ButtonMode.GetButtonText(),

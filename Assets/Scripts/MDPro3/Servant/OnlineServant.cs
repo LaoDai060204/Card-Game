@@ -97,13 +97,13 @@ namespace MDPro3.Servant
         {
             if (string.IsNullOrEmpty(name))
             {
-                MessageManager.Cast(InterString.Get("用户名不能为空。"));
+                MessageManager.Cast(InterString.Get("Player name cannot be empty."));
                 return;
             }
 
             if (string.IsNullOrEmpty(ip) || string.IsNullOrEmpty(port))
             {
-                MessageManager.Cast(InterString.Get("主机地址和端口不能为空。"));
+                MessageManager.Cast(InterString.Get("Host IP and Port cannot be empty."));
                 return;
             }
 
@@ -190,7 +190,7 @@ namespace MDPro3.Servant
                 yield return null;
             if (task.Result.user.id == 0)
             {
-                MessageManager.Cast(InterString.Get("登录失败：") + task.Result.user.username);
+                MessageManager.Cast(InterString.Get("Login Failed:") + task.Result.user.username);
                 GetUI<OnlineServantUI>().PageMyCard.PageLogin.SetActive(true);
                 if (UserInput.NeedDefaultSelect())
                     Select();
@@ -222,7 +222,7 @@ namespace MDPro3.Servant
 
             if (task.Result.user.id == 0)
             {
-                MessageManager.Cast(InterString.Get("MyCard登录失败。"));
+                MessageManager.Cast(InterString.Get("MyCard account login failed."));
                 yield break;
             }
             LoginSuccessEvent();
@@ -290,7 +290,7 @@ namespace MDPro3.Servant
 
         private void RefreshDeckSelector()
         {
-            GetUI<OnlineServantUI>().PageMyCard.ButtonDeckSelector.SetConfigDeck(InterString.Get("未选中有效卡组"));
+            GetUI<OnlineServantUI>().PageMyCard.ButtonDeckSelector.SetConfigDeck(InterString.Get("No Valid Deck Selected"));
         }
 
         private float timeError = 3f;
@@ -325,7 +325,7 @@ namespace MDPro3.Servant
 
             if (OnlineDeck.decks == null)
             {
-                MessageManager.Cast(InterString.Get("同步卡组失败。"));
+                MessageManager.Cast(InterString.Get("Failed to synchronize the deck."));
                 yield break;
             }
 
@@ -334,9 +334,9 @@ namespace MDPro3.Servant
             foreach (var deckPath in deckFiles)
                 decks.Add(new Deck(deckPath));
 
-            var decksNeedUpload = new Dictionary<string, Deck>();//没在服务器找到对应的deckId的本地卡组
-            var decksNeedUpdateToServer = new Dictionary<string, Deck>();//找到deckId但本地时间大于服务器时间timeError秒以上的卡组
-            var decksNeedUpdateFromServer = new Dictionary<string, Deck>();//找到deckId但本地时间小于服务器时间timeError秒以上的卡组
+            var decksNeedUpload = new Dictionary<string, Deck>();//Local decks whose deckId was not found on the server.
+            var decksNeedUpdateToServer = new Dictionary<string, Deck>();//Decks with a matching deckId whose local timestamp is newer by more than timeError seconds.
+            var decksNeedUpdateFromServer = new Dictionary<string, Deck>();//Decks with a matching deckId whose local timestamp is older by more than timeError seconds.
             var localFoundIds = new List<string>();
 
             for (int i = 0; i < decks.Count; i++)
@@ -387,19 +387,19 @@ namespace MDPro3.Servant
                     decksNeedUpload.Add(deckName, decks[i]);
             }
 
-            //上传已经有Id的本地较新卡组
+            //Upload newer local decks that already have an ID.
             foreach (var deck in decksNeedUpdateToServer)
             {
-                Debug.LogFormat("卡组[{0}]需要更新上传。", deck.Key);
+                Debug.LogFormat("Deck [{0}] needs to be uploaded as an update.", deck.Key);
                 var time = DateTime.UtcNow;
                 var task = OnlineDeck.SyncDeck(deck.Value.deckId, Path.GetFileName(deck.Key), deck.Value, time, false);
                 while (!task.IsCompleted)
                     yield return null;
             }
-            //更新已经有Id的本地较旧卡组
+            //Update older local decks that already have an ID.
             foreach (var deck in decksNeedUpdateFromServer)
             {
-                Debug.LogFormat("卡组[{0}]需要更新。", deck.Key);
+                Debug.LogFormat("Deck [{0}] needs to be updated.", deck.Key);
 
                 var od = OnlineDeck.GetByID(deck.Value.deckId);
                 var oldPath = Program.PATH_DECK + deck.Key + Program.EXPANSION_YDK;
@@ -412,8 +412,8 @@ namespace MDPro3.Servant
                 File.SetLastWriteTimeUtc(newPath, od.GetUpdateUtcTime());
             }
 
-            //下载本地ID不存在的服务器卡组
-            //OnlineDeck.UploadDecks() 会刷新OnlineDeck.decks，因此本功能需要在[上传没有Id的本地卡组]之前执行
+            //Download server decks whose IDs are not present locally.
+            //OnlineDeck.UploadDecks() refreshes OnlineDeck.decks, so download missing server decks before uploading local decks without IDs.
             var odtd = OnlineDeck.decks
                 .Where(od => !od.isDelete && !localFoundIds.Contains(od.deckId));
             foreach (var deck in odtd)
@@ -421,11 +421,11 @@ namespace MDPro3.Servant
                 var path = Program.PATH_DECK + (deck.GetType() == string.Empty ? string.Empty : $"{deck.GetType()}/") + deck.deckName + Program.EXPANSION_YDK;
                 if (File.Exists(path))
                 {
-                    Debug.Log($"删除服务器同名卡组 [{deck.GetType()}/{deck.deckName}]  [{deck.deckId}]。");
+                    Debug.Log($"Delete the server deck with the same name [{deck.GetType()}/{deck.deckName}] [{deck.deckId}].");
                     _ = OnlineDeck.DeleteDecks(new List<string> { deck.deckId });
                     continue;
                 }
-                Debug.Log($"卡组[{deck.GetType()} / {deck.deckName}] [{deck.deckId}]需要下载。");
+                Debug.Log($"Deck [{deck.GetType()} / {deck.deckName}] [{deck.deckId}] needs to be downloaded.");
 
                 var d = new Deck(deck.deckYdk, deck.deckId, MyCard.account.user.username)
                 {
@@ -434,14 +434,14 @@ namespace MDPro3.Servant
                 d.Save(Path.GetFileName(deck.deckName), deck.GetUpdateUtcTime(), false);
             }
 
-            //上传没有Id的本地卡组
+            //Upload local decks that do not have an ID.
             if (decksNeedUpload.Count > 0)
             {
                 var decksToUp = new List<Deck>();
                 var deckNames = new List<string>();
                 foreach (var deck in decksNeedUpload)
                 {
-                    var info = string.Format("卡组[{0}]需要上传：{1}。", deck.Key, deck.Value.deckId);
+                    var info = string.Format("Deck [{0}] needs to be uploaded: {1}.", deck.Key, deck.Value.deckId);
                     Debug.Log(info);
 
                     deckNames.Add(Path.GetFileName(deck.Key));
@@ -473,11 +473,11 @@ namespace MDPro3.Servant
                     StopCoroutine(athleticMatch);
                     athleticMatch = null;
                 }
-                GetUI<OnlineServantUI>().PageMyCard.ButtonAMatch.SetButtonText(InterString.Get("竞技匹配"));
+                GetUI<OnlineServantUI>().PageMyCard.ButtonAMatch.SetButtonText(InterString.Get("Ranked Match"));
             }
             else
             {
-                GetUI<OnlineServantUI>().PageMyCard.ButtonEMatch.SetButtonText(InterString.Get("娱乐匹配"));
+                GetUI<OnlineServantUI>().PageMyCard.ButtonEMatch.SetButtonText(InterString.Get("Casual Match"));
                 StopCoroutine(entertainMatch);
                 entertainMatch = null;
             }
@@ -493,11 +493,11 @@ namespace MDPro3.Servant
                     StopCoroutine(entertainMatch);
                     entertainMatch = null;
                 }
-                GetUI<OnlineServantUI>().PageMyCard.ButtonEMatch.SetButtonText(InterString.Get("娱乐匹配"));
+                GetUI<OnlineServantUI>().PageMyCard.ButtonEMatch.SetButtonText(InterString.Get("Casual Match"));
             }
             else
             {
-                GetUI<OnlineServantUI>().PageMyCard.ButtonAMatch.SetButtonText(InterString.Get("竞技匹配"));
+                GetUI<OnlineServantUI>().PageMyCard.ButtonAMatch.SetButtonText(InterString.Get("Ranked Match"));
                 StopCoroutine(athleticMatch);
                 athleticMatch = null;
             }
@@ -519,12 +519,12 @@ namespace MDPro3.Servant
 
             if(task.Result != null)
             {
-                GetUI<OnlineServantUI>().PageMyCard.ButtonEMatch.SetButtonText(InterString.Get("娱乐匹配"));
+                GetUI<OnlineServantUI>().PageMyCard.ButtonEMatch.SetButtonText(InterString.Get("Casual Match"));
                 TcpHelper.LinkStart(task.Result.address, MyCard.account.user.username, task.Result.port.ToString(), task.Result.password, false, null);
             }
             else
             {
-                GetUI<OnlineServantUI>().PageMyCard.ButtonEMatch.SetButtonText(InterString.Get("匹配失败"));
+                GetUI<OnlineServantUI>().PageMyCard.ButtonEMatch.SetButtonText(InterString.Get("Matching Failed"));
             }
             entertainMatch = null;
         }
@@ -545,12 +545,12 @@ namespace MDPro3.Servant
 
             if (task.Result != null)
             {
-                GetUI<OnlineServantUI>().PageMyCard.ButtonAMatch.SetButtonText(InterString.Get("竞技匹配"));
+                GetUI<OnlineServantUI>().PageMyCard.ButtonAMatch.SetButtonText(InterString.Get("Ranked Match"));
                 TcpHelper.LinkStart(task.Result.address, MyCard.account.user.username, task.Result.port.ToString(), task.Result.password, false, null);
             }
             else
             {
-                GetUI<OnlineServantUI>().PageMyCard.ButtonAMatch.SetButtonText(InterString.Get("匹配失败"));
+                GetUI<OnlineServantUI>().PageMyCard.ButtonAMatch.SetButtonText(InterString.Get("Matching Failed"));
             }
             athleticMatch = null;
         }

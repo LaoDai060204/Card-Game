@@ -17,7 +17,7 @@ namespace MDPro3.Utility
     public static class CardImageLoader
     {
 
-        #region 字段和属性
+        #region Fields and properties
 
         private class VideoCacheEntry
         {
@@ -53,7 +53,7 @@ namespace MDPro3.Utility
 
         #endregion
 
-        #region 初始化
+        #region Initialization
 
         public static void Initialize()
         {
@@ -330,7 +330,7 @@ namespace MDPro3.Utility
 
         public static void ReleaseCard(int code)
         {
-            // 普通卡片释放
+            // Release regular cards
             if (cachedCards.TryGetValue(code, out var entry))
             {
                 var newCount = Interlocked.Decrement(ref entry.ReferenceCount);
@@ -340,7 +340,7 @@ namespace MDPro3.Utility
                 return;
             }
 
-            // 视频卡释放
+            // Release video cards
             if (cachedVideoCards.TryGetValue(code, out var videoEntry))
             {
                 var newCount = Interlocked.Decrement(ref videoEntry.ReferenceCount);
@@ -371,7 +371,7 @@ namespace MDPro3.Utility
 
         public static void ClearCache()
         {
-            // 普通卡片
+            // Regular cards
             foreach (var card in cachedCards.Values)
                 UnityEngine.Object.Destroy(card.Texture);
             cachedCards.Clear();
@@ -380,7 +380,7 @@ namespace MDPro3.Utility
                 UnityEngine.Object.Destroy(cardNameTex);
             cachedCardNames.Clear();
 
-            // 视频卡
+            // Video cards
             foreach (var video in cachedVideoCards.Values)
             {
                 if (video.Renderer != null)

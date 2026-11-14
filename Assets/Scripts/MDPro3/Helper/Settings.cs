@@ -51,58 +51,58 @@ namespace MDPro3
         {
             FinalAttackBlueEyes = new int[]
             {
-                89631139,   //青眼白龙
-                53347303,   //青眼光龙
-                22804410,   //渊眼白龙
-                38517737,   //青眼亚白龙
-                30576089,   //青眼喷气龙
-                9433350,    //罪 青眼白龙
-                53183600,   //青眼卡通龙
-                23995346,   //青眼究极龙
-                43228023,   //青眼究极亚龙
-                56532353,   //真青眼究极龙
-                2129638,    //青眼双爆裂龙
-                11443677    //青眼暴君龙
+                89631139,   // Blue-Eyes White Dragon
+                53347303,   // Blue-Eyes Shining Dragon
+                22804410,   // Deep-Eyes White Dragon
+                38517737,   // Blue-Eyes Alternative White Dragon
+                30576089,   // Blue-Eyes Jet Dragon
+                9433350,    // Malefic Blue-Eyes White Dragon
+                53183600,   // Blue-Eyes Toon Dragon
+                23995346,   // Blue-Eyes Ultimate Dragon
+                43228023,   // Blue-Eyes Alternative Ultimate Dragon
+                56532353,   // Neo Blue-Eyes Ultimate Dragon
+                2129638,    // Blue-Eyes Twin Burst Dragon
+                11443677    // Blue-Eyes Tyrant Dragon
             };
 
             FinalAttackDarkM = new int[]
             {
-                46986414,   //黑魔术师
-                92377303,   //黑衣大贤者
-                342673,       //黑色魔术师-黑魔术师
-                21296502,   //卡通黑魔术师
-                29436665,   //黑魔导执行官
-                35191415,   //黑幻想之魔术师
-                38033121,   //黑魔术少女
-                90960358,   //卡通黑魔术少女
-                50237654    //超魔导师-黑魔术师徒
+                46986414,   // Dark Magician
+                92377303,   // Dark Sage
+                342673,       // Dark Magician the Magician of Black Magic
+                21296502,   // Toon Dark Magician
+                29436665,   // Dark Eradicator Warlock
+                35191415,   // Magician of Dark Illusion
+                38033121,   // Dark Magician Girl
+                90960358,   // Toon Dark Magician Girl
+                50237654    // The Dark Magicians
             };
 
             FinalAttackRedEyes = new int[]
             {
-                74677422,   //真红眼黑龙
-                96561011,   //真红眼暗龙
-                64335804,   //真红眼黑钢龙
-                18491580,   //真红眼亚黑龙
-                55343236,   //罪 真红眼黑龙
-                6556909,     //真红之魂
+                74677422,   // Red-Eyes Black Dragon
+                96561011,   // Red-Eyes Darkness Dragon
+                64335804,   // Red-Eyes Black Metal Dragon
+                18491580,   // Red-Eyes Alternative Black Dragon
+                55343236,   // Malefic Red-Eyes Black Dragon
+                6556909,     // Red-Eyes Soul
             };
 
             FinalAttackObelisk = new int[]
             {
-                10000000   //巨神兵
+                10000000   // Obelisk the Tormentor
             };
 
             FinalAttackRa = new int[]
             {
-                10000010,   //翼神龙
-                10000080,   //蛋
-                10000090,   //不死鸟
+                10000010,   // The Winged Dragon of Ra
+                10000080,   // The Winged Dragon of Ra - Sphere Mode
+                10000090,   // The Winged Dragon of Ra - Immortal Phoenix
             };
 
             FinalAttackSlifer = new int[]
             {
-                10000020   //天空龙
+                10000020   // Slifer the Sky Dragon
             };
 
             PrereleasePackUrl = "https://cdn02.moecube.com:444/ygopro-super-pre/archive/ygopro-super-pre.ypk";

@@ -624,9 +624,9 @@ namespace MDPro3.UI.ServantUI
                     var canRetrySolo = RoomServant.FromSolo;
                     ButtonRetry.gameObject.SetActive(canRetrySolo);
                     if (canRetrySolo)
-                        ButtonRetry.SetButtonText(InterString.Get("重试"));
+                        ButtonRetry.SetButtonText(InterString.Get("Retry"));
                     ButtonSurrender.gameObject.SetActive(true);
-                    ButtonSurrender.SetButtonText(InterString.Get("投降"));
+                    ButtonSurrender.SetButtonText(InterString.Get("Surrender"));
 
                     bool needShowCheckDecks = !OcgCore.inPuzzle;
                     ButtonCheckDecks.gameObject.SetActive(needShowCheckDecks);
@@ -639,7 +639,7 @@ namespace MDPro3.UI.ServantUI
 
                     ButtonRetry.gameObject.SetActive(false);
                     ButtonSurrender.gameObject.SetActive(true);
-                    ButtonSurrender.SetButtonText(InterString.Get("退出观战"));
+                    ButtonSurrender.SetButtonText(InterString.Get("Exit Spectate"));
                     ButtonCheckDecks.gameObject.SetActive(false);
                 }
                 else if (OcgCore.condition == OcgCore.Condition.Replay)
@@ -650,7 +650,7 @@ namespace MDPro3.UI.ServantUI
 
                     ButtonRetry.gameObject.SetActive(false);
                     ButtonSurrender.gameObject.SetActive(true);
-                    ButtonSurrender.SetButtonText(InterString.Get("退出回放"));
+                    ButtonSurrender.SetButtonText(InterString.Get("Exit Replay"));
                     ButtonCheckDecks.gameObject.SetActive(false);
                 }
                 TogglePort.gameObject.SetActive(false);
@@ -767,29 +767,29 @@ namespace MDPro3.UI.ServantUI
             string value = Config.Get("ScreenMode", "1");
             if (value == "0")
             {
-                ButtonScreenMode.SetModeText(InterString.Get("独占全屏"));
-                ButtonScreenMode.SetNoteText(InterString.Get("独占全屏（仅Windows端有效）"));
+                ButtonScreenMode.SetModeText(InterString.Get("Exclusive Fullscreen"));
+                ButtonScreenMode.SetNoteText(InterString.Get("Exclusive Fullscreen (Windows Only)"));
             }
             else if (value == "1")
             {
-                ButtonScreenMode.SetModeText(InterString.Get("窗口全屏"));
-                ButtonScreenMode.SetNoteText(InterString.Get("全屏显示"));
+                ButtonScreenMode.SetModeText(InterString.Get("Full Screen Mode"));
+                ButtonScreenMode.SetNoteText(InterString.Get("Display the game in full-screen mode"));
             }
             else
             {
-                ButtonScreenMode.SetModeText(InterString.Get("窗口化"));
-                ButtonScreenMode.SetNoteText(InterString.Get("窗口化（仅桌面端有效）"));
+                ButtonScreenMode.SetModeText(InterString.Get("Window Mode"));
+                ButtonScreenMode.SetNoteText(InterString.Get("Window Mode (PC/Laptop Only)"));
             }
         }
         private void OnScreenModeChange()
         {
             List<string> selections = new()
             {
-                InterString.Get("显示模式"),
+                InterString.Get("View Mode"),
                 string.Empty,
-                InterString.Get("独占全屏"),
-                InterString.Get("窗口全屏"),
-                InterString.Get("窗口化")
+                InterString.Get("Exclusive Fullscreen"),
+                InterString.Get("Full Screen Mode"),
+                InterString.Get("Window Mode")
             };
             UIManager.ShowPopupSelection(selections, ScreenModeChange);
         }
@@ -798,23 +798,23 @@ namespace MDPro3.UI.ServantUI
             string selected = EventSystem.current.currentSelectedGameObject
                 .GetComponent<SelectionButton>().GetButtonText();
 
-            if (selected == InterString.Get("独占全屏"))
+            if (selected == InterString.Get("Exclusive Fullscreen"))
             {
                 Screen.SetResolution(Screen.currentResolution.width, Screen.currentResolution.height, FullScreenMode.ExclusiveFullScreen);
-                ButtonScreenMode.SetModeText(InterString.Get("独占全屏"));
-                ButtonScreenMode.SetNoteText(InterString.Get("独占全屏（仅Windows端有效）"));
+                ButtonScreenMode.SetModeText(InterString.Get("Exclusive Fullscreen"));
+                ButtonScreenMode.SetNoteText(InterString.Get("Exclusive Fullscreen (Windows Only)"));
             }
-            else if (selected == InterString.Get("窗口全屏"))
+            else if (selected == InterString.Get("Full Screen Mode"))
             {
                 Screen.SetResolution(Screen.currentResolution.width, Screen.currentResolution.height, FullScreenMode.FullScreenWindow);
-                ButtonScreenMode.SetModeText(InterString.Get("窗口全屏"));
-                ButtonScreenMode.SetNoteText(InterString.Get("全屏显示"));
+                ButtonScreenMode.SetModeText(InterString.Get("Full Screen Mode"));
+                ButtonScreenMode.SetNoteText(InterString.Get("Display the game in full-screen mode"));
             }
             else
             {
                 Screen.SetResolution(Screen.currentResolution.width, Screen.currentResolution.height, false);
-                ButtonScreenMode.SetModeText(InterString.Get("窗口化"));
-                ButtonScreenMode.SetNoteText(InterString.Get("窗口化（仅桌面端有效）"));
+                ButtonScreenMode.SetModeText(InterString.Get("Window Mode"));
+                ButtonScreenMode.SetNoteText(InterString.Get("Window Mode (PC/Laptop Only)"));
             }
 
             Config.Set("ScreenMode", SaveScreenMode(selected));
@@ -822,11 +822,11 @@ namespace MDPro3.UI.ServantUI
         private string SaveScreenMode(string value)
         {
             string returnValue = "1";
-            if (value == InterString.Get("独占全屏"))
+            if (value == InterString.Get("Exclusive Fullscreen"))
                 returnValue = "0";
-            else if (value == InterString.Get("窗口全屏"))
+            else if (value == InterString.Get("Full Screen Mode"))
                 returnValue = "1";
-            else if (value == InterString.Get("窗口化"))
+            else if (value == InterString.Get("Window Mode"))
                 returnValue = "2";
             return returnValue;
         }
@@ -845,7 +845,7 @@ namespace MDPro3.UI.ServantUI
         {
             List<string> selections = new()
             {
-                InterString.Get("分辨率"),
+                InterString.Get("Resolution"),
                 string.Empty
             };
             foreach (var resolution in Screen.resolutions)
@@ -965,13 +965,13 @@ namespace MDPro3.UI.ServantUI
         {
             string qualityText = (int)value switch
             {
-                0 => InterString.Get("非常低"),
-                1 => InterString.Get("低"),
-                2 => InterString.Get("中等"),
-                3 => InterString.Get("高"),
-                4 => InterString.Get("非常高"),
-                5 => InterString.Get("极致"),
-                _ => InterString.Get("中等"),
+                0 => InterString.Get("Very Low"),
+                1 => InterString.Get("Low"),
+                2 => InterString.Get("Medium"),
+                3 => InterString.Get("High"),
+                4 => InterString.Get("Very High"),
+                5 => InterString.Get("Extreme"),
+                _ => InterString.Get("Medium"),
             };
             Config.SetFloat("Quality", value);
             ButtonQuality.SetModeText(qualityText);
@@ -1092,31 +1092,31 @@ namespace MDPro3.UI.ServantUI
         public static string ChangeShadow(float value)
         {
             SROptions sr = new();
-            var modeText = InterString.Get("非常低");
+            var modeText = InterString.Get("Very Low");
             switch ((int)value)
             {
                 case 0:
-                    modeText = InterString.Get("非常低");
+                    modeText = InterString.Get("Very Low");
                     sr.MainLightShadowResolution = ShadowResolution._256;
                     sr.SupportsSoftShadows = false;
                     break;
                 case 1:
-                    modeText = InterString.Get("低");
+                    modeText = InterString.Get("Low");
                     sr.MainLightShadowResolution = ShadowResolution._512;
                     sr.SupportsSoftShadows = false;
                     break;
                 case 2:
-                    modeText = InterString.Get("中等");
+                    modeText = InterString.Get("Medium");
                     sr.MainLightShadowResolution = ShadowResolution._1024;
                     sr.SupportsSoftShadows = false;
                     break;
                 case 3:
-                    modeText = InterString.Get("高");
+                    modeText = InterString.Get("High");
                     sr.MainLightShadowResolution = ShadowResolution._2048;
                     sr.SupportsSoftShadows = true;
                     break;
                 case 4:
-                    modeText = InterString.Get("非常高");
+                    modeText = InterString.Get("Very High");
                     sr.MainLightShadowResolution = ShadowResolution._4096;
                     sr.SupportsSoftShadows = true;
                     break;
@@ -1178,14 +1178,14 @@ namespace MDPro3.UI.ServantUI
             ButtonShowFPS.SetClickEvent(OnShowFPSClicked);
 
             var config = Config.GetBool("ShowFPS", true);
-            ButtonShowFPS.SetModeText(InterString.Get(config ? "开" : "关"));
+            ButtonShowFPS.SetModeText(InterString.Get(config ? "Toggle On" : "Toggle Off"));
             ChangeShowFPS();
         }
         private void OnShowFPSClicked()
         {
             var config = Config.GetBool("ShowFPS", true);
             Config.SetBool("ShowFPS", !config);
-            ButtonShowFPS.SetModeText(InterString.Get(config ? "关" : "开"));
+            ButtonShowFPS.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             ChangeShowFPS();
         }
         public static void ChangeShowFPS()
@@ -1204,12 +1204,12 @@ namespace MDPro3.UI.ServantUI
         {
             ButtonRumble.SetClickEvent(OnRumbleClicked);
             var config = Config.GetBool("Rumble", true);
-            ButtonRumble.SetModeText(InterString.Get(config ? "开" : "关"));
+            ButtonRumble.SetModeText(InterString.Get(config ? "Toggle On" : "Toggle Off"));
         }
         private void OnRumbleClicked()
         {
             var config = Config.GetBool("Rumble", true);
-            ButtonRumble.SetModeText(InterString.Get(config ? "关" : "开"));
+            ButtonRumble.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("Rumble", !config);
         }
 
@@ -1221,13 +1221,13 @@ namespace MDPro3.UI.ServantUI
         {
             ButtonConfirm.SetClickEvent(OnConfirmClicked);
             var config = Config.GetBool("Confirm", false);
-            ButtonConfirm.SetModeText(InterString.Get(config ? "左" : "右"));
+            ButtonConfirm.SetModeText(InterString.Get(config ? "Left" : "Right"));
         }
 
         private void OnConfirmClicked()
         {
             var config = Config.GetBool("Confirm", false);
-            ButtonConfirm.SetModeText(InterString.Get(config ? "右" : "左"));
+            ButtonConfirm.SetModeText(InterString.Get(config ? "Right" : "Left"));
             Config.SetBool("Confirm", !config);
         }
 
@@ -1244,17 +1244,17 @@ namespace MDPro3.UI.ServantUI
         {
             if (Program.instance.ocgcore.showing)
             {
-                MessageManager.Toast(InterString.Get("决斗中不能更改此选项。"));
+                MessageManager.Toast(InterString.Get("This option cannot be changed during a duel."));
                 return;
             }
 
             List<string> selections = new()
             {
-                InterString.Get("UI布局"),
+                InterString.Get("User Interface Layout"),
                 string.Empty,
-                InterString.Get("自动判断"),
-                InterString.Get("桌面布局"),
-                InterString.Get("移动布局")
+                InterString.Get("Automatic"),
+                InterString.Get("Desktop Layout"),
+                InterString.Get("Mobile Layout")
             };
             UIManager.ShowPopupSelection(selections, LayoutChange);
         }
@@ -1265,9 +1265,9 @@ namespace MDPro3.UI.ServantUI
             ButtonLayout.SetModeText(selected);
 
             var config = 0f;
-            if (selected == InterString.Get("桌面布局"))
+            if (selected == InterString.Get("Desktop Layout"))
                 config = 1f;
-            else if (selected == InterString.Get("移动布局"))
+            else if (selected == InterString.Get("Mobile Layout"))
                 config = 2f;
             Config.SetFloat("Layout", config);
 
@@ -1275,11 +1275,11 @@ namespace MDPro3.UI.ServantUI
         }
         private void SetLayoutMode(float config)
         {
-            var value = InterString.Get("自动判断");
+            var value = InterString.Get("Automatic");
             if (config == 1f)
-                value = InterString.Get("桌面布局");
+                value = InterString.Get("Desktop Layout");
             else if (config == 2f)
-                value = InterString.Get("移动布局");
+                value = InterString.Get("Mobile Layout");
             ButtonLayout.SetModeText(value);
         }
 
@@ -1291,12 +1291,12 @@ namespace MDPro3.UI.ServantUI
         {
             ButtonSyncDeck.SetClickEvent(OnSyncDeckClicked);
             var config = Config.GetBool("SyncDeck", true);
-            ButtonSyncDeck.SetModeText(InterString.Get(config ? "开" : "关"));
+            ButtonSyncDeck.SetModeText(InterString.Get(config ? "Toggle On" : "Toggle Off"));
         }
         private void OnSyncDeckClicked()
         {
             var config = Config.GetBool("SyncDeck", true);
-            ButtonSyncDeck.SetModeText(InterString.Get(config ? "关" : "开"));
+            ButtonSyncDeck.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("SyncDeck", !config);
         }
 
@@ -1312,21 +1312,21 @@ namespace MDPro3.UI.ServantUI
         private void ChangeBackgroundModeText()
         {
             var id = int.Parse(Config.Get("Background", "0"));
-            var value = InterString.Get("随机");
+            var value = InterString.Get("Random");
             if (id != 0)
                 if (!BackgroundManager.backgrounds.TryGetValue(id, out value))
                     value = "Classic";
             if (string.IsNullOrEmpty(value))
-                value = InterString.Get("随机");
+                value = InterString.Get("Random");
             ButtonBackground.SetModeText(value);
         }
         private void OnBackgroundClicked()
         {
             List<string> selections = new()
             {
-                InterString.Get("更换背景"),
+                InterString.Get("Change Background"),
                 string.Empty,
-                InterString.Get("随机"),
+                InterString.Get("Random"),
             };
             foreach (var background in BackgroundManager.backgrounds)
                 selections.Add(background.Value);
@@ -1351,13 +1351,13 @@ namespace MDPro3.UI.ServantUI
         {
             ButtonBgmBy.SetClickEvent(OnBgmByClicked);
             var config = Config.GetBool("BGMbyMySide", true);
-            ButtonBgmBy.SetModeText(InterString.Get(config ? "我方" : "对方"));
+            ButtonBgmBy.SetModeText(InterString.Get(config ? "Player" : "Opponent"));
         }
 
         private void OnBgmByClicked()
         {
             var config = Config.GetBool("BGMbyMySide", true);
-            ButtonBgmBy.SetModeText(InterString.Get(config ? "对方" : "我方"));
+            ButtonBgmBy.SetModeText(InterString.Get(config ? "Opponent" : "Player"));
             Config.SetBool("BGMbyMySide", !config);
         }
 
@@ -1375,13 +1375,13 @@ namespace MDPro3.UI.ServantUI
         {
             if (Program.instance.ocgcore.showing)
             {
-                MessageManager.Toast(InterString.Get("决斗中不能更改此选项。"));
+                MessageManager.Toast(InterString.Get("This option cannot be changed during a duel."));
                 return;
             }
 
             List<string> selections = new()
             {
-                InterString.Get("卡图风格"),
+                InterString.Get("Card Style"),
                 string.Empty
             };
             var values = Enum.GetValues(typeof(CardStyle));
@@ -1415,14 +1415,14 @@ namespace MDPro3.UI.ServantUI
             ButtonVideoCard.SetClickEvent(OnVideoCardClicked);
 
             var config = Config.GetBool("VideoCard", true);
-            ButtonVideoCard.SetModeText(InterString.Get(config ? "开" : "关"));
+            ButtonVideoCard.SetModeText(InterString.Get(config ? "Toggle On" : "Toggle Off"));
         }
 
         private void OnVideoCardClicked()
         {
             var config = Config.GetBool("VideoCard", true);
             Config.SetBool("VideoCard", !config);
-            ButtonVideoCard.SetModeText(InterString.Get(config ? "关" : "开"));
+            ButtonVideoCard.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             videoCardConfigChanged = true;
         }
 
@@ -1439,13 +1439,13 @@ namespace MDPro3.UI.ServantUI
         {
             if (Program.instance.ocgcore.showing)
             {
-                MessageManager.Toast(InterString.Get("决斗中不能更改此选项。"));
+                MessageManager.Toast(InterString.Get("This option cannot be changed during a duel."));
                 return;
             }
 
             List<string> selections = new()
             {
-                InterString.Get("卡图语言"),
+                InterString.Get("Card Language"),
                 string.Empty
             };
             DirectoryInfo[] infos = new DirectoryInfo(Program.PATH_LOCALES).GetDirectories();
@@ -1481,13 +1481,13 @@ namespace MDPro3.UI.ServantUI
         {
             if (Program.instance.ocgcore.showing)
             {
-                MessageManager.Toast(InterString.Get("决斗中不能更改此选项。"));
+                MessageManager.Toast(InterString.Get("This option cannot be changed during a duel."));
                 return;
             }
 
             List<string> selections = new()
             {
-                InterString.Get("语言"),
+                InterString.Get("UI Language"),
                 string.Empty
             };
             DirectoryInfo[] infos = new DirectoryInfo(Program.PATH_LOCALES).GetDirectories();
@@ -1609,20 +1609,20 @@ namespace MDPro3.UI.ServantUI
         {
             var config = Config.GetBool("DuelVoice", false);
             ButtonDuelVoice.SetClickEvent(OnDuelVoiceClick);
-            ButtonDuelVoice.SetModeText(InterString.Get(config ? "开" : "关"));
+            ButtonDuelVoice.SetModeText(InterString.Get(config ? "Toggle On" : "Toggle Off"));
 
             config = Config.GetBool("WatchVoice", false);
             ButtonWatchVoice.SetClickEvent(OnWatchVoiceClick);
-            ButtonWatchVoice.SetModeText(InterString.Get(config ? "开" : "关"));
+            ButtonWatchVoice.SetModeText(InterString.Get(config ? "Toggle On" : "Toggle Off"));
 
             config = Config.GetBool("ReplayVoice", false);
             ButtonReplayVoice.SetClickEvent(OnReplayVoiceClick);
-            ButtonReplayVoice.SetModeText(InterString.Get(config ? "开" : "关"));
+            ButtonReplayVoice.SetModeText(InterString.Get(config ? "Toggle On" : "Toggle Off"));
         }
         private void OnDuelVoiceClick()
         {
             var config = Config.GetBool("DuelVoice", false);
-            ButtonDuelVoice.SetModeText(InterString.Get(config ? "关" : "开"));
+            ButtonDuelVoice.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("DuelVoice", !config);
 
             Program.instance.ocgcore.CheckCharaFace();
@@ -1630,7 +1630,7 @@ namespace MDPro3.UI.ServantUI
         private void OnWatchVoiceClick()
         {
             var config = Config.GetBool("WatchVoice", false);
-            ButtonWatchVoice.SetModeText(InterString.Get(config ? "关" : "开"));
+            ButtonWatchVoice.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("WatchVoice", !config);
 
             Program.instance.ocgcore.CheckCharaFace();
@@ -1638,7 +1638,7 @@ namespace MDPro3.UI.ServantUI
         private void OnReplayVoiceClick()
         {
             var config = Config.GetBool("ReplayVoice", false);
-            ButtonReplayVoice.SetModeText(InterString.Get(config ? "关" : "开"));
+            ButtonReplayVoice.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("ReplayVoice", !config);
 
             Program.instance.ocgcore.CheckCharaFace();
@@ -1652,34 +1652,34 @@ namespace MDPro3.UI.ServantUI
         {
             var config = Config.GetBool("DuelCloseup", false);
             ButtonDuelCloseup.SetClickEvent(OnDuelCloseupClick);
-            ButtonDuelCloseup.SetModeText(InterString.Get(config ? "开" : "关"));
+            ButtonDuelCloseup.SetModeText(InterString.Get(config ? "Toggle On" : "Toggle Off"));
 
             config = Config.GetBool("WatchCloseup", false);
             ButtonWatchCloseup.SetClickEvent(OnWatchCloseupClick);
-            ButtonWatchCloseup.SetModeText(InterString.Get(config ? "开" : "关"));
+            ButtonWatchCloseup.SetModeText(InterString.Get(config ? "Toggle On" : "Toggle Off"));
 
             config = Config.GetBool("ReplayCloseup", false);
             ButtonReplayCloseup.SetClickEvent(OnReplayCloseupClick);
-            ButtonReplayCloseup.SetModeText(InterString.Get(config ? "开" : "关"));
+            ButtonReplayCloseup.SetModeText(InterString.Get(config ? "Toggle On" : "Toggle Off"));
         }
         private void OnDuelCloseupClick()
         {
             var config = Config.GetBool("DuelCloseup", false);
-            ButtonDuelCloseup.SetModeText(InterString.Get(config ? "关" : "开"));
+            ButtonDuelCloseup.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("DuelCloseup", !config);
             Program.instance.ocgcore.RefreshAllCardsLabel();
         }
         private void OnWatchCloseupClick()
         {
             var config = Config.GetBool("WatchCloseup", false);
-            ButtonWatchCloseup.SetModeText(InterString.Get(config ? "关" : "开"));
+            ButtonWatchCloseup.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("WatchCloseup", !config);
             Program.instance.ocgcore.RefreshAllCardsLabel();
         }
         private void OnReplayCloseupClick()
         {
             var config = Config.GetBool("ReplayCloseup", false);
-            ButtonReplayCloseup.SetModeText(InterString.Get(config ? "关" : "开"));
+            ButtonReplayCloseup.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("ReplayCloseup", !config);
             Program.instance.ocgcore.RefreshAllCardsLabel();
         }
@@ -1693,37 +1693,37 @@ namespace MDPro3.UI.ServantUI
             var button = Manager.GetElement<SelectionButton_Setting>("DuelSummon");
             button.SetClickEvent(OnDuelSummonClick);
             var config = Config.GetBool("DuelSummon", true);
-            button.SetModeText(InterString.Get(config ? "开" : "关"));
+            button.SetModeText(InterString.Get(config ? "Toggle On" : "Toggle Off"));
 
             button = Manager.GetElement<SelectionButton_Setting>("WatchSummon");
             button.SetClickEvent(OnWatchSummonClick);
             config = Config.GetBool("WatchSummon", true);
-            button.SetModeText(InterString.Get(config ? "开" : "关"));
+            button.SetModeText(InterString.Get(config ? "Toggle On" : "Toggle Off"));
 
             button = Manager.GetElement<SelectionButton_Setting>("ReplaySummon");
             button.SetClickEvent(OnReplaySummonClick);
             config = Config.GetBool("ReplaySummon", true);
-            button.SetModeText(InterString.Get(config ? "开" : "关"));
+            button.SetModeText(InterString.Get(config ? "Toggle On" : "Toggle Off"));
         }
         private void OnDuelSummonClick()
         {
             var button = Manager.GetElement<SelectionButton_Setting>("DuelSummon");
             var config = Config.GetBool("DuelSummon", true);
-            button.SetModeText(InterString.Get(config ? "关" : "开"));
+            button.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("DuelSummon", !config);
         }
         private void OnWatchSummonClick()
         {
             var button = Manager.GetElement<SelectionButton_Setting>("WatchSummon");
             var config = Config.GetBool("WatchSummon", true);
-            button.SetModeText(InterString.Get(config ? "关" : "开"));
+            button.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("WatchSummon", !config);
         }
         private void OnReplaySummonClick()
         {
             var button = Manager.GetElement<SelectionButton_Setting>("ReplaySummon");
             var config = Config.GetBool("ReplaySummon", true);
-            button.SetModeText(InterString.Get(config ? "关" : "开"));
+            button.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("ReplaySummon", !config);
         }
         #endregion
@@ -1734,32 +1734,32 @@ namespace MDPro3.UI.ServantUI
         {
             var config = Config.GetBool("DuelPendulum", true);
             ButtonDuelPendulum.SetClickEvent(OnDuelPendulumClick);
-            ButtonDuelPendulum.SetModeText(InterString.Get(config ? "开" : "关"));
+            ButtonDuelPendulum.SetModeText(InterString.Get(config ? "Toggle On" : "Toggle Off"));
 
             config = Config.GetBool("WatchPendulum", true);
             ButtonWatchPendulum.SetClickEvent(OnWatchPendulumClick);
-            ButtonWatchPendulum.SetModeText(InterString.Get(config ? "开" : "关"));
+            ButtonWatchPendulum.SetModeText(InterString.Get(config ? "Toggle On" : "Toggle Off"));
 
             config = Config.GetBool("ReplayPendulum", true);
             ButtonReplayPendulum.SetClickEvent(OnReplayPendulumClick);
-            ButtonReplayPendulum.SetModeText(InterString.Get(config ? "开" : "关"));
+            ButtonReplayPendulum.SetModeText(InterString.Get(config ? "Toggle On" : "Toggle Off"));
         }
         private void OnDuelPendulumClick()
         {
             var config = Config.GetBool("DuelPendulum", true);
-            ButtonDuelPendulum.SetModeText(InterString.Get(config ? "关" : "开"));
+            ButtonDuelPendulum.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("DuelPendulum", !config);
         }
         private void OnWatchPendulumClick()
         {
             var config = Config.GetBool("WatchPendulum", true);
-            ButtonWatchPendulum.SetModeText(InterString.Get(config ? "关" : "开"));
+            ButtonWatchPendulum.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("WatchPendulum", !config);
         }
         private void OnReplayPendulumClick()
         {
             var config = Config.GetBool("ReplayPendulum", true);
-            ButtonReplayPendulum.SetModeText(InterString.Get(config ? "关" : "开"));
+            ButtonReplayPendulum.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("ReplayPendulum", !config);
         }
 
@@ -1771,32 +1771,32 @@ namespace MDPro3.UI.ServantUI
         {
             var config = Config.GetBool("DuelCutin", true);
             ButtonDuelCutin.SetClickEvent(OnDuelCutinClick);
-            ButtonDuelCutin.SetModeText(InterString.Get(config ? "开" : "关"));
+            ButtonDuelCutin.SetModeText(InterString.Get(config ? "Toggle On" : "Toggle Off"));
 
             config = Config.GetBool("WatchCutin", true);
             ButtonWatchCutin.SetClickEvent(OnWatchCutinClick);
-            ButtonWatchCutin.SetModeText(InterString.Get(config ? "开" : "关"));
+            ButtonWatchCutin.SetModeText(InterString.Get(config ? "Toggle On" : "Toggle Off"));
 
             config = Config.GetBool("ReplayCutin", true);
             ButtonReplayCutin.SetClickEvent(OnReplayCutinClick);
-            ButtonReplayCutin.SetModeText(InterString.Get(config ? "开" : "关"));
+            ButtonReplayCutin.SetModeText(InterString.Get(config ? "Toggle On" : "Toggle Off"));
         }
         private void OnDuelCutinClick()
         {
             var config = Config.GetBool("DuelCutin", true);
-            ButtonDuelCutin.SetModeText(InterString.Get(config ? "关" : "开"));
+            ButtonDuelCutin.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("DuelCutin", !config);
         }
         private void OnWatchCutinClick()
         {
             var config = Config.GetBool("WatchCutin", true);
-            ButtonWatchCutin.SetModeText(InterString.Get(config ? "关" : "开"));
+            ButtonWatchCutin.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("WatchCutin", !config);
         }
         private void OnReplayCutinClick()
         {
             var config = Config.GetBool("ReplayCutin", true);
-            ButtonReplayCutin.SetModeText(InterString.Get(config ? "关" : "开"));
+            ButtonReplayCutin.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("ReplayCutin", !config);
         }
 
@@ -1808,32 +1808,32 @@ namespace MDPro3.UI.ServantUI
         {
             var config = Config.GetBool("DuelEffect", true);
             ButtonDuelEffect.SetClickEvent(OnDuelEffectClick);
-            ButtonDuelEffect.SetModeText(InterString.Get(config ? "开" : "关"));
+            ButtonDuelEffect.SetModeText(InterString.Get(config ? "Toggle On" : "Toggle Off"));
 
             config = Config.GetBool("WatchEffect", true);
             ButtonWatchEffect.SetClickEvent(OnWatchEffectClick);
-            ButtonWatchEffect.SetModeText(InterString.Get(config ? "开" : "关"));
+            ButtonWatchEffect.SetModeText(InterString.Get(config ? "Toggle On" : "Toggle Off"));
 
             config = Config.GetBool("ReplayEffect", true);
             ButtonReplayEffect.SetClickEvent(OnReplayEffectClick);
-            ButtonReplayEffect.SetModeText(InterString.Get(config ? "开" : "关"));
+            ButtonReplayEffect.SetModeText(InterString.Get(config ? "Toggle On" : "Toggle Off"));
         }
         private void OnDuelEffectClick()
         {
             var config = Config.GetBool("DuelEffect", true);
-            ButtonDuelEffect.SetModeText(InterString.Get(config ? "关" : "开"));
+            ButtonDuelEffect.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("DuelEffect", !config);
         }
         private void OnWatchEffectClick()
         {
             var config = Config.GetBool("WatchEffect", true);
-            ButtonWatchEffect.SetModeText(InterString.Get(config ? "关" : "开"));
+            ButtonWatchEffect.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("WatchEffect", !config);
         }
         private void OnReplayEffectClick()
         {
             var config = Config.GetBool("ReplayEffect", true);
-            ButtonReplayEffect.SetModeText(InterString.Get(config ? "关" : "开"));
+            ButtonReplayEffect.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("ReplayEffect", !config);
         }
 
@@ -1845,32 +1845,32 @@ namespace MDPro3.UI.ServantUI
         {
             var config = Config.GetBool("DuelChain", true);
             ButtonDuelChain.SetClickEvent(OnDuelChainClick);
-            ButtonDuelChain.SetModeText(InterString.Get(config ? "开" : "关"));
+            ButtonDuelChain.SetModeText(InterString.Get(config ? "Toggle On" : "Toggle Off"));
 
             config = Config.GetBool("WatchChain", true);
             ButtonWatchChain.SetClickEvent(OnWatchChainClick);
-            ButtonWatchChain.SetModeText(InterString.Get(config ? "开" : "关"));
+            ButtonWatchChain.SetModeText(InterString.Get(config ? "Toggle On" : "Toggle Off"));
 
             config = Config.GetBool("ReplayChain", true);
             ButtonReplayChain.SetClickEvent(OnReplayChainClick);
-            ButtonReplayChain.SetModeText(InterString.Get(config ? "开" : "关"));
+            ButtonReplayChain.SetModeText(InterString.Get(config ? "Toggle On" : "Toggle Off"));
         }
         private void OnDuelChainClick()
         {
             var config = Config.GetBool("DuelChain", true);
-            ButtonDuelChain.SetModeText(InterString.Get(config ? "关" : "开"));
+            ButtonDuelChain.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("DuelChain", !config);
         }
         private void OnWatchChainClick()
         {
             var config = Config.GetBool("WatchChain", true);
-            ButtonWatchChain.SetModeText(InterString.Get(config ? "关" : "开"));
+            ButtonWatchChain.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("WatchChain", !config);
         }
         private void OnReplayChainClick()
         {
             var config = Config.GetBool("ReplayChain", true);
-            ButtonReplayChain.SetModeText(InterString.Get(config ? "关" : "开"));
+            ButtonReplayChain.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("ReplayChain", !config);
         }
 
@@ -1882,32 +1882,32 @@ namespace MDPro3.UI.ServantUI
         {
             var config = Config.GetBool("DuelDice", true);
             ButtonDuelDice.SetClickEvent(OnDuelDiceClick);
-            ButtonDuelDice.SetModeText(InterString.Get(config ? "开" : "关"));
+            ButtonDuelDice.SetModeText(InterString.Get(config ? "Toggle On" : "Toggle Off"));
 
             config = Config.GetBool("WatchDice", true);
             ButtonWatchDice.SetClickEvent(OnWatchDiceClick);
-            ButtonWatchDice.SetModeText(InterString.Get(config ? "开" : "关"));
+            ButtonWatchDice.SetModeText(InterString.Get(config ? "Toggle On" : "Toggle Off"));
 
             config = Config.GetBool("ReplayDice", true);
             ButtonReplayDice.SetClickEvent(OnReplayDiceClick);
-            ButtonReplayDice.SetModeText(InterString.Get(config ? "开" : "关"));
+            ButtonReplayDice.SetModeText(InterString.Get(config ? "Toggle On" : "Toggle Off"));
         }
         private void OnDuelDiceClick()
         {
             var config = Config.GetBool("DuelDice", true);
-            ButtonDuelDice.SetModeText(InterString.Get(config ? "关" : "开"));
+            ButtonDuelDice.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("DuelDice", !config);
         }
         private void OnWatchDiceClick()
         {
             var config = Config.GetBool("WatchDice", true);
-            ButtonWatchDice.SetModeText(InterString.Get(config ? "关" : "开"));
+            ButtonWatchDice.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("WatchDice", !config);
         }
         private void OnReplayDiceClick()
         {
             var config = Config.GetBool("ReplayDice", true);
-            ButtonReplayDice.SetModeText(InterString.Get(config ? "关" : "开"));
+            ButtonReplayDice.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("ReplayDice", !config);
         }
 
@@ -1919,32 +1919,32 @@ namespace MDPro3.UI.ServantUI
         {
             var config = Config.GetBool("DuelCoin", true);
             ButtonDuelCoin.SetClickEvent(OnDuelCoinClick);
-            ButtonDuelCoin.SetModeText(InterString.Get(config ? "开" : "关"));
+            ButtonDuelCoin.SetModeText(InterString.Get(config ? "Toggle On" : "Toggle Off"));
 
             config = Config.GetBool("WatchCoin", true);
             ButtonWatchCoin.SetClickEvent(OnWatchCoinClick);
-            ButtonWatchCoin.SetModeText(InterString.Get(config ? "开" : "关"));
+            ButtonWatchCoin.SetModeText(InterString.Get(config ? "Toggle On" : "Toggle Off"));
 
             config = Config.GetBool("ReplayCoin", true);
             ButtonReplayCoin.SetClickEvent(OnReplayCoinClick);
-            ButtonReplayCoin.SetModeText(InterString.Get(config ? "开" : "关"));
+            ButtonReplayCoin.SetModeText(InterString.Get(config ? "Toggle On" : "Toggle Off"));
         }
         private void OnDuelCoinClick()
         {
             var config = Config.GetBool("DuelCoin", true);
-            ButtonDuelCoin.SetModeText(InterString.Get(config ? "关" : "开"));
+            ButtonDuelCoin.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("DuelCoin", !config);
         }
         private void OnWatchCoinClick()
         {
             var config = Config.GetBool("WatchCoin", true);
-            ButtonWatchCoin.SetModeText(InterString.Get(config ? "关" : "开"));
+            ButtonWatchCoin.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("WatchCoin", !config);
         }
         private void OnReplayCoinClick()
         {
             var config = Config.GetBool("ReplayCoin", true);
-            ButtonReplayCoin.SetModeText(InterString.Get(config ? "关" : "开"));
+            ButtonReplayCoin.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("ReplayCoin", !config);
         }
 
@@ -1956,32 +1956,32 @@ namespace MDPro3.UI.ServantUI
         {
             var config = Config.GetBool("DuelAutoInfo", true);
             ButtonDuelAutoInfo.SetClickEvent(OnDuelAutoInfoClick);
-            ButtonDuelAutoInfo.SetModeText(InterString.Get(config ? "开" : "关"));
+            ButtonDuelAutoInfo.SetModeText(InterString.Get(config ? "Toggle On" : "Toggle Off"));
 
             config = Config.GetBool("WatchAutoInfo", true);
             ButtonWatchAutoInfo.SetClickEvent(OnWatchAutoInfoClick);
-            ButtonWatchAutoInfo.SetModeText(InterString.Get(config ? "开" : "关"));
+            ButtonWatchAutoInfo.SetModeText(InterString.Get(config ? "Toggle On" : "Toggle Off"));
 
             config = Config.GetBool("ReplayAutoInfo", true);
             ButtonReplayAutoInfo.SetClickEvent(OnReplayAutoInfoClick);
-            ButtonReplayAutoInfo.SetModeText(InterString.Get(config ? "开" : "关"));
+            ButtonReplayAutoInfo.SetModeText(InterString.Get(config ? "Toggle On" : "Toggle Off"));
         }
         private void OnDuelAutoInfoClick()
         {
             var config = Config.GetBool("DuelAutoInfo", true);
-            ButtonDuelAutoInfo.SetModeText(InterString.Get(config ? "关" : "开"));
+            ButtonDuelAutoInfo.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("DuelAutoInfo", !config);
         }
         private void OnWatchAutoInfoClick()
         {
             var config = Config.GetBool("WatchAutoInfo", true);
-            ButtonWatchAutoInfo.SetModeText(InterString.Get(config ? "关" : "开"));
+            ButtonWatchAutoInfo.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("WatchAutoInfo", !config);
         }
         private void OnReplayAutoInfoClick()
         {
             var config = Config.GetBool("ReplayAutoInfo", true);
-            ButtonReplayAutoInfo.SetModeText(InterString.Get(config ? "关" : "开"));
+            ButtonReplayAutoInfo.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("ReplayAutoInfo", !config);
         }
 
@@ -1993,20 +1993,20 @@ namespace MDPro3.UI.ServantUI
         {
             var config = Config.GetBool("DuelFaceDown", true);
             ButtonDuelFaceDown.SetClickEvent(OnDuelFaceDownClick);
-            ButtonDuelFaceDown.SetModeText(InterString.Get(config ? "开" : "关"));
+            ButtonDuelFaceDown.SetModeText(InterString.Get(config ? "Toggle On" : "Toggle Off"));
 
             config = Config.GetBool("WatchFaceDown", true);
             ButtonWatchFaceDown.SetClickEvent(OnWatchFaceDownClick);
-            ButtonWatchFaceDown.SetModeText(InterString.Get(config ? "开" : "关"));
+            ButtonWatchFaceDown.SetModeText(InterString.Get(config ? "Toggle On" : "Toggle Off"));
 
             config = Config.GetBool("ReplayFaceDown", true);
             ButtonReplayFaceDown.SetClickEvent(OnReplayFaceDownClick);
-            ButtonReplayFaceDown.SetModeText(InterString.Get(config ? "开" : "关"));
+            ButtonReplayFaceDown.SetModeText(InterString.Get(config ? "Toggle On" : "Toggle Off"));
         }
         private void OnDuelFaceDownClick()
         {
             var config = Config.GetBool("DuelFaceDown", true);
-            ButtonDuelFaceDown.SetModeText(InterString.Get(config ? "关" : "开"));
+            ButtonDuelFaceDown.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("DuelFaceDown", !config);
 
             foreach (var card in OcgCore.cards)
@@ -2015,7 +2015,7 @@ namespace MDPro3.UI.ServantUI
         private void OnWatchFaceDownClick()
         {
             var config = Config.GetBool("WatchFaceDown", true);
-            ButtonWatchFaceDown.SetModeText(InterString.Get(config ? "关" : "开"));
+            ButtonWatchFaceDown.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("WatchFaceDown", !config);
 
             foreach (var card in OcgCore.cards)
@@ -2024,7 +2024,7 @@ namespace MDPro3.UI.ServantUI
         private void OnReplayFaceDownClick()
         {
             var config = Config.GetBool("ReplayFaceDown", true);
-            ButtonReplayFaceDown.SetModeText(InterString.Get(config ? "关" : "开"));
+            ButtonReplayFaceDown.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("ReplayFaceDown", !config);
 
             foreach (var card in OcgCore.cards)
@@ -2039,32 +2039,32 @@ namespace MDPro3.UI.ServantUI
         {
             var config = Config.GetBool("DuelPlayerMessage", true);
             ButtonDuelPlayerMessage.SetClickEvent(OnDuelPlayerMessageClick);
-            ButtonDuelPlayerMessage.SetModeText(InterString.Get(config ? "开" : "关"));
+            ButtonDuelPlayerMessage.SetModeText(InterString.Get(config ? "Toggle On" : "Toggle Off"));
 
             config = Config.GetBool("WatchPlayerMessage", true);
             ButtonWatchPlayerMessage.SetClickEvent(OnWatchPlayerMessageClick);
-            ButtonWatchPlayerMessage.SetModeText(InterString.Get(config ? "开" : "关"));
+            ButtonWatchPlayerMessage.SetModeText(InterString.Get(config ? "Toggle On" : "Toggle Off"));
 
             config = Config.GetBool("ReplayPlayerMessage", true);
             ButtonReplayPlayerMessage.SetClickEvent(OnReplayPlayerMessageClick);
-            ButtonReplayPlayerMessage.SetModeText(InterString.Get(config ? "开" : "关"));
+            ButtonReplayPlayerMessage.SetModeText(InterString.Get(config ? "Toggle On" : "Toggle Off"));
         }
         private void OnDuelPlayerMessageClick()
         {
             var config = Config.GetBool("DuelPlayerMessage", true);
-            ButtonDuelPlayerMessage.SetModeText(InterString.Get(config ? "关" : "开"));
+            ButtonDuelPlayerMessage.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("DuelPlayerMessage", !config);
         }
         private void OnWatchPlayerMessageClick()
         {
             var config = Config.GetBool("WatchPlayerMessage", true);
-            ButtonWatchPlayerMessage.SetModeText(InterString.Get(config ? "关" : "开"));
+            ButtonWatchPlayerMessage.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("WatchPlayerMessage", !config);
         }
         private void OnReplayPlayerMessageClick()
         {
             var config = Config.GetBool("ReplayPlayerMessage", true);
-            ButtonReplayPlayerMessage.SetModeText(InterString.Get(config ? "关" : "开"));
+            ButtonReplayPlayerMessage.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("ReplayPlayerMessage", !config);
         }
 
@@ -2076,32 +2076,32 @@ namespace MDPro3.UI.ServantUI
         {
             var config = Config.GetBool("DuelSystemMessage", true);
             ButtonDuelSystemMessage.SetClickEvent(OnDuelSystemMessageClick);
-            ButtonDuelSystemMessage.SetModeText(InterString.Get(config ? "开" : "关"));
+            ButtonDuelSystemMessage.SetModeText(InterString.Get(config ? "Toggle On" : "Toggle Off"));
 
             config = Config.GetBool("WatchSystemMessage", true);
             ButtonWatchSystemMessage.SetClickEvent(OnWatchSystemMessageClick);
-            ButtonWatchSystemMessage.SetModeText(InterString.Get(config ? "开" : "关"));
+            ButtonWatchSystemMessage.SetModeText(InterString.Get(config ? "Toggle On" : "Toggle Off"));
 
             config = Config.GetBool("ReplaySystemMessage", true);
             ButtonReplaySystemMessage.SetClickEvent(OnReplaySystemMessageClick);
-            ButtonReplaySystemMessage.SetModeText(InterString.Get(config ? "开" : "关"));
+            ButtonReplaySystemMessage.SetModeText(InterString.Get(config ? "Toggle On" : "Toggle Off"));
         }
         private void OnDuelSystemMessageClick()
         {
             var config = Config.GetBool("DuelSystemMessage", true);
-            ButtonDuelSystemMessage.SetModeText(InterString.Get(config ? "关" : "开"));
+            ButtonDuelSystemMessage.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("DuelSystemMessage", !config);
         }
         private void OnWatchSystemMessageClick()
         {
             var config = Config.GetBool("WatchSystemMessage", true);
-            ButtonWatchSystemMessage.SetModeText(InterString.Get(config ? "关" : "开"));
+            ButtonWatchSystemMessage.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("WatchSystemMessage", !config);
         }
         private void OnReplaySystemMessageClick()
         {
             var config = Config.GetBool("ReplaySystemMessage", true);
-            ButtonReplaySystemMessage.SetModeText(InterString.Get(config ? "关" : "开"));
+            ButtonReplaySystemMessage.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("ReplaySystemMessage", !config);
         }
 
@@ -2159,32 +2159,32 @@ namespace MDPro3.UI.ServantUI
         {
             var config = Config.GetBool("DuelAutoAcc", true);
             ButtonDuelAutoAcc.SetClickEvent(OnDuelAutoAccClick);
-            ButtonDuelAutoAcc.SetModeText(InterString.Get(config ? "开" : "关"));
+            ButtonDuelAutoAcc.SetModeText(InterString.Get(config ? "Toggle On" : "Toggle Off"));
 
             config = Config.GetBool("WatchAutoAcc", true);
             ButtonWatchAutoAcc.SetClickEvent(OnWatchAutoAccClick);
-            ButtonWatchAutoAcc.SetModeText(InterString.Get(config ? "开" : "关"));
+            ButtonWatchAutoAcc.SetModeText(InterString.Get(config ? "Toggle On" : "Toggle Off"));
 
             config = Config.GetBool("ReplayAutoAcc", true);
             ButtonReplayAutoAcc.SetClickEvent(OnReplayAutoAccClick);
-            ButtonReplayAutoAcc.SetModeText(InterString.Get(config ? "开" : "关"));
+            ButtonReplayAutoAcc.SetModeText(InterString.Get(config ? "Toggle On" : "Toggle Off"));
         }
         private void OnDuelAutoAccClick()
         {
             var config = Config.GetBool("DuelAutoAcc", true);
-            ButtonDuelAutoAcc.SetModeText(InterString.Get(config ? "关" : "开"));
+            ButtonDuelAutoAcc.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("DuelAutoAcc", !config);
         }
         private void OnWatchAutoAccClick()
         {
             var config = Config.GetBool("WatchAutoAcc", true);
-            ButtonWatchAutoAcc.SetModeText(InterString.Get(config ? "关" : "开"));
+            ButtonWatchAutoAcc.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("WatchAutoAcc", !config);
         }
         private void OnReplayAutoAccClick()
         {
             var config = Config.GetBool("ReplayAutoAcc", true);
-            ButtonReplayAutoAcc.SetModeText(InterString.Get(config ? "关" : "开"));
+            ButtonReplayAutoAcc.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("ReplayAutoAcc", !config);
         }
 
@@ -2196,12 +2196,12 @@ namespace MDPro3.UI.ServantUI
         {
             var config = Config.GetBool(Config.LABEL_TIMING, false);
             ButtonTiming.SetClickEvent(OnTimmingClick);
-            ButtonTiming.SetModeText(InterString.Get(config ? "开" : "关"));
+            ButtonTiming.SetModeText(InterString.Get(config ? "Toggle On" : "Toggle Off"));
         }
         private void OnTimmingClick()
         {
             var config = Config.GetBool(Config.LABEL_TIMING, false);
-            ButtonTiming.SetModeText(InterString.Get(config ? "关" : "开"));
+            ButtonTiming.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool(Config.LABEL_TIMING, !config);
         }
 
@@ -2213,12 +2213,12 @@ namespace MDPro3.UI.ServantUI
         {
             var config = Config.GetBool("AutoRPS", false);
             ButtonAutoRPS.SetClickEvent(OnAutoRPSClick);
-            ButtonAutoRPS.SetModeText(InterString.Get(config ? "开" : "关"));
+            ButtonAutoRPS.SetModeText(InterString.Get(config ? "Toggle On" : "Toggle Off"));
         }
         private void OnAutoRPSClick()
         {
             var config = Config.GetBool("AutoRPS", false);
-            ButtonAutoRPS.SetModeText(InterString.Get(config ? "关" : "开"));
+            ButtonAutoRPS.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("AutoRPS", !config);
         }
 
@@ -2232,7 +2232,7 @@ namespace MDPro3.UI.ServantUI
         {
             if (Program.instance.ocgcore.showing)
             {
-                MessageManager.Toast(InterString.Get("决斗中不能进行此操作。"));
+                MessageManager.Toast(InterString.Get("This operation cannot be performed during a duel."));
                 return;
             }
 
@@ -2258,16 +2258,16 @@ namespace MDPro3.UI.ServantUI
         {
             if (Program.instance.ocgcore.showing)
             {
-                MessageManager.Toast(InterString.Get("决斗中不能进行此操作。"));
+                MessageManager.Toast(InterString.Get("This operation cannot be performed during a duel."));
                 return;
             }
 
             var selections = new List<string>
             {
-                InterString.Get("确定清空"),
-                InterString.Get("是否确认删除所有导入的卡图？"),
-                InterString.Get("确认"),
-                InterString.Get("取消")
+                InterString.Get("Confirm Clear"),
+                InterString.Get("Are you sure you want to delete all imported card art?"),
+                InterString.Get("Confirm"),
+                InterString.Get("Cancel")
             };
             UIManager.ShowPopupYesOrNo(selections, () =>
             {
@@ -2281,16 +2281,16 @@ namespace MDPro3.UI.ServantUI
         {
             if (Program.instance.ocgcore.showing)
             {
-                MessageManager.Toast(InterString.Get("决斗中不能进行此操作。"));
+                MessageManager.Toast(InterString.Get("This operation cannot be performed during a duel."));
                 return;
             }
 
             var selections = new List<string>
             {
-                InterString.Get("确定清空"),
-                InterString.Get("是否确认删除所有的动态卡图？@n您可以在系统设置中选择关闭动态卡图的显示。"),
-                InterString.Get("确认"),
-                InterString.Get("取消")
+                InterString.Get("Confirm Clear"),
+                InterString.Get("Are you sure you want to delete all animated card art?@nYou can disable animated card art in System Settings."),
+                InterString.Get("Confirm"),
+                InterString.Get("Cancel")
             };
             UIManager.ShowPopupYesOrNo(selections, () =>
             {
@@ -2308,19 +2308,19 @@ namespace MDPro3.UI.ServantUI
         private void InitializeExpansions()
         {
             var config = Config.GetBool("Expansions", true);
-            ButtonExpansionSupport.SetModeText(InterString.Get(config ? "是" : "否"));
+            ButtonExpansionSupport.SetModeText(InterString.Get(config ? "Yes" : "No"));
         }
 
         public void OnSupportExpansions()
         {
             if (Program.instance.ocgcore.showing)
             {
-                MessageManager.Toast(InterString.Get("决斗中不能更改此选项。"));
+                MessageManager.Toast(InterString.Get("This option cannot be changed during a duel."));
                 return;
             }
 
             var config = Config.GetBool("Expansions", true);
-            ButtonExpansionSupport.SetModeText(InterString.Get(config ? "否" : "是"));
+            ButtonExpansionSupport.SetModeText(InterString.Get(config ? "No" : "Yes"));
             Config.SetBool("Expansions", !config);
 
             Program.instance.InitializeForDataChange();
@@ -2330,16 +2330,16 @@ namespace MDPro3.UI.ServantUI
         {
             if (Program.instance.ocgcore.showing)
             {
-                MessageManager.Toast(InterString.Get("决斗中不能进行此操作。"));
+                MessageManager.Toast(InterString.Get("This operation cannot be performed during a duel."));
                 return;
             }
 
             var selections = new List<string>
             {
-                InterString.Get("确定清空"),
-                InterString.Get("是否确认删除所有导入的扩展卡包？"),
-                InterString.Get("确认"),
-                InterString.Get("取消")
+                InterString.Get("Confirm Clear"),
+                InterString.Get("Are you sure you want to delete all imported expansion packs?"),
+                InterString.Get("Confirm"),
+                InterString.Get("Cancel")
             };
             UIManager.ShowPopupYesOrNo(selections, () =>
             {
@@ -2356,7 +2356,7 @@ namespace MDPro3.UI.ServantUI
         {
             if (Program.instance.ocgcore.showing)
             {
-                MessageManager.Toast(InterString.Get("决斗中不能进行此操作。"));
+                MessageManager.Toast(InterString.Get("This operation cannot be performed during a duel."));
                 return;
             }
             Program.instance.setting.UpdatePrerelease();
@@ -2366,7 +2366,7 @@ namespace MDPro3.UI.ServantUI
         {
             if (Program.instance.ocgcore.showing)
             {
-                MessageManager.Toast(InterString.Get("决斗中不能进行此操作。"));
+                MessageManager.Toast(InterString.Get("This operation cannot be performed during a duel."));
                 return;
             }
 
@@ -2396,7 +2396,7 @@ namespace MDPro3.UI.ServantUI
             {
                 var selections = new List<string>()
                 {
-                    InterString.Get("关于游戏"),
+                    InterString.Get("About the Game"),
                     GetAboutText(result.Result.text)
                 };
                 if (Language.UseChinese())
@@ -2413,7 +2413,7 @@ namespace MDPro3.UI.ServantUI
             {
                 var selections = new List<string>()
                 {
-                    InterString.Get("关于版本号"),
+                    InterString.Get("About Version Numbers."),
                     GetAboutText(result.Result.text)
                 };
                 UIManager.ShowPopupText(selections, TMPro.HorizontalAlignmentOptions.Left);
@@ -2427,7 +2427,7 @@ namespace MDPro3.UI.ServantUI
             {
                 var selections = new List<string>()
                 {
-                    InterString.Get("关于更新"),
+                    InterString.Get("About Updates"),
                     GetAboutText(result.Result.text)
                 };
                 if (Language.UseChinese())
@@ -2438,12 +2438,12 @@ namespace MDPro3.UI.ServantUI
         }
         public void OnUpdateContent()
         {
-            var handle = Addressables.LoadAssetAsync<TextAsset>("UpdateContent");
+            var handle = Addressables.LoadAssetAsync<TextAsset>(Language.UseChinese() ? "UpdateContent" : "UpdateContent_en");
             handle.Completed += (result) =>
             {
                 var selections = new List<string>()
                 {
-                    InterString.Get("更新内容"),
+                    InterString.Get("Patch Notes"),
                     result.Result.text
                 };
                 UIManager.ShowPopupText(selections, TMPro.HorizontalAlignmentOptions.Left);

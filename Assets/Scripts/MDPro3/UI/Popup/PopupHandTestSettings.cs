@@ -12,14 +12,14 @@ namespace MDPro3.UI.Popup
     public class PopupHandTestSettings : Popup
     {
         private const string SOLO_TOGGLE_TEXT_NAME = "#Text_SoloToggle";
-        private const string TITLE = "手牌测试设置";
-        private const string BUTTON_EXIT = "退出";
-        private const string BUTTON_START = "开始";
-        private const string LABEL_NO_SHUFFLE = "不洗切卡组";
-        private const string LABEL_STARTING_HAND = "初始手牌数：";
-        private const string LABEL_LIFE_POINTS = "基本分：";
-        private const string LABEL_RULE = "规则：";
-        private const string LABEL_SAVE_REPLAY = "退出时保存回放";
+        private const string TITLE = "Hand Test Settings";
+        private const string BUTTON_EXIT = "Exit";
+        private const string BUTTON_START = "Start";
+        private const string LABEL_NO_SHUFFLE = "No Shuffle";
+        private const string LABEL_STARTING_HAND = "Starting Hand:";
+        private const string LABEL_LIFE_POINTS = "Life Points:";
+        private const string LABEL_RULE = "Rule:";
+        private const string LABEL_SAVE_REPLAY = "Save Replay on Exit";
         private static readonly Color DestructiveTextColor = new(0.827451f, 0f, 0f, 1f);
 
         private static readonly FieldInfo NavigationEventField =

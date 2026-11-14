@@ -43,7 +43,7 @@ namespace MDPro3.UI
                 .onClick.AddListener(Zoom);
             BG.GetComponent<SelectionButton>()
                 .SetClickEvent(Hide);
-            TextShortcut.text = InterString.Get("扩大");
+            TextShortcut.text = InterString.Get("Maximize");
         }
 
         protected override void Update()
@@ -179,7 +179,7 @@ namespace MDPro3.UI
                 CardRect.DORotate(Vector3.zero, 0.2f).OnComplete(() => shifting = false); // TODO: tween in tween
             });
 
-            TextShortcut.text = InterString.Get("缩小");
+            TextShortcut.text = InterString.Get("Minimize");
         }
 
         private void ZoomOut()
@@ -196,7 +196,7 @@ namespace MDPro3.UI
                 CardRect.DORotate(Vector3.zero, 0.2f).OnComplete(() => shifting = false); // TODO: tween in tween
             });
 
-            TextShortcut.text = InterString.Get("扩大");
+            TextShortcut.text = InterString.Get("Maximize");
         }
 
     }

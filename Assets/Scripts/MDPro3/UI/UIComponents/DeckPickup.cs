@@ -85,7 +85,7 @@ namespace MDPro3.UI
             var result = $"{index} : ";
             var card = CardsManager.Get(code);
             if (card == null || card.Id == 0)
-                result += InterString.Get("未设置");
+                result += InterString.Get("Not Set");
             else
                 result += card.Name;
             result += Program.STRING_LINE_BREAK;

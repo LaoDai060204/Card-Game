@@ -115,7 +115,7 @@ namespace MDPro3
 
         private IEnumerator Check(string type)
         {
-            title = InterString.Get("正在读取[?]", type + ".zip");
+            title = InterString.Get("Loading [?]", type + ".zip");
             nowNum = 0;
             totalNum = 0;
 
@@ -134,7 +134,7 @@ namespace MDPro3
 
             if (request.result == UnityWebRequest.Result.Success)
             {
-                title = InterString.Get("正在解压[?]", type + ".zip");
+                title = InterString.Get("Extracting [?]", type + ".zip");
                 string outPath = "";
                 if (type.Contains("_"))
                     outPath = type.Split('_')[0];
@@ -157,7 +157,7 @@ namespace MDPro3
             totalNum = 0;
             progressBar.value = 0;
 
-            title = InterString.Get("正在初始化");
+            title = InterString.Get("Initializing");
 
             Program.SetRoot();
             _ = ABLoader.CacheMasterDuelOutDuelBundles();
@@ -178,7 +178,7 @@ namespace MDPro3
                 yield return null;
             }
 
-            title = InterString.Get("正在读取数据");
+            title = InterString.Get("Loading Data");
             var handle = Addressables.LoadAssetAsync<Items>("ScriptableObjects/Items.asset");
             while (!handle.IsDone)
             {
@@ -187,7 +187,7 @@ namespace MDPro3
             }
             Program.items = handle.Result;
 
-            title = InterString.Get("正在进入游戏");
+            title = InterString.Get("Entering Game");
             var load = Addressables.LoadSceneAsync("SceneMain");
             while (!load.IsDone)
             {
@@ -257,7 +257,7 @@ namespace MDPro3
             {
                 if(installVersion.Length > 5 || !installVersion.EndsWith("0"))
                 {
-                    title = "不能直接安装更新包。Can not install update apk directly.";
+                    title = "Cannot install an update APK directly.";
                     Directory.Delete(Program.PATH_DATA);
                     return false;
                 }
@@ -279,8 +279,8 @@ namespace MDPro3
                             return true;
                         else
                         {
-                            title = InterString.Get("当前更新包需要的版本：「[?]」。", VersionPre(installVersion));
-                            title += InterString.Get("已安装版本：「[?]」。", installedVersion);
+                            title = InterString.Get("This update package requires version \"[?]\".", VersionPre(installVersion));
+                            title += InterString.Get("Installed version: \"[?]\".", installedVersion);
                             return false;
                         }
                     }
@@ -290,8 +290,8 @@ namespace MDPro3
                             return true;
                         else
                         {
-                            title = InterString.Get("当前更新包需要的版本：「[?]」。", installVersion.Substring(0, 5));
-                            title += InterString.Get("已安装版本：「[?]」。", installedVersion);
+                            title = InterString.Get("This update package requires version \"[?]\".", installVersion.Substring(0, 5));
+                            title += InterString.Get("Installed version: \"[?]\".", installedVersion);
                             return false;
                         }
                     }
@@ -306,8 +306,8 @@ namespace MDPro3
                             return true;
                         else
                         {
-                            title = InterString.Get("当前更新包需要的版本：「[?]」。", VersionPre(installVersion));
-                            title += InterString.Get("已安装版本：「[?]」。", installedVersion);
+                            title = InterString.Get("This update package requires version \"[?]\".", VersionPre(installVersion));
+                            title += InterString.Get("Installed version: \"[?]\".", installedVersion);
                             return false;
                         }
                     }

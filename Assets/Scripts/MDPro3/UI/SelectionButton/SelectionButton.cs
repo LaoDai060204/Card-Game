@@ -203,7 +203,7 @@ namespace MDPro3.UI
         }
 
         /// <summary>
-        /// 仅被鼠标点击触发；
+        /// Triggered only by a mouse click.
         /// </summary>
         protected virtual void OnClick()
         {
@@ -219,7 +219,7 @@ namespace MDPro3.UI
         }
 
         /// <summary>
-        /// 选中时，键盘回车、手柄A键触发
+        /// Triggered by Enter or the controller A button while selected.
         /// </summary>
         protected virtual void OnSubmit()
         {
@@ -227,8 +227,8 @@ namespace MDPro3.UI
         }
 
         /// <summary>
-        /// 鼠标进入时触发
-        /// 调用HoverOn();
+        /// Triggered when the pointer enters.
+        /// Calls HoverOn().
         /// </summary>
         protected virtual void OnEnter()
         {
@@ -240,8 +240,8 @@ namespace MDPro3.UI
         }
 
         /// <summary>
-        /// 鼠标离开时触发，鼠标未锁定时，自动取消所有物品的选中状态
-        /// 调用HoverOff();
+        /// Triggered when the pointer exits; deselect all items when the pointer is not locked.
+        /// Calls HoverOff().
         /// </summary>
         protected virtual void OnExit()
         {
@@ -256,7 +256,7 @@ namespace MDPro3.UI
         }
 
         /// <summary>
-        /// 鼠标按下时触发
+        /// Triggered when a mouse button is pressed.
         /// </summary>
         protected virtual void OnDown()
         {
@@ -264,7 +264,7 @@ namespace MDPro3.UI
         }
 
         /// <summary>
-        /// 鼠标抬起时触发
+        /// Triggered when a mouse button is released.
         /// </summary>
         protected virtual void OnUp()
         {
@@ -273,10 +273,10 @@ namespace MDPro3.UI
         }
 
         /// <summary>
-        /// 手柄方向键选中时触发
-        /// 调用HoverOn();
+        /// Triggered when selected through controller directional navigation.
+        /// Calls HoverOn().
         /// </summary>
-        /// <param name="playSE">是否播放选中音效</param>
+        /// <param name="playSE">Whether to play the selection sound effect.</param>
         protected virtual void OnSelect(bool playSE)
         {
             HoverOn();
@@ -295,8 +295,8 @@ namespace MDPro3.UI
         }
 
         /// <summary>
-        /// 脱离选中时触发
-        /// 调用HoverOff();
+        /// Triggered when deselected.
+        /// Calls HoverOff().
         /// </summary>
         protected virtual void OnDeselect()
         {
@@ -310,8 +310,8 @@ namespace MDPro3.UI
         #region Input Reaction
 
         /// <summary>
-        /// 鼠标进入或者被选中时触发；
-        /// 调用HoverEvent()。
+        /// Triggered when the pointer enters or the button is selected.
+        /// Calls HoverEvent().
         /// </summary>
         protected virtual void HoverOn()
         {
@@ -351,7 +351,7 @@ namespace MDPro3.UI
         }
 
         /// <summary>
-        /// 鼠标离开或脱离选中状态时触发
+        /// Triggered when the pointer exits or the button is deselected.
         /// </summary>
         protected virtual void HoverOff(bool forced = false)
         {
@@ -572,10 +572,10 @@ namespace MDPro3.UI
         #region Navigation
 
         /// <summary>
-        /// 选中时响应方向键；
-        /// 注册了对应方向的SelectionButtonNavigationEvent就执行Event并返回。
-        /// 如果manuallySetNavigation，即手动设置了Selectable的Navigation，就链式选中对应方向上的激活按钮（自动跳过未激活按钮）；
-        /// 否则，依照GetRowsNum() GetColumnsNum() GetButtonsCount()获取的行列数和按钮总数自动导航。
+        /// Handle directional input while selected.
+        /// Invoke the registered SelectionButtonNavigationEvent for that direction and return.
+        /// When manuallySetNavigation is enabled, follow the configured Selectable navigation chain and skip inactive buttons.
+        /// Otherwise, navigate automatically using the rows, columns and button count from GetRowsNum(), GetColumnsNum() and GetButtonsCount().
         /// </summary>
         /// <param name="eventData"></param>
         protected virtual void OnNavigation(AxisEventData eventData)

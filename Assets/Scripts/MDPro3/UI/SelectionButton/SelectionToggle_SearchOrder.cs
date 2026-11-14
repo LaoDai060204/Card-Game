@@ -51,18 +51,18 @@ namespace MDPro3.UI
         {
             return sortOrder switch
             {
-                SortOrder.ByType => InterString.Get("种类"),
-                SortOrder.ByTypeReverse => InterString.Get("种类"),
-                SortOrder.ByLevelUp => InterString.Get("等级·阶级·连接"),
-                SortOrder.ByLevelDown => InterString.Get("等级·阶级·连接"),
-                SortOrder.ByAttackUp => InterString.Get("攻击力"),
-                SortOrder.ByAttackDown => InterString.Get("攻击力"),
-                SortOrder.ByDefenceUp => InterString.Get("守备力"),
-                SortOrder.ByDefenceDown => InterString.Get("守备力"),
-                SortOrder.ByRarityUp => InterString.Get("稀有度"),
-                SortOrder.ByRarityDown => InterString.Get("稀有度"),
-                SortOrder.ByGPUp => InterString.Get("Genesys分数"),
-                SortOrder.ByGPDown => InterString.Get("Genesys分数"),
+                SortOrder.ByType => InterString.Get("Type"),
+                SortOrder.ByTypeReverse => InterString.Get("Type"),
+                SortOrder.ByLevelUp => InterString.Get("Level/Rank/Link"),
+                SortOrder.ByLevelDown => InterString.Get("Level/Rank/Link"),
+                SortOrder.ByAttackUp => InterString.Get("ATK"),
+                SortOrder.ByAttackDown => InterString.Get("ATK"),
+                SortOrder.ByDefenceUp => InterString.Get("Defense"),
+                SortOrder.ByDefenceDown => InterString.Get("Defense"),
+                SortOrder.ByRarityUp => InterString.Get("Rarity"),
+                SortOrder.ByRarityDown => InterString.Get("Rarity"),
+                SortOrder.ByGPUp => InterString.Get("Genesys Points"),
+                SortOrder.ByGPDown => InterString.Get("Genesys Points"),
                 _ => string.Empty
             };
         }

@@ -51,7 +51,7 @@ namespace MDPro3.UI
         {
             if(OcgCore.cantCheckGrave && location == CardLocation.Grave)
             {
-                MessageManager.Cast(InterString.Get("现在不能查看此处的卡片。"));
+                MessageManager.Cast(InterString.Get("You cannot view these cards right now."));
                 return;
             }
 

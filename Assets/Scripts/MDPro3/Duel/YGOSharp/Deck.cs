@@ -279,7 +279,7 @@ namespace MDPro3.Duel.YGOSharp
         }
 
         /// <summary>
-        /// 直接保存即可，不需要考虑deckid，deckid会自动添加
+        /// Save directly; deckid is added automatically.
         /// </summary>
         /// <param name="deckName"></param>
         /// <param name="saveTime"></param>

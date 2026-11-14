@@ -11,7 +11,7 @@ namespace MDPro3.UI
     [RequireComponent(typeof(RawImage))]
     public class ArtRawImageHandler : MonoBehaviour
     {
-        #region 字段和属性
+        #region Fields and Properties
 
         public bool cache = true;
 

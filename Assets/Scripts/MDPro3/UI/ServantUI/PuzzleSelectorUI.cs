@@ -56,8 +56,7 @@ namespace MDPro3.UI.ServantUI
         #endregion
 
         public const int DEFAULT_CARD = 5990062;
-        private static readonly List<string> ignoreInPuzzleListPrefix = new()
-        { "卡片特效", "胜利特效" };
+        private static readonly List<string> ignoreInPuzzleListPrefix = new(MDPro3.Utility.LegacyTextContracts.Get("PuzzleIgnoredFilePrefixes"));
 
         public struct Puzzle
         {

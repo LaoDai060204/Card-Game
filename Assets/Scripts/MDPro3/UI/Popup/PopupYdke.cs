@@ -8,7 +8,7 @@ namespace MDPro3.UI.Popup
 {
     public class PopupYdke : Popup
     {
-        private const string YDKE_BUTTON_EXIT = "退出";
+        private const string YDKE_BUTTON_EXIT = "Exit";
 
         public Action importAction;
         public Action exportAction;
@@ -17,7 +17,7 @@ namespace MDPro3.UI.Popup
 
         protected override void InitializeSelections()
         {
-            args = new List<string> { $"YDKE {InterString.Get("导入导出")}" };
+            args = new List<string> { $"YDKE {InterString.Get("Import/Export")}" };
             base.InitializeSelections();
 
             var content = Manager.GetElement<RectTransform>("Content");
@@ -61,8 +61,8 @@ namespace MDPro3.UI.Popup
             fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
             fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
-            importButton = CreateActionButton(buttonTemplate, root.transform, InterString.Get("导入"), importAction);
-            CreateActionButton(buttonTemplate, root.transform, InterString.Get("导出"), exportAction);
+            importButton = CreateActionButton(buttonTemplate, root.transform, InterString.Get("Import"), importAction);
+            CreateActionButton(buttonTemplate, root.transform, InterString.Get("Export"), exportAction);
             CreateActionButton(buttonTemplate, root.transform, InterString.Get(YDKE_BUTTON_EXIT), Hide);
 
             buttonGroup.SetActive(false);

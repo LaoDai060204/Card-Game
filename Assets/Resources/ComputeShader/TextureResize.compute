@@ -13,13 +13,13 @@ void CSMain(uint3 id : SV_DispatchThreadID)
     if (id.x >= DestWidth || id.y >= DestHeight)
         return;
     
-    // 计算目标像素对应源纹理的浮点坐标
+    // Map the destination pixel to floating-point source coordinates
     float u = (id.x + 0.5f) / DestWidth;
     float v = (id.y + 0.5f) / DestHeight;
     float origX = u * SourceWidth - 0.5f;
     float origY = v * SourceHeight - 0.5f;
     
-    // 双线性插值
+    // Bilinear interpolation
     int x0 = (int) floor(origX);
     int y0 = (int) floor(origY);
     int x1 = min(x0 + 1, SourceWidth - 1);

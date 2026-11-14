@@ -212,11 +212,11 @@ namespace MDPro3.UI.ServantUI
         {
             return puzzleGroup.pathPrefix switch
             {
-                "" => InterString.Get("残局挑战"),
-                PuzzlePortal.PATH_PUZZLE_CARD_EFFECT => InterString.Get("卡片效果特效速览"),
-                PuzzlePortal.PATH_PUZZLE_FINAL_ATTACK => InterString.Get("最终一击特效速览"),
-                PuzzlePortal.PATH_PUZZLE_SPECIAL_WIN => InterString.Get("特殊胜利特效速览"),
-                PuzzlePortal.PATH_PUZZLE_TEST => InterString.Get("卡片测试"),
+                "" => InterString.Get("Puzzle Challenge"),
+                PuzzlePortal.PATH_PUZZLE_CARD_EFFECT => InterString.Get("Card Effect Animation Preview"),
+                PuzzlePortal.PATH_PUZZLE_FINAL_ATTACK => InterString.Get("Final Attack Animation Preview"),
+                PuzzlePortal.PATH_PUZZLE_SPECIAL_WIN => InterString.Get("Special Victory Animation Preview"),
+                PuzzlePortal.PATH_PUZZLE_TEST => InterString.Get("Card Test"),
                 _ => puzzleGroup.pathPrefix
             };
         }

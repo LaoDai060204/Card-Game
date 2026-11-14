@@ -357,7 +357,7 @@ namespace MDPro3.UI
         }
 
         /// <summary>
-        /// 锁定卡片child当前的位置，并在下一帧开始移动到父级初始位置
+        /// Lock the card child at its current position, then move it to the parent's initial position starting next frame.
         /// </summary>
         public void LockPosition()
         {
@@ -367,7 +367,7 @@ namespace MDPro3.UI
         }
 
         /// <summary>
-        /// 锁定卡片child到指定位置position，并在下一帧开始移动到父级初始位置
+        /// Lock the card child at the specified position, then move it to the parent's initial position starting next frame.
         /// </summary>
         /// <param name="position"></param>
         /// <param name="scale"></param>

@@ -578,12 +578,12 @@ namespace MDPro3.UI
 
             List<string> selections = new()
             {
-                InterString.Get("保存选项"),
+                InterString.Get("Save Options"),
                 string.Empty,
-                InterString.Get("当前卡片卡图"),
-                InterString.Get("当前卡组卡图"),
-                InterString.Get("所有衍生物卡图"),
-                InterString.Get("所有卡图"),
+                InterString.Get("Current Card Image"),
+                InterString.Get("Current Deck Card Images"),
+                InterString.Get("All Token Card Images"),
+                InterString.Get("All Card Images"),
             };
             UIManager.ShowPopupSelection(selections, CardPictureSaveOption);
         }
@@ -592,13 +592,13 @@ namespace MDPro3.UI
         {
             string selected = UnityEngine.EventSystems.EventSystem.current.
                 currentSelectedGameObject.GetComponent<SelectionButton>().GetButtonText();
-            if (selected == InterString.Get("当前卡片卡图"))
+            if (selected == InterString.Get("Current Card Image"))
                 SaveShowingCard();
-            else if (selected == InterString.Get("当前卡组卡图"))
+            else if (selected == InterString.Get("Current Deck Card Images"))
                 SaveDeckCards();
-            else if (selected == InterString.Get("所有衍生物卡图"))
+            else if (selected == InterString.Get("All Token Card Images"))
                 SaveAllTokens();
-            else if (selected == InterString.Get("所有卡图"))
+            else if (selected == InterString.Get("All Card Images"))
                 SaveAllCards();
         }
 
@@ -618,11 +618,11 @@ namespace MDPro3.UI
             if (SaveCardPicture(card.Id, (Texture2D)texture))
             {
                 var fullPath = Program.PATH_CARD_PIC + card.Id + Program.EXPANSION_PNG;
-                MessageManager.Toast(InterString.Get("卡图已保存于：[?]", fullPath));
+                MessageManager.Toast(InterString.Get("Card image saved to: [?]", fullPath));
             }
             else
             {
-                MessageManager.Toast(InterString.Get("没有写入权限，无法保存。"));
+                MessageManager.Toast(InterString.Get("Cannot save without write permission."));
             }
         }
 
@@ -632,11 +632,11 @@ namespace MDPro3.UI
             if (result)
             {
                 var fullPath = Program.PATH_CARD_PIC + card.Id + Program.EXPANSION_PNG;
-                MessageManager.Toast(InterString.Get("卡图已保存于：[?]", fullPath));
+                MessageManager.Toast(InterString.Get("Card image saved to: [?]", fullPath));
             }
             else
             {
-                MessageManager.Toast(InterString.Get("没有写入权限，无法保存。"));
+                MessageManager.Toast(InterString.Get("Cannot save without write permission."));
             }
         }
 
@@ -735,7 +735,7 @@ namespace MDPro3.UI
                 var pop = await Addressables.InstantiateAsync("Popup/PopupProgress.prefab").WithCancellation(token);
                 pop.transform.SetParent(Program.instance.ui_.popup, false);
                 popupProgress = pop.GetComponent<UI.Popup.PopupProgress>();
-                popupProgress.args = new List<string> { InterString.Get("卡图保存中") };
+                popupProgress.args = new List<string> { InterString.Get("Saving Card Images") };
                 popupProgress.cancelAction = StopSaving;
                 popupProgress.text.text = string.Empty;
                 popupProgress.progressBar.value = 0f;
@@ -756,7 +756,7 @@ namespace MDPro3.UI
                         errorLog += cards[i].ToString() + Program.STRING_LINE_BREAK;
                     }
 
-                    popupProgress.text.text = (i + 1) + Program.STRING_SLASH + cards.Count + Program.STRING_LINE_BREAK + InterString.Get("错误：") + errorCount;
+                    popupProgress.text.text = (i + 1) + Program.STRING_SLASH + cards.Count + Program.STRING_LINE_BREAK + InterString.Get("Error:") + errorCount;
                     popupProgress.progressBar.value = cards.Count == 0 ? 1f : (float)(i + 1) / cards.Count;
                     if ((i + 1) % 8 == 0 || i == cards.Count - 1)
                         await UniTask.Yield(PlayerLoopTiming.Update, token);

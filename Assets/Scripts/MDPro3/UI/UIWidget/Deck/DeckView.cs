@@ -708,7 +708,7 @@ namespace MDPro3.UI
         public bool CanEditCard(bool showToast = true)
         {
             if (showToast && condition == Condition.NonEditable)
-                MessageManager.Toast(InterString.Get("请先保存卡组"));
+                MessageManager.Toast(InterString.Get("Please save the deck first"));
             return condition == Condition.Editable;
         }
 
@@ -720,13 +720,13 @@ namespace MDPro3.UI
                 if (showToast)
                 {
                     if (count == 3)
-                        MessageManager.Toast(InterString.Get("卡组中同名卡片不得超过3张"));
+                        MessageManager.Toast(InterString.Get("No more than three of the same Card can be used in a Deck."));
                     else if (count == 2)
-                        MessageManager.Toast(InterString.Get("卡组中准限制卡片不得超过2张，@n如需无视限制，请将禁限卡表设置为无（N/A）。"));
+                        MessageManager.Toast(InterString.Get("Semi-limited cards cannot exceed 2 copies in the deck.@nTo ignore restrictions, set the banlist to None (N/A)."));
                     else if (count == 1)
-                        MessageManager.Toast(InterString.Get("卡组中限制卡片不得超过1张，@n如需无视限制，请将禁限卡表设置为无（N/A）。"));
+                        MessageManager.Toast(InterString.Get("Limited cards cannot exceed 1 copy in the deck.@nTo ignore restrictions, set the banlist to None (N/A)."));
                     else
-                        MessageManager.Toast(InterString.Get("无法将禁止卡片放入卡组，@n如需无视限制，请将禁限卡表设置为无（N/A）。"));
+                        MessageManager.Toast(InterString.Get("Forbidden cards cannot be added to the deck.@nTo ignore restrictions, set the banlist to None (N/A)."));
                 }
                 return false;
             }
@@ -738,13 +738,13 @@ namespace MDPro3.UI
             if (card.IsExtraCard() && location == DeckLocation.MainDeck)
             {
                 if (showToast)
-                    MessageManager.Toast(InterString.Get("无法将该卡片加入主卡组"));
+                    MessageManager.Toast(InterString.Get("Cannot add this card to the Main Deck"));
                 return false;
             }
             if (!card.IsExtraCard() && location == DeckLocation.ExtraDeck)
             {
                 if (showToast)
-                    MessageManager.Toast(InterString.Get("无法将该卡片加入额外卡组"));
+                    MessageManager.Toast(InterString.Get("Cannot add this card to the Extra Deck"));
                 return false;
             }
             return true;
@@ -1083,8 +1083,8 @@ namespace MDPro3.UI
 
             SetDirty(true);
 
-            deckNameWithType += " - " + InterString.Get("复制");
-            deckFileName += " - " + InterString.Get("复制");
+            deckNameWithType += " - " + InterString.Get("Copy deck");
+            deckFileName += " - " + InterString.Get("Copy deck");
             InputDeckName.text = deckFileName;
             Deck.deckId = string.Empty;
         }
@@ -1096,7 +1096,7 @@ namespace MDPro3.UI
             if (GetDirty() || !File.Exists(Program.PATH_DECK + deckNameWithType + Program.EXPANSION_YDK))
             {
                 if(condition != Condition.ChangeSide)
-                    MessageManager.Toast(InterString.Get("请先保存卡组"));
+                    MessageManager.Toast(InterString.Get("Please save the deck first"));
                 return;
             }
 
@@ -1463,14 +1463,14 @@ namespace MDPro3.UI
                 deckNameWithType = deckType == string.Empty ? deckName : $"{deckType}/{deckName}";
                 InputDeckName.text = deckFileName;
                 TextDeckName.text = deckFileName;
-                MessageManager.Toast(InterString.Get("本地卡组「[?]」已保存。", deckName));
+                MessageManager.Toast(InterString.Get("Deck \"[?]\" saved.", deckName));
                 Config.SetConfigDeck(deckName, true);
                 SetDirty(false);
                 return true;
             }
             catch (Exception e)
             {
-                MessageManager.Toast(InterString.Get("保存失败！"));
+                MessageManager.Toast(InterString.Get("Save Failed!"));
                 MessageManager.Cast(e.Message);
                 return false;
             }

@@ -110,11 +110,11 @@ namespace MDPro3.Servant
         public static bool pause;
         public static bool NoMoreWait
         {
-            get 
-            { 
-                return noMoreWait; 
+            get
+            {
+                return noMoreWait;
             }
-            set 
+            set
             {
                 noMoreWait = value;
                 //Debug.Log($"Set noMoreWait: {value}");
@@ -175,8 +175,8 @@ namespace MDPro3.Servant
         public static bool HideMyHandCard
         {
             get { return hideMyHandCard; }
-            set 
-            { 
+            set
+            {
                 hideMyHandCard = value;
                 Program.instance.ocgcore.RefreshMyHandCardPosition();
             }
@@ -243,7 +243,7 @@ namespace MDPro3.Servant
             {
                 btnConfirm = ABLoader.LoadMasterDuelGameObject("DuelButton").GetComponent<DuelButton>();
                 btnConfirm.response.Add(-4);
-                btnConfirm.hint = InterString.Get("确认");
+                btnConfirm.hint = InterString.Get("Confirm");
                 btnConfirm.type = ButtonType.Decide;
                 btnConfirm.Hide();
             }
@@ -251,7 +251,7 @@ namespace MDPro3.Servant
             {
                 btnCancel = ABLoader.LoadMasterDuelGameObject("DuelButton").GetComponent<DuelButton>();
                 btnCancel.response.Add(-5);
-                btnCancel.hint = InterString.Get("取消");
+                btnCancel.hint = InterString.Get("Cancel");
                 btnCancel.type = ButtonType.Cancel;
                 btnCancel.Hide();
             }
@@ -543,10 +543,10 @@ namespace MDPro3.Servant
                 card.SetData(datas[i]);
                 cards.Add(card);
             }
-            currentPopup.whenQuitDo = () => 
-            { 
+            currentPopup.whenQuitDo = () =>
+            {
                 GetUI<OcgCoreUI>().ShowPopupSelectCard
-                (InterString.Get("请选择需要宣言的卡片。"), cards, 1, 1, true, false); 
+                (InterString.Get("Select a card to declare."), cards, 1, 1, true, false);
             };
         }
 
@@ -621,7 +621,7 @@ namespace MDPro3.Servant
             if (RoomServant.NeedSide)
             {
                 RoomServant.NeedSide = false;
-                MessageManager.Cast(InterString.Get("卡片历史中为您准备了对手上一局使用过的卡。"));
+                MessageManager.Cast(InterString.Get("Card History contains the cards your opponent used in the last game."));
                 Program.instance.deckEditor.SwitchCondition(DeckEditor.Condition.ChangeSide);
                 Program.instance.ShiftToServant(Program.instance.deckEditor);
                 return;
@@ -662,10 +662,10 @@ namespace MDPro3.Servant
 
             var selections = new List<string>
             {
-                InterString.Get("投降"),
-                InterString.Get("您确定要投降吗？"),
-                InterString.Get("是"),
-                InterString.Get("否")
+                InterString.Get("Surrender"),
+                InterString.Get("Are you sure you want to surrender?"),
+                InterString.Get("Yes"),
+                InterString.Get("No")
             };
             UIManager.ShowPopupYesOrNo(selections, ActionSurrender, ActionCancelSurrender);
         }
@@ -680,7 +680,7 @@ namespace MDPro3.Servant
                 TcpHelper.CtosMessage_Surrender();
                 Program.instance.ExitCurrentServant();
                 if (RoomServant.Mode == 2 && !tagSurrendered)
-                    MessageManager.Cast(InterString.Get("您发起了投降。"));
+                    MessageManager.Cast(InterString.Get("You Surrendered."));
             }
             else
                 OnExit();
@@ -749,7 +749,7 @@ namespace MDPro3.Servant
             if (surrendered)
                 return;
             tagSurrendered = true;
-            MessageManager.Cast(InterString.Get("队友发起了投降。"));
+            MessageManager.Cast(InterString.Get("Your Teammate Surrendered."));
         }
 
         public void StocMessage_TimeLimit(BinaryReader r)
@@ -777,7 +777,7 @@ namespace MDPro3.Servant
         {
             _ = ShowErrorMessageAsync(error);
         }
-        
+
         private async UniTask ShowErrorMessageAsync(string error)
         {
             await UniTask.WaitWhile(() => servantUI == null);
@@ -982,7 +982,7 @@ namespace MDPro3.Servant
                 var fromLocation = NextMessageIsMovingFromLocation();
                 if (from.location == (uint)fromLocation && to.location == (uint)toLocation)
                     return 2;
-                else 
+                else
                     return 0;
             }
 
@@ -1058,7 +1058,7 @@ namespace MDPro3.Servant
                 return;
 
             replayPlaybackEndedNotified = true;
-            MessageManager.Cast(InterString.Get("回放播放结束。"));
+            MessageManager.Cast(InterString.Get("End of Replay."));
         }
 
         #endregion
@@ -1248,7 +1248,7 @@ namespace MDPro3.Servant
 
         public void ArrangeCards()
         {
-            //sort 
+            //sort
             cards.Sort((left, right) =>
             {
                 var a = 1;
@@ -1883,7 +1883,7 @@ namespace MDPro3.Servant
         {
             foreach (var place in Places)
                 place.InitializeSelectCardInThisZone(cards);
-            fieldHint = string.IsNullOrEmpty(hint) ? InterString.Get("请选择卡片") : hint;
+            fieldHint = string.IsNullOrEmpty(hint) ? InterString.Get("Please select a card") : hint;
             fieldMin = min;
             fieldMax = max;
             fieldExitable = exitable;

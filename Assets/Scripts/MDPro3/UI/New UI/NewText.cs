@@ -7,7 +7,7 @@ namespace MDPro3.UI
 {
     public class NewText : Text
     {
-        //实现超框时再缩小字体
+        //Shrink the font only when the text exceeds its bounds.
         public int Visiblelines { get; private set; }
         private void _UseFitSettings()
         {

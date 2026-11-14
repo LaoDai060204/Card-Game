@@ -280,12 +280,12 @@ namespace MDPro3.UI
                         if (activate)
                         {
                             int response = -1;
-                            buttons.Add(new DuelButtonInfo() { response = new List<int>() { response }, hint = InterString.Get("发动效果"), type = ButtonType.Activate });
+                            buttons.Add(new DuelButtonInfo() { response = new List<int>() { response }, hint = InterString.Get("Activate Effect"), type = ButtonType.Activate });
                         }
                         if (spsummmon)
                         {
                             int response = -2;
-                            buttons.Add(new DuelButtonInfo() { response = new List<int>() { response }, hint = InterString.Get("特殊召唤"), type = ButtonType.SpSummon });
+                            buttons.Add(new DuelButtonInfo() { response = new List<int>() { response }, hint = InterString.Get("Special Summon"), type = ButtonType.SpSummon });
                         }
                         CreateButtons();
                     }

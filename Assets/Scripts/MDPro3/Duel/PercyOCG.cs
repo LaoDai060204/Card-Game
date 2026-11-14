@@ -25,7 +25,7 @@ namespace MDPro3
         public PercyOCG()
         {
             _buffer = Marshal.AllocHGlobal(1024 * 256); // 256 KiB
-            error = InterString.Get("YGOPro旧版的回放崩溃了！您可以选择使用永不崩溃的新版回放。");
+            error = InterString.Get("This outdated YGOPro replay file has crashed. Try the newer replay format for better stability.");
             ygopro = new Ygopro(ReceiveHandler, CardHandler, ScriptHandler, ChatHandler);
             //ygopro.m_log = a => UnityEngine.Debug.Log(a);
         }
@@ -109,7 +109,7 @@ namespace MDPro3
         {
             if (!ygopro.StartPuzzle(path))
             {
-                MessageManager.Cast(InterString.Get("启动残局<#FF0000>[?]</color>失败。", path));
+                MessageManager.Cast(InterString.Get("Failed to start puzzle <#FF0000>[?]</color>.", path));
                 return;
             }
             else

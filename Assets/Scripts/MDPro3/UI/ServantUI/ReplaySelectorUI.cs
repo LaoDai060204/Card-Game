@@ -102,7 +102,7 @@ namespace MDPro3.UI.ServantUI
                 {
                     if (god)
                     {
-                        MessageManager.Cast(InterString.Get("您正在观看旧版的回放（上帝视角），不保证稳定性。"));
+                        MessageManager.Cast(InterString.Get("You are viewing an outdated replay (Free View). Stability is not guaranteed."));
                         percy?.Dispose();
                         percy = new PercyOCG();
                         var replays = GetYRPBuffer(fileName);
@@ -123,7 +123,7 @@ namespace MDPro3.UI.ServantUI
                 }
                 else
                 {
-                    MessageManager.Cast(InterString.Get("您正在观看旧版的回放（上帝视角），不保证稳定性。"));
+                    MessageManager.Cast(InterString.Get("You are viewing an outdated replay (Free View). Stability is not guaranteed."));
                     percy?.Dispose();
                     percy = new PercyOCG();
                     var collections = TcpHelper.GetPackages(percy.ygopro.GetYRP3dBuffer(GetYRP(File.ReadAllBytes(fileName))));
@@ -135,7 +135,7 @@ namespace MDPro3.UI.ServantUI
 #if UNITY_EDITOR
                 Debug.LogError(e);
 #endif
-                MessageManager.Cast(InterString.Get("回放没有录制完整。"));
+                MessageManager.Cast(InterString.Get("The replay was not fully recorded."));
             }
         }
 
@@ -357,7 +357,7 @@ namespace MDPro3.UI.ServantUI
         {
             var selections = new List<string>()
             {
-                InterString.Get("请输入新的回放名称"),
+                InterString.Get("Please enter a new replay name"),
                 superScrollView.items[superScrollView.selected].args[1].Replace(Program.EXPANSION_YRP, string.Empty)
             };
             UIManager.ShowPopupInput(selections, ReplayRename, null, TmpInputValidation.ValidationType.Path);
@@ -390,7 +390,7 @@ namespace MDPro3.UI.ServantUI
                 File.Delete(Program.PATH_REPLAY + replay);
             else
                 File.Delete(Program.PATH_REPLAY + replay + Program.EXPANSION_YRP3D);
-            MessageManager.Cast(InterString.Get("已删除回放「[?]」。", replay));
+            MessageManager.Cast(InterString.Get("Deleted Replay \"[?]\".", replay));
             Print();
         }
 
@@ -398,9 +398,9 @@ namespace MDPro3.UI.ServantUI
         {
             sortByName = !sortByName;
             if (sortByName)
-                ButtonSort.SetButtonText(InterString.Get("名称排序"));
+                ButtonSort.SetButtonText(InterString.Get("Sort by Name"));
             else
-                ButtonSort.SetButtonText(InterString.Get("时间排序"));
+                ButtonSort.SetButtonText(InterString.Get("Sort by Date"));
 
             Print();
         }

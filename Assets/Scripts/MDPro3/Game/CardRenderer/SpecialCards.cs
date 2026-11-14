@@ -33,88 +33,88 @@ namespace MDPro3
             {
                 FinalAttackBlueEyes = new int[]
                 {
-                    89631139,   //青眼白龙
-                    53347303,   //青眼光龙
-                    22804410,   //渊眼白龙
-                    38517737,   //青眼亚白龙
-                    30576089,   //青眼喷气龙
-                    9433350,    //罪 青眼白龙
-                    53183600,   //青眼卡通龙
-                    23995346,   //青眼究极龙
-                    43228023,   //青眼究极亚龙
-                    56532353,   //真青眼究极龙
-                    2129638,    //青眼双爆裂龙
-                    11443677    //青眼暴君龙
+                    89631139,   // Blue-Eyes White Dragon
+                    53347303,   // Blue-Eyes Shining Dragon
+                    22804410,   // Deep-Eyes White Dragon
+                    38517737,   // Blue-Eyes Alternative White Dragon
+                    30576089,   // Blue-Eyes Jet Dragon
+                    9433350,    // Malefic Blue-Eyes White Dragon
+                    53183600,   // Blue-Eyes Toon Dragon
+                    23995346,   // Blue-Eyes Ultimate Dragon
+                    43228023,   // Blue-Eyes Alternative Ultimate Dragon
+                    56532353,   // Neo Blue-Eyes Ultimate Dragon
+                    2129638,    // Blue-Eyes Twin Burst Dragon
+                    11443677    // Blue-Eyes Tyrant Dragon
                 };
 
                 FinalAttackDarkM = new int[]
                 {
-                    46986414,   //黑魔术师
-                    92377303,   //黑衣大贤者
-                    342673,       //黑色魔术师-黑魔术师
-                    21296502,   //卡通黑魔术师
-                    29436665,   //黑魔导执行官
-                    35191415,   //黑幻想之魔术师
-                    38033121,   //黑魔术少女
-                    90960358,   //卡通黑魔术少女
-                    50237654    //超魔导师-黑魔术师徒
+                    46986414,   // Dark Magician
+                    92377303,   // Dark Sage
+                    342673,       // Dark Magician the Magician of Black Magic
+                    21296502,   // Toon Dark Magician
+                    29436665,   // Dark Eradicator Warlock
+                    35191415,   // Magician of Dark Illusion
+                    38033121,   // Dark Magician Girl
+                    90960358,   // Toon Dark Magician Girl
+                    50237654    // The Dark Magicians
                 };
 
                 FinalAttackRedEyes = new int[]
                 {
-                    74677422,   //真红眼黑龙
-                    96561011,   //真红眼暗龙
-                    64335804,   //真红眼黑钢龙
-                    18491580,   //真红眼亚黑龙
-                    55343236,   //罪 真红眼黑龙
-                    6556909,     //真红之魂
+                    74677422,   // Red-Eyes Black Dragon
+                    96561011,   // Red-Eyes Darkness Dragon
+                    64335804,   // Red-Eyes Black Metal Dragon
+                    18491580,   // Red-Eyes Alternative Black Dragon
+                    55343236,   // Malefic Red-Eyes Black Dragon
+                    6556909,     // Red-Eyes Soul
                 };
 
                 FinalAttackObelisk = new int[]
                 {
-                    10000000   //巨神兵
+                    10000000   // Obelisk the Tormentor
                 };
 
                 FinalAttackRa = new int[]
                 {
-                    10000010,   //翼神龙
-                    10000080,   //蛋
-                    10000090,   //不死鸟
+                    10000010,   // The Winged Dragon of Ra
+                    10000080,   // The Winged Dragon of Ra - Sphere Mode
+                    10000090,   // The Winged Dragon of Ra - Immortal Phoenix
                 };
 
                 FinalAttackSlifer = new int[]
                 {
-                    10000020   //天空龙
+                    10000020   // Slifer the Sky Dragon
                 };
 
                 FrameObelisk = new int[]
                 {
-                    10000000   //巨神兵
+                    10000000   // Obelisk the Tormentor
                 };
 
                 FrameRa = new int[]
                 {
-                    10000010   //翼神龙
+                    10000010   // The Winged Dragon of Ra
                 };
 
                 FrameSlifer = new int[]
                 {
-                    10000020   //天空龙
+                    10000020   // Slifer the Sky Dragon
                 };
 
                 FrameRaviel = new int[]
                 {
-                    69890967   //幻魔皇 拉比艾尔
+                    69890967   // Raviel, Lord of Phantasms
                 };
 
                 FrameUria = new int[]
                 {
-                    6007213    //神炎皇 乌利亚
+                    6007213    // Uria, Lord of Searing Flames
                 };
 
                 FrameHamon = new int[]
                 {
-                    32491822   //降雷皇 哈蒙
+                    32491822   // Hamon, Lord of Striking Thunder
                 };
 
                 LevelZeroMonsters = new int[]
@@ -130,31 +130,31 @@ namespace MDPro3
 
                 SameCutins = new Dictionary<int, int[]>
                 {
-                    { 89631139, new int[] { 89631155 } },   // 青眼白龙1
-                    { 89631141, new int[] { 89631142, 89631148, 89631151, 89631154 } },   // 青眼白龙2
-                    { 89943723, new int[] { 89943725 } },   // 新宇侠
-                    { 46986417, new int[] { 46986424, 46986426, 46986430 } },   // 黑魔术师
-                    { 74677424, new int[] { 74677425 } },   // 真红眼黑龙
-                    { 44508094, new int[] { 44508096 } },   // 星尘龙
-                    { 84013237, new int[] { 84013240 } },   // 霍普
-                    { 16178681, new int[] { 16178684 } },   // 异色眼
-                    { 5043010, new int[] { 5043013 } },   // 防火龙
-                    { 35405755, new int[] { 35405756 } },   // 天童
-                    { 32828466, new int[] { 32828467 } },   // 醒醒侠
-                    { 37818794, new int[] { 37818795 } },   // 超魔导龙骑士
-                    { 44146295, new int[] { 44146296 } },   // 冰剑龙
-                    { 35952884, new int[] { 35952885 } },   // 流天类星龙
-                    { 6218704, new int[] { 6218705 } },   // 霸王天龙
-                    { 10000000, new int[] { 10000004 } },   // 巨神兵
-                    { 10000010, new int[] { 10000014 } },   // 翼神龙
-                    { 10000020, new int[] { 10000024 } },   // 天空龙
-                    { 12381100, new int[] { 12381101 } },   // 究极龙魔导
-                    { 13331639, new int[] { 13331640 } },   // 霸王龙 扎克
-                    { 22850702, new int[] { 22850703 } },   // 混沌之双翼
-                    { 31801517, new int[] { 31801518 } },   // 光子龙皇
-                    { 98127546, new int[] { 98127547 } },   // 冥神
-                    { 98630720, new int[] { 98630721 } },   // 前托枪管龙
-                    { 99585850, new int[] { 99585851 } },   // 真红莲超新星龙
+                    { 89631139, new int[] { 89631155 } },   // Blue-Eyes White Dragon (variant 1)
+                    { 89631141, new int[] { 89631142, 89631148, 89631151, 89631154 } },   // Blue-Eyes White Dragon (variant 2)
+                    { 89943723, new int[] { 89943725 } },   // Elemental HERO Neos
+                    { 46986417, new int[] { 46986424, 46986426, 46986430 } },   // Dark Magician
+                    { 74677424, new int[] { 74677425 } },   // Red-Eyes Black Dragon
+                    { 44508094, new int[] { 44508096 } },   // Stardust Dragon
+                    { 84013237, new int[] { 84013240 } },   // Number 39: Utopia
+                    { 16178681, new int[] { 16178684 } },   // Odd-Eyes Pendulum Dragon
+                    { 5043010, new int[] { 5043013 } },   // Firewall Dragon
+                    { 35405755, new int[] { 35405756 } },   // Kurikara Divincarnate
+                    { 32828466, new int[] { 32828467 } },   // Wake Up Your Elemental HERO
+                    { 37818794, new int[] { 37818795 } },   // Red-Eyes Dark Dragoon
+                    { 44146295, new int[] { 44146296 } },   // Mirrorjade the Iceblade Dragon
+                    { 35952884, new int[] { 35952885 } },   // Shooting Quasar Dragon
+                    { 6218704, new int[] { 6218705 } },   // Odd-Eyes Arcray Dragon
+                    { 10000000, new int[] { 10000004 } },   // Obelisk the Tormentor
+                    { 10000010, new int[] { 10000014 } },   // The Winged Dragon of Ra
+                    { 10000020, new int[] { 10000024 } },   // Slifer the Sky Dragon
+                    { 12381100, new int[] { 12381101 } },   // Dragon Master Magia
+                    { 13331639, new int[] { 13331640 } },   // Supreme King Z-ARC
+                    { 22850702, new int[] { 22850703 } },   // Chaos Angel
+                    { 31801517, new int[] { 31801518 } },   // Number 62: Galaxy-Eyes Prime Photon Dragon
+                    { 98127546, new int[] { 98127547 } },   // Underworld Goddess of the Closed World
+                    { 98630720, new int[] { 98630721 } },   // Borrelend Dragon
+                    { 99585850, new int[] { 99585851 } },   // Red Supernova Dragon
                 };
             }
 

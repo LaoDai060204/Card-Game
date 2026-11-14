@@ -104,7 +104,7 @@ namespace MDPro3
                 else
                     unitCards = ABLoader.LoadFromFolder<PlayableDirector>
                         ("MasterDuel/Timeline/Summon/SummonFusion/SummonFusion07445ShowUnitCard0" + materials.Count, true, true);
-                //TODO: 如果在await之前触发跳过TL，unitCards无法被立即删除
+                //TODO: If the timeline is skipped before await, unitCards cannot be removed immediately
             }
             // Invocation
             else if (data.HasType(CardType.Fusion)

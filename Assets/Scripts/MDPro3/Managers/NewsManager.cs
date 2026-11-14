@@ -1,3 +1,4 @@
+using System;
 using DG.Tweening;
 using MDPro3;
 using MDPro3.Net;
@@ -17,6 +18,8 @@ public class NewsManager : Manager
     public Text newsText2;
     public Text textCount;
     public bool showing;
+
+    private News[] Entries => news?.EnglishUS ?? Array.Empty<News>();
 
     private List<Texture2D> newsPics = new List<Texture2D>();
     private float width = 455f;
@@ -44,12 +47,12 @@ public class NewsManager : Manager
     {
         if(news == null)
             return 0;
-        return news.ChineseCN.Length > maxLoad ? maxLoad : news.ChineseCN.Length;
+        return Entries.Length > maxLoad ? maxLoad : Entries.Length;
     }
 
     public void Show()
     {
-        if (news == null || newsPics.Count == 0)
+        if (GetMax() == 0 || newsPics.Count == 0)
             return;
         var cg = GetComponent<CanvasGroup>();
         cg.alpha = 1.0f;
@@ -58,7 +61,7 @@ public class NewsManager : Manager
         showing = true;
 
         newsPic.texture = newsPics[0];
-        newsText.text = news.ChineseCN[0].title;
+        newsText.text = Entries[0].title;
         newsPic.rectTransform.anchoredPosition = new Vector2(0, 0);
         newsPic2.rectTransform.anchoredPosition = new Vector2(-width, 0);
 
@@ -77,17 +80,20 @@ public class NewsManager : Manager
 
     public void LoadNews()
     {
-        if (news == null)
+        if (GetMax() == 0)
+        {
+            Hide();
             return;
+        }
         _ = LoadNewsImageAsync();
     }
 
     async Task LoadNewsImageAsync()
     {
         Hide();
-        for (int i = 0; i < news.ChineseCN.Length && i < maxLoad; i++)
+        for (int i = 0; i < Entries.Length && i < maxLoad; i++)
         {
-            var load = Tools.DownloadImageAsync(news.ChineseCN[i].image);
+            var load = Tools.DownloadImageAsync(Entries[i].image);
 
             await TaskUtility.WaitUntil(() => load.IsCompleted);
             if (!Application.isPlaying)
@@ -103,7 +109,7 @@ public class NewsManager : Manager
     public void OnRight(float moveTime = 0.1f)
     {
         idleTime = 0f;
-        if (news.ChineseCN.Length < 2)
+        if (GetMax() < 2)
             return;
 
         var next = (currentNewsIndex + 1) % GetMax();
@@ -112,13 +118,13 @@ public class NewsManager : Manager
             newsPic.texture = null;
         else
             newsPic.texture = newsPics[currentNewsIndex];
-        newsText.text = news.ChineseCN[currentNewsIndex].title;
+        newsText.text = Entries[currentNewsIndex].title;
 
         if (newsPics.Count < next + 1)
             newsPic2.texture = null;
         else
             newsPic2.texture = newsPics[next];
-        newsText2.text = news.ChineseCN[next].title;
+        newsText2.text = Entries[next].title;
 
         currentNewsIndex = next;
         textCount.text = $"{currentNewsIndex + 1}/{GetMax()}";
@@ -134,7 +140,7 @@ public class NewsManager : Manager
     public void OnLeft(float moveTime = 0.1f)
     {
         idleTime = 0f;
-        if (news.ChineseCN.Length < 2)
+        if (GetMax() < 2)
             return;
         var max = GetMax();
         var next = (max + currentNewsIndex - 1) % max;
@@ -144,12 +150,12 @@ public class NewsManager : Manager
         else
             newsPic.texture = newsPics[currentNewsIndex];
 
-        newsText.text = news.ChineseCN[currentNewsIndex].title;
+        newsText.text = Entries[currentNewsIndex].title;
         if(newsPics.Count < next + 1)
             newsPic2.texture = null;
         else
             newsPic2.texture = newsPics[next];
-        newsText2.text = news.ChineseCN[next].title;
+        newsText2.text = Entries[next].title;
         currentNewsIndex = next;
         textCount.text = $"{currentNewsIndex + 1}/{GetMax()}";
 
@@ -162,7 +168,8 @@ public class NewsManager : Manager
 
     public void OnNewsClick()
     {
-        Application.OpenURL(news.ChineseCN[currentNewsIndex].url.Replace("ygobbs.com", "ygobbs2.com"));
+        if (currentNewsIndex < 0 || currentNewsIndex >= GetMax()) return;
+        Application.OpenURL(Entries[currentNewsIndex].url.Replace("ygobbs.com", "ygobbs2.com"));
     }
 
     public void OnClose()

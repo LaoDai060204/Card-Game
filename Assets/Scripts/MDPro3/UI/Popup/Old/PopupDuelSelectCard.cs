@@ -274,13 +274,13 @@ namespace MDPro3.UI
                             }
                             else
                             {
-                                var selections = new List<string>() { InterString.Get("效果选择") };
+                                var selections = new List<string>() { InterString.Get("Effect Selection") };
                                 var responses = new List<int> { };
                                 for (var i = 0; i < mono.card.effects.Count; i++)
                                 {
                                     var desc = mono.card.effects[i].desc;
                                     if (desc.Length <= 2)
-                                        desc = InterString.Get("发动效果");
+                                        desc = InterString.Get("Activate Effect");
                                     selections.Add(desc);
                                     responses.Add(mono.card.effects[i].ptr);
                                 }
@@ -323,19 +323,19 @@ namespace MDPro3.UI
 
                     int response = 0;
                     bool needSend = true;
-                    if (hint == InterString.Get("选择效果发动。"))
+                    if (hint == InterString.Get("Select an optional effect to activate."))
                     {
                         if (selectedCard.card.effects.Count == 1)
                             response = selectedCard.card.effects[0].ptr;
                         else
                         {
-                            var selections = new List<string>() { InterString.Get("效果选择") };
+                            var selections = new List<string>() { InterString.Get("Effect Selection") };
                             var responses = new List<int> { };
                             for (var i = 0; i < selectedCard.card.effects.Count; i++)
                             {
                                 var desc = selectedCard.card.effects[i].desc;
                                 if (desc.Length <= 2)
-                                    desc = InterString.Get("发动效果");
+                                    desc = InterString.Get("Activate Effect");
                                 selections.Add(desc);
                                 responses.Add(selectedCard.card.effects[i].ptr);
                             }
@@ -397,8 +397,8 @@ namespace MDPro3.UI
                 case GameMessage.AnnounceCard:
                     var ss = new List<string>()
                     {
-                        InterString.Get("请输入关键字："),
-                        InterString.Get("搜索"),
+                        InterString.Get("Please enter a keyword:"),
+                        InterString.Get("Search"),
                         string.Empty,
                         string.Empty
                     };

@@ -368,7 +368,7 @@ namespace MDPro3.Duel
             var nextPack = OcgCore.GetNextPackage();
             if(nextPack == null)
                 return UniTask.CompletedTask;
-            //仅检测盖卡打开
+            //Only detect facedown cards being flipped face-up.
             if ((GameMessage)nextPack.Function != GameMessage.Chaining)
                 return UniTask.CompletedTask;
 

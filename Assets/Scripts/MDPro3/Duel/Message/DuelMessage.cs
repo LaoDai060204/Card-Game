@@ -435,7 +435,7 @@ namespace MDPro3.Duel
             }
 
             if (player == 7)
-                name = InterString.Get("观战者");
+                name = InterString.Get("Spectator");
             if (name != string.Empty)
                 name += ": ";
 
@@ -509,7 +509,7 @@ namespace MDPro3.Duel
 
         protected override async UniTask GameMessage_Retry(BinaryReader reader)
         {
-            MessageManager.Cast(InterString.Get("游戏出错，请重试。或者保存回放并联系开发者。"));
+            MessageManager.Cast(InterString.Get("Game error, please try again. Or save the Replay and contact the Developer."));
             //Todo Show SaveReplay.
             await dispatcher.RetryMessage();
         }
@@ -576,12 +576,12 @@ namespace MDPro3.Duel
                 if (cookie_matchKill > 0)
                 {
                     winReason = CardsManager.Get(cookie_matchKill).Name;
-                    endingReason = InterString.Get("比赛胜利，卡片：[?]", winReason);
+                    endingReason = InterString.Get("Match won by card: [?]", winReason);
                 }
                 else
                 {
                     winReason = StringHelper.Get("victory", winType);
-                    endingReason = InterString.Get("游戏胜利，原因：[?]", winReason);
+                    endingReason = InterString.Get("Victory, Reason: [?]", winReason);
                 }
             }
             else
@@ -591,17 +591,17 @@ namespace MDPro3.Duel
                 if (cookie_matchKill > 0)
                 {
                     winReason = CardsManager.Get(cookie_matchKill).Name;
-                    endingReason = InterString.Get("比赛败北，卡片：[?]", winReason);
+                    endingReason = InterString.Get("Match lost to card: [?]", winReason);
                 }
                 else
                 {
                     winReason = StringHelper.Get("victory", winType);
-                    endingReason = InterString.Get("游戏败北，原因：[?]", winReason);
+                    endingReason = InterString.Get("Defeat, reason: [?]", winReason);
                 }
             }
 
             duelBGManager.DuelEndEvent();
-            //防止对方在更换副卡组时拔螺丝
+            //Block input while the opponent is changing their Side Deck.
             UIManager.UIBlackOut(Core.TransitionTime);
             Core.GetUI<OcgCoreUI>().CG.blocksRaycasts = true;
             Core.GetUI<OcgCoreUI>().CG.alpha = 1f;
@@ -613,7 +613,7 @@ namespace MDPro3.Duel
             }
             else if (winType >= 0x10)
             {
-                if (winType == 0x10)//被封印的艾克佐迪亚
+                if (winType == 0x10)//Exodia the Forbidden One
                 {
                     static void Action(ElementObjectManager mner)
                     {
@@ -625,47 +625,47 @@ namespace MDPro3.Duel
                     }
                     await duelBGManager.PlaySpecialWin("33396948", Action);
                 }
-                else if (winType == 0x11)//终焉的倒计时
+                else if (winType == 0x11)//Final Countdown
                     await duelBGManager.PlayCommonSpecialWin(new int[] { 95308449 });
-                else if (winType == 0x12)//毒蛇神 维诺米纳迦
+                else if (winType == 0x12)//Vennominaga the Deity of Poisonous Snakes
                     await duelBGManager.PlayCommonSpecialWin(new int[] { 8062132 });
-                else if (winType == 0x13)//光之创造神 哈拉克提
+                else if (winType == 0x13)//Holactie the Creator of Light
                     await duelBGManager.PlayCommonSpecialWin(new int[] { 10000040 });
-                else if (winType == 0x14)//究极封印神 艾克佐迪奥斯
+                else if (winType == 0x14)//Exodius the Ultimate Forbidden Lord
                     await duelBGManager.PlayCommonSpecialWin(new int[] { 13893596 });
-                else if (winType == 0x15)//通灵盘
+                else if (winType == 0x15)//Destiny Board
                     //await duelBGManager.PlaySpecialWin("40771118");
                     await duelBGManager.PlaySpecialWin("94212438");
-                else if (winType == 0x16)//最终一战！
+                else if (winType == 0x16)//Last Turn
                     await duelBGManager.PlayCommonSpecialWin(new int[] { 28566710 });
-                else if (winType == 0x17)//No.88 机关傀儡-命运狮子
+                else if (winType == 0x17)//Number 88: Gimmick Puppet of Leo
                     await duelBGManager.PlayCommonSpecialWin(new int[] { 48995978 });
-                else if (winType == 0x18)//混沌No.88 机关傀儡-灾厄狮子
+                else if (winType == 0x18)//Number C88: Gimmick Puppet Disaster Leo
                     await duelBGManager.PlayCommonSpecialWin(new int[] { 6165656 });
-                else if (winType == 0x19)//头奖壶7
+                else if (winType == 0x19)//Jackpot 7
                     await duelBGManager.PlayCommonSpecialWin(new int[] { 81171949, 81171949, 81171949 });
-                else if (winType == 0x1A)//魂之接力
+                else if (winType == 0x1A)//Relay Soul
                     await duelBGManager.PlayCommonSpecialWin(new int[] { 42776960 });
-                else if (winType == 0x1B)//鬼计惰天使
+                else if (winType == 0x1B)//Ghostrick Angel of Mischief
                     await duelBGManager.PlaySpecialWin("53334641");
-                else if (winType == 0x1C)//幻煌龙的天涡
+                else if (winType == 0x1C)//Phantasm Spiral Assault
                     await duelBGManager.PlayCommonSpecialWin(new int[] { 97795930 });
-                else if (winType == 0x1D)//方程式运动员胜利团队
+                else if (winType == 0x1D)//F.A. Winners
                     await duelBGManager.PlayCommonSpecialWin(new int[] { 69553552 });
-                else if (winType == 0x1E)//飞行象
+                else if (winType == 0x1E)//Flying Elephant
                     await duelBGManager.PlayCommonSpecialWin(new int[] { 66765023 });
-                else if (winType == 0x1F)//守护神 艾克佐迪亚
+                else if (winType == 0x1F)//Exodia, the Legendary Defender
                     await duelBGManager.PlayCommonSpecialWin(new int[] { 5008836 });
-                else if (winType == 0x20)//真艾克佐迪亚
+                else if (winType == 0x20)//True Exodia
                     await duelBGManager.PlayCommonSpecialWin(new int[] { 37984331 });
-                else if (winType == 0x21)//混沌虚数No.1000 梦幻虚光神 原数天灵·原数天地
+                else if (winType == 0x21)//Number iC1000: Numerounius Numerounia
                     await duelBGManager.PlayCommonSpecialWin(new int[] { 15862758 });
-                else if (winType == 0x22)//席取-六双丸
+                else if (winType == 0x22)//Musical Sumo Dice Games
                     await duelBGManager.PlaySpecialWin("96637156");
-                else if (winType == 0x23)//火器的祝台
+                else if (winType == 0x23)//Summer Schoolwork Successful!
                     await duelBGManager.PlayCommonSpecialWin(new int[] { 77751766 });
                 else
-                    MessageManager.Cast(InterString.Get("请联系开发者修复这张特殊胜利的卡。"));
+                    MessageManager.Cast(InterString.Get("Please contact the developers to fix this special victory card."));
             }
 
             if (duelResult == DuelResult.Win && inPuzzle && Program.instance.puzzle.currentPuzzle != null)
@@ -759,7 +759,7 @@ namespace MDPro3.Duel
 
         protected override async UniTask GameMessage_PosChange(BinaryReader reader)
         {
-            ES_hint = StringHelper.GetUnsafe(1600);//卡片改变了表示形式
+            ES_hint = StringHelper.GetUnsafe(1600);//The card changed its battle position.
             var code = reader.ReadInt32();
             var from = reader.ReadGPS();
             var card = Core.GCS_Get(from);
@@ -784,7 +784,7 @@ namespace MDPro3.Duel
 
         protected override UniTask GameMessage_Set(BinaryReader reader)
         {
-            ES_hint = StringHelper.GetUnsafe(1601);//盖放了卡片
+            ES_hint = StringHelper.GetUnsafe(1601);//A card was Set.
             var effect = ABLoader.LoadMasterDuelGameObject("fxp_som_mgctrpfld_001");
             effect.transform.position = lastMoveCard.model.transform.position;
             UnityEngine.Object.Destroy(effect, 3f);
@@ -800,7 +800,7 @@ namespace MDPro3.Duel
             var to = reader.ReadGPS();
 
             if(from.controller != to.controller)
-                ES_hint = StringHelper.GetUnsafe(1602);//卡的控制权改变了
+                ES_hint = StringHelper.GetUnsafe(1602);//Control of the card changed.
 
             var from2 = new GPS
             {
@@ -852,9 +852,9 @@ namespace MDPro3.Duel
             var se = "SE_LAND_NORMAL";
 
             card.SetCode(code);
-            card.AddStringTail(InterString.Get("通常召唤登场"));
+            card.AddStringTail(InterString.Get("Normal Summoned"));
             card.AnimationPosition();
-            ES_hint = InterString.Get("「[?]」通常召唤宣言时", card.GetData().Name);
+            ES_hint = InterString.Get("\"[?]\" is Normal Summoned", card.GetData().Name);
 
             if (card.GetData().Level > 6)
             {
@@ -917,7 +917,7 @@ namespace MDPro3.Duel
 
         protected override UniTask GameMessage_Summoned(BinaryReader reader)
         {
-            ES_hint = StringHelper.GetUnsafe(1604);//怪兽召唤成功
+            ES_hint = StringHelper.GetUnsafe(1604);//A monster was successfully Normal Summoned.
 
             return UniTask.CompletedTask;
         }
@@ -950,7 +950,7 @@ namespace MDPro3.Duel
 
             card.SetCode(code);
             card.AnimationPosition();
-            ES_hint = InterString.Get("「[?]」特殊召唤宣言时", card.GetData().Name);
+            ES_hint = InterString.Get("\"[?]\" is Special Summoned", card.GetData().Name);
 
             var isExtraDeckMonster = card.GetData().HasType(CardType.Fusion)
                 || card.GetData().HasType(CardType.Synchro)
@@ -1055,7 +1055,7 @@ namespace MDPro3.Duel
 
         protected override UniTask GameMessage_SpSummoned(BinaryReader reader)
         {
-            ES_hint = StringHelper.GetUnsafe(1606);//怪兽特殊召唤成功
+            ES_hint = StringHelper.GetUnsafe(1606);//A monster was successfully Special Summoned.
 
             return UniTask.CompletedTask;
         }
@@ -1076,7 +1076,7 @@ namespace MDPro3.Duel
             card.SetCode(code);
             gps.position = (int)CardPosition.FaceUpAttack;
             card.RefreshData();
-            ES_hint = InterString.Get("「[?]」反转召唤宣言时", card.GetData().Name);
+            ES_hint = InterString.Get("\"[?]\"is Flip Summoned", card.GetData().Name);
             if (Core.GetAutoInfo())
                 Core.GetUI<OcgCoreUI>().CardDescription.Show(card, card.GetMaterial());
             materialCards.Clear();
@@ -1087,7 +1087,7 @@ namespace MDPro3.Duel
 
         protected override UniTask GameMessage_FlipSummoned(BinaryReader reader)
         {
-            ES_hint = StringHelper.GetUnsafe(1608);//怪兽反转召唤成功
+            ES_hint = StringHelper.GetUnsafe(1608);//A monster was successfully Flip Summoned.
 
             return UniTask.CompletedTask;
         }
@@ -1107,7 +1107,7 @@ namespace MDPro3.Duel
             cardsInChain.Add(card);
             codesInChain.Add(code);
             controllerInChain.Add(gps.controller);
-            ES_hint = InterString.Get("「[?]」被发动时", card.GetData().Name);
+            ES_hint = InterString.Get("\"[?]\" is Activated", card.GetData().Name);
             if (gps.InMyControl())
             {
                 if (!myActivated.Contains(code))
@@ -1225,7 +1225,7 @@ namespace MDPro3.Duel
             }
 
             attackingCard = attackCard;
-            ES_hint = InterString.Get("「[?]」攻击时", attackCard.GetData().Name);
+            ES_hint = InterString.Get("\"[?]\" attacks", attackCard.GetData().Name);
             Vector3 endPosition;
             var attackedCard = Core.GCS_Get(to);
             var finalBlow = false;
@@ -1275,7 +1275,7 @@ namespace MDPro3.Duel
 
         protected override UniTask GameMessage_AttackDisabled(BinaryReader reader)
         {
-            ES_hint = InterString.Get("攻击被无效时");
+            ES_hint = InterString.Get("Attack negated");
             duelBGManager.HideAttackLine();
             duelBGManager.HideDuelFinalBlowText();
 
@@ -1546,13 +1546,13 @@ namespace MDPro3.Duel
             {
                 life0 -= value;
                 if(currentMessage == GameMessage.Damage)
-                    ES_hint = InterString.Get("我方受到伤害时");
+                    ES_hint = InterString.Get("You take damage");
             }
             else
             {
                 life1 -= value;
                 if (currentMessage == GameMessage.Damage)
-                    ES_hint = InterString.Get("对方受到伤害时");
+                    ES_hint = InterString.Get("Your opponent takes damage");
             }
 
             if(life0 <= 0 || life1 <= 0)
@@ -1582,12 +1582,12 @@ namespace MDPro3.Duel
             if(player == 0)
             {
                 life0 += value;
-                ES_hint = InterString.Get("我方生命值回复时");
+                ES_hint = InterString.Get("Your LP increase");
             }
             else
             {
                 life1 += value;
-                ES_hint = InterString.Get("对方生命值回复时");
+                ES_hint = InterString.Get("Your opponent's LP increase");
             }
 
             duelBGManager.OnLifePointsChanged(0, life0);
@@ -1688,9 +1688,9 @@ namespace MDPro3.Duel
                 {
                     var data = reader.ReadByte();
                     if (data == 1)
-                        MessageManager.Cast(InterString.Get("硬币正面"));
+                        MessageManager.Cast(InterString.Get("Heads"));
                     else
-                        MessageManager.Cast(InterString.Get("硬币反面"));
+                        MessageManager.Cast(InterString.Get("Tails"));
                 }
             }
         }
@@ -1756,7 +1756,7 @@ namespace MDPro3.Duel
                 for(var i = 0; i < count; i++)
                 {
                     var data = reader.ReadByte();
-                    MessageManager.Cast(InterString.Get("骰子结果：[?]", data.ToString()));
+                    MessageManager.Cast(InterString.Get("Dice Result: [?]", data.ToString()));
                 }
             }
         }
@@ -1764,7 +1764,7 @@ namespace MDPro3.Duel
         protected override async UniTask GameMessage_Draw(BinaryReader reader)
         {
             var player = LocalPlayer(reader.ReadByte());
-            ES_hint = player == 0 ? InterString.Get("我方抽卡时") : InterString.Get("对方抽卡时");
+            ES_hint = player == 0 ? InterString.Get("You draw") : InterString.Get("Your opponent draws");
             var count = reader.ReadByte();
             var deckCount = Core.GetLocationCardCount(CardLocation.Deck, (uint)player);
             var handCount = Core.GetLocationCardCount(CardLocation.Hand, (uint)player);
@@ -1867,7 +1867,7 @@ namespace MDPro3.Duel
 
             if (pValue == 38723936)
             {
-                valString = InterString.Get("不能确认墓地中的卡");
+                valString = InterString.Get("You cannot view cards in the Graveyard");
                 if (player == 0)
                 {
                     if (pType == 6)
@@ -1883,12 +1883,12 @@ namespace MDPro3.Duel
             if (pType == 6)
             {
                 if (pValue < 10000 || !cardList.AddAttachedEffect(pValue >> 4, player))
-                    PrintDuelLog(InterString.Get(player == 0 ? "我方状态：[?]" : "对方状态：[?]", valString));
+                    PrintDuelLog(InterString.Get(player == 0 ? "Your status: [?]" : "Opponent's Status: [?]", valString));
             }
             else if (pType == 7)
             {
                 if (pValue < 10000 || !cardList.RemoveAttachedEffect(pValue >> 4, player))
-                    PrintDuelLog(InterString.Get(player == 0 ? "我方状态结束：[?]" : "对方状态结束：[?]", valString));
+                    PrintDuelLog(InterString.Get(player == 0 ? "Your status ended: [?]" : "Opponent's status ended: [?]", valString));
             }
 
             return UniTask.CompletedTask;
@@ -1909,24 +1909,24 @@ namespace MDPro3.Duel
             switch (cType)
             {
                 case 1:
-                    card.RemoveStringTail(InterString.Get("数字记录："));
-                    card.AddStringTail(InterString.Get("数字记录：") + value);
+                    card.RemoveStringTail(InterString.Get("Number Record:"));
+                    card.AddStringTail(InterString.Get("Number Record:") + value);
                     break;
                 case 2:
-                    card.RemoveStringTail(InterString.Get("卡片记录："));
-                    card.AddStringTail(InterString.Get("卡片记录：") + CardsManager.Get(value).Name);
+                    card.RemoveStringTail(InterString.Get("Card Record:"));
+                    card.AddStringTail(InterString.Get("Card Record:") + CardsManager.Get(value).Name);
                     break;
                 case 3:
-                    card.RemoveStringTail(InterString.Get("种族记录："));
-                    card.AddStringTail(InterString.Get("种族记录：") + StringHelper.Race(value));
+                    card.RemoveStringTail(InterString.Get("Type Record:"));
+                    card.AddStringTail(InterString.Get("Type Record:") + StringHelper.Race(value));
                     break;
                 case 4:
-                    card.RemoveStringTail(InterString.Get("属性记录："));
-                    card.AddStringTail(InterString.Get("属性记录：") + StringHelper.Attribute(value));
+                    card.RemoveStringTail(InterString.Get("Attribute Record:"));
+                    card.AddStringTail(InterString.Get("Attribute Record:") + StringHelper.Attribute(value));
                     break;
                 case 5:
-                    card.RemoveStringTail(InterString.Get("数字记录："));
-                    card.AddStringTail(InterString.Get("数字记录：") + value);
+                    card.RemoveStringTail(InterString.Get("Number Record:"));
+                    card.AddStringTail(InterString.Get("Number Record:") + value);
                     break;
                 case 6:
                     card.AddStringTail(StringHelper.Get(value));
@@ -1954,30 +1954,30 @@ namespace MDPro3.Duel
             else if (type == 3)
                 ES_selectHint = StringHelper.Get(data);
             else if (type == 4)
-                PrintDuelLog(InterString.Get("效果选择：[?]", StringHelper.Get(data)));
+                PrintDuelLog(InterString.Get("Effect Choose：[?]", StringHelper.Get(data)));
             else if (type == 5)
                 PrintDuelLog(StringHelper.Get(data));
             else if (type == 6)
-                PrintDuelLog(InterString.Get("种族选择：[?]", StringHelper.Race(data)));
+                PrintDuelLog(InterString.Get("Select Type: [?]", StringHelper.Race(data)));
             else if (type == 7)
-                PrintDuelLog(InterString.Get("属性选择：[?]", StringHelper.Attribute(data)));
+                PrintDuelLog(InterString.Get("Select Attribute: [?]", StringHelper.Attribute(data)));
             else if (type == 8)
             {
                 Program.instance.message_.CastCard(data);
-                lastDuelLog = InterString.Get("宣言卡片：[?]", CardsManager.Get(data).Name);
+                lastDuelLog = InterString.Get("Declaration Card: [?]", CardsManager.Get(data).Name);
             }
             else if (type == 9)
-                PrintDuelLog(InterString.Get("数字选择：[?]", data.ToString()));
+                PrintDuelLog(InterString.Get("Select Number: [?]", data.ToString()));
             else if (type == 10)
             {
                 Program.instance.message_.CastCard(data);
-                lastDuelLog = InterString.Get("效果适用：[?]", CardsManager.Get(data).Name);
+                lastDuelLog = InterString.Get("Effect: [?]", CardsManager.Get(data).Name);
             }
             else if (type == 11)
             {
                 if (player == 1)
                     data = (data >> 16) | (data << 16);
-                PrintDuelLog(InterString.Get("区域选择：[?]", StringHelper.Zone(data)));
+                PrintDuelLog(InterString.Get("Select Zone: [?]", StringHelper.Zone(data)));
             }
             ES_selectCardFromFieldFirstFlag = (type == 3 && data == 575);
 
@@ -2123,7 +2123,7 @@ namespace MDPro3.Duel
             if (listShow)
             {
                 Core.GetUI<OcgCoreUI>().ShowPopupSelectCard
-                    (InterString.Get("确认卡片：[?]张。", count.ToString()), confirmCards, 0, 0, true, true);
+                    (InterString.Get("Confirm Cards: [?].", count.ToString()), confirmCards, 0, 0, true, true);
                 await UniTask.WaitUntil(() => dispatcher.playerResponed);
             }
             else
@@ -2150,7 +2150,7 @@ namespace MDPro3.Duel
                 return;
             }
             card.SetCode(code);
-            PrintDuelLog(InterString.Get("确认卡片：[?]", CardsManager.Get(code).Name));
+            PrintDuelLog(InterString.Get("Confirm Card: [?]", CardsManager.Get(code).Name));
             await card.AnimationConfirm(0).WaitAsync();
         }
 
@@ -2426,7 +2426,7 @@ namespace MDPro3.Duel
             ES_min = reader.ReadByte();
 
             var available = reader.ReadUInt32();
-            var selections = new List<string>() { InterString.Get("宣言种族") };
+            var selections = new List<string>() { InterString.Get("Declare Type") };
             var responses = new List<int>();
             for (int i = 0; i < (uint)CardRace.Count; i++)
             {
@@ -2453,7 +2453,7 @@ namespace MDPro3.Duel
             ES_min = reader.ReadByte();
 
             var available = reader.ReadUInt32();
-            var selections = new List<string>() { InterString.Get("宣言属性") };
+            var selections = new List<string>() { InterString.Get("Declare Attribute") };
             var responses = new List<int>();
             for (int i = 0; i < (uint)CardAttribute.Count; i++)
             {
@@ -2480,7 +2480,7 @@ namespace MDPro3.Duel
             var count = reader.ReadByte();
             ES_min = 1;
 
-            var selections = new List<string>() { InterString.Get("宣言数字") };
+            var selections = new List<string>() { InterString.Get("Declare Number") };
             var responses = new List<int>();
             for (int i = 0; i < count; i++)
             {
@@ -2507,8 +2507,8 @@ namespace MDPro3.Duel
                 ES_searchCodes.Add(reader.ReadInt32());
             var selections = new List<string>()
                     {
-                        InterString.Get("请输入关键字："),
-                        InterString.Get("搜索"),
+                        InterString.Get("Please enter a keyword:"),
+                        InterString.Get("Search"),
                         string.Empty,
                         string.Empty
                     };
@@ -2537,7 +2537,7 @@ namespace MDPro3.Duel
                     continue;
                 }
                 card.SetCode(code);
-                card.AddButton((i << 16) + 0, InterString.Get("召唤"), ButtonType.Summon);
+                card.AddButton((i << 16) + 0, InterString.Get("Summon"), ButtonType.Summon);
             }
 
             count = reader.ReadByte();
@@ -2553,9 +2553,9 @@ namespace MDPro3.Duel
                 }
                 card.SetCode(code);
                 if (card.InPendulumZone())
-                    card.AddButton((i << 16) + 1, InterString.Get("灵摆召唤"), ButtonType.PenSummon);
+                    card.AddButton((i << 16) + 1, InterString.Get("Pendulum Summon"), ButtonType.PenSummon);
                 else
-                    card.AddButton((i << 16) + 1, InterString.Get("特殊召唤"), ButtonType.SpSummon);
+                    card.AddButton((i << 16) + 1, InterString.Get("Special Summon"), ButtonType.SpSummon);
             }
 
             count = reader.ReadByte();
@@ -2571,9 +2571,9 @@ namespace MDPro3.Duel
                 }
                 card.SetCode(code);
                 if (card.p.InPosition(CardPosition.Defence))
-                    card.AddButton((i << 16) + 2, InterString.Get("变为攻击表示"), ButtonType.ToAttackPosition);
+                    card.AddButton((i << 16) + 2, InterString.Get("Change to Attack Position"), ButtonType.ToAttackPosition);
                 else
-                    card.AddButton((i << 16) + 2, InterString.Get("变为守备表示"), ButtonType.ToDefensePosition);
+                    card.AddButton((i << 16) + 2, InterString.Get("Change to Defense Position"), ButtonType.ToDefensePosition);
             }
 
             count = reader.ReadByte();
@@ -2585,7 +2585,7 @@ namespace MDPro3.Duel
                 if (card != null)
                 {
                     card.SetCode(code);
-                    card.AddButton((i << 16) + 3, InterString.Get("设置"), ButtonType.SetMonster);
+                    card.AddButton((i << 16) + 3, InterString.Get("Set (action)"), ButtonType.SetMonster);
                 }
             }
 
@@ -2598,7 +2598,7 @@ namespace MDPro3.Duel
                 if (card != null)
                 {
                     card.SetCode(code);
-                    card.AddButton((i << 16) + 4, InterString.Get("设置"), ButtonType.SetSpell);
+                    card.AddButton((i << 16) + 4, InterString.Get("Set (action)"), ButtonType.SetSpell);
                 }
             }
 
@@ -2614,7 +2614,7 @@ namespace MDPro3.Duel
                 {
                     card.SetCode(code);
                     if (descP == 1160)
-                        card.AddButton((i << 16) + 5, InterString.Get("灵摆发动"), ButtonType.SetPendulum);
+                        card.AddButton((i << 16) + 5, InterString.Get("Activate as Pendulum Scale"), ButtonType.SetPendulum);
                     else
                     {
                         var eff = new Effect
@@ -2623,7 +2623,7 @@ namespace MDPro3.Duel
                             desc = desc
                         };
                         card.effects.Add(eff);
-                        card.AddButton((i << 16) + 5, InterString.Get("发动效果"), ButtonType.Activate);
+                        card.AddButton((i << 16) + 5, InterString.Get("Activate Effect"), ButtonType.Activate);
                     }
                 }
             }
@@ -2676,7 +2676,7 @@ namespace MDPro3.Duel
                         desc = desc
                     };
                     card.effects.Add(eff);
-                    card.AddButton((i << 16) + 0, InterString.Get("发动效果"), ButtonType.Activate);
+                    card.AddButton((i << 16) + 0, InterString.Get("Activate Effect"), ButtonType.Activate);
                 }
             }
             count = reader.ReadByte();
@@ -2689,7 +2689,7 @@ namespace MDPro3.Duel
                 if (card != null)
                 {
                     card.SetCode(code);
-                    card.AddButton((i << 16) + 1, InterString.Get("攻击"), ButtonType.Battle);
+                    card.AddButton((i << 16) + 1, InterString.Get("Attack"), ButtonType.Battle);
                 }
             }
             foreach (var c in cards)
@@ -2720,13 +2720,13 @@ namespace MDPro3.Duel
             /*var player = LocalPlayer(*/reader.ReadByte()/*)*/;
 
             var desc = StringHelper.Get(reader.ReadInt32());
-            var title = InterString.Get("选择");
+            var title = InterString.Get("Select");
             var selections = new List<string>
                     {
                         title,
                         desc,
-                        InterString.Get("是"),
-                        InterString.Get("否")
+                        InterString.Get("Yes"),
+                        InterString.Get("No")
                     };
 
             void yes()
@@ -2773,16 +2773,16 @@ namespace MDPro3.Duel
             var forReplaceFirst = new Regex("\\[%ls\\]");
             if (cr == 0)
             {
-                desc = StringHelper.Get(200);//是否在[%ls]发动[%ls]的效果？
+                desc = StringHelper.Get(200);//Activate the effect of [%ls] in [%ls]?
                 desc = forReplaceFirst.Replace(desc, StringHelper.FormatLocation(gps), 1);
                 desc = ES_hint + "，" + forReplaceFirst.Replace(desc, displayname, 1);
             }
             else if (cr == 221)
             {
-                desc = StringHelper.Get(221);//是否在[%ls]发动[%ls]的诱发类效果？
+                desc = StringHelper.Get(221);//Activate the Trigger Effect of [%ls] in [%ls]?
                 desc = forReplaceFirst.Replace(desc, StringHelper.FormatLocation(gps), 1);
                 desc = forReplaceFirst.Replace(desc, displayname, 1);
-                desc = ES_hint + "，" + desc + "\n" + StringHelper.Get(223);//稍后将询问其他可以发动的效果。
+                desc = ES_hint + ", " + desc + "\n" + StringHelper.Get(223);//Other available effects will be prompted later.
             }
             else
             {
@@ -2836,10 +2836,10 @@ namespace MDPro3.Duel
 
             var handleFlag = 0;
 
-            // 无强制发动的卡
+            // No cards have mandatory effects to activate.
             if (forceCount == 0)
             {
-                // 无关键卡
+                // No key card.
                 if (spcount == 0)
                 {
                     if (chainCondition == ChainCondition.No)
@@ -2865,7 +2865,7 @@ namespace MDPro3.Duel
                         handleFlag = 0;
                     }
                 }
-                // 有关键卡
+                // A key card is present.
                 else
                 {
                     if (chainCards.Count == 0)
@@ -2887,7 +2887,7 @@ namespace MDPro3.Duel
                     }
                 }
             }
-            // 有强制发动的卡
+            // A card has a mandatory effect to activate.
             else
             {
                 if (chainCards.Count == 1 && chainCards[0].effects.Count == 1)
@@ -2903,22 +2903,22 @@ namespace MDPro3.Duel
             //Debug.Log($"ChainCondition: {chainCondition} spcount: {spcount} handleFlag: {handleFlag}");
 
             // handleFlag
-            // -1   无卡 需要提醒
-            // 0    无卡 直接回应
-            // 1    一张卡需要处理
-            // 2    多张卡需要处理
-            // 3    一张卡需要处理（强制发动）
-            // 4    多张卡需要处理（强制发动）
+            // -1   No card; a reminder is required.
+            // 0    No card; respond immediately.
+            // 1    One card requires resolution.
+            // 2    Multiple cards require resolution.
+            // 3    One card requires resolution (mandatory activation).
+            // 4    Multiple cards require resolution (mandatory activation).
 
             switch (handleFlag)
             {
                 case 1:
                 case 2:
-                    Core.GetUI<OcgCoreUI>().ShowPopupSelectCard(InterString.Get("[?]，是否连锁？", ES_hint), chainCards, 1, 1, true, false);
+                    Core.GetUI<OcgCoreUI>().ShowPopupSelectCard(InterString.Get("\"[?]\", Chain another card or effect?", ES_hint), chainCards, 1, 1, true, false);
                     break;
                 case 3:
                 case 4:
-                    Core.GetUI<OcgCoreUI>().ShowPopupSelectCard(InterString.Get("[?]，请选择效果发动。", ES_hint), chainCards, 1, 1, false, false);
+                    Core.GetUI<OcgCoreUI>().ShowPopupSelectCard(InterString.Get("\"[?]\", please select an effect to activate.", ES_hint), chainCards, 1, 1, false, false);
                     break;
                 default:
                     Core.OnResend();
@@ -3013,7 +3013,7 @@ namespace MDPro3.Duel
             if (!string.IsNullOrEmpty(ES_selectHint))
                 ES_selectUnselectHint = ES_selectHint;
             if (string.IsNullOrEmpty(ES_selectUnselectHint))
-                ES_selectUnselectHint = InterString.Get("请选择卡片");
+                ES_selectUnselectHint = InterString.Get("Please select a card");
 
             if (allOnfield)
                 Core.FieldSelect(ES_selectUnselectHint, cardsInSelection, 1, 1, cancelable, finishable);
@@ -3201,7 +3201,7 @@ namespace MDPro3.Duel
             var count = reader.ReadByte();
             if (count > 1)
             {
-                var selections = new List<string>() { InterString.Get("效果选择") };
+                var selections = new List<string>() { InterString.Get("Effect Selection") };
                 var responses = new List<int> { };
                 for (var i = 0; i < count; i++)
                 {
@@ -3258,13 +3258,13 @@ namespace MDPro3.Duel
                 if (Es_selectMSGHintType == 3)
                 {
                     if (Es_selectMSGHintPlayer == 0)
-                        ES_selectHint = InterString.Get("请为我方的「[?]」选择位置。", CardsManager.Get(Es_selectMSGHintData).Name);
+                        ES_selectHint = InterString.Get("Select a zone for your \"[?]\".", CardsManager.Get(Es_selectMSGHintData).Name);
                     else
-                        ES_selectHint = InterString.Get("请为对方的「[?]」选择位置。", CardsManager.Get(Es_selectMSGHintData).Name);
+                        ES_selectHint = InterString.Get("Select a zone for your opponent's \"[?]\".", CardsManager.Get(Es_selectMSGHintData).Name);
                 }
             }
             else if (ES_selectHint == string.Empty)
-                ES_selectHint = StringHelper.GetUnsafe(570);//请选择要变成不能使用的卡片区域
+                ES_selectHint = StringHelper.GetUnsafe(570);//Select the card zone to make unusable.
             Core.GetUI<OcgCoreUI>().SetHint(ES_selectHint);
 
             await UniTask.WaitUntil(() => dispatcher.playerResponed);
@@ -3352,7 +3352,7 @@ namespace MDPro3.Duel
                     cardsInSelection.Add(card);
                 }
             }
-            Core.FieldSelect(InterString.Get("请取除指示物"), cardsInSelection, ES_min, ES_min, true, false);
+            Core.FieldSelect(InterString.Get("Please remove the counter(s)"), cardsInSelection, ES_min, ES_min, true, false);
 
             await UniTask.WaitUntil(() => dispatcher.playerResponed);
         }
@@ -3380,7 +3380,7 @@ namespace MDPro3.Duel
                     ES_sortSum++;
                 }
             }
-            Core.GetUI<OcgCoreUI>().ShowPopupSelectCard(InterString.Get("请为卡片排序。"), sortingCards, sortingCards.Count, sortingCards.Count, false, false);
+            Core.GetUI<OcgCoreUI>().ShowPopupSelectCard(InterString.Get("Please sort the cards."), sortingCards, sortingCards.Count, sortingCards.Count, false, false);
 
             await UniTask.WaitUntil(() => dispatcher.playerResponed);
         }

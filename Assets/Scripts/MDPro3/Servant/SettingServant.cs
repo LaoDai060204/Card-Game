@@ -162,12 +162,12 @@ namespace MDPro3.Servant
 
         private struct UpdatePreleaseHints
         {
-            public readonly string CheckingUpdate => InterString.Get("检查更新中");
-            public readonly string CheckFailure => InterString.Get("检查更新失败！");
-            public readonly string Updating => InterString.Get("正在更新，请耐心等待更待更新完成再进行其他操作。");
-            public readonly string UpdateSuccess => InterString.Get("先行卡更新成功。");
-            public readonly string UpdateFailure => InterString.Get("先行卡更新失败。");
-            public readonly string Updated => InterString.Get("先行卡已是最新版。");
+            public readonly string CheckingUpdate => InterString.Get("Checking for Updates");
+            public readonly string CheckFailure => InterString.Get("Failed to check for updates!");
+            public readonly string Updating => InterString.Get("Update in progress. Please wait for it to finish before performing any other actions.");
+            public readonly string UpdateSuccess => InterString.Get("Pre-release cards updated successfully.");
+            public readonly string UpdateFailure => InterString.Get("Failed to update pre-release cards.");
+            public readonly string Updated => InterString.Get("The pre-release cards are already up to date.");
             public readonly string Progress(float progress) 
                 => (progress * 100f).ToString("0.##") + "%";
         }
@@ -402,13 +402,13 @@ namespace MDPro3.Servant
             {
                 var selections = new List<string>()
                 {
-                    InterString.Get("下载卡包@n请输入卡包的下载地址"),
+                    InterString.Get("Download expansion@nEnter the expansion download URL"),
                     string.Empty
                 };
                 UIManager.ShowPopupInput(selections, DownloadYPK, null, TmpInputValidation.ValidationType.None);
             }
             else
-                MessageManager.Toast(InterString.Get("正在下载中，请稍后再试。"));
+                MessageManager.Toast(InterString.Get("A download is already in progress. Please try again later."));
         }
 
         private void DownloadYPK(string url)
@@ -416,7 +416,7 @@ namespace MDPro3.Servant
             string[] supportedExts = new string[] { ".zip", ".ypk" };
             if (!NetUtil.IsValidDownloadUrl(url, supportedExts))
             {
-                MessageManager.Toast(InterString.Get("无效的下载地址。"));
+                MessageManager.Toast(InterString.Get("Invalid Download URL."));
                 return;
             }
             StartCoroutine(DownloadYpkCoroutine(url));
@@ -440,49 +440,49 @@ namespace MDPro3.Servant
                 if (!Directory.Exists(Program.PATH_EXPANSIONS))
                     Directory.CreateDirectory(Program.PATH_EXPANSIONS);
                 File.WriteAllBytes(filePath, request.downloadHandler.data);
-                MessageManager.Cast(InterString.Get("下载成功。"));
+                MessageManager.Cast(InterString.Get("Download successful."));
                 Program.instance.InitializeForDataChange();
             }
             else
             {
-                //MessageManager.Cast(InterString.Get("下载失败。"));
+                //MessageManager.Cast(InterString.Get("Download failed."));
 
                 string errorMessage = string.Empty;
 
-                // 1. 证书安全问题（SSL错误）
+                // 1. Certificate security issue (SSL error)
                 if (request.result == UnityWebRequest.Result.ConnectionError &&
                     (request.error.Contains("SSL") || request.error.Contains("certificate")))
                 {
                     List<string> selections = new()
                     {
-                        InterString.Get("下载链接不安全"),
-                        InterString.Get("安全证书验证失败！连接可能不安全。@n是否继续下载？"),
-                        InterString.Get("确认"),
-                        InterString.Get("取消"),
+                        InterString.Get("The download link is not secure."),
+                        InterString.Get("Security certificate validation failed! The connection may be unsafe.@nDo you want to continue downloading?"),
+                        InterString.Get("Confirm"),
+                        InterString.Get("Cancel"),
                         Config.STRING_YES
                     };
                     unsafeDownloadUrl = url;
                     UIManager.ShowPopupYesOrNo(selections, DownloadYpkUnsafe, null);
                 }
-                // 2. 网络连接错误
+                // 2. Network connection error
                 else if (request.result == UnityWebRequest.Result.ConnectionError)
                 {
-                    errorMessage = InterString.Get("网络连接失败：") + request.error;
+                    errorMessage = InterString.Get("Network connection failed:") + request.error;
                 }
-                // 3. HTTP协议错误（404, 500等）
+                // 3. HTTP protocol error (404, 500, etc.)
                 else if (request.result == UnityWebRequest.Result.ProtocolError)
                 {
-                    errorMessage = InterString.Get("服务器返回错误：") + request.responseCode;
+                    errorMessage = InterString.Get("The server returned an error:") + request.responseCode;
                 }
-                // 4. 数据处理错误
+                // 4. Data processing error
                 else if (request.result == UnityWebRequest.Result.DataProcessingError)
                 {
-                    errorMessage = InterString.Get("数据处理错误：") + request.error;
+                    errorMessage = InterString.Get("Data processing error:") + request.error;
                 }
-                // 5. 其他未知错误
+                // 5. Other unknown error
                 else
                 {
-                    errorMessage = InterString.Get("未知错误：") + request.error;
+                    errorMessage = InterString.Get("Unknown error:") + request.error;
                 }
 
                 if(errorMessage != string.Empty)
@@ -515,11 +515,11 @@ namespace MDPro3.Servant
                 if (!Directory.Exists(Program.PATH_EXPANSIONS))
                     Directory.CreateDirectory(Program.PATH_EXPANSIONS);
                 File.WriteAllBytes(filePath, request.downloadHandler.data);
-                MessageManager.Cast(InterString.Get("下载成功。"));
+                MessageManager.Cast(InterString.Get("Download successful."));
                 Program.instance.InitializeForDataChange();
             }
             else
-                MessageManager.Cast(InterString.Get("下载失败。"));
+                MessageManager.Cast(InterString.Get("Download failed."));
             GetUI<SettingServantUI>().ButtonDownloadYPK.SetModeText(string.Empty);
             downloadingYPK = false;
         }

@@ -32,7 +32,7 @@ namespace MDPro3
             return PATH;
         }
 
-        // 供 OnlineService 开机同步使用：以服务器返回的 Rarity.json 文本覆盖本地并刷新内存缓存
+        // Used by OnlineService startup sync: replace local Rarity.json with server content and refresh the memory cache
         public static void ApplyServerContent(string json)
         {
             if (string.IsNullOrEmpty(json))

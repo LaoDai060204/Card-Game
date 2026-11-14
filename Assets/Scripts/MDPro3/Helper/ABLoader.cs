@@ -339,10 +339,10 @@ namespace MDPro3
 
         private static void FindAndSetSkeletonDataAsset(GameObject prefab, List<UnityEngine.Object> assets)
         {
-            //召唤兽 梅尔卡巴[75286622]在安卓端和iOS端的Spine动画资源丢失，
-            //临时修复方案为从已加载的AssetBundle中寻找SkeletonDataAsset并赋值。
+            //Invoked Mechaba [75286622] is missing its Spine animation resources on Android and iOS.
+            //As a workaround, find and assign SkeletonDataAsset from the loaded AssetBundle.
 
-            //傻缺科乐美在 混沌幻魔[60110982]的Root节点留了个没删的SkeletonAnimation。
+            //The root node of Armityle the Chaos Phantasm [60110982] contains an unused SkeletonAnimation.
 
             var sas = prefab.GetComponentsInChildren<SkeletonAnimation>();
             if(sas == null || sas.Length == 0 || sas.Length > 1)

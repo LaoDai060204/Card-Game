@@ -101,10 +101,10 @@ namespace MDPro3.UI
         {
             List<string> tasks = new()
             {
-                InterString.Get("退出登录"),
-                InterString.Get("是否确认退出登录？"),
-                InterString.Get("确认"),
-                InterString.Get("取消")
+                InterString.Get("Log Out"),
+                InterString.Get("Do you want to log out?"),
+                InterString.Get("Confirm"),
+                InterString.Get("Cancel")
             };
             UIManager.ShowPopupYesOrNo(tasks, ExitLogin, null);
         }

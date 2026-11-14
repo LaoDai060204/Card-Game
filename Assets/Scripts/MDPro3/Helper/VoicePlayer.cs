@@ -280,9 +280,9 @@ namespace MDPro3.Duel
         public static int GetCidDefaultAltCard(int card)
         {
             var data = CardsManager.Get(card);
-            if (card == 89631139 || data.Alias == 89631139)//青眼白龙
+            if (card == 89631139 || data.Alias == 89631139)// Blue-Eyes White Dragon
                 return 89631141;
-            if (card == 46986414 || data.Alias == 46986414)//黑魔术师
+            if (card == 46986414 || data.Alias == 46986414)// Dark Magician
                 return 46986417;
             return card;
         }

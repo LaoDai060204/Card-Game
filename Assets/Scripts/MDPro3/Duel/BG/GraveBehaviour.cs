@@ -129,12 +129,12 @@ namespace MDPro3.Duel
                 if (activate)
                 {
                     int response = -1;
-                    graveButtons.Add(new DuelButtonInfo() { response = new List<int>() { response }, hint = InterString.Get("发动效果"), type = ButtonType.Activate });
+                    graveButtons.Add(new DuelButtonInfo() { response = new List<int>() { response }, hint = InterString.Get("Activate Effect"), type = ButtonType.Activate });
                 }
                 if (spsummmon)
                 {
                     int response = -2;
-                    graveButtons.Add(new DuelButtonInfo() { response = new List<int>() { response }, hint = InterString.Get("特殊召唤"), type = ButtonType.SpSummon });
+                    graveButtons.Add(new DuelButtonInfo() { response = new List<int>() { response }, hint = InterString.Get("Special Summon"), type = ButtonType.SpSummon });
                 }
                 CreateGraveButtons();
             }
@@ -168,12 +168,12 @@ namespace MDPro3.Duel
                 if (activate)
                 {
                     int response = -1;
-                    excludeButtons.Add(new DuelButtonInfo() { response = new List<int>() { response }, hint = InterString.Get("发动效果"), type = ButtonType.Activate });
+                    excludeButtons.Add(new DuelButtonInfo() { response = new List<int>() { response }, hint = InterString.Get("Activate Effect"), type = ButtonType.Activate });
                 }
                 if (spsummmon)
                 {
                     int response = -2;
-                    excludeButtons.Add(new DuelButtonInfo() { response = new List<int>() { response }, hint = InterString.Get("特殊召唤"), type = ButtonType.SpSummon });
+                    excludeButtons.Add(new DuelButtonInfo() { response = new List<int>() { response }, hint = InterString.Get("Special Summon"), type = ButtonType.SpSummon });
                 }
                 CreateExcludeButtons();
             }

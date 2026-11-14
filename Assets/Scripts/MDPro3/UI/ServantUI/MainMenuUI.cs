@@ -103,10 +103,10 @@ namespace MDPro3.UI.ServantUI
 
             List<string> selections = new()
             {
-                InterString.Get("确认退出"),
-                InterString.Get("即将退出应用程序，@n是否确认？"),
-                InterString.Get("确认"),
-                InterString.Get("取消"),
+                InterString.Get("Confirm Exit"),
+                InterString.Get("Are you sure you want to exit the game?"),
+                InterString.Get("Confirm"),
+                InterString.Get("Cancel"),
                 Config.STRING_YES
             };
             UIManager.ShowPopupYesOrNo(selections, Program.GameQuit, null);

@@ -201,7 +201,7 @@ namespace MDPro3.Duel.YGOSharp
             uint h = 2166136261u;
             foreach (char c in s)
             {
-                byte b = (byte)c; // 假设字符串为 UTF-8 编码的字节，这里简单取低 8 位
+                byte b = (byte)c; // Use the low 8 bits of each character for the legacy byte representation.
                 h ^= b;
                 h *= 16777619u;
             }

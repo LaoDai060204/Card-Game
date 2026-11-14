@@ -11,14 +11,14 @@ namespace MDPro3
     public static class Json
     {
         /// <summary>
-        /// 从 JSON 文件加载对象。
-        /// 会自动检测目标类型 <typeparamref name="T"/> 中的可序列化成员，
-        /// 如果 JSON 中缺失对应的属性，则用默认值补齐并重写文件。
-        /// 若文件不存在，则创建包含默认值的 JSON 文件并返回默认实例。
+        /// Load an object from a JSON file.
+        /// Automatically inspect the serializable members of <typeparamref name="T"/>.
+        /// Fill missing JSON properties with defaults and rewrite the file.
+        /// If the file does not exist, create it with defaults and return the default instance.
         /// </summary>
-        /// <typeparam name="T">目标类型</typeparam>
-        /// <param name="filePath">JSON 文件路径</param>
-        /// <returns>反序列化得到的对象</returns>
+        /// <typeparam name="T">Target type</typeparam>
+        /// <param name="filePath">JSON file path</param>
+        /// <returns>Deserialized object</returns>
         public static T LoadFromFile<T>(string filePath) where T : new()
         {
             if (!File.Exists(filePath))
@@ -66,11 +66,11 @@ namespace MDPro3
         }
 
         /// <summary>
-        /// 将对象序列化为 JSON 并保存到指定路径。
+        /// Serialize an object as JSON and save it to the specified path.
         /// </summary>
-        /// <typeparam name="T">对象类型</typeparam>
-        /// <param name="filePath">保存路径</param>
-        /// <param name="obj">要保存的对象</param>
+        /// <typeparam name="T">Object type</typeparam>
+        /// <param name="filePath">Save path</param>
+        /// <param name="obj">Object to save</param>
         public static void SaveToFile<T>(string filePath, T obj)
         {
             string json = JsonConvert.SerializeObject(obj, Formatting.Indented);

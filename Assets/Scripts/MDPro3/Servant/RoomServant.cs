@@ -133,7 +133,7 @@ namespace MDPro3.Servant
         {
             if (players[SelfType] != null && players[SelfType].ready)
             {
-                MessageManager.Toast(InterString.Get("请先取消准备，再选择卡组。"));
+                MessageManager.Toast(InterString.Get("Please cancel Ready before changing your deck."));
                 return false;
             }
             return true;
@@ -322,13 +322,13 @@ namespace MDPro3.Servant
                     switch (code)
                     {
                         case 0:
-                            MessageManager.Cast(StringHelper.GetUnsafe(1403)); // 无法加入主机。
+                            MessageManager.Cast(StringHelper.GetUnsafe(1403)); // Unable to join the host.
                             break;
                         case 1:
-                            MessageManager.Cast(StringHelper.GetUnsafe(1404)); // 密码错误。
+                            MessageManager.Cast(StringHelper.GetUnsafe(1404)); // Incorrect password.
                             break;
                         case 2:
-                            MessageManager.Cast(StringHelper.GetUnsafe(1405)); // 主机拒绝了连接。
+                            MessageManager.Cast(StringHelper.GetUnsafe(1405)); // The host rejected the connection.
                             break;
                     }
                     break;
@@ -336,19 +336,19 @@ namespace MDPro3.Servant
                     var flag = code >> 28;
                     code &= 0xFFFFFFF;
                     var cardName = CardsManager.Get(code).Name;
-                    List<string> tasks = new() { StringHelper.GetUnsafe(1406) }; //无效卡组。
+                    List<string> tasks = new() { StringHelper.GetUnsafe(1406) }; //Invalid deck.
                     string task;
                     switch (flag)
                     {
                         case 1:
-                            task = StringHelper.GetUnsafe(1407); //「%ls」的数量不符合当前禁限卡表设定。
+                            task = StringHelper.GetUnsafe(1407); //The number of copies of "%ls" violates the current Forbidden and Limited List.
                             var replace = new Regex("%ls");
                             task = replace.Replace(task, cardName);
                             break;
-                        case 2: // 「%ls」为OCG独有卡，不允许在当前设定下使用。
-                        case 3: // 「%ls」为TCG独有卡，不允许在当前设定下使用。
-                        case 4: // 卡组中「%ls(%d)」无法被主机识别。
-                        case 5: // 卡组中「%ls」的总数量超过3张。
+                        case 2: // "%ls" is OCG-exclusive and is not allowed by the current settings.
+                        case 3: // "%ls" is TCG-exclusive and is not allowed by the current settings.
+                        case 4: // The host cannot recognize "%ls(%d)" in the deck.
+                        case 5: // The deck contains more than three copies of "%ls".
                             task = StringHelper.GetUnsafe(1411 + flag);
                             replace = new Regex("%ls");
                             task = replace.Replace(task, cardName);
@@ -358,10 +358,10 @@ namespace MDPro3.Servant
                                 task = replace.Replace(task, code.ToString());
                             }
                             break;
-                        case 6: // 主卡组数量应为40-60张，当前卡组数量为%d张。
-                        case 7: // 额外卡组数量应不超过15张，当前卡组数量为%d张。
-                        case 8: // 副卡组数量应不超过15张，当前卡组数量为%d张。
-                        case 9: // 有额外卡组卡片存在于主卡组，可能是额外卡组数量超过15张。
+                        case 6: // The Main Deck must contain 40-60 cards; the current deck contains %d.
+                        case 7: // The Extra Deck must contain at most 15 cards; the current deck contains %d.
+                        case 8: // The Side Deck must contain at most 15 cards; the current deck contains %d.
+                        case 9: // The Main Deck contains Extra Deck cards, possibly because the Extra Deck exceeds 15 cards.
                             task = StringHelper.GetUnsafe(1411 + flag);
                             replace = new Regex("%d");
                             deck = new Deck(Program.PATH_DECK + Config.GetConfigDeckName() + Program.EXPANSION_YDK);
@@ -380,7 +380,7 @@ namespace MDPro3.Servant
                             }
                             break;
                         default:
-                            task = StringHelper.GetUnsafe(1406); // 无效卡组。
+                            task = StringHelper.GetUnsafe(1406); // Invalid deck.
                             break;
                     }
                     tasks.Add(task);
@@ -389,7 +389,7 @@ namespace MDPro3.Servant
                 case 3:
                     tasks = new List<string>()
                     {
-                        StringHelper.GetUnsafe(1408), // 更换副卡组失败。
+                        StringHelper.GetUnsafe(1408), // Failed to change the Side Deck.
                         StringHelper.GetUnsafe(1410),
                     };
                     UIManager.ShowPopupConfirm(tasks);
@@ -409,7 +409,7 @@ namespace MDPro3.Servant
                 {
                     result.Result.transform.SetParent(Program.instance.ui_.popup, false);
                     var popupRPS = result.Result.GetComponent<UI.Popup.PopupRockPaperScissors>();
-                    popupRPS.args = new List<string> { InterString.Get("猜拳") };
+                    popupRPS.args = new List<string> { InterString.Get("Rock-Paper-Scissors") };
                     popupRPS.Show();
                 };
             }
@@ -422,11 +422,11 @@ namespace MDPro3.Servant
             List<string> selections = new List<string>
             {
                 Program.instance.currentServant == Program.instance.room ?
-                InterString.Get("猜拳获胜") :
-                InterString.Get("选择先后手"),
-                InterString.Get("选择是否由我方先手？"),
-                InterString.Get("先攻"),
-                InterString.Get("后攻")
+                InterString.Get("You won rock-paper-scissors.") :
+                InterString.Get("Choose Turn Order"),
+                InterString.Get("Choose whether you will go first or second."),
+                InterString.Get("Go First"),
+                InterString.Get("Go Second")
             };
             UIManager.ShowPopupYesOrNo(selections, () => { GoFirst(true); }, () => { GoFirst(false); });
         }
@@ -439,11 +439,11 @@ namespace MDPro3.Servant
             int meResult = r.ReadByte();
             int opResult = r.ReadByte();
             if (meResult == opResult)
-                MessageManager.Cast(InterString.Get("猜拳平局。"));
+                MessageManager.Cast(InterString.Get("It's a draw. Try again."));
             else if (meResult == 1 && opResult == 2
                 || meResult == 2 && opResult == 3
                 || meResult == 3 && opResult == 1)
-                MessageManager.Cast(InterString.Get("猜拳落败。"));
+                MessageManager.Cast(InterString.Get("You lost rock-paper-scissors."));
         }
 
         public void StocMessage_TpResult(BinaryReader r)
@@ -460,7 +460,7 @@ namespace MDPro3.Servant
         public void StocMessage_WaitingSide(BinaryReader r)
         {
             SideWaitingObserver = true;
-            MessageManager.Cast(InterString.Get("请耐心等待双方玩家更换副卡组。"));
+            MessageManager.Cast(InterString.Get("Please wait for both players to finish Side Decking."));
         }
 
         public void StocMessage_DeckCount(BinaryReader r)
@@ -519,7 +519,7 @@ namespace MDPro3.Servant
             {
                 Program.instance.deckEditor.Hide(0);
                 if(!FromHandTest)
-                    MessageManager.Cast(InterString.Get("更换副卡组成功，请等待对手更换副卡组。"));
+                    MessageManager.Cast(InterString.Get("Side Deck updated successfully. Please wait for your opponent to finish Side Decking."));
             }
 
             if (showing)

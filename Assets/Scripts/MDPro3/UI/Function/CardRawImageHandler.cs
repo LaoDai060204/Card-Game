@@ -13,7 +13,7 @@ namespace MDPro3.UI
     [RequireComponent(typeof(RawImage))]
     public class CardRawImageHandler : MonoBehaviour
     {
-        #region 字段和属性
+        #region Fields and Properties
 
         public bool cache;
         public Card card;
@@ -37,7 +37,7 @@ namespace MDPro3.UI
 
         #endregion
 
-        #region Unity生命周期
+        #region Unity Lifecycle
 
         private void Awake()
         {
@@ -56,7 +56,7 @@ namespace MDPro3.UI
 
         #endregion
 
-        #region 公共API
+        #region Public API
 
         public void SetCard(int code)
         {
@@ -136,7 +136,7 @@ namespace MDPro3.UI
 
         #endregion
 
-        #region 私有实现
+        #region Private Implementation
 
         private void ReleaseCard()
         {
@@ -244,7 +244,7 @@ namespace MDPro3.UI
             }
             catch (System.OperationCanceledException)
             {
-                // 任务被取消，不做处理
+                // The task was canceled; no further action is required.
             }
         }
 

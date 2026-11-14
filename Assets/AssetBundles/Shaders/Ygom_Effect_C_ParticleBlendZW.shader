@@ -19,7 +19,7 @@ Shader "Ygom/Effect/C_ParticleBlendZw" {
             ColorMask RGB
             Cull Off
             Lighting Off
-            ZWrite On  // 关键区别：启用深度写入
+            ZWrite On  // Enable depth writes for this shader variant.
             
             CGPROGRAM
             #pragma vertex vert
@@ -50,7 +50,7 @@ Shader "Ygom/Effect/C_ParticleBlendZw" {
                 #endif
             };
             
-            // ZTest 关键字处理
+            // Handle the ZTest keyword.
             #if defined(_ZTEST_ALWAYS)
                 #define DEPTH_TEST_MODE Always
             #elif defined(_ZTEST_NOTEQUAL)
@@ -66,7 +66,7 @@ Shader "Ygom/Effect/C_ParticleBlendZw" {
             #elif defined(_ZTEST_LESS)
                 #define DEPTH_TEST_MODE Less
             #else
-                #define DEPTH_TEST_MODE LEqual  // 默认值
+                #define DEPTH_TEST_MODE LEqual  // Default value
             #endif
             
             v2f vert (appdata_t v)
@@ -86,10 +86,10 @@ Shader "Ygom/Effect/C_ParticleBlendZw" {
             
             fixed4 frag (v2f i) : SV_Target
             {
-                // 采样纹理
+                // Sample the texture.
                 fixed4 col = 2.0f * i.color * _TintColor * tex2D(_MainTex, i.texcoord);
                 
-                // 软粒子处理
+                // Handle soft particles.
                 #ifdef SOFTPARTICLES_ON
                 float sceneZ = LinearEyeDepth(SAMPLE_DEPTH_TEXTURE_PROJ(_CameraDepthTexture, UNITY_PROJ_COORD(i.projPos)));
                 float partZ = i.projPos.z;

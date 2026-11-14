@@ -93,13 +93,13 @@ namespace MDPro3.Net
                 Debug.Log(e);
                 if(error.Contains("Authentication Error"))
                 {
-                    MessageManager.Cast(InterString.Get("MyCard登陆信息已过期，请重新登陆。"));
+                    MessageManager.Cast(InterString.Get("MyCard login information has expired. Please log in again."));
                     Config.Set("MyCardToken", Config.STRING_NO);
                     Config.Save();
                 }
                 else
                 {
-                    MessageManager.Cast(InterString.Get("MyCard登录失败。") + error);
+                    MessageManager.Cast(InterString.Get("MyCard account login failed.") + error);
                 }
                 return null;
             }
@@ -134,7 +134,7 @@ namespace MDPro3.Net
                 if (message != null)
                     returnValue.user.username = JsonUtility.FromJson<MyCardMessage>(request.downloadHandler.text).message;
                 else
-                    returnValue.user.username = InterString.Get("请检查网络连接");
+                    returnValue.user.username = InterString.Get("Please check your network connection.");
                 return returnValue;
             }
         }
@@ -497,7 +497,7 @@ namespace MDPro3.Net
         {
             static void Bad(string message)
             {
-                MessageManager.Cast(InterString.Get("MyCard: 获取用户密钥失败。请重新登录。([?])", message));
+                MessageManager.Cast(InterString.Get("MyCard: Failed to obtain the user token. Please log in again. ([?])", message));
                 throw new Exception($"Get U16 secret failed: {message}");
             }
 

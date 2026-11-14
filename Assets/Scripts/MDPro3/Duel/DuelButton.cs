@@ -153,12 +153,12 @@ namespace MDPro3.UI
 
         private void RefreshPosition()
         {
-            if (response[0] == -4) // 确认
+            if (response[0] == -4) // Confirm
             {
                 var middle = Program.instance.ui_.GetComponent<RectTransform>().sizeDelta.x / 2;
                 GetComponent<RectTransform>().anchoredPosition = new Vector2(middle + 340, 620);
             }
-            else if (response[0] == -5) // 取消
+            else if (response[0] == -5) // Cancel
             {
                 var middle = Program.instance.ui_.GetComponent<RectTransform>().sizeDelta.x / 2;
                 GetComponent<RectTransform>().anchoredPosition = new Vector2(middle - 340, 620);
@@ -241,17 +241,17 @@ namespace MDPro3.UI
                         }
                         else
                         {
-                            var selections = new List<string>() { InterString.Get("效果选择") };
+                            var selections = new List<string>() { InterString.Get("Effect Selection") };
                             var responses = new List<int> { };
                             for (var i = 0; i < cookieCard.effects.Count; i++)
                             {
                                 var desc = cookieCard.effects[i].desc;
                                 if (desc.Length <= 2)
-                                    desc = InterString.Get("发动效果");
+                                    desc = InterString.Get("Activate Effect");
                                 selections.Add(desc);
                                 responses.Add(cookieCard.effects[i].ptr);
                             }
-                            selections.Add(InterString.Get("放弃"));
+                            selections.Add(InterString.Get("Abandon"));
                             responses.Add(-233);
                             Program.instance.ocgcore.GetUI<OcgCoreUI>().ShowPopupSelection(selections, responses);
                         }
@@ -271,9 +271,9 @@ namespace MDPro3.UI
                                     break;
                                 }
                 if (type == ButtonType.Activate)
-                    Program.instance.ocgcore.GetUI<OcgCoreUI>().ShowPopupSelectCard(InterString.Get("选择效果发动。"), responseCards, 1, 1, true, false);
+                    Program.instance.ocgcore.GetUI<OcgCoreUI>().ShowPopupSelectCard(InterString.Get("Select an optional effect to activate."), responseCards, 1, 1, true, false);
                 else
-                    Program.instance.ocgcore.GetUI<OcgCoreUI>().ShowPopupSelectCard(InterString.Get("选择怪兽特殊召唤。"), responseCards, 1, 1, true, false);
+                    Program.instance.ocgcore.GetUI<OcgCoreUI>().ShowPopupSelectCard(InterString.Get("Select a monster to Special Summon."), responseCards, 1, 1, true, false);
             }
             else if (response[0] == -3)
             {

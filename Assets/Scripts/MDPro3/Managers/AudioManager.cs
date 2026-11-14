@@ -434,27 +434,27 @@ namespace MDPro3
 
         private static readonly Dictionary<int, List<int>> fieldBGMs = new()
         {
-            {1, new List<int>{ 2, 12, 29, 31 } }, //「森」「未界域－欧玛利亚大陆」「染上樱色的森林」「为白色所覆的森林」
-            {2, new List<int>{ 4, 3, 21 } }, //「齿车街」「魔导书廊」「教导的圣堂」
-            {3, new List<int>{ 1, 11 } }, //「仪式之间」「荒野的祭殿」
-            {4, new List<int>{ 5, 6 } }, //「火山」「星遺物沉眠的废墟」
-            {5, new List<int>{ 7 } }, //「异国之都」
-            {6, new List<int>{ 15, 24 } }, //「鲜彩之苍海」「辉石的洞窟」
-            {7, new List<int>{ 9 } }, //「摩天楼」
+            {1, new List<int>{ 2, 12, 29, 31 } }, //Forest, Realm of Danger!, Forest of Cherry Pink, Forest of Endless White
+            {2, new List<int>{ 4, 3, 21 } }, //Geartown, Spellbook Star Hall, Dogmatika Cathedral
+            {3, new List<int>{ 1, 11 } }, //Ritual Cage, The Desolate Temple
+            {4, new List<int>{ 5, 6 } }, //Volcano, World Legacy Ruins
+            {5, new List<int>{ 7 } }, //Foreign Capital
+            {6, new List<int>{ 15, 24 } }, //Vivid Abyssal Waters, Pyroxene Cave
+            {7, new List<int>{ 9 } }, //Night Skyscrapers
             {8, new List<int>{ 502 } }, // High School JP Championship 20260212
-            {9, new List<int>{ 16, 17 } }, //「魔偶甜点城堡」「鬼计之馆」
+            {9, new List<int>{ 16, 17 } }, //Madolche Chateau, Ghostrick Mansion
             {10, new List<int>{  } },
             {11, new List<int>{ 26, 50 } }, //Ursarctic, E-Football(MD) 20260106
-            {12, new List<int>{ 19, 25, 36 } }, //「突异变种进化研究所」「六世坏=天魔世界」「罪宝遗迹」
-            {13, new List<int>{ 14 } }, //「相剑的灵峰」
-            {14, new List<int>{ 22 } }, //「恶魔宫殿」
-            {15, new List<int>{ 10, 35 } }, //「冻结的世界」「冻结的世界」
-            {16, new List<int>{ 20, 27, 28 } }, //「古之决斗的记忆」「苏醒的天空殿」「青色眼睛的灵堂」
+            {12, new List<int>{ 19, 25, 36 } }, //Myutant Evolution Lab, Pressured Planet Wraitsoth, Ruins of the Sinful Spoils
+            {13, new List<int>{ 14 } }, //Mount Swordsoul
+            {14, new List<int>{ 22 } }, //Archfiend Palabyrinth
+            {15, new List<int>{ 10, 35 } }, //Glacial World, Glacial World
+            {16, new List<int>{ 20, 27, 28 } }, //Memories of an Ancient Duel, The Revived Sky Temple, Blue-Eyes Mausoleum
         };
 
         private static readonly Dictionary<int, List<string>> fieldColBGMs = new() // New list for Colosseum 20251203
 		{
-            {1, new List<string>{ "BGM_DUEL_EX_02_NORMAL", "BGM_DUEL_EX_02_KEYCARD", "BGM_DUEL_EX_02_CLIMAX" }}, // 角斗场
+            {1, new List<string>{ "BGM_DUEL_EX_02_NORMAL", "BGM_DUEL_EX_02_KEYCARD", "BGM_DUEL_EX_02_CLIMAX" }}, // Colosseum
 			{2, new List<string>{ "BGM_DUEL_DC01_NORMAL", "BGM_DUEL_DC01_KEYCARD", "BGM_DUEL_DC01_CLIMAX" }},    // DC 1st
 			{3, new List<string>{ "BGM_DUEL_DC02_NORMAL", "BGM_DUEL_DC02_KEYCARD", "BGM_DUEL_DC02_CLIMAX" }},    // DC 2nd
 			{4, new List<string>{ "BGM_DUEL_EX_04_NORMAL", "BGM_DUEL_EX_04_KEYCARD", "BGM_DUEL_EX_04_CLIMAX" }}, // Xyz CUP 1st
@@ -466,7 +466,7 @@ namespace MDPro3
 
         private static readonly Dictionary<int, List<string>> fieldCybBGMs = new() // New list for Cyberse 20260106
 		{
-            {1, new List<string>{ "BGM_DUEL_NORMAL_12", "BGM_DUEL_KEYCARD_12", "BGM_DUEL_CLIMAX_12" }}, // 「电脑的宇宙」
+            {1, new List<string>{ "BGM_DUEL_NORMAL_12", "BGM_DUEL_KEYCARD_12", "BGM_DUEL_CLIMAX_12" }}, // Cyber Universe
 			{2, new List<string>{ "BGM_DUEL_EX_01" }},    //World Legacy Last stage Cyberse Field 
 		};
 
@@ -477,10 +477,10 @@ namespace MDPro3
             {new List<string>{ "BGM_DUEL_EX_09_PHASE_A", "BGM_DUEL_EX_09_PHASE_B" }, new List<int>{ 504 } }, //Synchro CUP 20251203
             //{new List<string>{ "BGM_DUEL_EX_10_NORMAL", "BGM_DUEL_EX_10_KEYCARD", "BGM_DUEL_EX_10_CLIMAX" }, new List<int>{  } }, //New Event?
             
-            {new List<string>{ "BGM_DUEL_F01_ALL" }, new List<int>{ 38 } }, //「邪恶双子」
+            {new List<string>{ "BGM_DUEL_F01_ALL" }, new List<int>{ 38 } }, //Evil Twin
             {new List<string>{ "BGM_DUEL_F02_PHASE_A", "BGM_DUEL_F02_PHASE_B" }, new List<int>{ 34 } }, //Lost world 20260106
-            {new List<string>{ "BGM_DUEL_F03_PHASE_A", "BGM_DUEL_F03_PHASE_B", "BGM_DUEL_F03_PHASE_C" }, new List<int>{ 40 } }, //「闪刀行动模拟区域」
-            {new List<string>{ "BGM_DUEL_F04_PHASE_A", "BGM_DUEL_F04_PHASE_B" }, new List<int>{ 42 } }, //Despia 「烙印剧城 惨绝戏 暂定」
+            {new List<string>{ "BGM_DUEL_F03_PHASE_A", "BGM_DUEL_F03_PHASE_B", "BGM_DUEL_F03_PHASE_C" }, new List<int>{ 40 } }, //Striking Stratagem Simulation Area
+            {new List<string>{ "BGM_DUEL_F04_PHASE_A", "BGM_DUEL_F04_PHASE_B" }, new List<int>{ 42 } }, //Despia Despia, Theater of the Branded (provisional)
             {new List<string>{ "BGM_DUEL_F05_PHASE_A", "BGM_DUEL_F05_PHASE_B" }, new List<int>{ 41 } }, //Graveyard of Myriad Souls //added 20251203
             {new List<string>{ "BGM_DUEL_F06_PHASE_A", "BGM_DUEL_F06_PHASE_B" }, new List<int>{ 47 } }, //White Forest //added 20251203
             {new List<string>{ "BGM_DUEL_F07_PHASE_A", "BGM_DUEL_F07_PHASE_B" }, new List<int>{ 46 } }, //E-Football //added 20251203

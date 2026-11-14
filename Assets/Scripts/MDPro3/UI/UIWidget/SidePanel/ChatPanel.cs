@@ -123,7 +123,7 @@ namespace MDPro3.UI
             MyTag,
             Op,
             OpTag,
-            WatchMe, // 本机处于观战时的一号位
+            WatchMe, // Player-one seat while this client is spectating
             WatchMyTag,
             WatchOp,
             WatchOpTag,
@@ -293,7 +293,7 @@ namespace MDPro3.UI
                         nickName = configName;
                     break;
                 case 7: //observer
-                    nickName += InterString.Get("观战者");
+                    nickName += InterString.Get("Spectator");
                     break;
                 case 8: //system custom message, no prefix.
                     nickName += "[System]";

@@ -143,13 +143,13 @@ namespace MDPro3.UI.ServantUI
             switch (condition)
             {
                 case Condition.Duel:
-                    Title.text = InterString.Get("决斗角色");
+                    Title.text = InterString.Get("Characters in Duel");
                     break;
                 case Condition.Watch:
-                    Title.text = InterString.Get("观战角色");
+                    Title.text = InterString.Get("Characters in Spectate");
                     break;
                 case Condition.Replay:
-                    Title.text = InterString.Get("回放角色");
+                    Title.text = InterString.Get("Characters in Replay");
                     break;
             }
 

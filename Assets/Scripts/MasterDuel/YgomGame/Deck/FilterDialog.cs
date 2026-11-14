@@ -124,173 +124,173 @@ namespace YgomGame.Deck
 
 		private Coroutine m_InitializeCoroutine;
 
-		private const string Label_Frame_Normal = "\ufffd";
+		private const string Label_Frame_Normal = "Frame Normal";
 
-		private const string Label_Frame_Effect = "\ufffd";
+		private const string Label_Frame_Effect = "Frame Effect";
 
-		private const string Label_Frame_Fusion = "\ufffd";
+		private const string Label_Frame_Fusion = "Frame Fusion";
 
-		private const string Label_Frame_Ritual = "\ufffd";
+		private const string Label_Frame_Ritual = "Frame Ritual";
 
-		private const string Label_Frame_Synchro = "シ\ufffd";
+		private const string Label_Frame_Synchro = "Frame Synchro";
 
-		private const string Label_Frame_Xyz = "エ\ufffd";
+		private const string Label_Frame_Xyz = "Frame Xyz";
 
-		private const string Label_Frame_Pendulum = "ペン";
+		private const string Label_Frame_Pendulum = "Frame Pendulum";
 
-		private const string Label_Frame_Link = "リ";
+		private const string Label_Frame_Link = "Frame Link";
 
-		private const string Label_Frame_Magic = "\ufffd";
+		private const string Label_Frame_Magic = "Frame Magic";
 
-		private const string Label_Frame_Trap = "\ufffd";
+		private const string Label_Frame_Trap = "Frame Trap";
 
-		private const string Label_Attr_Light = "光";
+		private const string Label_Attr_Light = "Attr Light";
 
-		private const string Label_Attr_Dark = "闇";
+		private const string Label_Attr_Dark = "Attr Dark";
 
-		private const string Label_Attr_Water = "水";
+		private const string Label_Attr_Water = "Attr Water";
 
-		private const string Label_Attr_Fire = "炎";
+		private const string Label_Attr_Fire = "Attr Fire";
 
-		private const string Label_Attr_Earth = "地";
+		private const string Label_Attr_Earth = "Attr Earth";
 
-		private const string Label_Attr_Wind = "風";
+		private const string Label_Attr_Wind = "Attr Wind";
 
-		private const string Label_Attr_Divine = "神";
+		private const string Label_Attr_Divine = "Attr Divine";
 
-		private const string Label_Tribe_SpellCaster = "魔\ufffd";
+		private const string Label_Tribe_SpellCaster = "Tribe Spell Caster";
 
-		private const string Label_Tribe_Dragon = "ド\ufffd";
+		private const string Label_Tribe_Dragon = "Tribe Dragon";
 
-		private const string Label_Tribe_Zombie = "アン";
+		private const string Label_Tribe_Zombie = "Tribe Zombie";
 
-		private const string Label_Tribe_Warrior = "戦";
+		private const string Label_Tribe_Warrior = "Tribe Warrior";
 
-		private const string Label_Tribe_BeastWarrior = "獣\ufffd";
+		private const string Label_Tribe_BeastWarrior = "Tribe Beast Warrior";
 
-		private const string Label_Tribe_Beast = "\ufffd";
+		private const string Label_Tribe_Beast = "Tribe Beast";
 
-		private const string Label_Tribe_WingedBeast = "鳥";
+		private const string Label_Tribe_WingedBeast = "Tribe Winged Beast";
 
-		private const string Label_Tribe_Machine = "機";
+		private const string Label_Tribe_Machine = "Tribe Machine";
 
-		private const string Label_Tribe_Fiend = "悪";
+		private const string Label_Tribe_Fiend = "Tribe Fiend";
 
-		private const string Label_Tribe_Fairy = "天";
+		private const string Label_Tribe_Fairy = "Tribe Fairy";
 
-		private const string Label_Tribe_Insect = "昆";
+		private const string Label_Tribe_Insect = "Tribe Insect";
 
-		private const string Label_Tribe_Dinosaur = "恐";
+		private const string Label_Tribe_Dinosaur = "Tribe Dinosaur";
 
-		private const string Label_Tribe_Reptile = "爬\ufffd";
+		private const string Label_Tribe_Reptile = "Tribe Reptile";
 
-		private const string Label_Tribe_Fish = "\ufffd";
+		private const string Label_Tribe_Fish = "Tribe Fish";
 
-		private const string Label_Tribe_SeaSerpent = "海";
+		private const string Label_Tribe_SeaSerpent = "Tribe Sea Serpent";
 
-		private const string Label_Tribe_Aqua = "\ufffd";
+		private const string Label_Tribe_Aqua = "Tribe Aqua";
 
-		private const string Label_Tribe_Pyro = "\ufffd";
+		private const string Label_Tribe_Pyro = "Tribe Pyro";
 
-		private const string Label_Tribe_Thunder = "\ufffd";
+		private const string Label_Tribe_Thunder = "Tribe Thunder";
 
-		private const string Label_Tribe_Rock = "岩";
+		private const string Label_Tribe_Rock = "Tribe Rock";
 
-		private const string Label_Tribe_Plant = "植";
+		private const string Label_Tribe_Plant = "Tribe Plant";
 
-		private const string Label_Tribe_Psychic = "サイ";
+		private const string Label_Tribe_Psychic = "Tribe Psychic";
 
-		private const string Label_Tribe_Wyrm = "幻";
+		private const string Label_Tribe_Wyrm = "Tribe Wyrm";
 
-		private const string Label_Tribe_Cyberse = "サイ";
+		private const string Label_Tribe_Cyberse = "Tribe Cyberse";
 
-		private const string Label_Tribe_DivineBeast = "幻\ufffd";
+		private const string Label_Tribe_DivineBeast = "Tribe Divine Beast";
 
-		private const string Label_Lvl0 = "0";
+		private const string Label_Lvl0 = "Lvl0";
 
-		private const string Label_Lvl1 = "1";
+		private const string Label_Lvl1 = "Lvl1";
 
-		private const string Label_Lvl2 = "2";
+		private const string Label_Lvl2 = "Lvl2";
 
-		private const string Label_Lvl3 = "3";
+		private const string Label_Lvl3 = "Lvl3";
 
-		private const string Label_Lvl4 = "4";
+		private const string Label_Lvl4 = "Lvl4";
 
-		private const string Label_Lvl5 = "5";
+		private const string Label_Lvl5 = "Lvl5";
 
-		private const string Label_Lvl6 = "6";
+		private const string Label_Lvl6 = "Lvl6";
 
-		private const string Label_Lvl7 = "7";
+		private const string Label_Lvl7 = "Lvl7";
 
-		private const string Label_Lvl8 = "8";
+		private const string Label_Lvl8 = "Lvl8";
 
-		private const string Label_Lvl9 = "9";
+		private const string Label_Lvl9 = "Lvl9";
 
-		private const string Label_Lvl10 = "10";
+		private const string Label_Lvl10 = "Lvl10";
 
-		private const string Label_Lvl11 = "11";
+		private const string Label_Lvl11 = "Lvl11";
 
-		private const string Label_Lvl12 = "12";
+		private const string Label_Lvl12 = "Lvl12";
 
-		private const string Label_Lvl13 = "13";
+		private const string Label_Lvl13 = "Lvl13";
 
-		private const string Label_Spell_Normal = "通\ufffd";
+		private const string Label_Spell_Normal = "Spell Normal";
 
-		private const string Label_Spell_Field = "フィ\ufffd";
+		private const string Label_Spell_Field = "Spell Field";
 
-		private const string Label_Spell_Equip = "装\ufffd";
+		private const string Label_Spell_Equip = "Spell Equip";
 
-		private const string Label_Spell_Continuous = "永\ufffd";
+		private const string Label_Spell_Continuous = "Spell Continuous";
 
-		private const string Label_Spell_QuickPlay = "速\ufffd";
+		private const string Label_Spell_QuickPlay = "Spell Quick Play";
 
-		private const string Label_Spell_Ritual = "儀\ufffd";
+		private const string Label_Spell_Ritual = "Spell Ritual";
 
-		private const string Label_Trap_Normal = "通";
+		private const string Label_Trap_Normal = "Trap Normal";
 
-		private const string Label_Trap_Continuous = "永";
+		private const string Label_Trap_Continuous = "Trap Continuous";
 
-		private const string Label_Trap_Counter = "カウ";
+		private const string Label_Trap_Counter = "Trap Counter";
 
-		private const string Label_Rarity_Normal = "N";
+		private const string Label_Rarity_Normal = "Rarity Normal";
 
-		private const string Label_Rarity_Rare = "R";
+		private const string Label_Rarity_Rare = "Rarity Rare";
 
-		private const string Label_Rarity_SuperRare = "SR";
+		private const string Label_Rarity_SuperRare = "Rarity Super Rare";
 
-		private const string Label_Rarity_UltraRare = "UR";
+		private const string Label_Rarity_UltraRare = "Rarity Ultra Rare";
 
-		private const string Label_Style_Normal = "Normal";
+		private const string Label_Style_Normal = "Style Normal";
 
-		private const string Label_Style_Shine = "Shine";
+		private const string Label_Style_Shine = "Style Shine";
 
-		private const string Label_Style_Royal = "Royal";
+		private const string Label_Style_Royal = "Style Royal";
 
-		private const string Label_Limit_0 = "禁\ufffd";
+		private const string Label_Limit_0 = "Limit 0";
 
-		private const string Label_Limit_1 = "制\ufffd";
+		private const string Label_Limit_1 = "Limit 1";
 
-		private const string Label_Limit_2 = "準制";
+		private const string Label_Limit_2 = "Limit 2";
 
-		private const string Label_Limit_3 = "無制";
+		private const string Label_Limit_3 = "Limit 3";
 
-		private const string Label_Cutin_Exist = "有\ufffd";
+		private const string Label_Cutin_Exist = "Cutin Exist";
 
-		private const string Label_Cutin_NotExist = "無\ufffd";
+		private const string Label_Cutin_NotExist = "Cutin Not Exist";
 
-		private const string Label_Ability_Toon = "トゥ\ufffd";
+		private const string Label_Ability_Toon = "Ability Toon";
 
-		private const string Label_Ability_Dual = "デュ\ufffd";
+		private const string Label_Ability_Dual = "Ability Dual";
 
-		private const string Label_Ability_Union = "ユニ\ufffd";
+		private const string Label_Ability_Union = "Ability Union";
 
-		private const string Label_Ability_Spirit = "スピ\ufffd";
+		private const string Label_Ability_Spirit = "Ability Spirit";
 
-		private const string Label_Ability_Tuner = "チュ\ufffd";
+		private const string Label_Ability_Tuner = "Ability Tuner";
 
-		private const string Label_Ability_Reverse = "リバ\ufffd";
+		private const string Label_Ability_Reverse = "Ability Reverse";
 
-		private const string Label_Ability_SpSummon = "特殊\ufffd";
+		private const string Label_Ability_SpSummon = "Ability Sp Summon";
 
 		private SearchFilter.Setting m_setting;
 

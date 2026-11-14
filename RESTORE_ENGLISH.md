@@ -1,5 +1,9 @@
 # Restored MDPro3 English baseline
 
+This document records the initial restore at `e9ba63fa6`. The subsequent
+[deep English migration](ENGLISH_MIGRATION.md) adds English source/lookup keys
+and authored UI text while preserving the restored gameplay baseline.
+
 Restored on 2026-11-14 from **`47c3adb6e1bc966356d2585aa67d86f5868cb7bd`**,
 the snapshot immediately before the Vietnamese interface/branding commit.
 The application is **MDPro3 1.4.7**, Unity **6000.0.24f1**, Windows x64.

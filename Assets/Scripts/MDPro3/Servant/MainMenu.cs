@@ -38,10 +38,10 @@ namespace MDPro3.Servant
 
             List<string> selections = new()
             {
-                InterString.Get("确认退出"),
-                InterString.Get("即将退出应用程序，@n是否确认？"),
-                InterString.Get("确认"),
-                InterString.Get("取消"),
+                InterString.Get("Confirm Exit"),
+                InterString.Get("Are you sure you want to exit the game?"),
+                InterString.Get("Confirm"),
+                InterString.Get("Cancel"),
                 Config.STRING_YES
             };
             UIManager.ShowPopupYesOrNo(selections, Program.GameQuit, null);
@@ -118,10 +118,10 @@ namespace MDPro3.Servant
                 var result = www.downloadHandler.text;
                 var lines = result.Replace("\r", "").Split('\n');
                 if (Application.version != lines[0])
-                    MessageManager.Cast(InterString.Get("检测到新版本[[?]]。", lines[0]));
+                    MessageManager.Cast(InterString.Get("A new version \"[?]\" has been detected.", lines[0]));
             }
             else
-                MessageManager.Cast(InterString.Get("检查更新失败！"));
+                MessageManager.Cast(InterString.Get("Failed to check for updates!"));
 
             var filePath = Path.Combine(Program.PATH_EXPANSIONS, Path.GetFileName(Settings.Data.PrereleasePackUrl));
             if (!File.Exists(filePath))
@@ -137,7 +137,7 @@ namespace MDPro3.Servant
                 var result = www2.downloadHandler.text;
                 var lines = result.Replace("\r", "").Split('\n');
                 if (Config.Get("Prerelease", "0") != lines[0])
-                    MessageManager.Cast(InterString.Get("检测到新版先行卡，请至 [游戏设置]-[扩展卡包]-[更新先行卡] 处进行更新。"));
+                    MessageManager.Cast(InterString.Get("A new version of the Pre-Release Cards was detected. Go to [SETTINGS] > [Expansions] > [Update Pre-Release Cards] to update them."));
             }
         }
 

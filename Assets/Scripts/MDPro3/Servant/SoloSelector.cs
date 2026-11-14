@@ -172,7 +172,7 @@ namespace MDPro3.Servant
                 string selectedDeck = GetUI<SoloSelectorUI>().GetAIDeck();
                 if (!File.Exists(Program.PATH_DECK + selectedDeck + Program.EXPANSION_YDK))
                 {
-                    MessageManager.Cast(InterString.Get("请先为AI选择有效的卡组。"));
+                    MessageManager.Cast(InterString.Get("Please select a valid deck for the AI."));
                     return string.Empty;
                 }
                 aiCommand += " DeckFile=\"" + selectedDeck + "\"";
@@ -339,7 +339,7 @@ namespace MDPro3.Servant
             else
             {
                 MessageManager.messageFromSubString 
-                    = InterString.Get("端口被占用， 请尝试修改端口后再尝试。端口号应大于0，小于65535。");
+                    = InterString.Get("The port is occupied. Please try modifying the port before attempting again. The port number should be greater than 0 and less than 65535.");
             }
         }
 

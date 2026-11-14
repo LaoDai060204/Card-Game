@@ -84,13 +84,13 @@ namespace MDPro3.Servant
                 decks = task.Result;
                 if (decks == null)
                 {
-                    MessageManager.Cast(InterString.Get("网络异常，获取在线卡组列表失败。"));
+                    MessageManager.Cast(InterString.Get("Network error. Failed to retrieve the online deck list."));
                     yield break;
                 }
                 GetUI<OnlineDeckViewerUI>().Print();
             }
             else
-                MessageManager.Cast(InterString.Get("网络异常，获取在线卡组列表失败。"));
+                MessageManager.Cast(InterString.Get("Network error. Failed to retrieve the online deck list."));
         }
     }
 }

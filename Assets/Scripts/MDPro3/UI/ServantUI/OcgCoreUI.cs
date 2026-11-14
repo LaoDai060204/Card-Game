@@ -337,7 +337,7 @@ namespace MDPro3.UI.ServantUI
         public void ShowPopupSelectCard(string hint, List<GameCard> cards, int min, int max, bool exitable, bool sendable)
         {
             if (string.IsNullOrEmpty(hint))
-                hint = InterString.Get("请选择卡片");
+                hint = InterString.Get("Please select a card");
             var handler = Addressables.InstantiateAsync("UI/PopupDuelSelectCard.prefab");
             handler.Completed += (result) =>
             {
@@ -416,9 +416,9 @@ namespace MDPro3.UI.ServantUI
 
             var selections = new List<string>()
             {
-                InterString.Get("保存回放"),
-                InterString.Get("保存"),
-                InterString.Get("放弃"),
+                InterString.Get("Save Replay"),
+                InterString.Get("Save"),
+                InterString.Get("Abandon"),
                 Tools.GetTimeString()
             };
             ShowPopupInput(selections, OnSaveReplay, OnGiveUpReplay, InputValidation.ValidationType.Path);
@@ -428,9 +428,9 @@ namespace MDPro3.UI.ServantUI
         {
             var selections = new List<string>()
                     {
-                        InterString.Get("保存回放"),
-                        InterString.Get("保存"),
-                        InterString.Get("放弃"),
+                        InterString.Get("Save Replay"),
+                        InterString.Get("Save"),
+                        InterString.Get("Abandon"),
                         Tools.GetTimeString()
                     };
             ShowPopupInput(selections, OnSaveReplay, OnGiveUpReplay, InputValidation.ValidationType.Path);

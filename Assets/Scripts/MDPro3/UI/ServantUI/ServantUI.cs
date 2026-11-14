@@ -8,9 +8,9 @@ using MDPro3.Servant;
 namespace MDPro3.UI.ServantUI
 {
     /// <summary>
-    /// Servant的UI部件，在parentServant Show时激活，Hide时摧毁或者SetActive(false);
-    /// 因此尽量不要在此类中调用协程。
-    /// 主要用途是初始化UI和给按钮分配方法。
+    /// UI component for a Servant: activated when parentServant is shown, then destroyed or deactivated when it is hidden.
+    /// Avoid starting coroutines in this class because hiding the Servant may deactivate or destroy it.
+    /// Its main role is to initialize the UI and assign button actions.
     /// </summary>
     [RequireComponent(typeof(ElementObjectManager))]
     public class ServantUI : MonoBehaviour
