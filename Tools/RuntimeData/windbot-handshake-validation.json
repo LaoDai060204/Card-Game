@@ -1,0 +1,45 @@
+{
+  "date": "2026-11-14",
+  "branch": "mdpro3-english",
+  "baseline": "6d5dfb409f27d820ce9267ba4b3fe72da76cee91",
+  "backupBranch": "backup/2026-11-14-before-windbot-name-fix",
+  "backupVerifiedOnOriginBeforeEdits": true,
+  "productionFix": "Normalize only the outgoing WindBot PlayerInfo name; retain full profile names and protocol field length.",
+  "reportedName": "Red Dragon Archfiend",
+  "wireName": "Red Dragon Archfien",
+  "playerInfoNameFieldUtf16Units": 20,
+  "nameTextUtf16Units": 19,
+  "playerInfoPayloadWithMessageIdBytes": 41,
+  "joinPayloadWithMessageIdBytes": 49,
+  "capturedPacketTests": [
+    {
+      "test": "WindBotHandshake",
+      "configuration": "Debug",
+      "cases": 504,
+      "boundaryCases": 15,
+      "shippedProfiles": 489,
+      "overlengthProfiles": 102,
+      "productionFiles": 5,
+      "transport": "captured packets; no network or Unity Editor"
+    },
+    {
+      "test": "WindBotHandshake",
+      "configuration": "Release",
+      "cases": 504,
+      "boundaryCases": 15,
+      "shippedProfiles": 489,
+      "overlengthProfiles": 102,
+      "productionFiles": 5,
+      "transport": "captured packets; no network or Unity Editor"
+    }
+  ],
+  "cSharp9Syntax": {
+    "productionFiles": 1,
+    "profiles": 3,
+    "errors": 0,
+    "unityApiCompilation": false
+  },
+  "sharedWriterServerReaderAndBotProfilesUnchanged": true,
+  "actualNetworkUnityPlayOrBuildTested": false,
+  "productionSourceSha256": "c84239e9dc3654947c4ef6ebb873a0b2fccf70a8bfa7b428a4c5e92a76bca8d6"
+}

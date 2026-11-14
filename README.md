@@ -47,3 +47,6 @@ PlayableGuide\_C001\_Near\_Mat13
 The CID startup-data fix ships `Data/cards_Lite.json`, so opening mates/items
 does not require a separately downloaded full `cards.json`. See
 [runtime mapping data and verification](Tools/RuntimeData/README.md).
+
+WindBot also fits long names into the existing PlayerInfo field without changing
+the selected bot/deck. See [handshake fix and test limits](Tools/RuntimeData/WINDBOT_HANDSHAKE.md).

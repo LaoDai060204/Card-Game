@@ -18,6 +18,7 @@ namespace WindBot.Game
         public int Hand;
         public bool Debug;
         public bool _chat;
+        private const int PlayerNameLength = 20;
         private string _serverHost;
         private int _serverPort;
         private short _proVersion;
@@ -71,7 +72,7 @@ namespace WindBot.Game
             Connection.Send(packet);
 
             packet = GamePacketFactory.Create(CtosMessage.PlayerInfo);
-            packet.WriteUnicode(Username, 20);
+            packet.WriteUnicode(GetProtocolPlayerName(Username), PlayerNameLength);
             Connection.Send(packet);
 
             byte[] junk = { 0xCC, 0xCC, 0x00, 0x00, 0x00, 0x00 };
@@ -80,6 +81,26 @@ namespace WindBot.Game
             packet.Write(junk);
             packet.WriteUnicode(_roomInfo, 20);
             Connection.Send(packet);
+        }
+
+        private static string GetProtocolPlayerName(string name)
+        {
+            if (string.IsNullOrEmpty(name))
+                return string.Empty;
+
+            // PlayerInfo reserves one UTF-16 unit for NUL. Keep the full name in
+            // Username and the bot configuration; shorten only the wire value.
+            int length = Math.Min(name.Length, PlayerNameLength - 1);
+            int terminator = name.IndexOf('\0');
+            if (terminator >= 0)
+                length = Math.Min(length, terminator);
+
+            // Do not leave half of a supplementary Unicode character at the cut.
+            if (length > 0 && length < name.Length
+                && char.IsHighSurrogate(name[length - 1]) && char.IsLowSurrogate(name[length]))
+                length--;
+
+            return name.Substring(0, length);
         }
 
         public void Tick()
