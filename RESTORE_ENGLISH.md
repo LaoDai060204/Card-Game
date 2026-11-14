@@ -2,7 +2,9 @@
 
 This document records the initial restore at `e9ba63fa6`. The subsequent
 [deep English migration](ENGLISH_MIGRATION.md) adds English source/lookup keys
-and authored UI text while preserving the restored gameplay baseline.
+and authored UI text while preserving the restored gameplay baseline. The
+[CID mapping startup fix](Tools/RuntimeData/README.md) subsequently restores the
+missing compact data separately; other historical gameplay fixes remain deferred.
 
 Restored on 2026-11-14 from **`47c3adb6e1bc966356d2585aa67d86f5868cb7bd`**,
 the snapshot immediately before the Vietnamese interface/branding commit.
