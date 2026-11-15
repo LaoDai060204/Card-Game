@@ -62,3 +62,11 @@ Người dùng cung cấp ba HTML và muốn dùng kiểu nhân vật hologram c
 Ritenia 26RBS03-X01 làm mẫu boss (Cost 6, BP 6000/8000); Pisketona 26RBS03-022 minh họa tuyến thường (BP 8000/11000). Gán boss chỉ là metadata của demo, không phải phân loại chính thức/danh sách đã chốt. Trang hologram nguồn có nhãn Pisketona đi kèm artwork Ritenia, đã sửa riêng trong bản mới; ba HTML gốc và ảnh nhúng giữ nguyên. Crop Pisketona nguồn còn nền/khung nên có thêm PNG alpha dẫn xuất mới, ghi nguồn rõ ràng.
 
 Giữ đúng tám bước Standard, Core xanh và Soul Core tâm đỏ/viền bạc; không dùng quy tắc trả cost cố định, giới hạn năm Spirit hay Burst lịch sử từ demo nguồn. Các nút phase và tài nguyên hiện tại chỉ minh họa presentation, chưa có engine trận đấu. Boss cutscene có Skip, âm thanh tắt mặc định, giảm chuyển động và quay lại hologram trên sân. Chỉ bắt đầu triển khai Unity khi người dùng yêu cầu sau giai đoạn review này.
+
+## Thư viện hologram mở rộng
+
+Người dùng yêu cầu làm tiếp các lá còn lại. Đã tạo thêm 41 cutout Spirit, giữ nguyên hai mẫu Ritenia/Pisketona, thành 43 hologram. Thư viện [v2](hologram-library-v2/README.md) có đủ 61 thẻ từ bốn deck đã lưu cộng Pisketona = 62 thẻ: 43 Spirit, 3 Nexus và 16 Magic. Nexus/Magic giữ dạng thẻ phẳng, không dựng thành quái. Những màu chưa có Spirit trong bộ thẻ này không được tự coi là đã có model chỉ vì bộ khung trước đó có sáu màu.
+
+Có tìm tên/mã, lọc màu/loại, nạp payload theo lựa chọn và tối đa sáu cặp texture. Bản xem có bốn gói offline theo màu và gói đủ 43 PNG; PNG mới là bản dẫn xuất bằng công cụ hình ảnh, không phải model có khối hay mask pixel chính xác. Alpha bounds chỉ dùng để căn UV/điểm chân khi dựng hình; không chỉnh byte PNG.
+
+Không tự gán boss mới: Ritenia vẫn là mẫu boss duy nhất. Hai mẫu cũ và demo v1 giữ nguyên, gồm cả vài mảnh nền còn trong cutout Ritenia do người dùng cung cấp. Các thẻ English/ảnh gốc, khung và design.7z trước đó không thay đổi; mã Unity giữ nguyên.

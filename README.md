@@ -23,13 +23,15 @@ Mã nguồn Unity và các nhánh phát triển hiện tại được giữ nguy
 **Đã upload đủ 16 ảnh PNG gốc từ `design.7z`.** [Xem ảnh trực tiếp](references/core-field-20261115/README.md) · [Tải design.7z nguyên bản](https://raw.githubusercontent.com/LaoDai060204/Card-Game/review/battle-spirits-english-cards-20261115/references/core-field-20261115/design.7z). Ảnh và tên tệp được giữ nguyên; đã đối chiếu hash. Danh mục phân biệt Core/Soul Core với Symbol/EX Symbol và ghi riêng các sơ đồ Standard, lịch sử/Eternal. Chưa áp dụng vào Unity.
 
 
-## Thiết kế hologram, cutscene boss và sân hai người
+## Thư viện hologram và sân hai người
 
-[Bản demo và tải ZIP](design/hologram-arena-v1/README.md) · [Thiết kế chi tiết](design/hologram-arena-v1/DESIGN.md)
+**Đã thêm 41 nhân vật mới, đủ 43 hologram.** [Xem ảnh và tải bộ PNG/demo v2](design/hologram-library-v2/README.md)
 
-Ba mẫu HTML mới đã được lưu nguyên bản. Bản xem độc lập có hologram 2.5D trên đế thẻ, soi thẻ, tuyến triệu hồi thường/boss, Skip, âm thanh tùy chọn và chế độ giảm chuyển động. Chưa tích hợp Unity.
+Thư viện có 62 thẻ để tìm/soi: 43 Spirit có hologram và 19 Nexus/Magic giữ dạng thẻ. Demo nạp hình theo lựa chọn, có bộ lọc tên/mã/màu/loại. Giữ Ritenia là mẫu boss, chưa gán thêm boss và chưa sửa Unity.
 
-![Sàn đấu hologram](design/hologram-arena-v1/screenshots/arena-preview.png)
+![Thư viện hologram](design/hologram-library-v2/screenshots/library-preview.png)
+
+[Thiết kế và ba HTML nguồn v1](design/hologram-arena-v1/README.md)
 
 ## Khung thẻ PNG rỗng
 

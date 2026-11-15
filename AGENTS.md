@@ -102,3 +102,18 @@ review as an instruction to begin the Unity conversion.
 - Future engine integration must confirm summon before presentation; cutscenes
   must not mutate resources or retrigger effects. No Unity integration is authorized
   by this review update alone. Read the accompanying DESIGN.md before extending it.
+
+## Expanded Spirit hologram library
+
+- `design/hologram-library-v2` adds 41 AI-derived Spirit cutouts, preserving the
+  two earlier samples unchanged: 43 standees total, including extra Pisketona.
+  The 61-card deck dataset plus Pisketona gives 62 inspector entries: 43 Spirits,
+  3 Nexus and 16 Magic. Nexus/Magic remain flat; do not invent monster standees.
+- The viewer supports name/ID search, color/type filters, lazy classic-script
+  image payloads, a six-pair texture cache, last-selection-wins loading and retry.
+  Alpha bounds affect UV presentation only, not PNG bytes. Color ZIPs run offline.
+- Ritenia remains the only demonstration boss; no boss assignments were added.
+  The unchanged Ritenia user cutout retains small background/edge remnants; do
+  not label it as newly cleaned. All 41 new silhouettes were reviewed separately.
+- Keep v1, all prior card/frame/reference assets, and all Unity branches unchanged.
+  The new assets are review silhouettes, not pixel-exact masks or volumetric rigs.

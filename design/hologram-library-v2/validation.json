@@ -1,0 +1,294 @@
+{
+  "date": "2026-11-15",
+  "assets": {
+    "new_cutouts": 41,
+    "all_standees": 43,
+    "flat_cards": 19,
+    "payloads": 62,
+    "payload_bytes": 317351225,
+    "largest_payload_bytes": 8193903,
+    "cutout_bytes": 80483418
+  },
+  "browser": {
+    "checks": {
+      "search_name_id_accent_empty_and_combined_filters": true,
+      "every_card_loaded_and_rendered": 62,
+      "spirit_standees": 43,
+      "nexus_magic_stay_flat": 19,
+      "max_cached_card_pairs": 6,
+      "max_owned_textures": 17,
+      "last_click_wins": true,
+      "missing_asset_visible_error_and_retry": true,
+      "decode_failure_cleans_partner_texture_and_retries": true,
+      "no_new_boss_assignments": true,
+      "boss_sample_skip_escape_and_reduced_motion": true,
+      "quality_and_motion_controls": true,
+      "desktop_no_overflow": true,
+      "mobile_no_overflow": true
+    },
+    "rendered_ids": [
+      "26RSD09-001",
+      "26RBS02-002",
+      "26RBS01-003",
+      "26RSD09-004",
+      "26RBS03-004",
+      "ritenia",
+      "26RBS01-X03",
+      "26RBS03-X03",
+      "26RSD09-011",
+      "26RSD01-012",
+      "26RSD09-012",
+      "26RBS02-087",
+      "26RBS03-087",
+      "26RSD01-014",
+      "26RBS03-009",
+      "26RSD02-001",
+      "26RBS03-010",
+      "26RBS03-012",
+      "26RBS01-019",
+      "26RBS03-014",
+      "26RSD02-005",
+      "26RBS01-X04",
+      "26RBS01-024",
+      "26RBS03-X04",
+      "26RBS03-X05",
+      "26RSD02-X01",
+      "26RBS01-X06",
+      "26RBS03-X06",
+      "26RSD02-014",
+      "26RBS03-089",
+      "26RBS03-097",
+      "26RSD03-002",
+      "26RSD03-003",
+      "26RSD10-003",
+      "26RSD10-004",
+      "26RSD03-005",
+      "26RSD03-X02",
+      "26RBS02-034",
+      "26RBS02-033",
+      "26RBS02-X09",
+      "26RSD03-010",
+      "26RSD03-012",
+      "26RSD03-013",
+      "26RSD03-014",
+      "26RBS03-091",
+      "26RCB01-039",
+      "26RCB01-040",
+      "26RCB01-041",
+      "26RCB01-043",
+      "26RCB01-044",
+      "26RCB01-046",
+      "26RCB01-047",
+      "26RCB01-051",
+      "26RCB01-052",
+      "26RCB01-X06",
+      "26RCB01-X07",
+      "26RCB01-060",
+      "26RSD06-012",
+      "26RSD06-013",
+      "26RCB01-071",
+      "26RBS01-126",
+      "pisketona"
+    ],
+    "browser_errors": [],
+    "failed_requests": [],
+    "external_requests": [],
+    "expected_fault_injection_events": 2,
+    "scope": "Independent review demo; no Unity runtime or rules engine tests."
+  },
+  "gallery": {
+    "timestamp": "2026-11-15T14:37:35.008Z",
+    "url": "http://127.0.0.1:8792/gallery.html",
+    "servedDirectory": ".",
+    "desktop": {
+      "imageCount": 43,
+      "loadedImages": 43,
+      "viewportWidth": 1500,
+      "documentWidth": 1500,
+      "bodyWidth": 1500,
+      "overflowingElements": []
+    },
+    "mobile": {
+      "viewportWidth": 390,
+      "documentWidth": 390,
+      "bodyWidth": 390,
+      "overflowingElements": []
+    },
+    "countsPerColor": {
+      "red": 8,
+      "purple": 15,
+      "green": 9,
+      "blue": 11
+    },
+    "expectedCounts": {
+      "red": 8,
+      "purple": 15,
+      "green": 9,
+      "blue": 11
+    },
+    "library": {
+      "datasetCards": 61,
+      "cardCount": 62,
+      "spiritCount": 43,
+      "newCutouts": 41,
+      "reusedCutouts": 2,
+      "additionalReference": "Pisketona 26RBS03-022"
+    },
+    "errors": [],
+    "failedRequests": [],
+    "externalRequests": [],
+    "screenshots": [
+      "screenshots/characters-red.png",
+      "screenshots/characters-purple.png",
+      "screenshots/characters-green.png",
+      "screenshots/characters-blue.png"
+    ],
+    "visualReview": {
+      "complete": true,
+      "reviewedColors": [
+        "red",
+        "purple",
+        "green",
+        "blue"
+      ],
+      "reviewedImages": 43,
+      "newCutoutsReviewed": 41,
+      "newCutoutsCleanSilhouettes": true,
+      "cardTextResidueObserved": false,
+      "fullOpaqueArtworkRectanglesObserved": false,
+      "issues": [
+        {
+          "card_id": "26RBS03-X01",
+          "name_en": "Ritenia, Crimson Bladeflower",
+          "assetOrigin": "Reused unchanged user-supplied Ritenia cutout",
+          "severity": "Known reused-asset limitation",
+          "description": "The reused cutout retains gray sky patches above/right of the head, a gold sky/background wedge below the right sleeve, and a thin gold name-banner edge along the bottom. No printed text or complete opaque artwork rectangle is visible.",
+          "action": "Reported to root; PNG left unchanged as instructed."
+        }
+      ],
+      "otherFindings": "All 41 new cutouts and reused Pisketona show transparent character silhouettes without visible frame, card text, or opaque artwork rectangle at gallery scale."
+    },
+    "automatedResult": "PASS",
+    "result": "PASS_WITH_KNOWN_REUSED_ASSET_RESIDUE",
+    "catalogImageReferencesMatch": true,
+    "screenshotMetadata": [
+      {
+        "path": "screenshots/characters-red.png",
+        "width": 1380,
+        "height": 655,
+        "sha256": "c8fbde92ec9821cd1943075e22f270739a1716612a30602e93f83208cd7a1d70"
+      },
+      {
+        "path": "screenshots/characters-purple.png",
+        "width": 1380,
+        "height": 965,
+        "sha256": "56044451e13a28a85ab34750529de829a3225f75d53a73577d0ebe66823a0d26"
+      },
+      {
+        "path": "screenshots/characters-green.png",
+        "width": 1380,
+        "height": 656,
+        "sha256": "d7216159c595076980fee08b7258da488570752ad15809651f8b63fd7f8a99b7"
+      },
+      {
+        "path": "screenshots/characters-blue.png",
+        "width": 1380,
+        "height": 983,
+        "sha256": "0fce08f85428001f7e75dad549e9fda0d2f3908b494b92c2a1bdd8b7777e6f24"
+      }
+    ],
+    "temporaryServerStopped": true
+  },
+  "scope": "Independent asset/browser review. No Unity build or rules-engine verification.",
+  "offline_packages": {
+    "packages": [
+      {
+        "color": "red",
+        "offline_network_disabled": true,
+        "assets_served_only_from_zip": true,
+        "catalog_cards": 15,
+        "sample_card": "26RSD09-001",
+        "runtime_requests": 12,
+        "missing_files": []
+      },
+      {
+        "color": "purple",
+        "offline_network_disabled": true,
+        "assets_served_only_from_zip": true,
+        "catalog_cards": 18,
+        "sample_card": "26RBS03-009",
+        "runtime_requests": 12,
+        "missing_files": []
+      },
+      {
+        "color": "green",
+        "offline_network_disabled": true,
+        "assets_served_only_from_zip": true,
+        "catalog_cards": 16,
+        "sample_card": "26RSD03-002",
+        "runtime_requests": 12,
+        "missing_files": []
+      },
+      {
+        "color": "blue",
+        "offline_network_disabled": true,
+        "assets_served_only_from_zip": true,
+        "catalog_cards": 19,
+        "sample_card": "26RCB01-039",
+        "runtime_requests": 12,
+        "missing_files": []
+      }
+    ],
+    "page_errors": []
+  },
+  "archives": {
+    "archives": [
+      {
+        "file": "spirit-cutouts-43.zip",
+        "bytes": 78652500,
+        "sha256": "aeafc3288fd9b2fb53a4130c18aa51506664b95d3bbb0f5ec60cf8e34081d6cc",
+        "role": "All transparent PNG assets",
+        "cutouts": 43,
+        "entries": 45
+      },
+      {
+        "file": "hologram-red-v2.zip",
+        "bytes": 52458412,
+        "sha256": "4bcd46decbc01ba59ccb17fc54361155387e4e277f8f81b358bac6e182134e0e",
+        "role": "Offline Red demo",
+        "color": "Red",
+        "catalog_cards": 15,
+        "color_spirits": 8
+      },
+      {
+        "file": "hologram-purple-v2.zip",
+        "bytes": 73283814,
+        "sha256": "48dd2523aced6d0d9067ab3464b804306a8f41b6fe87d9146f795032f4a6db1d",
+        "role": "Offline Purple demo",
+        "color": "Purple",
+        "catalog_cards": 18,
+        "color_spirits": 15
+      },
+      {
+        "file": "hologram-green-v2.zip",
+        "bytes": 60252529,
+        "sha256": "7ed01e9cccf9f3970c3058517f93041dc12a4c8487c4be4f72b265e26b54095d",
+        "role": "Offline Green demo",
+        "color": "Green",
+        "catalog_cards": 16,
+        "color_spirits": 9
+      },
+      {
+        "file": "hologram-blue-v2.zip",
+        "bytes": 69677435,
+        "sha256": "e9cdec17f84900f4c22bc54a1620f5ee449e55b4835524931316ad5a744d2825",
+        "role": "Offline Blue demo",
+        "color": "Blue",
+        "catalog_cards": 19,
+        "color_spirits": 11
+      }
+    ],
+    "cutout_hashes_verified": 43,
+    "all_crc_checks_passed": true
+  }
+}

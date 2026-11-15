@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#080f1c">
+  <meta name="description" content="A Battle Spirits visual presentation demo: explore the arena, inspect sample cards, and preview a spirit summon.">
+  <title>Battle Spirits · The Hologram Library</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath fill='%2383cbe8' d='M16 1 30 9v14L16 31 2 23V9z'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a class="skip-link" href="#stage">Skip to arena</a>
+  <header class="site-header">
+    <a class="brand" href="#stage" aria-label="Battle Spirits arena">
+      <svg class="brand-mark" viewBox="0 0 40 44" aria-hidden="true"><path d="M20 2 36 11v21L20 42 4 32V11Z"/><path d="m20 8 10 7v14l-10 7-10-7V15Zm0 0v28M10 15l20 14m0-14L10 29"/></svg>
+      <span class="brand-wordmark">BATTLE <strong>SPIRITS</strong><small>THE HOLOGRAM LIBRARY</small></span>
+    </a>
+    <nav class="mode-nav" aria-label="Presentation view">
+      <button id="mode-arena" type="button" data-mode="arena" aria-pressed="true" class="active"><span class="nav-icon" aria-hidden="true">◇</span>Arena</button>
+      <button id="mode-hologram" type="button" data-mode="hologram" aria-pressed="false"><span class="nav-icon" aria-hidden="true">⌁</span>Hologram</button>
+      <button id="mode-cutscene" type="button" data-mode="cutscene" aria-pressed="false"><span class="nav-icon" aria-hidden="true">▷</span>Boss cutscene</button>
+    </nav>
+    <span class="preview-tag"><span aria-hidden="true"></span>DESIGN PREVIEW</span>
+  </header>
+
+  <div class="page-heading">
+    <div><p class="eyebrow">A NEW DIMENSION OF BATTLE</p><h1>Choose your spirit<span>.</span></h1></div>
+    <p>Every spirit deserves an entrance.</p>
+  </div>
+
+  <main class="arena-layout">
+    <aside class="inspector panel" aria-labelledby="inspector-heading">
+      <div class="panel-heading"><h2 id="inspector-heading">Card inspection</h2><span class="micro-label">01 / COLLECTION</span></div>
+      <div class="library-controls"><label for="library-search">Find a card</label><input id="library-search" type="search" placeholder="Name or card ID" autocomplete="off"><div class="library-filters"><select id="library-color" aria-label="Filter by color"><option value="">All colors</option></select><select id="library-type" aria-label="Filter by type"><option value="Spirit">Spirit</option><option value="Nexus">Nexus</option><option value="Magic">Magic</option><option value="">All types</option></select></div><p id="library-count" aria-live="polite"></p><p id="asset-status" role="status"></p></div><div id="card-picker" class="card-picker" role="group" aria-label="Choose a card"></div>
+      <figure class="inspected-art"><div class="art-glow" aria-hidden="true"></div><img id="card-art" alt="Selected Battle Spirits card" decoding="async"><figcaption>SELECTED CARD</figcaption></figure>
+      <div class="card-heading"><p><span id="card-type">—</span><span id="card-code">—</span></p><h2 id="card-name">Select a spirit</h2><p id="card-families" class="card-families">—</p></div>
+      <dl class="card-stats"><div><dt>Cost</dt><dd id="card-cost">—</dd></div><div><dt>Battle points</dt><dd id="card-bp">—</dd></div></dl>
+      <div class="card-effect-wrap"><h3>Card details</h3><p id="card-effect">Choose a sample card to inspect its details.</p></div>
+      <div class="inspector-actions"><button id="inspect-full" type="button" class="button button-secondary"><span aria-hidden="true">⛶</span> View full card</button><button id="summon-preview" type="button" class="button button-primary"><span aria-hidden="true">✧</span> Summon preview</button></div>
+    </aside>
+
+    <section class="stage-column" aria-labelledby="stage-caption">
+      <header class="stage-heading"><div><p class="eyebrow"><span class="live-dot" aria-hidden="true"></span>THE SUMMONING FIELD</p><h2 id="stage-caption">Arena view</h2></div><span class="stage-badge">VISUAL DEMO</span></header>
+      <p id="mode-description" class="mode-description">Explore the field. Select a card and bring its spirit to life.</p>
+
+      <div id="stage" tabindex="0" role="region" aria-label="Interactive Battle Spirits presentation. Drag to rotate and scroll to zoom." aria-describedby="stage-context">
+        <div class="stage-vignette" aria-hidden="true"></div>
+        <div class="player-huds" aria-label="Illustrative player status">
+          <div class="player-hud opponent">
+            <div class="hud-player"><span class="avatar opponent-avatar" aria-hidden="true">◇</span><div><span class="micro-label">OPPOSING SIDE</span><strong>Opponent</strong></div></div>
+            <div class="hud-resources"><div class="resource-line"><span>Life <b>5</b></span><span class="core-group" aria-hidden="true"><i class="core blue"></i><i class="core blue"></i><i class="core blue"></i><i class="core blue"></i><i class="core blue"></i></span></div><div class="resource-line"><span>Reserve</span><span class="core-group" aria-label="3 blue cores and 1 Soul Core"><i class="core blue"></i><i class="core blue"></i><i class="core blue"></i><i class="core soul"></i></span></div></div>
+          </div>
+          <div class="player-hud player">
+            <div class="hud-player"><span class="avatar player-avatar" aria-hidden="true">◇</span><div><span class="micro-label">YOUR SIDE</span><strong>You</strong></div></div>
+            <div class="hud-resources"><div class="resource-line"><span>Life <b>5</b></span><span class="core-group" aria-hidden="true"><i class="core blue"></i><i class="core blue"></i><i class="core blue"></i><i class="core blue"></i><i class="core blue"></i></span></div><div class="resource-line"><span>Reserve</span><span class="core-group" aria-label="3 blue cores and 1 Soul Core"><i class="core blue"></i><i class="core blue"></i><i class="core blue"></i><i class="core soul"></i></span></div></div>
+          </div>
+          <span class="hud-scene-note">Illustrative resources · scene only</span>
+        </div>
+        <div class="field-coordinate coordinate-left" aria-hidden="true">BS / FIELD 01</div><div class="field-coordinate coordinate-right" aria-hidden="true">SPIRIT LINK · ACTIVE</div>
+        <div id="object-labels" aria-label="Inspect spirits on the field"></div>
+        <div class="hand-area"><span class="hand-heading">YOUR HAND <span>SELECT TO INSPECT</span></span><div id="hand" aria-label="Sample card hand"></div></div>
+        <div id="loading" class="loading" role="status" aria-live="polite"><div class="loading-emblem" aria-hidden="true">◇</div><p class="eyebrow">PREPARING THE FIELD</p><h3>Opening the arena</h3><p id="load-progress">Loading your spirits…</p><span class="loading-line" aria-hidden="true"></span><button id="retry-load" type="button" class="button button-primary" hidden>Try again</button></div>
+      </div>
+
+      <div class="stage-toolbar"><p id="stage-context"><span aria-hidden="true">↔</span> Drag to orbit <span class="toolbar-dot" aria-hidden="true">·</span> Scroll to zoom</p><div class="stage-tools"><button id="camera-reset" type="button" class="tool-button"><span aria-hidden="true">↺</span> Reset view</button><button id="hologram-toggle" type="button" class="tool-button" aria-pressed="true"><span aria-hidden="true">⌁</span> Hologram</button></div></div>
+    </section>
+
+    <aside class="phase-panel panel" aria-labelledby="phase-heading">
+      <div class="panel-heading"><h2 id="phase-heading">Battle flow</h2><span class="micro-label">SCENE GUIDE</span></div>
+      <div class="turn-indicator"><span class="live-dot" aria-hidden="true"></span>YOUR TURN<span class="turn-number">01</span></div>
+      <ol id="phase-list" aria-label="Preview battle phases"></ol>
+      <button id="phase-next" type="button" class="button button-primary">Next phase <span aria-hidden="true">→</span></button>
+      <p class="flow-note">Explore the sequence.<br>Scene preview only.</p>
+      <div class="presentation-settings"><h3>Presentation</h3><button id="sound-toggle" type="button" class="setting-button" aria-pressed="false"><span>Sound</span><span class="toggle-track" aria-hidden="true"></span></button><button id="motion-toggle" type="button" class="setting-button" aria-pressed="false"><span>Reduced motion</span><span class="toggle-track" aria-hidden="true"></span></button><label class="quality-label" for="quality-select">Quality<select id="quality-select"><option value="high">High</option><option value="low">Low</option></select></label></div>
+      <div class="arena-seal" aria-hidden="true"><svg viewBox="0 0 70 70"><path d="m35 4 27 15v32L35 66 8 51V19Z"/><path d="m35 14 18 11v21L35 56 17 46V25Zm0 0v42M17 25l36 21m0-21L17 46"/></svg><span>SPIRIT / UNLEASHED</span></div>
+    </aside>
+  </main>
+
+  <footer class="site-footer"><span>BATTLE SPIRITS <i aria-hidden="true">/</i> VISUAL PRESENTATION DEMO</span><p>A glimpse of the battle. A stage for your spirits.</p><span class="footer-status"><span class="live-dot" aria-hidden="true"></span>DESIGN PREVIEW</span></footer>
+
+  <div id="cutscene-overlay" role="dialog" aria-modal="true" aria-label="Boss summon preview" hidden>
+    <canvas id="cutscene-canvas" aria-label="Animated spirit reveal"></canvas>
+    <div class="cutscene-top"><p class="cutscene-title"><span class="live-dot" aria-hidden="true"></span>BOSS SUMMON <span id="cutscene-role">SPIRIT REVEAL</span></p><div class="cutscene-controls"><button id="replay-cutscene" type="button" class="cutscene-button"><span aria-hidden="true">↺</span> Replay</button><button id="skip-cutscene" type="button" class="cutscene-button">Skip <span aria-hidden="true">→</span></button><button id="close-cutscene" type="button" class="cutscene-button close-button" aria-label="Close boss summon preview">✕</button></div></div>
+    <p class="cutscene-bottom">BATTLE SPIRITS <span>THE SPIRIT AWAKENS</span></p>
+  </div>
+
+  <dialog id="card-dialog" aria-label="Full card artwork"><button id="close-dialog" type="button" class="dialog-close" aria-label="Close full card">✕</button><img id="full-art" alt="Selected Battle Spirits card at full size" decoding="async"><p>FULL CARD VIEW <span>ESC TO CLOSE</span></p></dialog>
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <script src="vendor/three.r128.min.js"></script>
+  <script src="common-assets.js"></script>
+  <script src="catalog.js"></script>
+  <script src="scripts/library.js"></script>
+  <script src="scripts/hologram.js"></script>
+  <script src="scripts/cutscene.js"></script>
+  <script src="scripts/app.js"></script>
+</body>
+</html>
