@@ -16,6 +16,13 @@ Mã nguồn Unity và các nhánh phát triển hiện tại được giữ nguy
 
 [Hướng dẫn làm việc với nhánh review](AGENTS.md)
 
+## Ghi nhớ Core, Symbol và sàn đấu
+
+[Ghi nhớ thiết kế](design/DESIGN_MEMORY.md) · [Danh mục 16 ảnh tham chiếu](references/core-field-20261115/README.md)
+
+Đã lưu các mô tả và cách phân loại 16 ảnh người dùng vừa cung cấp. **Các tệp ảnh gốc chưa được lưu/upload** vì ảnh chèn trong chat chưa có tệp nguồn có thể lấy từ môi trường làm việc; đang chờ ZIP ảnh gốc. Danh mục phân biệt Core/Soul Core với Symbol/EX Symbol và ghi riêng các sơ đồ Standard, lịch sử/Eternal.
+
+
 ## Xem và tải ảnh
 
 Mở các mục bên dưới rồi bấm vào ảnh để xem kích thước đầy đủ. Có thể tải ảnh riêng bằng nút Download raw file của GitHub.

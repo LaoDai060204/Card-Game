@@ -48,3 +48,19 @@ review as an instruction to begin the Unity conversion.
   approval step for ordinary review updates already requested by the user.
 - Do not publish credentials, private local configuration, Unity caches, or
   unrelated runtime assets. Report precisely what was produced and checked.
+
+
+## Design memory and reference intake
+
+- Read `design/DESIGN_MEMORY.md` and the reference catalog before continuing
+  new Battle Spirits asset work. The 2026-11-15 catalog lists sixteen user
+  inline images; their original binary files are still pending a real upload.
+- Distinguish the blue regular Core and red-centered silver Soul Core resource
+  pieces from the six normal Symbol gemstones and six EX Symbol versions.
+- Current Standard has eight turn steps, including Second Main Step. Keep
+  older seven-step/Brave/Burst guides labeled historical or Eternal. Follow
+  official Standard rules instead of deriving mechanics from an old diagram.
+- Archive supplied reference files unchanged and record their hashes. Do not
+  label a visual transcription, AI reconstruction, or other source image as
+  an uploaded original. If only inline images are visible and their binaries
+  are unavailable, keep the catalog pending and request the original files.
