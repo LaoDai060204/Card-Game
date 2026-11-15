@@ -49,8 +49,8 @@ Nguồn: [Standard Rule Manual](https://asia-en.battlespirits.com/pdf/official-r
 
 ## Khung thẻ rỗng — yêu cầu đã chốt ngày 15/11/2026
 
-Người dùng xác định “wireframe” là **khung PNG rỗng, bỏ artwork và chữ, giữ viền cùng hoa văn**, không phải sơ đồ đánh dấu các vùng. Bộ mẫu hiện có ba khung đỏ cho Spirit, Nexus và Magic ở [frames/red-base-v1](../frames/red-base-v1/README.md).
+Người dùng xác định “wireframe” là **khung PNG rỗng, bỏ artwork và chữ, giữ viền cùng hoa văn**, không phải sơ đồ đánh dấu các vùng. Bộ mẫu hiện có đủ **18 khung đơn màu** cho Spirit, Nexus và Magic: đỏ, tím, xanh lá, trắng, vàng, xanh dương ở [frames/six-color-v1](../frames/six-color-v1/README.md). Ba khung đỏ trước đây được giữ nguyên cả tệp và hash.
 
 Giữ các bảng nền trống để gắn nội dung sau; vùng artwork và góc ngoài có alpha trong suốt. Các con số Cost/BP/Level, giảm phí, tên/hệ, hiệu ứng và ngọc gameplay là nội dung sẽ đặt riêng. Spirit/Nexus có hai ô Level trống; Magic không có Level/BP. Các mẫu này là bản phục dựng tham khảo, không được gọi là mask pixel chính xác hoặc texture production đã hoàn tất.
 
-Đã được phép cập nhật tài nguyên review lên nhánh này. Mọi bản màu hoặc biến thể khác sẽ làm theo yêu cầu tiếp theo; mã Unity hiện tại vẫn giữ nguyên.
+Đã được phép cập nhật tài nguyên review lên nhánh này. Đã bổ sung đủ năm màu đơn còn lại. Những biến thể đặc biệt hoặc đa màu sẽ làm theo yêu cầu tiếp theo; mã Unity hiện tại vẫn giữ nguyên.

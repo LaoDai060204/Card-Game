@@ -72,10 +72,13 @@ review as an instruction to begin the Unity conversion.
 - The user clarified that "wireframe" means an empty PNG card frame: remove
   artwork, all text and numeric values; keep borders, ornaments and blank
   panel backgrounds. Use actual alpha transparency in the artwork opening.
-- Three derived red review templates exist in `frames/red-base-v1` for Spirit,
-  Nexus and Magic. Spirit/Nexus retain two blank Level containers; Magic has
-  no Level or BP containers. Source card files remain unchanged.
-- These are image-generated review overlays, not pixel-exact masks or a full
-  six-color production kit. Do not imply unfinished variants already exist.
-- The checkerboard in `frames-preview.png` is documentation background only;
-  use the individual RGBA frame PNGs as the assets.
+- The complete single-color review set has eighteen PNGs in
+  `frames/six-color-v1`: Red, Purple, Green, White, Yellow and Blue, each with
+  Spirit/Nexus/Magic. The older three red files in `frames/red-base-v1` remain
+  unchanged. Spirit/Nexus retain two blank Level containers; Magic has none.
+- These are image-generated review overlays, not pixel-exact masks or final
+  production textures. Single-color coverage is complete; multicolor and
+  other special variants have not been requested or produced.
+- Keep all source images and hashes with their provenance. The checkerboard
+  in `frames-preview.png` is documentation background only; use the individual
+  RGBA frame PNGs as the assets. No Unity integration has been performed.

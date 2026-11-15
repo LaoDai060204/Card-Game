@@ -25,11 +25,13 @@ Mã nguồn Unity và các nhánh phát triển hiện tại được giữ nguy
 
 ## Khung thẻ PNG rỗng
 
-[Xem và tải ba mẫu Spirit / Nexus / Magic](frames/red-base-v1/README.md)
+**Đã đủ 18 mẫu: 6 màu × Spirit / Nexus / Magic.** [Xem và tải bộ khung](frames/six-color-v1/README.md)
 
-Đã tạo ba khung đỏ v1: bỏ artwork, chữ và số; giữ viền, hoa văn và các ô nền. Vùng artwork có alpha trong suốt. Đây là mẫu review dựa trên thẻ nguồn hiện có, chưa phải bộ đủ mọi màu và chưa được tích hợp vào Unity.
+Bỏ artwork, chữ và số; giữ viền, hoa văn và các ô nền. Vùng artwork có alpha trong suốt. Đã thêm 15 mẫu tím, xanh lá, trắng, vàng và xanh dương; ba khung đỏ v1 giữ nguyên. Đây là bộ mẫu đơn màu để review, chưa tích hợp vào Unity.
 
-![Ba khung thẻ rỗng](frames/red-base-v1/frames-preview.png)
+![Bộ khung sáu màu](frames/six-color-v1/frames-preview.png)
+
+[Bộ đỏ v1 trước đây](frames/red-base-v1/README.md)
 
 ## Xem và tải ảnh
 
