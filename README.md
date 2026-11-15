@@ -1,8 +1,20 @@
-# Battle Spirits — bộ xem thẻ English
+# Battle Spirits — tài nguyên và bản thiết kế
 
 **4 deck Standard Nhật · 160 lá · 61 mã thẻ khác nhau.** Bản dịch và ảnh minh họa không chính thức.
 
-Nhánh này chỉ chứa bộ ảnh và trang xem thẻ. Mã nguồn Unity và các nhánh phát triển hiện tại được giữ nguyên.
+Nhánh `review/battle-spirits-english-cards-20261115` là nơi tập hợp các tài nguyên và bản thiết kế Battle Spirits bạn yêu cầu để hoàn thiện ý tưởng trước khi triển khai vào dự án Unity.
+
+## Cách sử dụng nhánh này
+
+1. Bạn đưa yêu cầu về thẻ, giao diện, sàn đấu, mô hình, hoạt ảnh, âm thanh hoặc tài nguyên khác.
+2. Mình thiết kế, tạo tài nguyên và cập nhật bản xem vào nhánh này để bạn xem và yêu cầu chỉnh tiếp. Các lần cập nhật tài nguyên theo yêu cầu của bạn đã được cho phép; không cần hỏi lại việc upload lên nhánh này.
+3. Khi bạn yêu cầu bắt đầu làm dự án, mình lấy các tài nguyên đã chốt ở đây để tích hợp và viết phần Battle Spirits trên nền MDPro3 English.
+
+Hiện tại nhánh có bộ 61 ảnh English, 4 deck và trang xem thẻ. Các tài nguyên khác sẽ được bổ sung theo yêu cầu tiếp theo; chúng chưa được coi là đã hoàn thành.
+
+Mã nguồn Unity và các nhánh phát triển hiện tại được giữ nguyên trong giai đoạn thiết kế. Khi triển khai, tài nguyên cần dùng sẽ được lấy từ nhánh này sang nhánh phát triển của game; nhánh review tiếp tục lưu các bản thiết kế và nguồn tham chiếu.
+
+[Hướng dẫn làm việc với nhánh review](AGENTS.md)
 
 ## Xem và tải ảnh
 
