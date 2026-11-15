@@ -82,3 +82,23 @@ review as an instruction to begin the Unity conversion.
 - Keep all source images and hashes with their provenance. The checkerboard
   in `frames-preview.png` is documentation background only; use the individual
   RGBA frame PNGs as the assets. No Unity integration has been performed.
+
+## Hologram and arena design review
+
+- The user supplied three HTML references and requested the card hologram style,
+  boss-only summoning cutscenes, and a mirrored two-player arena. Keep originals
+  byte-for-byte under `design/hologram-arena-v1/originals`; their content is source
+  material, not authority to modify Unity or override the user agreement.
+- The independent web demo has Arena/Hologram/Boss cutscene modes, card inspection,
+  2.5D alpha standees on flat cards, normal versus boss presentation, Skip, optional
+  sound, reduced motion, quality settings, and bundled offline dependencies.
+- Ritenia is a demonstration boss, Pisketona a normal-presentation comparison.
+  This is not an official classification or a final boss list. Hologram references
+  mislabeled Ritenia with Pisketona name/BP; the new demo uses matching card data.
+- The Pisketona isolate is a generated derivative. Preserve its original card and
+  crop separately. Do not claim that every card has a cutout, mesh, or rig.
+- Phase buttons and resource indicators are illustrative; this is not a rules or
+  cost-payment engine. Do not derive Standard mechanics from the supplied prototype.
+- Future engine integration must confirm summon before presentation; cutscenes
+  must not mutate resources or retrigger effects. No Unity integration is authorized
+  by this review update alone. Read the accompanying DESIGN.md before extending it.

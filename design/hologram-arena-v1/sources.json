@@ -1,0 +1,144 @@
+{
+  "original_html": [
+    {
+      "file_name": "Battle Spirits – Sàn đấu 2 người chơi.html",
+      "sha256": "520a63796835e2f96f3df7563f1918b2ab87af770034164a3cc32aebdb693a6c",
+      "bytes": 2542652
+    },
+    {
+      "file_name": "Thẻ Ritenia – hologram.html",
+      "sha256": "6e8416b0583bc4981756562cc2a3285c4275e83f66d10c93e08919881d640ab5",
+      "bytes": 1266639
+    },
+    {
+      "file_name": "Cutscene triệu hồi – Ritenia.html",
+      "sha256": "1bac269fd59d1d74b5daf30eb12e9aa90fa1ab47a1f61940eea4432fe16f1e10",
+      "bytes": 910501
+    }
+  ],
+  "extracted_assets": [
+    {
+      "sha256": "4496b0905a8d5b050c27ed18981ee293d397be99d8dca0c83dc52de7c1be2b63",
+      "bytes": 255924,
+      "size": [
+        675,
+        982
+      ],
+      "mode": "RGB",
+      "file": "assets/pisketona-card-original.jpg"
+    },
+    {
+      "sha256": "13717439662fc8bd1742f2c75e677cc05addcde2728e11f2b211431b43070787",
+      "bytes": 643582,
+      "size": [
+        599,
+        472
+      ],
+      "mode": "RGBA",
+      "file": "assets/pisketona-cutout.png"
+    },
+    {
+      "sha256": "1f2faec1f9a0da3836120ee429b5627bd95b354e3a00bf070dea332f02ddce12",
+      "bytes": 20458,
+      "size": [
+        128,
+        128
+      ],
+      "mode": "RGBA",
+      "file": "assets/core.png"
+    },
+    {
+      "sha256": "6a779756ccda03d17ace475010a4c76e4978740c5c7b2202fe3c748df3eed8d1",
+      "bytes": 20575,
+      "size": [
+        128,
+        128
+      ],
+      "mode": "RGBA",
+      "file": "assets/soul-core.png"
+    },
+    {
+      "sha256": "003af7d5565a533a5b2b725784117f206375c9835b4998961aa645efcb0a6389",
+      "bytes": 263065,
+      "size": [
+        675,
+        983
+      ],
+      "mode": "RGB",
+      "file": "assets/ritenia-card-original.jpg"
+    },
+    {
+      "sha256": "8b9521d77a3fd414dfbdeb65ae88a0f4f9915a19d596e0f315774eeb107491fb",
+      "bytes": 676149,
+      "size": [
+        860,
+        605
+      ],
+      "mode": "RGBA",
+      "file": "assets/ritenia-cutout.png"
+    }
+  ],
+  "third_party": {
+    "library": "three.js",
+    "version": "r128",
+    "file": "vendor/three.r128.min.js",
+    "source": "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js",
+    "license": "MIT",
+    "license_file": "vendor/THREE-LICENSE.txt"
+  },
+  "note": "User HTML is archived unchanged. Embedded PNG/JPEG assets are base64-decoded without pixel changes. Source display names/BP panels conflict on the hologram page; new Ritenia panel uses existing English review data for 26RBS03-X01.",
+  "generated_cutout": {
+    "source_original": "pisketona-cutout.png",
+    "source_sha256": "13717439662fc8bd1742f2c75e677cc05addcde2728e11f2b211431b43070787",
+    "tool": "image_gen.imagegen",
+    "operation": "Reference-image edit with transparent_background=true",
+    "generated_original": "exec-33c45d36-a727-40c5-adc8-84485e7048d2.png",
+    "generated_image": "pisketona-isolated.png",
+    "sha256": "d85f8eeb566c1a6ca4660f811141cc9b2aa9b944238fff743ec83c5d20745eda",
+    "generated_original_sha256": "d85f8eeb566c1a6ca4660f811141cc9b2aa9b944238fff743ec83c5d20745eda",
+    "copy_is_byte_identical": true,
+    "visual_review": true,
+    "visual_review_notes": "Only recognizable purple-haired armored woman, gold horn/ear ornaments, skeletal spirit wings and connected skull weapon/chain retained. Card medallion/frame/text, blue rectangular scenery, fish and floating debris removed. Original visible lower body crop retained; no generated legs or standee base. This is a derived character isolation, not a pixel-exact manual mask.",
+    "alpha_validation": {
+      "mode": "RGBA",
+      "width": 1414,
+      "height": 1113,
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "corner_alpha": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "background_roi_alpha_extrema": {
+        "upper_left_background": [
+          0,
+          1
+        ],
+        "upper_right_corner": [
+          0,
+          0
+        ],
+        "lower_left_background": [
+          0,
+          1
+        ]
+      },
+      "transparent_pixel_fraction_alpha_le_2": 0.6651270633416827,
+      "near_opaque_pixel_fraction_alpha_ge_245": 0.2999888167484442,
+      "background_alpha_passed": true,
+      "method": "Read-only PIL alpha inspection; generated PNG bytes remain unchanged."
+    },
+    "published_file": "assets/pisketona-isolated.png"
+  },
+  "english_card_reused": {
+    "card_id": "26RBS03-X01",
+    "file": "assets/ritenia-card-english.png",
+    "sha256": "a05017df08532939cea11431e43910710641e0dcbbd3a0880348479a288f669c"
+  },
+  "boss_assignment_note": "Ritenia is assigned the boss presentation and Pisketona the normal Spirit presentation solely to demonstrate different summon routing; this is not an official gameplay classification or a final boss list.",
+  "pisketona_note": "The supplied crop still included scenery and frame. Only the new image-generated silhouette is used upright. The original card and crop remain unchanged. Pisketona English rule text is an unofficial reading for review, with the original Japanese card preserved; no English card image has been produced for it in this batch."
+}

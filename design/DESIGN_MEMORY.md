@@ -54,3 +54,11 @@ Người dùng xác định “wireframe” là **khung PNG rỗng, bỏ artwork
 Giữ các bảng nền trống để gắn nội dung sau; vùng artwork và góc ngoài có alpha trong suốt. Các con số Cost/BP/Level, giảm phí, tên/hệ, hiệu ứng và ngọc gameplay là nội dung sẽ đặt riêng. Spirit/Nexus có hai ô Level trống; Magic không có Level/BP. Các mẫu này là bản phục dựng tham khảo, không được gọi là mask pixel chính xác hoặc texture production đã hoàn tất.
 
 Đã được phép cập nhật tài nguyên review lên nhánh này. Đã bổ sung đủ năm màu đơn còn lại. Những biến thể đặc biệt hoặc đa màu sẽ làm theo yêu cầu tiếp theo; mã Unity hiện tại vẫn giữ nguyên.
+
+## Hologram và cutscene — yêu cầu ngày 15/11/2026
+
+Người dùng cung cấp ba HTML và muốn dùng kiểu nhân vật hologram cho thẻ, cutscene riêng cho boss và sân hai người theo bố cục đó. [Bản xem v1](hologram-arena-v1/README.md) có ba chế độ Arena/Hologram/Boss cutscene, bảng soi thẻ và phóng to, hai mẫu nhân vật đứng trên đế thẻ. Đây là 2.5D với cutout alpha, chưa phải mesh/rig toàn thân cho tất cả thẻ.
+
+Ritenia 26RBS03-X01 làm mẫu boss (Cost 6, BP 6000/8000); Pisketona 26RBS03-022 minh họa tuyến thường (BP 8000/11000). Gán boss chỉ là metadata của demo, không phải phân loại chính thức/danh sách đã chốt. Trang hologram nguồn có nhãn Pisketona đi kèm artwork Ritenia, đã sửa riêng trong bản mới; ba HTML gốc và ảnh nhúng giữ nguyên. Crop Pisketona nguồn còn nền/khung nên có thêm PNG alpha dẫn xuất mới, ghi nguồn rõ ràng.
+
+Giữ đúng tám bước Standard, Core xanh và Soul Core tâm đỏ/viền bạc; không dùng quy tắc trả cost cố định, giới hạn năm Spirit hay Burst lịch sử từ demo nguồn. Các nút phase và tài nguyên hiện tại chỉ minh họa presentation, chưa có engine trận đấu. Boss cutscene có Skip, âm thanh tắt mặc định, giảm chuyển động và quay lại hologram trên sân. Chỉ bắt đầu triển khai Unity khi người dùng yêu cầu sau giai đoạn review này.

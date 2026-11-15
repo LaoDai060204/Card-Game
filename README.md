@@ -23,6 +23,14 @@ Mã nguồn Unity và các nhánh phát triển hiện tại được giữ nguy
 **Đã upload đủ 16 ảnh PNG gốc từ `design.7z`.** [Xem ảnh trực tiếp](references/core-field-20261115/README.md) · [Tải design.7z nguyên bản](https://raw.githubusercontent.com/LaoDai060204/Card-Game/review/battle-spirits-english-cards-20261115/references/core-field-20261115/design.7z). Ảnh và tên tệp được giữ nguyên; đã đối chiếu hash. Danh mục phân biệt Core/Soul Core với Symbol/EX Symbol và ghi riêng các sơ đồ Standard, lịch sử/Eternal. Chưa áp dụng vào Unity.
 
 
+## Thiết kế hologram, cutscene boss và sân hai người
+
+[Bản demo và tải ZIP](design/hologram-arena-v1/README.md) · [Thiết kế chi tiết](design/hologram-arena-v1/DESIGN.md)
+
+Ba mẫu HTML mới đã được lưu nguyên bản. Bản xem độc lập có hologram 2.5D trên đế thẻ, soi thẻ, tuyến triệu hồi thường/boss, Skip, âm thanh tùy chọn và chế độ giảm chuyển động. Chưa tích hợp Unity.
+
+![Sàn đấu hologram](design/hologram-arena-v1/screenshots/arena-preview.png)
+
 ## Khung thẻ PNG rỗng
 
 **Đã đủ 18 mẫu: 6 màu × Spirit / Nexus / Magic.** [Xem và tải bộ khung](frames/six-color-v1/README.md)
