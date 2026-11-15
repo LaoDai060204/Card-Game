@@ -20,7 +20,7 @@ Mã nguồn Unity và các nhánh phát triển hiện tại được giữ nguy
 
 [Ghi nhớ thiết kế](design/DESIGN_MEMORY.md) · [Danh mục 16 ảnh tham chiếu](references/core-field-20261115/README.md)
 
-Đã lưu các mô tả và cách phân loại 16 ảnh người dùng vừa cung cấp. **Các tệp ảnh gốc chưa được lưu/upload** vì ảnh chèn trong chat chưa có tệp nguồn có thể lấy từ môi trường làm việc; đang chờ ZIP ảnh gốc. Danh mục phân biệt Core/Soul Core với Symbol/EX Symbol và ghi riêng các sơ đồ Standard, lịch sử/Eternal.
+**Đã upload đủ 16 ảnh PNG gốc từ `design.7z`.** [Xem ảnh trực tiếp](references/core-field-20261115/README.md) · [Tải design.7z nguyên bản](https://raw.githubusercontent.com/LaoDai060204/Card-Game/review/battle-spirits-english-cards-20261115/references/core-field-20261115/design.7z). Ảnh và tên tệp được giữ nguyên; đã đối chiếu hash. Danh mục phân biệt Core/Soul Core với Symbol/EX Symbol và ghi riêng các sơ đồ Standard, lịch sử/Eternal. Chưa áp dụng vào Unity.
 
 
 ## Xem và tải ảnh

@@ -53,8 +53,9 @@ review as an instruction to begin the Unity conversion.
 ## Design memory and reference intake
 
 - Read `design/DESIGN_MEMORY.md` and the reference catalog before continuing
-  new Battle Spirits asset work. The 2026-11-15 catalog lists sixteen user
-  inline images; their original binary files are still pending a real upload.
+  new Battle Spirits asset work. The 2026-11-15 catalog now includes all
+  sixteen original PNG files supplied in `design.7z`; the unchanged archive,
+  filenames, dimensions, CRC32 values and SHA-256 hashes are recorded.
 - Distinguish the blue regular Core and red-centered silver Soul Core resource
   pieces from the six normal Symbol gemstones and six EX Symbol versions.
 - Current Standard has eight turn steps, including Second Main Step. Keep

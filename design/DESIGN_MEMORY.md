@@ -10,7 +10,7 @@
 
 [Danh mục đủ 16 ảnh và trạng thái tệp gốc](../references/core-field-20261115/README.md) · [Dữ liệu tham chiếu](../references/core-field-20261115/references.json)
 
-Hiện chỉ ghi nhận được nội dung ảnh chèn trong tin nhắn; **chưa có tệp ảnh gốc để upload**. Cần ZIP hoặc tệp đính kèm có thể tải được để lưu đúng những ảnh người dùng đã gửi. Không thay ảnh bằng bản AI hay nguồn khác rồi gọi là ảnh gốc.
+Đã nhận `design.7z` và upload đủ **16 ảnh PNG nguyên bản**, giữ nguyên tên và nội dung tệp. [Xem ảnh trực tiếp](../references/core-field-20261115/README.md) và [manifest hash/kích thước](../references/core-field-20261115/archive-manifest.json). Gói 7z gốc cũng được lưu để tải lại. Đây là ảnh tham chiếu, chưa được chỉnh sửa hoặc tích hợp vào Unity.
 
 ### Core và Soul Core
 
