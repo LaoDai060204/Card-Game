@@ -23,6 +23,14 @@ Mã nguồn Unity và các nhánh phát triển hiện tại được giữ nguy
 **Đã upload đủ 16 ảnh PNG gốc từ `design.7z`.** [Xem ảnh trực tiếp](references/core-field-20261115/README.md) · [Tải design.7z nguyên bản](https://raw.githubusercontent.com/LaoDai060204/Card-Game/review/battle-spirits-english-cards-20261115/references/core-field-20261115/design.7z). Ảnh và tên tệp được giữ nguyên; đã đối chiếu hash. Danh mục phân biệt Core/Soul Core với Symbol/EX Symbol và ghi riêng các sơ đồ Standard, lịch sử/Eternal. Chưa áp dụng vào Unity.
 
 
+## Khung thẻ PNG rỗng
+
+[Xem và tải ba mẫu Spirit / Nexus / Magic](frames/red-base-v1/README.md)
+
+Đã tạo ba khung đỏ v1: bỏ artwork, chữ và số; giữ viền, hoa văn và các ô nền. Vùng artwork có alpha trong suốt. Đây là mẫu review dựa trên thẻ nguồn hiện có, chưa phải bộ đủ mọi màu và chưa được tích hợp vào Unity.
+
+![Ba khung thẻ rỗng](frames/red-base-v1/frames-preview.png)
+
 ## Xem và tải ảnh
 
 Mở các mục bên dưới rồi bấm vào ảnh để xem kích thước đầy đủ. Có thể tải ảnh riêng bằng nút Download raw file của GitHub.

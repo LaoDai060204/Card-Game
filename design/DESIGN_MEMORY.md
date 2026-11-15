@@ -46,3 +46,11 @@ Sơ đồ tám bước ở ảnh 08 phù hợp với trình tự Standard. Etern
 Chuẩn bị trận: 5 Core thường ở Life, 3 Core thường cùng 1 Soul Core ở Reserve, 4 lá trên tay. Số ô vẽ trên thảm không thay đổi các số lượng này. Chưa có luật nào được triển khai vào dự án trong lần ghi nhớ này.
 
 Nguồn: [Standard Rule Manual](https://asia-en.battlespirits.com/pdf/official-rule-manual_standard.pdf?ver.1.0) và [trang luật Nhật](https://www.battlespirits.com/rule/).
+
+## Khung thẻ rỗng — yêu cầu đã chốt ngày 15/11/2026
+
+Người dùng xác định “wireframe” là **khung PNG rỗng, bỏ artwork và chữ, giữ viền cùng hoa văn**, không phải sơ đồ đánh dấu các vùng. Bộ mẫu hiện có ba khung đỏ cho Spirit, Nexus và Magic ở [frames/red-base-v1](../frames/red-base-v1/README.md).
+
+Giữ các bảng nền trống để gắn nội dung sau; vùng artwork và góc ngoài có alpha trong suốt. Các con số Cost/BP/Level, giảm phí, tên/hệ, hiệu ứng và ngọc gameplay là nội dung sẽ đặt riêng. Spirit/Nexus có hai ô Level trống; Magic không có Level/BP. Các mẫu này là bản phục dựng tham khảo, không được gọi là mask pixel chính xác hoặc texture production đã hoàn tất.
+
+Đã được phép cập nhật tài nguyên review lên nhánh này. Mọi bản màu hoặc biến thể khác sẽ làm theo yêu cầu tiếp theo; mã Unity hiện tại vẫn giữ nguyên.

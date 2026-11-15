@@ -65,3 +65,17 @@ review as an instruction to begin the Unity conversion.
   label a visual transcription, AI reconstruction, or other source image as
   an uploaded original. If only inline images are visible and their binaries
   are unavailable, keep the catalog pending and request the original files.
+
+
+## Empty card frame assets
+
+- The user clarified that "wireframe" means an empty PNG card frame: remove
+  artwork, all text and numeric values; keep borders, ornaments and blank
+  panel backgrounds. Use actual alpha transparency in the artwork opening.
+- Three derived red review templates exist in `frames/red-base-v1` for Spirit,
+  Nexus and Magic. Spirit/Nexus retain two blank Level containers; Magic has
+  no Level or BP containers. Source card files remain unchanged.
+- These are image-generated review overlays, not pixel-exact masks or a full
+  six-color production kit. Do not imply unfinished variants already exist.
+- The checkerboard in `frames-preview.png` is documentation background only;
+  use the individual RGBA frame PNGs as the assets.

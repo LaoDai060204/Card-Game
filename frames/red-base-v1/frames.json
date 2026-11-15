@@ -1,0 +1,139 @@
+{
+  "version": 1,
+  "created_date": "2026-11-15",
+  "scope": "Three red empty PNG review frames based on existing Spirit/Nexus/Magic cards; no Unity integration.",
+  "user_request": "Remove illustration, all text and numbers; retain border, ornament and empty backgrounds.",
+  "method": "Image-generation editing with original card references; preserve original source files separately.",
+  "transparent_regions": [
+    "upper artwork opening",
+    "outside rounded card corners"
+  ],
+  "retained_regions": [
+    "outer border and ornaments",
+    "blank cost medallion",
+    "blank type pennant",
+    "blank family and name plaques",
+    "blank lower textured panel"
+  ],
+  "other_colors_completed": false,
+  "attribution": "Derived from Battle Spirits card design © BNP/BANDAI. Original source images and illustration credits are retained in original-cards and source URLs. These are unofficial review templates.",
+  "frames": [
+    {
+      "id": "blank-spirit-red-v1",
+      "card_type": "Spirit",
+      "color": "Red",
+      "file": "card-frame-spirit-red.png",
+      "width": 1039,
+      "height": 1514,
+      "sha256": "9918c91d67178b1c565357bc47aee9ed14fe20da3fecceb87840816bfe948d09",
+      "source_card_id": "26RBS03-004",
+      "source_card_name": "Lumius",
+      "source_file": "../../original-cards/26RBS03-004.webp",
+      "source_sha256": "bd9493b25aec4bec81c1ec71b47dd1f8e3d5662bc5fd7756f18b062372124356",
+      "source_url": "https://www.battlespirits.com/cardlist/detail_iframe.php?card_no=26RBS03-004&card_no2=26RBS03-004",
+      "blank_level_containers": 2,
+      "bp_numbers_present": false,
+      "fixed_cost_or_reduction_numbers": false,
+      "text_present": false,
+      "artwork_present": false,
+      "gold_symbol_socket_retained": true,
+      "alpha_validation": {
+        "mode": "RGBA",
+        "artwork_inner_max": 1,
+        "artwork_inner_zero_fraction": 0.9869765200630805,
+        "sample_values": {
+          "artwork_center": 0,
+          "name_bar": 253,
+          "lower_panel": 253,
+          "cost_center": 253,
+          "symbol_socket_or_area": 253
+        },
+        "corner_values": [
+          0,
+          0,
+          1,
+          0
+        ]
+      },
+      "status": "Derived visual review template; not a pixel-exact source extraction or finalized production texture."
+    },
+    {
+      "id": "blank-nexus-red-v1",
+      "card_type": "Nexus",
+      "color": "Red",
+      "file": "card-frame-nexus-red.png",
+      "width": 1038,
+      "height": 1515,
+      "sha256": "2efd503850be23a11c540058bc2e7652e9c6bd4514a26446d504bf916a6b92b4",
+      "source_card_id": "26RSD09-011",
+      "source_card_name": "Gorge of Mighty Winds",
+      "source_file": "../../original-cards/26RSD09-011.webp",
+      "source_sha256": "9bec36e0d8e549b563961a5a3e9e86158ff019977caaa96d783b7cf65a24a69a",
+      "source_url": "https://www.battlespirits.com/cardlist/detail_iframe.php?card_no=26RSD09-011&card_no2=26RSD09-011",
+      "blank_level_containers": 2,
+      "bp_numbers_present": false,
+      "fixed_cost_or_reduction_numbers": false,
+      "text_present": false,
+      "artwork_present": false,
+      "gold_symbol_socket_retained": false,
+      "alpha_validation": {
+        "mode": "RGBA",
+        "artwork_inner_max": 1,
+        "artwork_inner_zero_fraction": 0.9867231973174275,
+        "sample_values": {
+          "artwork_center": 0,
+          "name_bar": 253,
+          "lower_panel": 253,
+          "cost_center": 253,
+          "symbol_socket_or_area": 253
+        },
+        "corner_values": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "status": "Derived visual review template; not a pixel-exact source extraction or finalized production texture."
+    },
+    {
+      "id": "blank-magic-red-v1",
+      "card_type": "Magic",
+      "color": "Red",
+      "file": "card-frame-magic-red.png",
+      "width": 1038,
+      "height": 1515,
+      "sha256": "0b00be0893ea0acd55515e2753c6bd050f479c645017710030aaa600646b9b93",
+      "source_card_id": "26RSD01-012",
+      "source_card_name": "Break Claw",
+      "source_file": "../../original-cards/26RSD01-012.webp",
+      "source_sha256": "79601c36f3783a707c2ec5a3b70ddcaf5dc790eedcc54bde45d47bd35e1f45e7",
+      "source_url": "https://www.battlespirits.com/cardlist/detail_iframe.php?card_no=26RSD01-012&card_no2=26RSD01-012",
+      "blank_level_containers": 0,
+      "bp_numbers_present": false,
+      "fixed_cost_or_reduction_numbers": false,
+      "text_present": false,
+      "artwork_present": false,
+      "gold_symbol_socket_retained": true,
+      "alpha_validation": {
+        "mode": "RGBA",
+        "artwork_inner_max": 1,
+        "artwork_inner_zero_fraction": 0.9835630988276912,
+        "sample_values": {
+          "artwork_center": 0,
+          "name_bar": 253,
+          "lower_panel": 253,
+          "cost_center": 252,
+          "symbol_socket_or_area": 252
+        },
+        "corner_values": [
+          0,
+          0,
+          1,
+          0
+        ]
+      },
+      "status": "Derived visual review template; not a pixel-exact source extraction or finalized production texture."
+    }
+  ]
+}
