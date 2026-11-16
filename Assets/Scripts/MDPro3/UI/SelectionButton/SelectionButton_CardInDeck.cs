@@ -157,6 +157,8 @@ namespace MDPro3.UI
         public DeckLocation location;
         private Vector3 dragScale = new(1.7f, 1.7f, 1f);
         private RectTransform child;
+        // Root leaves the grid temporarily while card movement is animated.
+        internal RectTransform CardRoot => child;
 
         protected override void Awake()
         {

@@ -30,7 +30,7 @@ LAN. Replays record completed Battle Spirits matches.
 - 43 transparent paper standees, 18 empty card frames, blue Core, red Soul Core,
   the supplied card back and three field appearances.
 - Native two-player mirrored field, card inspection, legal-action selection,
-  core placement/payment choices and the Ritenia summon presentation.
+  core placement/payment choices and Ritenia/Pisketona summon presentations.
 - Battle Spirits wallpaper/avatar choices in the existing appearance widgets.
 
 Sections without replacement content keep their existing place in the menu and

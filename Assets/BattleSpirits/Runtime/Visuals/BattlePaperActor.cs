@@ -29,7 +29,7 @@ namespace MDPro3.BattleSpirits.Visuals
         internal readonly GameObject Root;
         internal BattleCardPresentation Data { get; private set; }
         internal bool HasCharacter => character != null;
-        internal Vector3 LabelPosition => Root.transform.TransformPoint(new Vector3(0, .12f, 1.03f));
+        internal Vector3 LabelPosition => Root.transform.TransformPoint(new Vector3(0, .12f, 1.13f));
 
         internal BattlePaperActor(BattleFieldRenderer host, Transform parent, BattleCardPresentation data)
         {
@@ -38,10 +38,13 @@ namespace MDPro3.BattleSpirits.Visuals
             Data = Copy(data);
             card = host.NewObject("Complete printed card", Root.transform).transform;
             var edge = Own(host.FieldMaterial(new Color(.13f, .18f, .23f)));
-            host.Plane("Card body", card, edge, new Vector3(0, .025f, 0), new Vector2(1.27f, 1.85f), true);
+            host.Plane("Card body", card, edge, new Vector3(0, .025f, 0), new Vector2(1.47f, 2.06f), true);
             var face = Own(host.SurfaceMaterial());
             face.SetFloat("_Opacity", 0);
-            host.Plane("Uncropped printed face", card, face, new Vector3(0, .031f, 0), new Vector2(1.25f, 1.82f), true);
+            // The shared XY plane lies face-up after its +90-degree X turn.
+            // Reverse V so the printed top points toward the opposing player.
+            face.SetVector("_UvRect", new Vector4(0, 1, 1, -1));
+            host.Plane("Uncropped printed face", card, face, new Vector3(0, .031f, 0), new Vector2(1.45f, 2.03f), true);
             facePath = BattleCatalog.CardImagePath(data.cardId);
             host.AcquireTexture(facePath, texture =>
             {
@@ -80,7 +83,7 @@ namespace MDPro3.BattleSpirits.Visuals
                 host.Plane("Soft summoning rings", Root.transform, ring, new Vector3(0, .018f, 0), new Vector2(2.7f, 2.7f), true);
                 beam = host.Plane("Low projection beam", billboard, Effect(accent, 1),
                     new Vector3(0, -.45f, -.025f), new Vector2(1.1f, 1.5f), false).transform;
-                host.Plane("Subtle printed face shimmer", card, Effect(accent, 2), new Vector3(0, .034f, 0), new Vector2(1.25f, 1.82f), true);
+                host.Plane("Subtle printed face shimmer", card, Effect(accent, 2), new Vector3(0, .034f, 0), new Vector2(1.45f, 2.03f), true);
                 motes = host.MeshObject("Fixed projection motes", Root.transform, host.MoteMesh, Effect(accent, 3)).transform;
             }
             Apply(data);
@@ -95,11 +98,11 @@ namespace MDPro3.BattleSpirits.Visuals
             {
                 var i = cores.Count;
                 cores.Add(host.Plane("Normal Core", Root.transform, host.CoreMaterial,
-                    new Vector3(-.43f + (i % 4) * .28f, .055f, .38f + (i / 4) * .28f), new Vector2(.24f, .24f), true));
+                    new Vector3(-.48f + (i % 4) * .32f, .055f, .5f + (i / 4) * .32f), new Vector2(.3f, .3f), true));
             }
             for (var i = 0; i < cores.Count; i++) cores[i].SetActive(i < count);
             if (data.soul && soul == null)
-                soul = host.Plane("Soul Core", Root.transform, host.SoulMaterial, new Vector3(.42f, .06f, -.6f), new Vector2(.3f, .3f), true);
+                soul = host.Plane("Soul Core", Root.transform, host.SoulMaterial, new Vector3(.5f, .06f, -.7f), new Vector2(.38f, .38f), true);
             if (soul != null) soul.SetActive(data.soul);
         }
 
@@ -179,7 +182,7 @@ namespace MDPro3.BattleSpirits.Visuals
             return t * t * (3 - 2 * t);
         }
 
-        private static Color Accent(string id)
+        internal static Color Accent(string id)
         {
             if (id == "26RBS03-X01") return new Color(.93f, .54f, .42f);
             if (id == "26RBS03-022") return new Color(.76f, .61f, .96f);

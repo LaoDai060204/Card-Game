@@ -34,7 +34,7 @@ static class CatalogSmoke
             Check(validation.IsValid, "Typed Standard legality and copy-limit validation: " + validation.Summary);
         }
         Check(BattleCatalog.GetVisual("ritenia").isBoss, "Ritenia alias must use the approved boss assignment.");
-        Check(!BattleCatalog.GetVisual("pisketona").isBoss, "Pisketona must remain normal presentation.");
+        Check(BattleCatalog.GetVisual("pisketona").isBoss, "Pisketona alias must use the explicit two-player arena boss approval.");
         Check(BattleCatalog.GetVisual("pisketona").width == 1414, "Pisketona alpha bounds must retain source dimensions.");
         Check(BattleCatalog.CardImagePath("pisketona").EndsWith(".jpg"), "The original JPEG must retain its extension and bytes.");
         Check(BattleCatalog.GetNumericId("not-a-card") == 0 && BattleCatalog.GetCardId(42) == null, "Unknown IDs must not fall back to another card.");

@@ -431,7 +431,8 @@ namespace MDPro3.UI
 
         public void ShowArea(Area area)
         {
-            if (this.area == area) return;
+            // The native collection tab starts selected. Its first ShowArea
+            // still has to populate the grid, even when the enum already matches.
             this.area = area;
             RefreshToolArea();
             if (area == Area.Collection)
@@ -564,9 +565,9 @@ namespace MDPro3.UI
 
             superScrollView = new SuperScrollView
             (
-                6, 
-                DeckEditor.UseMobileLayout ? 158 : 88,
-                DeckEditor.UseMobileLayout ? 239 : 143,
+                DeckEditor.UseMobileLayout ? 6 : 4,
+                DeckEditor.UseMobileLayout ? 158 : 132,
+                DeckEditor.UseMobileLayout ? 239 : 202,
                 DeckEditor.UseMobileLayout ? 10 : 5,
                 DeckEditor.UseMobileLayout ? 10 : 5,
                 Template, ItemOnListRefresh, ScrollRect
@@ -578,6 +579,7 @@ namespace MDPro3.UI
             RefreshToolArea();
 
             InputSearch.InputField.onEndEdit.AddListener(RefreshCurrentArea);
+            InputSearch.InputField.onValueChanged.AddListener(RefreshCurrentArea);
             ButtonSearch.SetClickEvent(() => RefreshCurrentArea());
             ButtonSort.SetClickEvent(ShowSortOrder);
             ButtonClear.SetClickEvent(ResetFilters);
@@ -593,6 +595,13 @@ namespace MDPro3.UI
                 SetDropArea();
             else
                 defaultArea = Area.History;
+        }
+
+        private void Start()
+        {
+            // Child tab Start callbacks can run before or after this component.
+            // Both paths intentionally refresh the already-selected collection.
+            ShowArea(defaultArea);
         }
 
         protected override void OnDestroy()

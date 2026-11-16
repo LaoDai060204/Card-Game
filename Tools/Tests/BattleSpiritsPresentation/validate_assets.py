@@ -11,7 +11,7 @@ assets = root / "Assets/StreamingAssets/BattleSpirits"
 visuals = json.loads((assets / "visuals.json").read_text())["visuals"]
 spirits = [entry for entry in visuals if entry["width"] > 0 and entry["height"] > 0]
 assert len(spirits) == 43, "The reviewed library has exactly 43 paper silhouettes"
-assert [entry["id"] for entry in visuals if entry["isBoss"]] == ["26RBS03-X01"]
+assert {entry["id"] for entry in visuals if entry["isBoss"]} == {"26RBS03-X01", "26RBS03-022"}
 for entry in spirits:
     image = Image.open(assets / "standees" / (entry["id"] + ".png"))
     assert image.size == (entry["width"], entry["height"]), entry["id"]
@@ -42,4 +42,4 @@ for name in ("BattleSurface", "BattleField", "BattleProjection"):
     assert (shader_root / (name + ".shader.meta")).exists()
 for path in code_root.glob("*.cs"):
     assert path.with_suffix(".cs.meta").exists(), path.name
-print("PASS: 43 alpha PNGs and bounds; Ritenia-only boss metadata; native shader property coverage and stable metadata.")
+print("PASS: 43 alpha PNGs and bounds; explicit Ritenia/Pisketona boss metadata; native shader property coverage and stable metadata.")

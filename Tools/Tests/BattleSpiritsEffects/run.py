@@ -15,7 +15,7 @@ runtime = sorted((sdk / "shared/Microsoft.NETCore.App").iterdir())[-1].name
 with tempfile.TemporaryDirectory(prefix="bs-effects-") as work:
     target = Path(work) / "EffectsTests.dll"
     response = Path(work) / "compile.rsp"
-    sources = sorted((root / "Assets/BattleSpirits/Runtime/Core").glob("*.cs")) + [Path(__file__).with_name("Program.cs")]
+    sources = sorted((root / "Assets/BattleSpirits/Runtime/Core").glob("*.cs")) + sorted(Path(__file__).parent.glob("*.cs"))
     response.write_text("\n".join(["-nologo", "-langversion:9.0", "-target:exe", '-out:"' + str(target) + '"'] + ['-r:"' + p + '"' for p in refs] + ['"' + str(p) + '"' for p in sources]))
     env = dict(os.environ, DOTNET_CLI_HOME=str(Path(work) / "dotnet"), DOTNET_CLI_TELEMETRY_OPTOUT="1")
     subprocess.run([str(sdk / "dotnet"), "exec", str(version / "Roslyn/bincore/csc.dll"), "@" + str(response)], env=env, check=True)

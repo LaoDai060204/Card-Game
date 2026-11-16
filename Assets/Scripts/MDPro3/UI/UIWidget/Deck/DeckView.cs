@@ -337,6 +337,8 @@ namespace MDPro3.UI
         protected bool needSave;
         protected bool dirtyAfterPrint;
         private Coroutine printRoutine;
+        private bool battleDeckLayout;
+        private Vector2 battleViewportSize;
 
         #endregion
 
@@ -1174,11 +1176,90 @@ namespace MDPro3.UI
 
             Template.transform.SetParent(transform, false);
             Template.SetActive(false);
+            ConfigureBattleDeckLayout();
             ButtonNoItem.SetSelectEvent(() =>
             {
                 if (Program.instance.currentServant == Program.instance.deckEditor)
                     Program.instance.deckEditor.ResponseRegion = DeckEditorUI.ResponseRegion.Deck;
             });
+        }
+
+        private void ConfigureBattleDeckLayout()
+        {
+            if (DeckEditor.UseMobileLayout) return;
+            battleDeckLayout = true;
+            defaultColumns = 7;
+            defaultSpacing = new Vector2(8f, 8f);
+            var viewport = Viewport.GetComponent<RectTransform>();
+            var content = MainDeckContent.transform.parent.parent as RectTransform;
+            ScrollRect.content = content;
+            ScrollRect.viewport = viewport;
+            ScrollRect.horizontal = false;
+            ScrollRect.vertical = true;
+            ScrollRect.scrollSensitivity = 40f;
+            ScrollRect.enabled = true;
+            if (viewport.GetComponent<RectMask2D>() == null)
+                viewport.gameObject.AddComponent<RectMask2D>();
+            if (AutoScroll == null)
+                m_AutoScroll = ScrollRect.gameObject.AddComponent<UIScrollToSelection>();
+            content.anchorMin = new Vector2(0f, 1f);
+            content.anchorMax = Vector2.one;
+            content.pivot = new Vector2(0f, 1f);
+            content.anchoredPosition = Vector2.zero;
+            RefreshBattleDeckLayout();
+        }
+
+        private void LateUpdate()
+        {
+            if (battleDeckLayout && battleViewportSize != ScrollRect.viewport.rect.size)
+                RefreshBattleDeckLayout();
+        }
+
+        private void RefreshBattleDeckLayout()
+        {
+            if (!battleDeckLayout) return;
+            battleViewportSize = ScrollRect.viewport.rect.size;
+            // The desktop asset uses a 72 x 101 face inside a fixed 10-column
+            // grid. Grow both the grid cell AND its private template's Root.
+            contentWidth = Mathf.Max(200f, battleViewportSize.x - 24f);
+            templateWidth = (contentWidth - (defaultColumns - 1) * defaultSpacing.x) / defaultColumns;
+            var cell = new Vector2(templateWidth, templateWidth / MDPro3.Utility.CardImageLoader.DEFAULT_ASPECT);
+            var templateRoot = Template.transform.GetChild(0) as RectTransform;
+            templateRoot.sizeDelta = cell;
+            if (cards != null)
+                foreach (var card in cards)
+                    card.CardRoot.sizeDelta = cell;
+
+            // Unity destroys old button objects at the end of the frame. Size
+            // from the current deck list, so removals and empty reprints shrink now.
+            float height = LayoutBattleDeckSection(MainDeckContent, cards?.Count(card => card.location == DeckLocation.MainDeck) ?? 0, cell, 0f, true);
+            height = LayoutBattleDeckSection(ExtraDeckContent, cards?.Count(card => card.location == DeckLocation.ExtraDeck) ?? 0, cell, height, false);
+            height = LayoutBattleDeckSection(SideDeckContent, cards?.Count(card => card.location == DeckLocation.SideDeck) ?? 0, cell, height, false);
+            ScrollRect.content.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, Mathf.Max(height, battleViewportSize.y));
+        }
+
+        private float LayoutBattleDeckSection(GridLayoutGroup grid, int count, Vector2 cell, float top, bool keepEmpty)
+        {
+            var section = grid.transform.parent as RectTransform;
+            section.gameObject.SetActive(keepEmpty || count > 0);
+            if (!keepEmpty && count == 0) return top;
+            grid.cellSize = cell;
+            grid.spacing = defaultSpacing;
+            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            grid.constraintCount = defaultColumns;
+            int rows = Mathf.Max(1, Mathf.CeilToInt(count / (float)defaultColumns));
+            float height = 48f + grid.padding.top + grid.padding.bottom + rows * cell.y + (rows - 1) * defaultSpacing.y;
+            section.anchorMin = new Vector2(0f, 1f);
+            section.anchorMax = Vector2.one;
+            section.pivot = new Vector2(0f, 1f);
+            section.anchoredPosition = new Vector2(4f, -top);
+            section.sizeDelta = new Vector2(-8f, height);
+            var gridRect = grid.GetComponent<RectTransform>();
+            gridRect.anchorMin = Vector2.zero;
+            gridRect.anchorMax = Vector2.one;
+            gridRect.offsetMin = new Vector2(8f, 0f);
+            gridRect.offsetMax = new Vector2(-8f, -48f);
+            return top + height;
         }
 
         protected IEnumerator PrintDeckAsync()
@@ -1222,6 +1303,13 @@ namespace MDPro3.UI
 
             RefreshCardsCount(DeckLocation.All);
 
+            if (battleDeckLayout)
+            {
+                RefreshBattleDeckLayout();
+                ScrollRect.StopMovement();
+                ScrollRect.verticalNormalizedPosition = 1f;
+            }
+
             TweenLoading.Hide();
             Viewport.alpha = 1f;
             Viewport.blocksRaycasts = true;
@@ -1238,6 +1326,11 @@ namespace MDPro3.UI
 
         protected virtual void ChangeGridSpacing(DeckLocation location)
         {
+            if (battleDeckLayout)
+            {
+                RefreshBattleDeckLayout();
+                return;
+            }
             if ((location & DeckLocation.MainDeck) > 0)
             {
                 int count = GetDeckLocationCount(DeckLocation.MainDeck);

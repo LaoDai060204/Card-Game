@@ -67,14 +67,16 @@ namespace MDPro3.BattleSpirits
             UIManager.HideExitButton(0);
             UIManager.HideLine(0);
             UIManager.HideWallpaper(TransitionTime);
-            UIManager.ShowBlackBack(0, TransitionTime);
+            // An alpha-zero Image still intercepts pointer events. The backdrop
+            // is above this servant in the shared Canvas and must stop raycasting.
+            UIManager.HideBlackBack(0);
             AfterShowingEvent();
         }
 
         protected override void ApplyHideArrangement(int nextDepth)
         {
             if (servantUI is BattleDuelUI ui) ui.Suspend();
-            servantUI.ShutDown();
+            if (servantUI != null) servantUI.ShutDown();
             inTransition = false;
         }
 

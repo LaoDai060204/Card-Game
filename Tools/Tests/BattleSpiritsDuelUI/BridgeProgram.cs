@@ -30,7 +30,14 @@ static class BridgeSmoke
     static void Run()
     {
         var owner = MDPro3.Program.instance;
-        owner.menu = new GameObject("Menu").AddComponent<MDPro3.Servant.Servant>();
+        // Main.unity keeps Program outside the camera-rendered UI Canvas.
+        var canvas = new GameObject("UI", typeof(RectTransform), typeof(Canvas)) { layer = 5 };
+        owner.menu = new GameObject("Menu", typeof(RectTransform)) { layer = 5 }.AddComponent<MDPro3.Servant.Servant>();
+        owner.menu.transform.SetParent(canvas.transform, false);
+        owner.ocgcore = new GameObject("OcgCore", typeof(RectTransform)) { layer = 5 }.AddComponent<MDPro3.Servant.Servant>();
+        owner.ocgcore.transform.SetParent(canvas.transform, false);
+        var blackBack = new GameObject("BlackBack", typeof(RectTransform)) { layer = 5 };
+        blackBack.transform.SetParent(canvas.transform, false);
         owner.currentServant = owner.menu;
         BattleIntegration.Initialize(owner);
         BattleIntegration.Initialize(owner);
@@ -42,6 +49,14 @@ static class BridgeSmoke
         var solo = BattleIntegration.Current;
         Check(solo.View != null && solo.View.Players.All(p => p.Life == 5) && solo.View.Phase == MatchPhase.Opening, "Solo opens with BS life and opening state.");
         Check(owner.Registered == 1 && owner.currentServant is BattleDuelServant && owner.currentServant.returnServant == owner.menu, "Startup registers native duel once and retains return navigation.");
+        var duelRect = owner.currentServant.transform as RectTransform;
+        Check(duelRect != null && duelRect.parent == canvas.transform && duelRect.GetComponentInParent<Canvas>() != null,
+            "The duel is a RectTransform below the actual UI Canvas rather than below Program.");
+        Check(owner.currentServant.gameObject.layer == 5 && duelRect.GetSiblingIndex() == 1 && blackBack.transform.GetSiblingIndex() > duelRect.GetSiblingIndex(),
+            "The duel inherits the camera-visible UI layer and stays below modal backdrop layers.");
+        Check(duelRect.anchorMin.x == 0 && duelRect.anchorMin.y == 0 && duelRect.anchorMax.x == 1 && duelRect.anchorMax.y == 1
+            && duelRect.offsetMin.x == 0 && duelRect.offsetMax.y == 0 && duelRect.localScale.x == 1,
+            "The runtime duel stretches across its Canvas parent at normal scale.");
         Check(!BattleIntegration.PlayReplay(Path.Combine(Application.persistentDataPath, "missing.bsreplay.json")), "Invalid replay is reported as a failed start.");
         Check(ReferenceEquals(solo, BattleIntegration.Current) && solo.View != null, "Failed candidate replay preserves the previous live match.");
         Check(!BattleIntegration.Host(-1, "Player") && ReferenceEquals(solo, BattleIntegration.Current), "Invalid LAN listen port does not replace a live match.");

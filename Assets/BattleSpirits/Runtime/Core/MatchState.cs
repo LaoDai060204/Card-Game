@@ -23,7 +23,9 @@ namespace MDPro3.BattleSpirits.Core
                 if (Card?.levels == null) return result;
                 for (int i = 0; i < Card.levels.Count; i++) if (Cores.Total >= Card.levels[i].cores || Cores.Soul && Card.levels[i].soulAlternative) result = i + 1;
 
-                return Math.Max(result, BattleLevelOverride);
+                // A battle level change still requires enough physical cores for Lv1.
+                // In particular, Level Up cannot keep a zero-core Spirit on the field.
+                return result == 0 ? 0 : Math.Max(result, BattleLevelOverride);
             }
         }
         public int Bp => Level <= 0 || !Card.IsSpirit ? 0 : (int)Math.Max(0, Math.Min(int.MaxValue, (long)Card.levels[Math.Min(Level, Card.levels.Count) - 1].bp + TurnBpBonus + BattleBpBonus + (ContinuousBp?.Invoke(this) ?? 0)));

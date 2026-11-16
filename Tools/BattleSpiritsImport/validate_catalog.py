@@ -58,7 +58,13 @@ for deck in decks:
     assert max(Counter(deck['cards']).values()) <= 3
 visuals = read(stream / 'visuals.json')['visuals']
 assert len(visuals) == 62
-assert [v['id'] for v in visuals if v['isBoss']] == ['26RBS03-X01']
+assert {v['id'] for v in visuals if v['isBoss']} == {'26RBS03-X01', '26RBS03-022'}
+arena_reference = read(data / 'provenance/arena-reference-20261117.json')['references'][0]
+arena_original = data / 'provenance' / arena_reference['original_file']
+assert arena_reference['unchanged_original']
+assert arena_original.stat().st_size == arena_reference['original_bytes']
+assert hashlib.sha256(arena_original.read_bytes()).hexdigest() == arena_reference['original_sha256']
+assert set(arena_reference['approved_boss_ids']) == {v['id'] for v in visuals if v['isBoss']}
 for v in visuals:
     if by_id[v['id']]['type'] == 'Spirit':
         assert (stream / 'standees' / (v['id'] + '.png')).is_file()

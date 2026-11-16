@@ -6,8 +6,10 @@ from pathlib import Path
 import subprocess
 import shutil
 import tempfile
+from test_real_prefabs import validate
 
 root = Path(__file__).resolve().parents[3]
+validate(root)
 sdk = Path(os.environ.get("DOTNET_ROOT", "/tmp/codex-dotnet"))
 version = sorted((sdk / "sdk").iterdir())[-1]
 reference = sorted((sdk / "packs/Microsoft.NETCore.App.Ref").glob("*/ref/net10.0"))[-1]
@@ -16,7 +18,7 @@ with tempfile.TemporaryDirectory(prefix="bs-native-duel-") as work:
     target = Path(work) / "NativeDuelSmoke.dll"
     sources = [p for p in Path(__file__).parent.glob("*.cs") if p.name != "BridgeProgram.cs"]
     production = root / "Assets/BattleSpirits/Runtime"
-    sources += [production / "Integration/BattleDuelServant.cs", production / "Integration/BattleDuelUI.cs",
+    sources += [production / "Integration/BattleDuelServant.cs", production / "Integration/BattleDuelUI.cs", production / "Integration/BattleDuelHud.cs",
                 production / "Visuals/BattlePresentationState.cs"]
     sources += list((production / "Core").glob("*.cs"))
     response = Path(work) / "compile.rsp"

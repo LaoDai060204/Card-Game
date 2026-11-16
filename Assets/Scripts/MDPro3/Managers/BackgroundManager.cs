@@ -19,9 +19,9 @@ namespace MDPro3
         public static readonly Dictionary<int, string> backgrounds = new Dictionary<int, string>()
         {
             { 1, "Battle Spirits Navy" },
-            { 2, "Dragon Field" },
-            { 3, "Standard Play Sheet" },
-            { 4, "White Play Sheet" },
+            { 2, "Deep Blue" },
+            { 3, "Midnight Violet" },
+            { 4, "Slate" },
         };
 
         public void Refresh()
@@ -43,12 +43,11 @@ namespace MDPro3
                 // A native solid sprite supplies the canvas base without altering any source pixels.
                 Texture2D texture = Texture2D.whiteTexture;
                 renderer.color = BattleCosmetics.Navy;
-                if (cid > 1)
-                {
-                    string[] paths = { "field.png", "play-sheet.png", "play-sheet-white.png" };
-                    texture = BattleCosmetics.LoadTexture(Path.Combine(Application.streamingAssetsPath, "BattleSpirits", "playmats", paths[cid - 2]));
-                    renderer.color = Color.white;
-                }
+                // Play sheets belong to the duel surface. Menus need a quiet
+                // background so their labels and card lists remain readable.
+                if (cid == 2) renderer.color = new Color(.018f, .06f, .10f, 1);
+                else if (cid == 3) renderer.color = new Color(.045f, .025f, .075f, 1);
+                else if (cid == 4) renderer.color = new Color(.045f, .055f, .07f, 1);
                 if (texture == null) texture = Texture2D.whiteTexture;
                 battleBackgroundSprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(.5f, .5f), 100f);
                 renderer.sprite = battleBackgroundSprite;

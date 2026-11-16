@@ -38,8 +38,8 @@ namespace MDPro3.Servant
         protected override void FirstLoadEvent() { base.FirstLoadEvent(); Print(); }
         protected override void ApplyShowArrangement(int depth)
         {
+            if (bots.Count == 0) LoadBots();
             base.ApplyShowArrangement(depth);
-            LoadBots();
             if (retry) { retry = false; BattleIntegration.StartSolo(lastDeck, lastOpponent); }
         }
         public override void Select(bool forced = false)

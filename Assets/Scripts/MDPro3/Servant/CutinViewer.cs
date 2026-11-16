@@ -18,7 +18,12 @@ namespace MDPro3.Servant
         public override int Depth => 1;
         protected override bool ShowLine => false;
         public override void Initialize() { returnServant = Program.instance.menu; base.Initialize(); LoadCutins(); }
-        protected override void ApplyShowArrangement(int previous) { base.ApplyShowArrangement(previous); LoadCutins(); }
+        protected override void FirstLoadEvent() { base.FirstLoadEvent(); GetUI<CutinViewerUI>().Print(); }
+        protected override void ApplyShowArrangement(int previous)
+        {
+            if (cards.Count == 0) LoadCutins();
+            base.ApplyShowArrangement(previous);
+        }
         public override void Select(bool forced = false)
         {
             if (!forced && !UserInput.NeedDefaultSelect()) return;
@@ -31,7 +36,11 @@ namespace MDPro3.Servant
             foreach (var definition in BattleCatalog.Cards)
                 if (BattleCatalog.IsBoss(definition.id))
                 { var card = CardsManager.Get(definition.numericId); if (card != null) { cards.Add(card); codes.Add(card.Id); } }
-            if (servantUI != null) GetUI<CutinViewerUI>().Print();
+            if (servantUI != null)
+            {
+                var ui = GetUI<CutinViewerUI>();
+                ui.Print(ui.CurrentSearch);
+            }
         }
         public override void PerFrameFunction()
         {
@@ -45,6 +54,10 @@ namespace MDPro3.Servant
         public static UniTask Play(int code, int owner)
         { if (CutinExist(code)) BattleIntegration.PreviewCutscene(BattleCatalog.GetCardId(code)); return UniTask.CompletedTask; }
         public static UniTask CacheCutin(int code) => UniTask.CompletedTask;
-        public void AutoPlay() { BattleIntegration.PreviewCutscene(); }
+        public void AutoPlay()
+        {
+            int code = GetUI<CutinViewerUI>()?.SelectedCode ?? 0;
+            if (CutinExist(code)) _ = Play(code, controller);
+        }
     }
 }

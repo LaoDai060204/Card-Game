@@ -38,7 +38,7 @@ def validate(root: Path, allow_incomplete=False, base="2c7fd2ee7e5d2100eb85cccff
             if card_id in by_id:
                 check(count <= by_id[card_id].get("maxCopies", 3), "Printed copy limit exceeded: " + deck["name"] + "/" + card_id)
     check(len(visuals) == 62 and {item["id"] for item in visuals} == set(by_id), "Visual metadata and catalog coverage differ.")
-    check([item["id"] for item in visuals if item.get("isBoss")] == ["26RBS03-X01"], "Only Ritenia has the boss cutscene flag.")
+    check({item["id"] for item in visuals if item.get("isBoss")} == {"26RBS03-X01", "26RBS03-022"}, "Only the explicitly assigned Ritenia and Pisketona cards have boss cutscenes.")
     check(sum(item.get("width", 0) > 0 for item in visuals) == 43, "Reviewed paper-actor silhouette count changed.")
     puzzles = list((source / "Puzzles").glob("*.json"))
     check(len(puzzles) >= 10, "At least ten Battle Spirits puzzle fixtures must ship.")

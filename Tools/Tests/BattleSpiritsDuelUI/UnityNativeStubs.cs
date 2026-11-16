@@ -30,6 +30,7 @@ namespace UnityEngine
         public GameObject gameObject;
         public Transform transform => gameObject.transform;
         public T GetComponent<T>() where T : Component => gameObject.GetComponent<T>();
+        public T GetComponentInParent<T>() where T : Component => gameObject.GetComponentInParent<T>();
         public T[] GetComponentsInChildren<T>(bool includeInactive = false) where T : Component => gameObject.GetComponentsInChildren<T>(includeInactive);
         public T GetComponentInChildren<T>(bool includeInactive = false) where T : Component => GetComponentsInChildren<T>(includeInactive).FirstOrDefault();
     }
@@ -38,6 +39,7 @@ namespace UnityEngine
     public class GameObject : Object
     {
         public bool activeSelf = true;
+        public int layer;
         public Transform transform;
         private readonly List<Component> components = new List<Component>();
         public GameObject(string name, params Type[] types)
@@ -54,6 +56,7 @@ namespace UnityEngine
         }
         public T AddComponent<T>() where T : Component, new() => (T)AddComponent(typeof(T));
         public T GetComponent<T>() where T : Component => components.OfType<T>().FirstOrDefault();
+        public T GetComponentInParent<T>() where T : Component => GetComponent<T>() ?? transform.parent?.GetComponentInParent<T>();
         public T GetComponentInChildren<T>(bool includeInactive = false) where T : Component => GetComponentsInChildren<T>(includeInactive).FirstOrDefault();
         public T[] GetComponentsInChildren<T>(bool includeInactive = false) where T : Component => components.OfType<T>()
             .Concat(transform.Children.SelectMany(c => c.gameObject.GetComponentsInChildren<T>(includeInactive))).ToArray();
@@ -67,22 +70,35 @@ namespace UnityEngine
         public void SetParent(Transform value, bool world = false) { parent?.Children.Remove(this); parent = value; value?.Children.Add(this); }
         public void SetAsFirstSibling() { if (parent == null) return; parent.Children.Remove(this); parent.Children.Insert(0, this); }
         public void SetAsLastSibling() { if (parent == null) return; parent.Children.Remove(this); parent.Children.Add(this); }
+        public void SetSiblingIndex(int index) { if (parent == null) return; parent.Children.Remove(this); parent.Children.Insert(Math.Min(index, parent.Children.Count), this); }
+        public int GetSiblingIndex() => parent?.Children.IndexOf(this) ?? 0;
+        public Transform Find(string path)
+        {
+            Transform current = this;
+            foreach (string segment in path.Split('/')) current = current?.Children.FirstOrDefault(child => child.gameObject.name == segment);
+            return current;
+        }
     }
     public class RectTransform : Transform
     {
         public Vector2 anchorMin, anchorMax, offsetMin, offsetMax, pivot, anchoredPosition, sizeDelta;
         public Vector3 anchoredPosition3D;
+        public Rect rect => new Rect(0, 0, sizeDelta.x, sizeDelta.y);
     }
     public struct Vector2
     {
         public float x, y; public Vector2(float x, float y) { this.x = x; this.y = y; }
         public static Vector2 zero => new Vector2(0, 0); public static Vector2 one => new Vector2(1, 1);
     }
-    public struct Vector3 { public float x, y, z; public Vector3(float x, float y, float z) { this.x = x; this.y = y; this.z = z; } public static Vector3 zero => new Vector3(); }
-    public struct Color { public static Color white => new Color(); }
+    public struct Vector3 { public float x, y, z; public Vector3(float x, float y, float z) { this.x = x; this.y = y; this.z = z; } public static Vector3 zero => new Vector3(); public static Vector3 one => new Vector3(1, 1, 1); }
+    public struct Rect { public float x, y, width, height; public Rect(float x, float y, float width, float height) { this.x=x;this.y=y;this.width=width;this.height=height; } }
+    public struct Color { public float r,g,b,a; public Color(float r,float g,float b,float a=1) { this.r=r;this.g=g;this.b=b;this.a=a; } public static Color white => new Color(1,1,1); }
     public class Texture : Object { }
     public class Texture2D : Texture { }
     public class CanvasGroup : Behaviour { public float alpha; public bool blocksRaycasts; }
+    public class Canvas : Behaviour { public static void ForceUpdateCanvases() { } }
+    public class Font : Object { }
+    public static class Resources { public static T GetBuiltinResource<T>(string path) where T : Object, new() => new T(); }
     public class SerializeField : Attribute { }
     public class RequireComponent : Attribute { public RequireComponent(Type type) { } }
     public class HideInInspector : Attribute { }
@@ -92,7 +108,8 @@ namespace UnityEngine
     public static class Time { public static float unscaledTime; }
     public static class Debug { public static string LastError; public static void LogError(object error) => LastError = error?.ToString(); }
     public enum HorizontalWrapMode { Wrap, Overflow }
-    public enum VerticalWrapMode { Overflow }
+    public enum VerticalWrapMode { Overflow, Truncate }
+    public enum TextAnchor { UpperLeft, MiddleLeft, MiddleCenter }
 }
 namespace UnityEngine.Events
 {
@@ -126,12 +143,14 @@ namespace UnityEngine.UI
         public enum Mode { Explicit }
         public Mode mode; public Selectable selectOnUp, selectOnDown, selectOnLeft, selectOnRight;
     }
-    public class Graphic : Behaviour { public bool raycastTarget; public RectTransform rectTransform => (RectTransform)transform; }
+    public class Graphic : Behaviour { public bool raycastTarget; public Color color; public RectTransform rectTransform => (RectTransform)transform; }
     public class Image : Graphic { }
     public class RawImage : Graphic { }
-    public class Text : Graphic { public string text; public int fontSize; public float preferredHeight => Math.Max(1, (text?.Length ?? 0) / 60 + 1) * Math.Max(1, fontSize); public HorizontalWrapMode horizontalOverflow; public VerticalWrapMode verticalOverflow; }
+    public class Text : Graphic { public string text; public int fontSize; public Font font; public TextAnchor alignment; public bool supportRichText; public float preferredHeight => Math.Max(1, (text?.Length ?? 0) / 60 + 1) * Math.Max(1, fontSize); public HorizontalWrapMode horizontalOverflow; public VerticalWrapMode verticalOverflow; }
     public class Button : Selectable { public Graphic targetGraphic; public Events.UnityEvent onClick = new Events.UnityEvent(); }
-    public class ScrollRect : Behaviour { public RectTransform content; public float verticalNormalizedPosition; }
+    public class ScrollRect : Behaviour { public RectTransform content, viewport; public bool horizontal, vertical; public float scrollSensitivity; public float verticalNormalizedPosition; }
+    public class Outline : Behaviour { public Color effectColor; public Vector2 effectDistance; }
+    public class RectMask2D : Behaviour { }
 }
 namespace TMPro
 {
@@ -177,11 +196,14 @@ namespace MDPro3
         public static void ShowCardInfoDetail(object card) => Inspected = card;
         public static void HideExitButton(float time) { } public static void HideLine(float time) { }
         public static void HideWallpaper(float time) { } public static void ShowBlackBack(float alpha, float time) { }
+        public static int BlackBackHides;
+        public static void HideBlackBack(float time) { BlackBackHides++; }
     }
     public class Program : UnityEngine.MonoBehaviour
     {
         public static readonly Program instance = new UnityEngine.GameObject("Program").AddComponent<Program>();
         public Servant.Servant menu;
+        public Servant.Servant ocgcore;
         public Servant.Servant setting;
         public Servant.Servant currentServant, currentSubServant;
         public Servant.Servant LastServant;
@@ -271,6 +293,7 @@ namespace MDPro3.BattleSpirits
         public static string Description(CardDefinition definition) => definition.effectTextEn;
         public static object ToNative(CardDefinition definition) => definition;
         public static void FitFace(UnityEngine.UI.RawImage image, UnityEngine.Texture texture) { }
+        public static Task<UnityEngine.Texture2D> BackAsync(CancellationToken token) => Task.FromResult(new UnityEngine.Texture2D());
     }
 #if !REAL_SESSION
     public static class BattleIntegration

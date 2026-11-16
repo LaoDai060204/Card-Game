@@ -1,5 +1,5 @@
 {
-  "version": "standard-effects-20261116",
+  "version": "standard-effects-20261116-r2",
   "ids": [
     "26RBS01-003",
     "26RBS01-019",
@@ -64,15 +64,25 @@
     "26RSD10-003",
     "26RSD10-004"
   ],
-  "verification": "Explicit production effect profiles tested by Core, Effects and Solo/Puzzle harnesses; vanilla profiles intentionally have no printed effect.",
+  "verification": "Explicit production effect profiles tested by Core, Effects and Solo/Puzzle harnesses; every shipped card is also exercised through public legal-command dispatch. Vanilla profiles intentionally have no printed effect.",
   "source_effect_sha256": "ecffec4e56e9c5478e34f501d4cf73e699a16893049cc9e6b14663483101343f",
   "verified": true,
   "checks": {
     "core": 116,
-    "effects": 539,
+    "effects": 2754,
     "soloPuzzles": 3698,
     "puzzles": 10,
     "completeAiMatchups": 16,
-    "unityPlayBuild": false
+    "unityPlayBuild": false,
+    "publicCommands": {
+      "handPlays": 124,
+      "spiritAttacks": 43,
+      "spiritBlocks": 43,
+      "magicModesAndWindows": 40,
+      "soulMagicPayments": 10,
+      "activatedAbilities": 8,
+      "successionPayments": 14,
+      "levelUpDepletion": 9
+    }
   }
 }

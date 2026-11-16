@@ -37,7 +37,7 @@ namespace MDPro3.BattleSpirits
         {
             EnsureReady();
             var next = new BattleGameSession(BattleCatalog.Cards, StorageRoot);
-            try { start(next); }
+            try { start(next); EnsureDuelHost(); }
             catch { next.Dispose(); throw; }
             // Validate and initialize the candidate before releasing a live match or
             // LAN listener. Failed replay/deck/connection input must not replace it.
@@ -58,15 +58,35 @@ namespace MDPro3.BattleSpirits
             return deck;
         }
 
-        private static void OpenDuel()
+        private static void EnsureDuelHost()
         {
             if (duel == null)
             {
-                var gameObject = new GameObject("Battle Spirits Duel");
-                gameObject.transform.SetParent(program.transform, false);
+                // Program is a separate scene object with no Canvas. Native
+                // servants live below the UI Canvas, before its modal layers.
+                var parent = program.menu != null ? program.menu.transform.parent : null;
+                if (parent == null || parent.GetComponentInParent<Canvas>() == null)
+                    throw new InvalidOperationException("The Battle Spirits UI Canvas is unavailable.");
+                var gameObject = new GameObject("Battle Spirits Duel", typeof(RectTransform));
+                gameObject.layer = parent.gameObject.layer;
+                var rect = gameObject.GetComponent<RectTransform>();
+                rect.SetParent(parent, false);
+                rect.anchorMin = Vector2.zero;
+                rect.anchorMax = Vector2.one;
+                rect.offsetMin = rect.offsetMax = Vector2.zero;
+                rect.localScale = Vector3.one;
+                // BlackBack, settings, side panels and popups must remain above
+                // the duel, just as they are above the original scene servant.
+                rect.SetSiblingIndex(program.ocgcore != null
+                    ? program.ocgcore.transform.GetSiblingIndex() : 0);
                 duel = gameObject.AddComponent<BattleDuelServant>();
                 program.RegisterServant(duel);
             }
+        }
+
+        private static void OpenDuel()
+        {
+            EnsureDuelHost();
             if (program.currentServant != duel)
                 duel.returnServant = program.currentServant ?? program.menu;
             duel.Bind(Current);

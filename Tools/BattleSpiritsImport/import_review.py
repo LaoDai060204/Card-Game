@@ -19,6 +19,10 @@ import urllib.request
 PROJECT = Path(__file__).resolve().parents[2]
 STREAM = PROJECT / 'Assets/StreamingAssets/BattleSpirits'
 DATA = PROJECT / 'Data/BattleSpirits'
+# Explicit presentation approval from the owner's 17 November two-player arena
+# reference (provenance/arena-reference-20261117.json). This overrides the older
+# library's Ritenia-only demonstration flag.
+APPROVED_BOSS_IDS = frozenset(('26RBS03-X01', '26RBS03-022'))
 EX_IDS = frozenset('26RBS01-003 26RBS01-019 26RBS02-002 26RBS03-004 26RBS03-009 26RCB01-039 26RCB01-040 26RCB01-043 26RCB01-044 26RSD02-001 26RSD02-005 26RSD03-003 26RSD03-005 26RSD09-004 26RSD10-004 26RBS02-087 26RCB01-071 26RSD01-012 26RSD01-014 26RSD02-014 26RSD03-013 26RSD03-014 26RSD06-013'.split())
 # Independent transcription of the printed gemstone colors, not card attributes.
 PRINTED_SYMBOL_COLORS = {
@@ -149,7 +153,7 @@ def main():
     for entry in library['entries']:
         id = entry['card_id']
         bounds = entry.get('character_bounds', {})
-        visual_data.append({'id': id, 'width': entry.get('width', 0), 'height': entry.get('height', 0), 'left': bounds.get('left', 0), 'top': bounds.get('top', 0), 'right': bounds.get('right', 0), 'bottom': bounds.get('bottom', 0), 'isBoss': entry['is_boss_demo']})
+        visual_data.append({'id': id, 'width': entry.get('width', 0), 'height': entry.get('height', 0), 'left': bounds.get('left', 0), 'top': bounds.get('top', 0), 'right': bounds.get('right', 0), 'bottom': bounds.get('bottom', 0), 'isBoss': id in APPROVED_BOSS_IDS})
         if entry.get('cutout'):
             copy(review / 'design/hologram-library-v2' / entry['cutout'], STREAM / 'standees' / (id + '.png'), entry['method'])
     for frame in sorted((review / 'frames/six-color-v1').glob('*/*.png')):

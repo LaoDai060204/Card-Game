@@ -32,6 +32,29 @@ publishes viewer-filtered snapshots. It is not compatible with old game servers.
 Completed-match replays use `.bsreplay.json`, validated command resimulation and
 isolated local storage. No old replay or deck directory is consumed.
 
+## Native UI corrections
+
+The dynamic duel host is a full-stretch RectTransform under the same Canvas as
+the native menu. It inherits the UI layer and sits below the shared backdrop,
+settings and popup layers. A transparent backdrop explicitly stops raycasting
+when entering a duel. New field labels, hand cells, controls and inspection
+widgets inherit their parent's layer; the actual scene UI camera draws layers
+5 and 30. The scene and prefab contract checks read these serialized assets
+instead of assuming that Program is a Canvas.
+
+The native arena has public counters, all eight Standard steps, hand inspection,
+and a filtered action list for the selected card. Every action still sends an
+exact command offered by the session. Each printed face fits inside its own
+bounds, rather than an entire HUD panel. Summon presentations hide ordinary HUD
+controls until they end or are skipped.
+
+Solo and Cutin use one asynchronously loaded list each; overlapping requests
+cannot create duplicate rows or erase the selected opponent. Cutin previews the
+selected boss cutout before playback. The desktop deck has seven larger columns,
+native scrolling, an enlarged inspector and readable English effects. An empty
+search initially shows the full 62-card catalog. Menu backgrounds use quiet dark
+colors; reference play sheets belong to the duel surface.
+
 ## Cards and presentation
 
 The shipped catalog has 62 explicit profiles and four 40-card example decks.
@@ -40,15 +63,25 @@ never mark an effect implemented. Persistent numeric IDs do not use alternate-ar
 arithmetic. Printed symbols, Standard block/legality and reference hashes are
 recorded separately from effect code.
 
+The `standard-effects-20261116-r2` profile corrects Level Up keeping a zero-core
+Spirit alive: physical Lv1 maintenance now takes priority over a level override.
+Every catalog card is exercised through public legal-command dispatch, with
+additional clause-specific checks documented in
+`Tools/Tests/BattleSpiritsEffects/README.md`. Some conditional interactions still
+require compatible cards outside this limited roster; legal targeting is never
+weakened to manufacture those combinations.
+
 English printed faces are the 61 reviewed unofficial images. Pisketona retains
 its supplied original printed face with English inspection text. This is a
 limited reviewed roster, not the entire Battle Spirits card database.
 
 The presentation includes 43 alpha paper silhouettes on flat printed card bases.
-These are 2.5D standees, not rigged 3D creature meshes. Ritenia is the only card
-explicitly assigned the boss cutscene; ordinary summons do not infer boss status
-from cost or rarity. Cutscenes support skip and reduced motion. Three selected
-field appearances provide subdued mirrored art beneath readable native zones.
+These are 2.5D standees, not rigged 3D creature meshes. The supplied two-player
+arena reference explicitly assigns Ritenia and Pisketona boss presentations;
+ordinary summons do not infer boss status from cost or rarity. Cutscenes support
+skip and reduced motion. The default table uses the reference navy/silver
+geometry and perspective camera. Three optional field appearances provide
+subdued mirrored art beneath readable native zones.
 Wallpaper, avatar and protector widgets use the supplied Battle Spirits assets.
 Unsupported cosmetic libraries remain empty.
 
@@ -68,6 +101,9 @@ python3 Tools/Tests/BattleSpiritsEffects/run.py
 python3 Tools/Tests/BattleSpiritsSoloPuzzles/run.py
 python3 Tools/Tests/BattleSpiritsSession/run.py
 python3 Tools/Tests/BattleSpiritsDuelUI/run.py
+python3 Tools/Tests/BattleSpiritsSoloCutin/run.py
+python3 Tools/Tests/BattleSpiritsDeckSearch/run.py
+python3 Tools/Tests/BattleSpiritsDeckLayout/run.py
 python3 Tools/Tests/BattleSpiritsPresentation/run.py
 python3 Tools/Tests/BattleSpiritsPresentation/validate_assets.py
 python3 Tools/Tests/BattleSpiritsPresentation/settings_smoke.py

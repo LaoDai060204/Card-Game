@@ -7,7 +7,7 @@ using System.Text.Json.Serialization;
 using MDPro3.BattleSpirits.Core;
 
 // Production-source harness: no copied effect implementation and no Unity dependency.
-static class EffectsTests
+static partial class EffectsTests
 {
     static CardDefinition[] Catalog;
     static int assertions, instance = 1000;
@@ -217,6 +217,7 @@ static class EffectsTests
             Catalog = JsonSerializer.Deserialize<CardsDatabase>(File.ReadAllText(Path.Combine(root, "Assets/StreamingAssets/BattleSpirits/cards.json")), options).cards;
             Check(Catalog.All(c=>c.implemented&&c.IsPlayable),"The actual shipped card flags expose every profile");
             Red(); PurpleEffects(); Green(); ExAid(); NegativeAndPayment(); ContinuationsAndPrintedClauses(); SimultaneousTriggerOrder();
+            PublicCommandReachability(); LevelUpDepletionThroughCommands();
             Console.WriteLine($"PASS {assertions} assertions; {covered.Count} exact card profiles; production Core/*.cs linked."); return 0;
         }
         catch (Exception e) { Console.Error.WriteLine(e); return 1; }

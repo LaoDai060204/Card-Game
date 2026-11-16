@@ -1,5 +1,3 @@
-using MDPro3.UI;
-using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -17,7 +15,13 @@ namespace MDPro3.UI
 
         public override void Refresh()
         {
-            Manager.GetElement<TextMeshProUGUI>("ButtonText").text = cardName;
+            base.Refresh();
+            var title = Manager.GetElement<TextMeshProUGUI>("ButtonText");
+            title.text = cardName;
+            title.enableAutoSizing = true;
+            title.fontSizeMin = 18;
+            title.fontSizeMax = 24;
+            title.overflowMode = TextOverflowModes.Ellipsis;
             if(CutinViewer.codes.Contains(code))
                 Manager.GetElement<TextMeshProUGUI>("ButtonText").color = Color.white;
             else
@@ -34,13 +38,13 @@ namespace MDPro3.UI
         protected override void CallToggleOnEvent()
         {
             base.CallToggleOnEvent();
-            Program.instance.cutin.lastSelectedCutinItem = this;
+            Program.instance.cutin.GetUI<CutinViewerUI>().SelectCutin(this);
         }
 
 
         protected override void OnClick()
         {
-            Program.instance.cutin.lastSelectedCutinItem = this;
+            SetToggleOn();
             CallSubmitEvent();
         }
 

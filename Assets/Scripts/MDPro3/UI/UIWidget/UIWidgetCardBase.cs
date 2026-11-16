@@ -382,23 +382,20 @@ namespace MDPro3.UI
                 IconLimit.gameObject.SetActive(false);
                 SetCardCount();
                 if (PoolArea != null) PoolArea.SetActive(false);
-                IconLevel.enabled = false;
-                IconLevel.gameObject.SetActive(true);
-                TextLevel.text = "Cost " + definition.cost;
-                IconRank.gameObject.SetActive(false);
-                IconLink.gameObject.SetActive(false);
-                IconPendulumScale.gameObject.SetActive(false);
-                IconRace.gameObject.SetActive(false);
-                IconTuner.gameObject.SetActive(false);
-                SpellTrapType.SetActive(false);
-                IconAtk.enabled = false;
-                IconAtk.gameObject.SetActive(true);
-                TextAtk.text = definition.IsSpirit ? "BP " + data.Attack : definition.type;
-                IconDef.enabled = false;
-                IconDef.gameObject.SetActive(true);
-                TextDef.text = "Symbols " + BattleCardAdapter.Symbols(definition);
+                // These prefab slots are sized for a single level/ATK/DEF number.
+                // The complete BS metadata belongs in the existing scroll text.
+                Manager.GetElement("ParameterArea")?.SetActive(false);
                 TextDescriptionItem.text = definition.type + " · " + BattleCardAdapter.Colors(definition);
                 TextDescriptionValue.text = data.Desc;
+                TextDescriptionValue.enableAutoSizing = false;
+                TextDescriptionValue.enableWordWrapping = true;
+                TextDescriptionValue.richText = false;
+                TextDescriptionValue.fontSize = DeckEditor.UseMobileLayout ? 30f : 24f;
+                TextDescriptionValue.lineSpacing = 4f;
+                TextDescriptionValue.overflowMode = TextOverflowModes.Overflow;
+                ConfigureBattleInspector();
+                if (TextArea != null && TextArea.content != null)
+                    LayoutRebuilder.ForceRebuildLayoutImmediate(TextArea.content);
                 if (TextArea != null) { TextArea.StopMovement(); TextArea.verticalNormalizedPosition = 1f; }
                 if (PendulumDescriptionArea != null) PendulumDescriptionArea.SetActive(false);
                 if (MenuArea != null)
@@ -578,6 +575,31 @@ namespace MDPro3.UI
             }
 
             #endregion
+        }
+
+        private void ConfigureBattleInspector()
+        {
+            // CardActionMenu has its own full-size face and button layout.
+            if (!(this is CardDetailView) || DeckEditor.UseMobileLayout) return;
+            var cardArea = Manager.GetElement<RectTransform>("CardArea");
+            var descriptionArea = Manager.GetElement<RectTransform>("DescriptionArea");
+            if (cardArea == null || descriptionArea == null) return;
+            var panel = cardArea.parent as RectTransform;
+            if (panel == null) return;
+
+            // The shipped desktop inspector is 412 wide, but its old card area
+            // is only 143 x 208. Reserve a centered full-face area at runtime.
+            float faceWidth = Mathf.Min(280f, Mathf.Max(143f, panel.rect.width - 40f));
+            float faceHeight = faceWidth / MDPro3.Utility.CardImageLoader.DEFAULT_ASPECT;
+            const float faceTop = 74f;
+            cardArea.anchorMin = cardArea.anchorMax = new Vector2(.5f, 1f);
+            cardArea.pivot = new Vector2(.5f, 1f);
+            cardArea.anchoredPosition = new Vector2(0f, -faceTop);
+            cardArea.sizeDelta = new Vector2(faceWidth, faceHeight);
+            descriptionArea.anchorMin = Vector2.zero;
+            descriptionArea.anchorMax = Vector2.one;
+            descriptionArea.offsetMin = new Vector2(8f, 8f);
+            descriptionArea.offsetMax = new Vector2(-8f, -(faceTop + faceHeight + 16f));
         }
 
         public virtual void SetCardCount(string cardCount)

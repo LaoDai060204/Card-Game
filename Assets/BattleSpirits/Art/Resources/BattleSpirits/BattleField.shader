@@ -4,6 +4,8 @@ Shader "MDPro3/BattleSpirits/Field"
     {
         _BaseColor ("Field color", Color) = (0.025, 0.055, 0.085, 1)
         _Detail ("Navy table weave", Range(0,1)) = 0
+        _Silver ("Silver inlay sheen", Range(0,1)) = 0
+        _Backdrop ("Radial Spirit stage", Range(0,1)) = 0
     }
     SubShader
     {
@@ -31,6 +33,8 @@ Shader "MDPro3/BattleSpirits/Field"
             CBUFFER_START(UnityPerMaterial)
                 half4 _BaseColor;
                 half _Detail;
+                half _Silver;
+                half _Backdrop;
             CBUFFER_END
 
             struct Attributes
@@ -43,6 +47,7 @@ Shader "MDPro3/BattleSpirits/Field"
             {
                 float4 positionCS : SV_POSITION;
                 float2 uv : TEXCOORD0;
+                float2 tablePosition : TEXCOORD1;
                 UNITY_VERTEX_OUTPUT_STEREO
             };
 
@@ -53,15 +58,20 @@ Shader "MDPro3/BattleSpirits/Field"
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
                 output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
                 output.uv = input.uv;
+                output.tablePosition = TransformObjectToWorld(input.positionOS.xyz).xz;
                 return output;
             }
             half4 Frag(Varyings input) : SV_Target
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
                 float radius = length(input.uv - .5) * 1.42;
-                half3 navy = lerp(half3(.045, .11, .17), half3(.008, .022, .044), saturate(radius));
+                half3 navy = lerp(half3(.065, .145, .22), half3(.008, .02, .036), saturate(radius));
                 half weave = pow(max(0, sin((input.uv.x + input.uv.y * .4) * 390)), 38) * .008;
-                return half4(lerp(_BaseColor.rgb, navy + weave, _Detail), 1.0h);
+                half fineThreads = pow(max(0, sin(input.uv.y * 940 + sin(input.uv.x * 80) * .7)), 70) * .008;
+                half sheen = .72h + .28h * sin(dot(input.tablePosition, float2(.22, .31)) + .8);
+                half3 baseColor = _BaseColor.rgb * lerp(1.0h, sheen, _Silver);
+                baseColor *= lerp(1.0h, .12h + exp(-radius * radius * 3.5), _Backdrop);
+                return half4(lerp(baseColor, navy + weave + fineThreads, _Detail), 1.0h);
             }
             ENDHLSL
         }

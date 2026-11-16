@@ -7,12 +7,14 @@ using UnityEngine.UI;
 
 namespace MDPro3.BattleSpirits.Visuals
 {
-    /// <summary>Native Unity presentation of the reviewed square Battle Spirits table.
+    /// <summary>Native Unity presentation of the approved Battle Spirits arena.
     /// The host supplies committed state and owns every gameplay decision.</summary>
     [DisallowMultipleComponent]
     public sealed class BattleFieldRenderer : MonoBehaviour, IDisposable
     {
         private const int PresentationLayer = 30;
+        internal const float TableWidth = 15.6f;
+        internal const float TableDepth = 15.2f;
         private const float BossDuration = 4.2f;
         private readonly Dictionary<int, BattlePaperActor> actors = new Dictionary<int, BattlePaperActor>();
         private readonly List<UnityEngine.Object> owned = new List<UnityEngine.Object>();
@@ -24,6 +26,7 @@ namespace MDPro3.BattleSpirits.Visuals
         private readonly Queue<int> bossQueue = new Queue<int>();
         private readonly List<Transform> bossRings = new List<Transform>();
         private readonly List<Material> bossRingMaterials = new List<Material>();
+        private readonly Vector3[] screenCorners = new Vector3[4];
         private RawImage target;
         private Texture previousTexture;
         private bool previousRaycast;
@@ -48,6 +51,7 @@ namespace MDPro3.BattleSpirits.Visuals
         private Material soulMaterial;
         private Material backMaterial;
         private Material playmatMaterial;
+        private Material bossBackdropMaterial;
         private string playmatCode;
         private string playmatPath;
         private BattlePresentationState state = new BattlePresentationState();
@@ -89,7 +93,7 @@ namespace MDPro3.BattleSpirits.Visuals
             world = NewObject("Battle Spirits native presentation", null);
             // Isolate this off-screen stage from the retained native UI cameras.
             world.transform.position = new Vector3(0, -10000, 0);
-            field = NewObject("Mirrored square table", world.transform).transform;
+            field = NewObject("Mirrored navy and silver table", world.transform).transform;
             bossStage = NewObject("Committed boss presentation", world.transform).transform;
             BuildBossBackdrop();
             bossStage.gameObject.SetActive(false);
@@ -99,7 +103,8 @@ namespace MDPro3.BattleSpirits.Visuals
             renderCamera.cullingMask = 1 << PresentationLayer;
             renderCamera.clearFlags = CameraClearFlags.SolidColor;
             renderCamera.backgroundColor = new Color(.018f, .035f, .06f, 1);
-            renderCamera.orthographic = true;
+            renderCamera.orthographic = false;
+            renderCamera.fieldOfView = 42;
             renderCamera.nearClipPlane = .05f;
             renderCamera.farClipPlane = 75;
             renderCamera.allowHDR = false;
@@ -145,6 +150,7 @@ namespace MDPro3.BattleSpirits.Visuals
                     {
                         playerIndex = player.playerIndex, life = player.life, reserveNormal = player.reserveNormal,
                         trashNormal = player.trashNormal, deckCount = player.deckCount,
+                        trashCardCount = player.trashCardCount, burstCount = player.burstCount,
                         reserveSoul = player.reserveSoul, trashSoul = player.trashSoul
                     });
                 copy.players = people.ToArray();
@@ -237,18 +243,18 @@ namespace MDPro3.BattleSpirits.Visuals
             group.Sort((a, b) => a.Data.instanceId.CompareTo(b.Data.instanceId));
             if (group.Count == 0) return;
             // Layout grows to arbitrary field population; no five-slot rule.
-            var columns = nexus ? group.Count : Mathf.Max(1, Mathf.CeilToInt(Mathf.Sqrt(group.Count * 2.1f)));
+            var columns = nexus ? group.Count : Math.Min(group.Count, Mathf.Max(5, Mathf.CeilToInt(Mathf.Sqrt(group.Count * 2.5f))));
             var rows = Mathf.CeilToInt((float)group.Count / columns);
-            var cellWidth = 8.05f / columns;
-            var cellDepth = (nexus ? 1.35f : 3.1f) / rows;
-            var tileScale = Mathf.Min(1, cellWidth / 1.42f, cellDepth / 1.9f);
+            var cellWidth = Mathf.Min(1.8f, 9f / columns);
+            var cellDepth = (nexus ? 1.55f : 4.25f) / rows;
+            var tileScale = Mathf.Min(1, cellWidth / 1.62f, cellDepth / 2.15f);
             var opponent = owner != state.viewer;
             for (var i = 0; i < group.Count; i++)
             {
                 var row = i / columns;
                 var rowCount = Math.Min(columns, group.Count - row * columns);
                 var x = ((i % columns) - (rowCount - 1) * .5f) * cellWidth;
-                var z = nexus ? 4.75f : .45f + cellDepth * (row + .5f);
+                var z = nexus ? 5.8f : rows == 1 ? 2.9f : .55f + cellDepth * (row + .5f);
                 if (opponent) { x = -x; z = -z; }
                 group[i].Layout(new Vector3(x, .05f, z), tileScale, cellWidth * .94f, opponent);
             }
@@ -258,7 +264,7 @@ namespace MDPro3.BattleSpirits.Visuals
         {
             actor.Reveal(reducedMotion);
             Invalidate();
-            if (!reducedMotion && actor.HasCharacter && actor.Data.cardId == "26RBS03-X01" && BattleCatalog.IsBoss(actor.Data.cardId))
+            if (!reducedMotion && actor.HasCharacter && BattleCatalog.IsBoss(actor.Data.cardId))
             {
                 bossQueue.Enqueue(actor.Data.instanceId);
                 StartNextBoss();
@@ -275,6 +281,9 @@ namespace MDPro3.BattleSpirits.Visuals
                 bossActor = new BattlePaperActor(this, bossStage, actor.Data);
                 bossActor.Layout(Vector3.zero, 1.7f, 5.5f, false);
                 bossActor.Reveal(false);
+                var accent = BattlePaperActor.Accent(actor.Data.cardId);
+                foreach (var material in bossRingMaterials) material.SetColor("_Accent", new Color(accent.r, accent.g, accent.b, .5f));
+                bossBackdropMaterial.SetColor("_BaseColor", new Color(accent.r * .25f, accent.g * .13f, accent.b * .32f));
                 bossAge = 0;
                 field.gameObject.SetActive(false);
                 bossStage.gameObject.SetActive(true);
@@ -382,11 +391,24 @@ namespace MDPro3.BattleSpirits.Visuals
         private void RefreshSize()
         {
             var rect = target.rectTransform.rect;
-            var scaleFactor = target.canvas != null ? target.canvas.scaleFactor : 1;
-            var width = Mathf.Clamp(Mathf.RoundToInt(Mathf.Abs(rect.width) * scaleFactor), 256, 1920);
-            var height = Mathf.Clamp(Mathf.RoundToInt(Mathf.Abs(rect.height) * scaleFactor), 256, 1920);
-            // Keep a strict pixel budget on narrow / high-density displays.
-            var factor = Mathf.Min(1, Mathf.Sqrt(2073600f / (width * (float)height)));
+            var canvas = target.canvas != null ? target.canvas.rootCanvas : null;
+            var scaleFactor = canvas != null ? canvas.scaleFactor : 1;
+            var pixelsWide = Mathf.Abs(rect.width) * scaleFactor;
+            var pixelsHigh = Mathf.Abs(rect.height) * scaleFactor;
+            if (canvas != null)
+            {
+                // Rect dimensions alone miss the native servant's inherited
+                // transform scale. Measure the viewport in actual screen pixels.
+                target.rectTransform.GetWorldCorners(screenCorners);
+                var uiCamera = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
+                var bottomLeft = RectTransformUtility.WorldToScreenPoint(uiCamera, screenCorners[0]);
+                pixelsWide = Vector2.Distance(bottomLeft, RectTransformUtility.WorldToScreenPoint(uiCamera, screenCorners[3]));
+                pixelsHigh = Vector2.Distance(bottomLeft, RectTransformUtility.WorldToScreenPoint(uiCamera, screenCorners[1]));
+            }
+            var width = Mathf.Clamp(Mathf.RoundToInt(pixelsWide), 256, 3840);
+            var height = Mathf.Clamp(Mathf.RoundToInt(pixelsHigh), 256, 3840);
+            // Native 4K landscape remains sharp, with a bounded 8.3 MP target.
+            var factor = Mathf.Min(1, Mathf.Sqrt(8294400f / (width * (float)height)));
             width = Mathf.Max(1, Mathf.RoundToInt(width * factor));
             height = Mathf.Max(1, Mathf.RoundToInt(height * factor));
             if (renderTexture != null && renderTexture.width == width && renderTexture.height == height) return;
@@ -408,15 +430,20 @@ namespace MDPro3.BattleSpirits.Visuals
             if (renderCamera == null || world == null) return;
             if (IsPresentationBusy)
             {
+                renderCamera.orthographic = true;
                 renderCamera.transform.localPosition = new Vector3(0, 2.6f, 9);
                 renderCamera.transform.LookAt(world.transform.TransformPoint(new Vector3(0, 1.9f, 0)));
                 renderCamera.orthographicSize = Mathf.Max(3.2f, 3.25f / renderCamera.aspect);
             }
             else
             {
-                renderCamera.transform.localPosition = new Vector3(0, 16.5f, 16.8f);
-                renderCamera.transform.LookAt(world.transform.position);
-                renderCamera.orthographicSize = Mathf.Max(7.2f, 8.05f / renderCamera.aspect);
+                renderCamera.orthographic = false;
+                renderCamera.fieldOfView = 42;
+                var fit = Mathf.Max(1.25f, 2.1f / renderCamera.aspect);
+                renderCamera.farClipPlane = Mathf.Max(75, 32 * fit);
+                var lookAt = new Vector3(0, 0, 2.2f);
+                renderCamera.transform.localPosition = lookAt + new Vector3(0, 11, 11) * fit;
+                renderCamera.transform.LookAt(world.transform.TransformPoint(lookAt));
             }
         }
 
@@ -444,11 +471,11 @@ namespace MDPro3.BattleSpirits.Visuals
         private void BuildTable()
         {
             var navy = Own(FieldMaterial(new Color(.012f, .028f, .047f)));
-            Plane("Square navy plinth", field, navy, new Vector3(0, -.055f, 0), new Vector2(15.05f, 15.05f), true);
+            Plane("Navy table plinth", field, navy, new Vector3(0, -.055f, 0), new Vector2(TableWidth + .22f, TableDepth + .22f), true);
             var table = Own(FieldMaterial(Color.white)); table.SetFloat("_Detail", 1);
-            Plane("Woven navy square table", field, table, Vector3.zero, new Vector2(14.8f, 14.8f), true);
+            Plane("Woven navy arena", field, table, Vector3.zero, new Vector2(TableWidth, TableDepth), true);
             playmatMaterial = Own(SurfaceMaterial());
-            playmatMaterial.SetColor("_BaseColor", new Color(.38f, .5f, .62f, 1));
+            playmatMaterial.SetColor("_BaseColor", new Color(.3f, .42f, .54f, 1));
             playmatMaterial.SetFloat("_Opacity", 0);
             // Crop only the central decorative artwork. The source play sheets'
             // zone labels and rules never replace the readable mirrored zones.
@@ -458,42 +485,57 @@ namespace MDPro3.BattleSpirits.Visuals
                     new Vector3(0, .001f, 3.55f * sign), new Vector2(13.3f, 6.9f), true);
                 if (sign < 0) art.transform.localRotation = Quaternion.Euler(90, 0, 180);
             }
-            var silver = Own(FieldMaterial(new Color(.56f, .69f, .77f)));
-            var lightSilver = Own(FieldMaterial(new Color(.78f, .87f, .91f)));
-            var dimSilver = Own(FieldMaterial(new Color(.21f, .34f, .42f)));
-            AddFrame(field, 14.42f, 14.42f, .028f, .32f, silver, new Vector3(0, .006f, 0));
-            AddFrame(field, 14.24f, 14.24f, .035f, .27f, lightSilver, new Vector3(0, .007f, 0));
-            AddFrame(field, 14.01f, 14.01f, .018f, .23f, silver, new Vector3(0, .008f, 0));
-            for (var i = 0; i < 22; i++)
+            var silver = Own(FieldMaterial(new Color(.72f, .79f, .88f))); silver.SetFloat("_Silver", 1);
+            var lightSilver = Own(FieldMaterial(new Color(.87f, .92f, .98f))); lightSilver.SetFloat("_Silver", 1);
+            var dimSilver = Own(FieldMaterial(new Color(.36f, .47f, .57f))); dimSilver.SetFloat("_Silver", .5f);
+            AddFrame(field, TableWidth - .36f, TableDepth - .36f, .09f, .5f, silver, new Vector3(0, .006f, 0));
+            AddFrame(field, TableWidth - .68f, TableDepth - .68f, .03f, .4f, lightSilver, new Vector3(0, .007f, 0));
+            for (var i = 1; i < 13; i++)
             {
-                var x = Mathf.Lerp(-6.65f, 6.65f, i / 21f);
-                foreach (var z in new[] { -7.12f, 7.12f })
-                    AddFrame(field, .34f, .14f, .012f, .065f, silver, new Vector3(x, .009f, z));
+                var x = -TableWidth * .5f + TableWidth * i / 13f;
+                foreach (var z in new[] { -7.34f, 7.34f })
+                {
+                    var diamond = Plane("Silver border diamond", field, silver, new Vector3(x, .009f, z), new Vector2(.1f, .1f), true);
+                    diamond.transform.localRotation = Quaternion.Euler(90, 0, 45);
+                }
             }
             foreach (var sign in new[] { 1, -1 })
             {
                 var side = NewObject("Mirrored resource zones", field).transform;
                 side.localRotation = Quaternion.Euler(0, sign < 0 ? 180 : 0, 0);
-                Zone(side, -5.7f, 3.6f, 2.1f, 2.05f, "LIFE", dimSilver);
-                Zone(side, -5.7f, 5.95f, 2.1f, 1.9f, "RESERVE", dimSilver);
-                Zone(side, 5.7f, 3.6f, 2.1f, 2.05f, "DECK", dimSilver);
-                Zone(side, 5.7f, 5.95f, 2.1f, 1.9f, "TRASH", dimSilver);
-                Zone(side, 0, 4.75f, 8.25f, 1.55f, "NEXUS", dimSilver);
-                for (var i = 0; i < 20; i++)
+                Zone(side, -6.2f, 1.45f, 2.4f, 2.4f, "BURST", silver);
+                Zone(side, 6.2f, 1.45f, 2.4f, 2.4f, "DECK", silver);
+                Zone(side, -6.2f, 3.85f, 2.2f, 2f, "LIFE", silver);
+                Zone(side, -6.2f, 6.2f, 2.2f, 2.2f, "RESERVE", silver);
+                Zone(side, 6.2f, 4f, 2.4f, 2.2f, "TRASH CARD", silver);
+                Zone(side, 6.2f, 6.25f, 2.4f, 2f, "TRASH CORE", silver);
+                // One open field expands with the engine's population. The
+                // reference's five decorative slots never become a card limit.
+                for (var i = 0; i < 22; i++)
                 {
-                    var x = Mathf.Lerp(-4.04f, 4.04f, i / 19f);
-                    foreach (var z in new[] { .05f, 3.55f })
+                    var x = Mathf.Lerp(-4.48f, 4.48f, i / 21f);
+                    foreach (var z in new[] { .38f, 4.85f })
                         Plane("Open Spirit field boundary", side, dimSilver, new Vector3(x, .009f, z), new Vector2(.23f, .018f), true);
                 }
-                for (var i = 0; i < 9; i++)
-                    foreach (var x in new[] { -4.1f, 4.1f })
-                        Plane("Open Spirit field boundary", side, dimSilver, new Vector3(x, .009f, .2f + i * .4f), new Vector2(.018f, .21f), true);
+                for (var i = 0; i < 11; i++)
+                    foreach (var x in new[] { -4.56f, 4.56f })
+                        Plane("Open Spirit field boundary", side, dimSilver, new Vector3(x, .009f, .55f + i * .4f), new Vector2(.018f, .21f), true);
             }
-            Plane("Central silver line", field, dimSilver, new Vector3(0, .009f, 0), new Vector2(13.6f, .025f), true);
+            Plane("Central silver line", field, dimSilver, new Vector3(0, .009f, 0), new Vector2(14.4f, .04f), true);
+            var emblem = NewObject("Central silver diamond", field).transform;
+            emblem.localPosition = new Vector3(0, .012f, 0);
+            emblem.localRotation = Quaternion.Euler(0, 45, 0);
+            Plane("Diamond navy inset", emblem, navy, Vector3.zero, new Vector2(.6f, .6f), true);
+            AddFrame(emblem, .6f, .6f, .04f, .025f, silver, new Vector3(0, .002f, 0));
         }
 
         private void BuildBossBackdrop()
         {
+            bossBackdropMaterial = Own(FieldMaterial(new Color(.12f, .025f, .08f)));
+            bossBackdropMaterial.SetFloat("_Backdrop", 1);
+            var backdrop = Plane("Spirit-colored radial boss backdrop", bossStage, bossBackdropMaterial,
+                new Vector3(0, 2, -2), new Vector2(30, 20), false);
+            backdrop.transform.localRotation = Quaternion.Euler(0, 180, 0);
             for (var i = 0; i < 6; i++)
             {
                 var material = Own(ProjectionMaterial(new Color(.93f, .54f, .42f, .18f), 0));
@@ -507,6 +549,9 @@ namespace MDPro3.BattleSpirits.Visuals
         {
             var arrival = Mathf.Clamp01(bossAge / .85f);
             arrival = arrival * arrival * (3 - 2 * arrival);
+            // The approved cutscene arrives large, then settles on the real
+            // silhouette. This remains separate from the committed field card.
+            bossActor?.Layout(Vector3.zero, Mathf.Lerp(2.45f, 2f, arrival), 6, false);
             for (var i = 0; i < bossRings.Count; i++)
             {
                 var diameter = Mathf.Lerp(7.2f + i * .25f, 3.5f + i * .48f, arrival);
@@ -521,9 +566,10 @@ namespace MDPro3.BattleSpirits.Visuals
 
         private void Zone(Transform parent, float x, float z, float width, float depth, string label, Material border)
         {
-            var fill = Own(FieldMaterial(new Color(.012f, .031f, .052f)));
+            var fill = Own(FieldMaterial(new Color(.04f, .075f, .105f)));
             Plane(label + " zone", parent, fill, new Vector3(x, .004f, z), new Vector2(width, depth), true);
-            AddFrame(parent, width, depth, .018f, .085f, border, new Vector3(x, .009f, z));
+            AddFrame(parent, width, depth, .045f, .1f, border, new Vector3(x, .009f, z));
+            AddFrame(parent, width - .2f, depth - .2f, .012f, .06f, border, new Vector3(x, .01f, z));
         }
 
         private void AddFrame(Transform parent, float width, float depth, float thickness, float radius, Material material, Vector3 position)
@@ -538,14 +584,14 @@ namespace MDPro3.BattleSpirits.Visuals
             Stretch(overlay.GetComponent<RectTransform>());
             foreach (var sign in new[] { 1, -1 })
             {
-                ZoneText("LIFE", new Vector3(-5.7f * sign, .02f, 2.83f * sign));
-                ZoneText("RESERVE", new Vector3(-5.7f * sign, .02f, 5.23f * sign));
-                ZoneText("DECK", new Vector3(5.7f * sign, .02f, 2.83f * sign));
-                ZoneText("TRASH", new Vector3(5.7f * sign, .02f, 5.23f * sign));
-                ZoneText("NEXUS", new Vector3(0, .02f, 4.16f * sign));
-                ZoneText("SPIRIT FIELD", new Vector3(0, .02f, 3.32f * sign), 10);
+                ZoneText("BURST", new Vector3(-6.2f * sign, .02f, .6f * sign));
+                ZoneText("DECK", new Vector3(6.2f * sign, .02f, .6f * sign));
+                ZoneText("LIFE", new Vector3(-6.2f * sign, .02f, 2.85f * sign));
+                ZoneText("RESERVE", new Vector3(-6.2f * sign, .02f, 5.1f * sign));
+                ZoneText("TRASH · CARD", new Vector3(6.2f * sign, .02f, 2.9f * sign));
+                ZoneText("TRASH · CORE", new Vector3(6.2f * sign, .02f, 5.25f * sign));
+                ZoneText("FIELD", new Vector3(0, .02f, 6.7f * sign), 16);
             }
-            ZoneText("Battle Spirits", new Vector3(0, .02f, 0), 18);
             bossControls = NewUI("Boss presentation controls", overlay.transform);
             Stretch(bossControls.GetComponent<RectTransform>());
             bossTitle = MakeText("Committed Spirit name", bossControls.transform, 24);
@@ -566,13 +612,14 @@ namespace MDPro3.BattleSpirits.Visuals
             bossControls.SetActive(false);
         }
 
-        private void ZoneText(string text, Vector3 position, int size = 12)
+        private Text ZoneText(string text, Vector3 position, int size = 14, Transform relativeTo = null)
         {
             var label = MakeText(text, overlay.transform, size);
             label.text = text;
-            label.color = new Color(.68f, .8f, .87f, size == 10 ? .5f : .88f);
-            labels.Add(new ZoneLabel { text = label, position = position });
-            Anchor(label.rectTransform, Vector2.zero, new Vector2(size == 18 ? 220 : 140, size + 10));
+            label.color = new Color(.83f, .9f, .96f, size == 16 ? .35f : 1);
+            labels.Add(new ZoneLabel { text = label, position = position, relativeTo = relativeTo });
+            Anchor(label.rectTransform, Vector2.zero, new Vector2(150, size + 10));
+            return label;
         }
 
         private void UpdateLabels()
@@ -580,7 +627,7 @@ namespace MDPro3.BattleSpirits.Visuals
             if (IsPresentationBusy) return;
             foreach (var label in labels)
             {
-                var p = renderCamera.WorldToViewportPoint(field.TransformPoint(label.position));
+                var p = renderCamera.WorldToViewportPoint((label.relativeTo ?? field).TransformPoint(label.position));
                 label.text.rectTransform.anchorMin = label.text.rectTransform.anchorMax = new Vector2(p.x, p.y);
                 label.text.rectTransform.anchoredPosition = Vector2.zero;
             }
@@ -601,11 +648,14 @@ namespace MDPro3.BattleSpirits.Visuals
 
         private void RefreshSelectedPlaymat()
         {
-            string code = Config.Get("DuelField0", BattleCosmetics.DefaultFieldId.ToString());
+            string code = Config.Get("DuelField0", Items.CODE_NONE.ToString());
             // Resolve Random only when the selection changes, not every frame.
             if (playmatCode == code) return;
             playmatCode = code;
-            string path = BattleCosmetics.GetPath(code, Items.ItemType.Mat);
+            // Missing or retained legacy selections start on the approved navy
+            // arena. Only an explicit Battle Spirits theme adds decorative art.
+            bool selectedTheme = code == Items.CODE_RANDOM.ToString() || code == "1099001" || code == "1099002" || code == "1099003";
+            string path = selectedTheme ? BattleCosmetics.GetPath(code, Items.ItemType.Mat) : string.Empty;
             if (string.Equals(playmatPath, path, StringComparison.Ordinal)) return;
             if (!string.IsNullOrEmpty(playmatPath)) ReleaseTexture(playmatPath);
             playmatPath = path;
@@ -618,7 +668,7 @@ namespace MDPro3.BattleSpirits.Visuals
             {
                 if (disposed || texture == null || !string.Equals(playmatPath, path, StringComparison.Ordinal)) return;
                 playmatMaterial.mainTexture = texture;
-                playmatMaterial.SetFloat("_Opacity", .3f);
+                playmatMaterial.SetFloat("_Opacity", .12f);
                 Invalidate();
             });
         }
@@ -688,7 +738,9 @@ namespace MDPro3.BattleSpirits.Visuals
 
         private static GameObject NewUI(string objectName, Transform parent)
         {
-            var obj = new GameObject(objectName, typeof(RectTransform)); obj.transform.SetParent(parent, false); return obj;
+            var obj = new GameObject(objectName, typeof(RectTransform)) { layer = parent.gameObject.layer };
+            obj.transform.SetParent(parent, false);
+            return obj;
         }
 
         private static Text MakeText(string objectName, Transform parent, int size)
@@ -738,7 +790,7 @@ namespace MDPro3.BattleSpirits.Visuals
             CardSelected = null; PresentationBusyChanged = null;
         }
 
-        private sealed class ZoneLabel { internal Text text; internal Vector3 position; }
+        private sealed class ZoneLabel { internal Text text; internal Vector3 position; internal Transform relativeTo; }
 
         private sealed class PlayerVisual
         {
@@ -750,16 +802,28 @@ namespace MDPro3.BattleSpirits.Visuals
             private readonly GameObject reserveSoul;
             private readonly GameObject trashSoul;
             private readonly GameObject deck;
+            private readonly GameObject burst;
+            private readonly Text lifeCount;
+            private readonly Text reserveCount;
+            private readonly Text trashCount;
+            private readonly Text deckCount;
+            private readonly Text trashCardCount;
             internal PlayerVisual(BattleFieldRenderer host, Transform parent, int seat)
             {
                 this.seat = seat;
                 root = host.NewObject("Player " + seat + " resources", parent).transform;
-                life = Icons(host, root, "Life Core", 18, -6.25f, 3.35f, host.coreMaterial, 4, .36f);
-                reserve = Icons(host, root, "Reserve Core", 12, -6.23f, 5.7f, host.coreMaterial, 4, .36f);
-                trash = Icons(host, root, "Trash Core", 12, 5.17f, 5.7f, host.coreMaterial, 4, .36f);
-                reserveSoul = host.Plane("Reserve Soul Core", root, host.soulMaterial, new Vector3(-5.05f, .05f, 6.4f), new Vector2(.39f, .39f), true);
-                trashSoul = host.Plane("Trash Soul Core", root, host.soulMaterial, new Vector3(6.35f, .05f, 6.4f), new Vector2(.39f, .39f), true);
-                deck = host.Plane("Battle Spirits deck", root, host.backMaterial, new Vector3(5.7f, .08f, 3.7f), new Vector2(.9f, 1.31f), true);
+                life = Icons(host, root, "Life Core", 18, -6.9f, 3.45f, host.coreMaterial, 3, .7f, .8f, .62f);
+                reserve = Icons(host, root, "Reserve Core", 32, -6.95f, 5.78f, host.coreMaterial, 4, .5f, .84f, .48f);
+                trash = Icons(host, root, "Trash Core", 32, 5.375f, 5.83f, host.coreMaterial, 4, .55f, .84f, .48f);
+                reserveSoul = host.Plane("Reserve Soul Core", root, host.soulMaterial, new Vector3(-6.2f, .16f, 6.2f), new Vector2(.56f, .56f), true);
+                trashSoul = host.Plane("Trash Soul Core", root, host.soulMaterial, new Vector3(6.2f, .16f, 6.25f), new Vector2(.56f, .56f), true);
+                deck = host.Plane("Battle Spirits deck", root, host.backMaterial, new Vector3(6.2f, .08f, 1.45f), new Vector2(1.45f, 2.03f), true);
+                burst = host.Plane("Face-down Burst", root, host.backMaterial, new Vector3(-6.2f, .08f, 1.45f), new Vector2(1.45f, 2.03f), true);
+                lifeCount = host.ZoneText("", new Vector3(-6.2f, .2f, 4.68f), 13, root);
+                reserveCount = host.ZoneText("", new Vector3(-6.2f, .2f, 7.08f), 13, root);
+                trashCount = host.ZoneText("", new Vector3(6.2f, .2f, 7.08f), 13, root);
+                deckCount = host.ZoneText("", new Vector3(6.2f, .2f, 2.35f), 13, root);
+                trashCardCount = host.ZoneText("", new Vector3(6.2f, .2f, 4f), 13, root);
             }
             internal void Apply(BattlePlayerPresentation[] people, int viewer)
             {
@@ -769,12 +833,20 @@ namespace MDPro3.BattleSpirits.Visuals
                 Count(life, data?.life ?? 0); Count(reserve, data?.reserveNormal ?? 0); Count(trash, data?.trashNormal ?? 0);
                 reserveSoul.SetActive(data?.reserveSoul == true); trashSoul.SetActive(data?.trashSoul == true);
                 deck.SetActive(data != null && data.deckCount > 0);
+                burst.SetActive(data != null && data.burstCount > 0);
+                lifeCount.text = (data?.life ?? 0).ToString();
+                reserveCount.text = CoreCount(data?.reserveNormal ?? 0, data?.reserveSoul == true);
+                trashCount.text = CoreCount(data?.trashNormal ?? 0, data?.trashSoul == true);
+                deckCount.text = (data?.deckCount ?? 0).ToString() + " cards";
+                trashCardCount.text = (data?.trashCardCount ?? 0).ToString() + " cards";
             }
-            private static GameObject[] Icons(BattleFieldRenderer host, Transform root, string name, int count, float x, float z, Material material, int columns, float spacing)
+            private static string CoreCount(int normal, bool soul) => normal + " Core" + (soul ? " + Soul" : "");
+            private static GameObject[] Icons(BattleFieldRenderer host, Transform root, string name, int count, float x, float z, Material material, int columns, float spacing, float rowSpacing, float size)
             {
                 var result = new GameObject[count];
                 for (var i = 0; i < count; i++) result[i] = host.Plane(name, root, material,
-                    new Vector3(x + (i % columns) * spacing, .04f + i * .0003f, z + (i / columns) * .27f), new Vector2(.29f, .29f), true);
+                    new Vector3(x + (i % columns) * spacing, .04f + (i / (columns * 2)) * .025f,
+                        z + ((i / columns) % 2) * rowSpacing), new Vector2(size, size), true);
                 return result;
             }
             private static void Count(GameObject[] objects, int count)

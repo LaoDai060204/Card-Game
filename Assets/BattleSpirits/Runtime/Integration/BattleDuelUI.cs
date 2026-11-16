@@ -19,13 +19,11 @@ using YgomSystem.ElementSystem;
 namespace MDPro3.BattleSpirits
 {
     /// <summary>Controller for an unmodified, private OcgCoreUI prefab instance.</summary>
-    public sealed class BattleDuelUI : ServantUI
+    public sealed partial class BattleDuelUI : ServantUI
     {
         private const int PageSize = 6, HandPageSize = 9;
         private BattleGameSession session;
         private BattleFieldRenderer field;
-        private ElementObjectManager inspector;
-        private RawImage inspectorFace;
         private BattleCardInspection cardInspection;
         private readonly List<GameObject> handObjects = new List<GameObject>();
         private readonly List<GameObject> rows = new List<GameObject>();
@@ -102,17 +100,8 @@ namespace MDPro3.BattleSpirits
             }
             foreach (var text in GetComponentsInChildren<TextMeshProUGUI>(true))
                 if (text.text == "LP") text.text = "Life";
-            var description = Manager.GetElement("CardDescription");
-            if (description != null)
-            {
-                inspector = description.GetComponent<ElementObjectManager>();
-                inspectorFace = inspector.GetElement<RawImage>("Card");
-                var window = inspector.GetElement<RectTransform>("Window");
-                if (window != null) window.anchoredPosition = new Vector2(-1200, window.anchoredPosition.y);
-                var cardButton = inspector.GetElement<Button>("CardButton");
-                if (cardButton != null) { Clear(cardButton.onClick); cardButton.onClick.AddListener(ZoomCard); }
-            }
             var imageObject = new GameObject("BattleSpiritsField", typeof(RectTransform), typeof(RawImage));
+            imageObject.layer = Root.gameObject.layer;
             imageObject.transform.SetParent(Root, false);
             imageObject.transform.SetAsFirstSibling();
             var image = imageObject.GetComponent<RawImage>();
@@ -138,13 +127,7 @@ namespace MDPro3.BattleSpirits
                 if (button.gameObject.name == "ButtonInfo") button.onClick.AddListener(() => OpenPanel("info"));
                 if (button.gameObject.name == "ButtonSetting") button.onClick.AddListener(() => Program.instance.ShowSubServant(Program.instance.setting));
             }
-            if (inspector != null)
-            {
-                var plus = inspector.GetElement<Button>("FontSizePlus");
-                var minus = inspector.GetElement<Button>("FontSizeMinus");
-                if (plus != null) plus.onClick.AddListener(() => ChangeInspectionFont(2));
-                if (minus != null) minus.onClick.AddListener(() => ChangeInspectionFont(-2));
-            }
+            BuildArenaHud();
         }
 
         private void BindButton(string label, string caption, UnityAction callback)
@@ -271,6 +254,7 @@ namespace MDPro3.BattleSpirits
                 if (button != null) button.interactable = session != null && !session.PresentationBusy;
             }
             RefreshHand();
+            RefreshArenaHud();
             if (actionObject != null && actionObject.activeSelf) RenderPanel();
         }
 
@@ -302,16 +286,21 @@ namespace MDPro3.BattleSpirits
             {
                 string id = visible[i];
                 if (!BattleCatalog.TryGet(id, out var definition)) continue;
-                var obj = new GameObject("BattleHand_" + (handPage * HandPageSize + i), typeof(RectTransform), typeof(RawImage), typeof(Button));
-                obj.transform.SetParent(Root, false);
-                var image = obj.GetComponent<RawImage>();
-                image.rectTransform.anchorMin = image.rectTransform.anchorMax = new Vector2(.5f, 0);
-                image.rectTransform.pivot = new Vector2(.5f, 0);
-                image.rectTransform.anchoredPosition = new Vector2((i - (visible.Length - 1) * .5f) * 112, 12);
-                image.rectTransform.sizeDelta = new Vector2(108, 151);
-                var button = obj.GetComponent<Button>();
+                int handIndex = handPage * HandPageSize + i;
+                var obj = CanvasObject("BattleHand_" + handIndex, handArea != null ? handArea : Root);
+                var bounds = obj.GetComponent<RectTransform>();
+                bounds.anchorMin = bounds.anchorMax = new Vector2(.5f, 0);
+                bounds.pivot = new Vector2(.5f, 0);
+                float available = handArea != null && handArea.rect.width > 0 ? handArea.rect.width : 1050;
+                float stride = Math.Min(136, Math.Max(48, (available - 132) / Math.Max(1, visible.Length - 1)));
+                bounds.anchoredPosition = new Vector2((i - (visible.Length - 1) * .5f) * stride, 10);
+                bounds.sizeDelta = new Vector2(132, 192);
+                var face = CanvasObject("Printed card", obj.transform, typeof(RawImage), typeof(Button));
+                var image = face.GetComponent<RawImage>();
+                HudRect(image.rectTransform, 0, 0, 1, 1);
+                var button = face.GetComponent<Button>();
                 button.targetGraphic = image;
-                button.onClick.AddListener(() => InspectCard(id));
+                button.onClick.AddListener(() => { InspectCard(id, null, handIndex); if (CanPlay) OpenPanel("actions"); });
                 handObjects.Add(obj);
                 _ = LoadFace(image, id, -1);
             }
@@ -336,25 +325,24 @@ namespace MDPro3.BattleSpirits
             if (spirit != null) InspectCard(spirit.CardId, spirit);
         }
 
-        private void InspectCard(string id, SpiritSnapshot state = null)
+        private void InspectCard(string id, SpiritSnapshot state = null, int handIndex = -1)
         {
-            if (inspector == null || !BattleCatalog.TryGet(id, out var definition)) return;
+            if (inspectionWindow == null || !BattleCatalog.TryGet(id, out var definition)) return;
             cardInspection = new BattleCardInspection { Definition = definition };
-            var window = inspector.GetElement<RectTransform>("Window");
-            window.anchoredPosition = new Vector2(20, window.anchoredPosition.y);
-            inspector.GetElement<Text>("TextName").text = definition.DisplayName;
-            inspector.GetElement<Text>("TextType").text = definition.type + " · " + BattleCardAdapter.Colors(definition);
+            inspectedHandIndex = handIndex;
+            inspectedInstance = state?.InstanceId ?? -1;
+            inspectionWindow.gameObject.SetActive(true);
+            inspectionName.text = definition.DisplayName;
+            inspectionStats.text = definition.id + " · " + definition.type + "\n" + BattleCardAdapter.Colors(definition);
             string details = BattleCardAdapter.Description(definition);
             if (state != null) details = "Lv" + state.Level + " · " + state.Bp + " BP · " + Pool(state.NormalCores, state.Soul)
                 + " · " + (state.HeavyExhausted ? "Heavy exhausted" : state.Exhausted ? "Exhausted" : "Refreshed") + "\n" + details;
-            inspector.GetElement<TextMeshProUGUI>("TextDescription").text = details;
-            foreach (string key in new[] { "PropertyMonster", "PropertySpell", "BaseActivated", "Attribute", "ArributeOutline", "Limit" })
-            {
-                var element = inspector.GetElement(key);
-                if (element != null) element.SetActive(false);
-            }
-            _ = LoadFace(inspectorFace, id, ++faceRevision);
-            inspector.transform.SetAsLastSibling();
+            inspectionEffects.text = details;
+            Canvas.ForceUpdateCanvases();
+            inspectionEffects.rectTransform.sizeDelta = new Vector2(0, Math.Max(inspectionScroll.viewport.rect.height, inspectionEffects.preferredHeight + 24));
+            inspectionScroll.verticalNormalizedPosition = 1;
+            _ = LoadFace(inspectionImage, id, ++faceRevision);
+            inspectionWindow.SetAsLastSibling();
         }
 
         private void ZoomCard()
@@ -364,16 +352,15 @@ namespace MDPro3.BattleSpirits
 
         private void ChangeInspectionFont(int delta)
         {
-            var text = inspector?.GetElement<TextMeshProUGUI>("TextDescription");
+            var text = inspectionEffects;
             if (text != null) text.fontSize = Math.Max(16, Math.Min(40, text.fontSize + delta));
         }
 
         private void CloseInspection()
         {
-            if (inspector == null) return;
-            var window = inspector.GetElement<RectTransform>("Window");
-            window.anchoredPosition = new Vector2(-1200, window.anchoredPosition.y);
+            if (inspectionWindow != null) inspectionWindow.gameObject.SetActive(false);
             cardInspection = null;
+            ClearCardSelection();
         }
 
         public void PreviewBoss(string id)
@@ -387,11 +374,16 @@ namespace MDPro3.BattleSpirits
             InspectCard(id);
         }
 
-        private static BattlePresentationState PreviewState(string id) => new BattlePresentationState
+        private static BattlePresentationState PreviewState(string id)
         {
-            viewer = 0, currentPlayer = 0,
-            cards = new[] { new BattleCardPresentation { instanceId = int.MaxValue, cardId = id, owner = 0, level = 1, normalCores = 1 } }
-        };
+            BattleCatalog.TryGet(id, out var definition);
+            return new BattlePresentationState
+            {
+                viewer = 0, currentPlayer = 0,
+                cards = new[] { new BattleCardPresentation { instanceId = int.MaxValue, cardId = id, owner = 0,
+                    level = 1, bp = definition?.levels?.FirstOrDefault()?.bp ?? 0, normalCores = definition?.levels?.FirstOrDefault()?.cores ?? 1 } }
+            };
+        }
 
         private void ResetPuzzle() { if (session?.PresentationBusy != true) session?.ResetPuzzle(); }
 
@@ -489,7 +481,7 @@ namespace MDPro3.BattleSpirits
                 for (int i = 0; i < hand.Length; i++)
                 {
                     string id = hand[i]; int handIndex = i;
-                    entries.Add(new BattleNativeEntry((i + 1) + ". " + BattleDuelActions.CardName(id), () => { handPage = handIndex / HandPageSize; RefreshHand(); InspectCard(id); }));
+                    entries.Add(new BattleNativeEntry((i + 1) + ". " + BattleDuelActions.CardName(id), () => { handPage = handIndex / HandPageSize; RefreshHand(); InspectCard(id, null, handIndex); }));
                 }
             }
             else if (view?.PendingChoice != null && view.PendingChoice.Owner == session.Seat)
@@ -514,7 +506,7 @@ namespace MDPro3.BattleSpirits
                 }
                 // Confirmation is present on every page and preserves click order.
             }
-            else foreach (var command in session?.LegalCommands ?? Array.Empty<BattleCommand>())
+            else foreach (var command in (session?.LegalCommands ?? Array.Empty<BattleCommand>()).Where(SelectedCommand))
             {
                 var exactCommand = command;
                 entries.Add(new BattleNativeEntry(BattleDuelActions.Describe(command, view, session.Seat), () => Send(exactCommand), CanPlay));
@@ -525,6 +517,8 @@ namespace MDPro3.BattleSpirits
             if (actionShell.title != null) actionShell.title.text = title + "  " + (page + 1) + "/" + pageCount;
             foreach (var entry in entries.Skip(page * PageSize).Take(PageSize)) AddRow(entry);
             if (entries.Count == 0) AddRow(new BattleNativeEntry(panel == "actions" ? "Waiting for a decision / connection" : "No entries", null, false));
+            if (panel == "actions" && (inspectedHandIndex >= 0 || inspectedInstance >= 0))
+                AddRow(new BattleNativeEntry("Show all legal actions", () => { ClearCardSelection(); page = 0; RenderPanel(); }));
             if (panel == "actions" && view?.PendingChoice != null && view.PendingChoice.Owner == session.Seat)
             {
                 var choice = view.PendingChoice;
@@ -586,6 +580,7 @@ namespace MDPro3.BattleSpirits
             if (!CanPlay || command == null) return;
             if (!session.Send(command, out error)) { Refresh(); return; }
             error = "";
+            ClearCardSelection();
             Refresh();
             if (session.View?.PendingChoice == null) ClosePanel();
             else { panel = "actions"; page = 0; RenderPanel(); }
@@ -704,7 +699,7 @@ namespace MDPro3.BattleSpirits
                     level = s.Level, bp = s.Bp, normalCores = s.NormalCores, soul = s.Soul }).ToArray(),
                 players = people.Select(p => new BattlePlayerPresentation { playerIndex = p.Index, life = p.Life,
                     reserveNormal = p.ReserveNormal, reserveSoul = p.ReserveSoul, trashNormal = p.TrashNormal,
-                    trashSoul = p.TrashSoul, deckCount = p.DeckCount }).ToArray()
+                    trashSoul = p.TrashSoul, deckCount = p.DeckCount, trashCardCount = p.Discard?.Length ?? 0, burstCount = 0 }).ToArray()
             };
         }
     }

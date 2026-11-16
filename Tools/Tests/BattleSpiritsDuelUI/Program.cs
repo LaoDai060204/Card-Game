@@ -75,6 +75,7 @@ static class NativeDuelSmoke
     static GameObject Element(ElementObjectManager manager, string label, params Type[] types)
     {
         var obj = new GameObject(label, new[] { typeof(RectTransform) }.Concat(types).ToArray());
+        obj.layer = manager.gameObject.layer;
         manager.Elements[label] = obj; obj.transform.SetParent(manager.transform, false); return obj;
     }
     static void Lifecycle()
@@ -82,6 +83,8 @@ static class NativeDuelSmoke
         var servantObject = new GameObject("servant");
         var servant = servantObject.AddComponent<BattleDuelServant>();
         var instance = new GameObject("OriginalOcgCoreInstance", typeof(RectTransform), typeof(ElementObjectManager), typeof(OcgCoreUI));
+        var canvas = new GameObject("UI", typeof(RectTransform), typeof(Canvas)) { layer = 5 };
+        instance.layer = 5; instance.transform.SetParent(canvas.transform, false);
         var manager = instance.GetComponent<ElementObjectManager>();
         var original = instance.GetComponent<OcgCoreUI>();
         servant.servantUI = original;
@@ -94,6 +97,11 @@ static class NativeDuelSmoke
         var oldDescription = Element(manager, "legacyDescription", typeof(MDPro3.CardDescription)).GetComponent<MDPro3.CardDescription>();
         Call(servant, "FirstLoadEvent");
         var ui = (BattleDuelUI)servant.servantUI;
+        Check(ui.Root.gameObject.layer == 5 && Field<BattleFieldRenderer>(ui, "field").gameObject.layer == 5, "The native field inherits the real UI layer.");
+        Check(Field<Text[]>(ui, "stepLabels").Length == 8 && Field<Text[]>(ui, "stepLabels").Last().text == "8  End", "The runtime HUD exposes all eight Standard steps.");
+        Check(ui.Root.GetComponentsInChildren<Graphic>(true).All(graphic => graphic.gameObject.layer == 5), "Runtime HUD graphics preserve the real camera-visible UI layer.");
+        int hides = MDPro3.UIManager.BlackBackHides; Call(servant, "ApplyShowArrangement", 0);
+        Check(MDPro3.UIManager.BlackBackHides == hides + 1, "Showing the duel disables the shared backdrop instead of leaving an invisible pointer blocker.");
         Check(!original.enabled && !oldDescription.enabled, "Old root and card callbacks disabled before Start.");
         oldWidget.Click();
         Check(oldCalls == 0, "Nested native widget serialized callbacks individually disabled.");
@@ -110,9 +118,30 @@ static class NativeDuelSmoke
             return shellObject;
         };
         var first = new BattleGameSession { View = View(), LegalCommands = Enumerable.Range(0, 31).Select(i => new BattleCommand { action = "transfer", source = -1, target = 12, mode = i }).ToArray() };
-        // Avoid hand rendering in the fixture; full card loading is covered by native-card tests.
-        first.View.Players[0].Hand = Array.Empty<string>();
         ui.Bind(first); ui.ShowEvent();
+        var hand = Field<List<GameObject>>(ui, "handObjects");
+        Check(hand.Count == 2 && hand.All(card => card.GetComponent<RectTransform>().sizeDelta.x == 132
+            && card.GetComponentInChildren<RawImage>(true).transform.parent == card.transform), "Hand faces have independent fixed card bounds beneath their native hand area.");
+        Check(hand.All(card => card.layer == 5 && card.GetComponentInChildren<RawImage>(true).gameObject.layer == 5), "Hand bounds and full-face images stay on the real UI layer.");
+        Field<BattleFieldRenderer>(ui, "field").SelectCard(12);
+        Check(Field<RectTransform>(ui, "inspectionWindow").gameObject.activeSelf && Field<Text>(ui, "inspectionName").text == "Spirit A", "A field-card click opens the private printed-card inspector.");
+        Check(Field<Text>(ui, "inspectionEffects").text.Contains("6000 BP") && Field<Text>(ui, "inspectionEffects").text.Contains("Printed effect."), "Inspection shows the live BS field state and English printed effect.");
+        var inspectionScroll = Field<ScrollRect>(ui, "inspectionScroll");
+        Check(inspectionScroll.vertical && !inspectionScroll.horizontal && inspectionScroll.content != null
+            && inspectionScroll.viewport.GetComponent<RectMask2D>() != null && inspectionScroll.verticalNormalizedPosition == 1,
+            "The effect text uses a clipped native vertical scroll area starting at the top.");
+        Call(ui, "CloseInspection");
+        var allCommands = first.LegalCommands;
+        var selectedCommand = new BattleCommand { action = "summon", index = 1 };
+        first.LegalCommands = new[] { selectedCommand, new BattleCommand { action = "magic", index = 0 }, new BattleCommand { action = "pass" } };
+        hand[1].GetComponentInChildren<Button>(true).onClick.Invoke();
+        var selectedRows = Field<List<GameObject>>(ui, "rows");
+        Check(Field<Text>(ui, "inspectionName").text == "Spirit B" && selectedRows.Count == 3,
+            "Clicking a hand card opens its English inspection and only its two relevant legal actions plus Show all.");
+        selectedRows[0].GetComponentInChildren<Button>(true).onClick.Invoke();
+        Check(ReferenceEquals(first.Sent, selectedCommand), "A hand-card action sends the exact offered command object.");
+        first.LegalCommands = allCommands;
+        Call(ui, "CloseInspection");
         var field = Field<BattleFieldRenderer>(ui, "field");
         Check(manager.GetElement<TextMeshProUGUI>("TextPlayer0LP").text == "5", "Original LP slot shows five BS life.");
         Check(manager.GetElement<TextMeshProUGUI>("TextHint").text.Contains("Main Step"), "Original hint slot names current BS step.");
@@ -128,14 +157,19 @@ static class NativeDuelSmoke
         Check(ReferenceEquals(first.Sent, first.LegalCommands[6]), "Exact paginated legal-command object reaches backend Send unmodified.");
         first.Commit(new BattleEvent { Kind = "Drawn" }); Check(field.Summons == 0, "Non-summon events never trigger boss ritual.");
         first.Commit(new BattleEvent { Kind = "Summoned", SpiritId = 12 }); Check(field.Summons == 1 && first.PresentationBusy, "Committed summons engage presentation lock.");
+        Check(Field<CanvasGroup>(ui, "arenaHud").alpha == 0 && !Field<CanvasGroup>(ui, "arenaHud").blocksRaycasts
+            && !Field<RectTransform>(ui, "handArea").gameObject.activeSelf, "Summon presentations hide and unlock the HUD and hand controls above the rendered scene.");
         Call(ui, "Send", first.LegalCommands[0]); Check(ReferenceEquals(first.Sent, first.LegalCommands[6]), "No gameplay send while presentation is active.");
         ui.ReturnOrClose(); Check(!first.PresentationBusy, "Escape skips presentation and unlocks backend.");
+        Check(Field<CanvasGroup>(ui, "arenaHud").alpha == 1 && Field<CanvasGroup>(ui, "arenaHud").blocksRaycasts,
+            "Skipping a summon restores visible, interactive HUD controls.");
         var second = new BattleGameSession { Seat = 1, View = View(1), IsReplay = true };
         second.View.Players[1].Hand = Array.Empty<string>();
         ui.Bind(second); int oldSets = field.Sets; first.Change(); first.Commit(new BattleEvent { Kind = "Summoned" });
         Check(field.Sets == oldSets && field.Summons == 1, "Session rebind detaches both old events.");
         Check(manager.GetElement<TextMeshProUGUI>("TextPlayer0LP").text == "4", "Joined seat sees its own life in native near-player slot.");
         manager.GetElement<Button>("ButtonPlay").onClick.Invoke(); Check(second.ReplayDelta == 1, "Original replay button steps BS replay.");
+        Field<Button>(ui, "advanceButton").onClick.Invoke(); Check(second.ReplayDelta == 2, "The new native HUD advances the BS replay backend.");
         ui.Suspend(); Check(!second.PresentationBusy, "Hiding servant releases presentation lock.");
         Call(ui, "OnDestroy"); oldSets = field.Sets; second.Change();
         Check(field.Disposals == 1 && field.Sets == oldSets, "Destroy detaches events and disposes owned field once.");

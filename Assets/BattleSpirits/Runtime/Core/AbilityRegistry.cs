@@ -4,7 +4,7 @@ namespace MDPro3.BattleSpirits.Core
 {
     public static class AbilityRegistry
     {
-        public const string Version = "standard-effects-20261116";
+        public const string Version = "standard-effects-20261116-r2";
         private static readonly HashSet<string> Supported = new HashSet<string>(StringComparer.Ordinal)
         {
             "26RSD09-001","26RBS02-002","26RBS01-003","26RSD09-004","26RBS03-004","26RBS03-X01","26RBS01-X03","26RBS03-X03","26RSD09-011","26RSD01-012","26RSD09-012","26RBS02-087","26RBS03-087","26RSD01-014",

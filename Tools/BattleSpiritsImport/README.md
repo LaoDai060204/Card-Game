@@ -25,8 +25,13 @@ exact source bytes. The original 61 Japanese card references, the Pisketona
 original, original printed artist credits, individual attribution and hashes
 remain in `Data/BattleSpirits/provenance`. English faces and effect translations
 are unofficial. Standee silhouettes are reviewed 2.5D derivatives, not exact
-masks, meshes or rigs. Ritenia is the only demonstration boss. Playmat reference
+masks, meshes or rigs. Ritenia and Pisketona have explicit boss presentations,
+as approved in the owner's 17 November two-player arena reference. The importer
+records those IDs directly; artwork, cost and rarity never assign boss status. Playmat reference
 markings can describe historical/Eternal rules; they do not define gameplay.
+The exact supplied arena HTML and its source hash live in
+`Data/BattleSpirits/provenance/arena-reference-20261117.html` and the paired JSON
+reference entry. This supplement leaves the imported `references.json` intact.
 
 Each official `detail_iframe` HTML response is archived. Its typed cost,
 reductions, levels, Soul Core alternatives, family and block values are parsed

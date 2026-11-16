@@ -33,6 +33,8 @@ namespace MDPro3.BattleSpirits.Visuals
         public int reserveNormal;
         public int trashNormal;
         public int deckCount;
+        public int trashCardCount;
+        public int burstCount;
         public bool reserveSoul;
         public bool trashSoul;
     }
