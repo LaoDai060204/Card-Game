@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using MDPro3.BattleSpirits;
 using UnityEngine;
 using MDPro3.UI;
 using System.Collections;
@@ -13,36 +14,14 @@ namespace MDPro3
     public class BackgroundManager : Manager
     {
         GameObject back;
+        private Sprite battleBackgroundSprite;
         int cid;
         public static readonly Dictionary<int, string> backgrounds = new Dictionary<int, string>()
         {
-            {1, "Classic" },
-            {2, "Classic2" },
-            {11, "ClassicRed" },
-            {5, "ClassicPink" },
-            {4, "ClassicPinkShine" },
-            //{6, "ClassicWhite" },
-            {7, "WCS" },
-            {8, "Shop" },
-            {9, "Knowledge" },
-            {3, "PurpleDarkFantasy" },
-            {10, "DeepDarkFantasy" },
-            //{13, "New" },
-            {12, "DIY Green" },
-            {14, "Neos" },
-            {16, "Classic Grid" },
-            {17, "4th Anniversary" },
-
-            {50, "DIY Classic" },
-            {51, "DIY Classic2" },
-            {52, "DIY Red" },
-            {53, "DIY Pink" },
-            {54, "DIY PinkShine" },
-            //{55, "DIY Purple" },
-            {56, "DIY WCS" },
-            {57, "DIY SHOP" },
-            {58, "DIY Knowledge" },
-            {59, "DIY DeepDarkFantasy" },
+            { 1, "Battle Spirits Navy" },
+            { 2, "Dragon Field" },
+            { 3, "Standard Play Sheet" },
+            { 4, "White Play Sheet" },
         };
 
         public void Refresh()
@@ -52,6 +31,33 @@ namespace MDPro3
 
         public void Change(int id)
         {
+            if (BattleSpiritsMode.IsEnabled)
+            {
+                if (back != null) { back.SetActive(false); Destroy(back); }
+                if (battleBackgroundSprite != null) Destroy(battleBackgroundSprite);
+                if (id == 0) id = Random.Range(1, 5);
+                cid = backgrounds.ContainsKey(id) ? id : 1;
+                back = new GameObject("Battle Spirits Background");
+                back.transform.SetParent(transform, false);
+                var renderer = back.AddComponent<SpriteRenderer>();
+                // A native solid sprite supplies the canvas base without altering any source pixels.
+                Texture2D texture = Texture2D.whiteTexture;
+                renderer.color = BattleCosmetics.Navy;
+                if (cid > 1)
+                {
+                    string[] paths = { "field.png", "play-sheet.png", "play-sheet-white.png" };
+                    texture = BattleCosmetics.LoadTexture(Path.Combine(Application.streamingAssetsPath, "BattleSpirits", "playmats", paths[cid - 2]));
+                    renderer.color = Color.white;
+                }
+                if (texture == null) texture = Texture2D.whiteTexture;
+                battleBackgroundSprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(.5f, .5f), 100f);
+                renderer.sprite = battleBackgroundSprite;
+                var scaler = back.AddComponent<SpriteScaler>();
+                scaler.isApplyOnUpdate = true;
+                scaler.SetFitMode(SpriteScaler.FitMode.FitHighestResolutionMaintainAspectRatio);
+                Tools.ChangeLayer(back, "2D");
+                return;
+            }
             Destroy(back);
 
             if (id == 0)

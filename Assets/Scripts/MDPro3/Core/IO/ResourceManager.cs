@@ -1,4 +1,4 @@
-using Cysharp.Threading.Tasks;
+﻿using Cysharp.Threading.Tasks;
 using MDPro3.Data;
 using System;
 using System.Collections.Generic;
@@ -17,28 +17,20 @@ namespace MDPro3.IO
         private static FileGroupConfig fileGroups;
         public static async UniTask InitializeAsync(Action onBackground = null, Action onMainThread = null)
         {
-            fileGroups = Json.LoadFromFile<FileGroupConfig>(FileGroupConfig.SavePath);
-#if DEVELOPMENT_BUILD || UNITY_EDITOR
-            if (FileManager.DebugEnabled)
-                Debug.Log($"[ResourceManager] Loaded file group config from {FileGroupConfig.SavePath}");
-#endif
-
-            await InitializeFileManagerAsync(fileGroups, default);
-            await UnzipAllCardVideos(default);
-            await CacheIniTextsAsync();
-            await CacheAllCdbInZipToTempAsync();
-
-            await UniTask.RunOnThreadPool(() =>
-            {
-                CacheOverFrameDic();
-                CacheCardVideoMap();
-                onBackground?.Invoke();
-            });
-
+            // Only the shipped Battle Spirits resources enter the active game.
+            // The retained interface bundles are loaded independently by ABLoader.
+            await FileManager.InitializeAsync(Array.Empty<string>(), Array.Empty<string>(),
+                new[] { Path.Combine(Application.streamingAssetsPath, "BattleSpirits") },
+                Array.Empty<string>(), default);
+            iniContents.Clear();
+            cachedTempCdbs.Clear();
+            _overFrameDic.Clear();
+            _cardVideoDic.Clear();
+            if (onBackground != null) await UniTask.RunOnThreadPool(onBackground);
             if (onMainThread != null)
             {
                 await UniTask.SwitchToMainThread();
-                onMainThread.Invoke();
+                onMainThread();
             }
         }
 

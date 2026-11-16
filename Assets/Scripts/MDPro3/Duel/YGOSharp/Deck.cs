@@ -1,3 +1,4 @@
+using MDPro3.BattleSpirits;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -21,7 +22,7 @@ namespace MDPro3.Duel.YGOSharp
         public int Stand;
         public int Mate;
 
-        public const string deckHint = "#created by MDPro3";
+        public const string deckHint = "#Battle Spirits Standard deck";
         public string userId;
         public string deckId;
 
@@ -33,19 +34,18 @@ namespace MDPro3.Duel.YGOSharp
             Extra = new List<int>();
             Side = new List<int>();
             Pickup = new List<int>() { 0, 0, 0 };
-            Protector = 1070001;
-            Case = 1080001;
-            Field = 1090001;
-            Grave = 1100001;
-            Stand = 1110001;
-            Mate = 1000001;
+            Protector = 1079001;
+            Case = 0;
+            Field = 1099001;
+            Grave = 0;
+            Stand = 0;
+            Mate = 0;
         }
 
         public Deck(string path) : this(File.ReadAllText(path), string.Empty, string.Empty)
         {
-            type = Path.GetFileName(Path.GetDirectoryName(path));
-            if(type == "Deck" && type == Path.GetDirectoryName(path))
-                type = string.Empty;
+            var relative = Path.GetRelativePath(BattleDeckStorage.DeckDirectory, Path.GetFullPath(path));
+            type = Path.GetDirectoryName(relative) ?? string.Empty;
         }
 
         public Deck(string ydk, string deckID = "", string userID = "")
@@ -57,12 +57,12 @@ namespace MDPro3.Duel.YGOSharp
             Extra = new List<int>();
             Side = new List<int>();
             Pickup = new List<int>();
-            Protector = 1070001;
-            Case = 1080001;
-            Field = 1090001;
-            Grave = 1100001;
-            Stand = 1110001;
-            Mate = 1000001;
+            Protector = 1079001;
+            Case = 0;
+            Field = 1099001;
+            Grave = 0;
+            Stand = 0;
+            Mate = 0;
             string st = ydk.Replace("\r", string.Empty).Replace("\\r", string.Empty).Replace("\\n", "\n");
             string[] lines = st.Split("\n", StringSplitOptions.RemoveEmptyEntries);
             int flag = -1;
@@ -116,7 +116,7 @@ namespace MDPro3.Duel.YGOSharp
                     {
                         // Replace pre-release ids with official ids only for playable deck sections.
                         if (flag >= 1 && flag <= 3)
-                            code = YdkIdHelper.ToOfficial(code);
+                            code = BattleCatalog.TryGet(code, out _) ? code : 0;
 
                         switch (flag)
                         {
@@ -157,75 +157,42 @@ namespace MDPro3.Duel.YGOSharp
                 }
             }
 
+            Main = Main.Where(id => BattleCatalog.TryGet(id, out _)).ToList();
+            Extra.Clear();
+            Side.Clear();
+
             if (Pickup.Count < 3)
                 Pickup.AddRange(Enumerable.Repeat(0, 3 - Pickup.Count));
         }
 
         public Deck(List<int> main, List<int> extra, List<int> side)
         {
-            Main = main;
-            Extra = extra;
-            Side = side;
+            Main = main != null ? new List<int>(main) : new List<int>();
+            Extra = new List<int>();
+            Side = new List<int>();
             Pickup = new List<int>() { 0, 0, 0 };
-            Protector = 1070001;
-            Case = 1080001;
-            Field = 1090001;
-            Grave = 1100001;
-            Stand = 1110001;
-            Mate = 1000001;
+            Protector = 1079001;
+            Case = 0;
+            Field = 1099001;
+            Grave = 0;
+            Stand = 0;
+            Mate = 0;
 
             // Normalize any pre-release ids that may be in the provided lists.
-            YdkIdHelper.NormalizeDeck(this);
+            Main = Main.Where(id => BattleCatalog.TryGet(id, out _)).ToList();
+            Extra.Clear();
+            Side.Clear();
         }
 
         public int Check(Banlist ban, bool ocg, bool tcg)
         {
-            if (Main.Count < 40 ||
-                Main.Count > 60 ||
-                Extra.Count > 15 ||
-                Side.Count > 15)
-                return 1;
-
-            Dictionary<int, int> cards = new Dictionary<int, int>();
-
-            List<int>[] stacks = { Main, Extra, Side };
-            foreach (List<int> stack in stacks)
-            {
-                foreach (int id in stack)
-                {
-                    Card card = CardsManager.Get(id);
-                    AddToCards(cards, card);
-                    if (!ocg && card.Ot == 1 || !tcg && card.Ot == 2)
-                        return id;
-                    if (card.HasType(CardType.Token))
-                        return id;
-                }
-            }
-
-            if (ban == null)
-                return 0;
-
-            foreach (var pair in cards)
-            {
-                int max = ban.GetQuantity(pair.Key);
-                if (pair.Value > max)
-                    return pair.Key;
-            }
-            return 0;
+            var validation = BattleDeckStorage.Validate(this);
+            return validation.IsValid ? 0 : 1;
         }
 
         public int GetCardCount(int code)
         {
-            int al = 0;
-            try
-            {
-                al = CardsManager.Get(code).Alias;
-            }
-            catch (Exception)
-            {
-            }
-            int returnValue = 0;
-            return returnValue;
+            return Main.Count(id => BattleDeckStorage.SameName(code, id));
         }
 
         public bool Check(Deck deck)
@@ -287,28 +254,19 @@ namespace MDPro3.Duel.YGOSharp
         /// <returns></returns>
         public bool Save(string deckName, DateTime saveTime, bool upload = true, bool showHint = true)
         {
-            var ydk = GetYDK();
             try
             {
+                BattleDeckStorage.EnsureInitialized();
                 deckName = NormalizeDeckFileName(deckName);
-                if (!IsValidDeckFileName(deckName))
-                    return false;
-
-                var path = Program.PATH_DECK + (type == string.Empty ? string.Empty : $"{type}/") + deckName + Program.EXPANSION_YDK;
-                var dir = Path.GetDirectoryName(path);
-                if (!Directory.Exists(dir))
-                    Directory.CreateDirectory(dir);
-                File.WriteAllText(path, ydk, Encoding.UTF8);
+                if (!IsValidDeckFileName(deckName)) return false;
+                var relativeName = string.IsNullOrEmpty(type) ? deckName : type + "/" + deckName;
+                var path = BattleDeckStorage.ResolveDeckPath(relativeName);
+                Directory.CreateDirectory(Path.GetDirectoryName(path));
+                File.WriteAllText(path, GetYDK(), Encoding.UTF8);
                 File.SetLastWriteTimeUtc(path, saveTime);
-
-                if (MyCard.account != null && upload && Config.GetBool("SyncDeck", true))
-                    _ = OnlineDeck.SyncDeck(deckId, deckName, this, saveTime, showHint);
+                return true;
             }
-            catch
-            {
-                return false;
-            }
-            return true;
+            catch { return false; }
         }
 
         public static string NormalizeDeckFileName(string deckName)
@@ -332,32 +290,19 @@ namespace MDPro3.Duel.YGOSharp
 
         public string GetYDK()
         {
-            var value = deckHint + "\r\n#main";
-            for (var i = 0; i < Main.Count; i++)
-                value += $"\r\n{Main[i]}";
-            value += "\r\n#extra";
-            for (var i = 0; i < Extra.Count; i++)
-                value += $"\r\n{Extra[i]}";
-            value += "\r\n!side";
-            for (var i = 0; i < Side.Count; i++)
-                value += $"\r\n{Side[i]}";
-            value += $"\r\n#pickup\r\n#{Pickup[0]}";
-            value += $"\r\n#{Pickup[1]}";
-            value += $"\r\n#{Pickup[2]}";
-
-            value += $"\r\n#case\r\n#{Case}";
-            value += $"\r\n#protector\r\n#{Protector}";
-            value += $"\r\n#field\r\n#{Field}";
-            value += $"\r\n#grave\r\n#{Grave}";
-            value += $"\r\n#stand\r\n#{Stand}";
-            value += $"\r\n#mate\r\n#{Mate}";
-
-            if (!string.IsNullOrEmpty(deckId))
-                value += $"\r\n##{deckId}";
-            if (!string.IsNullOrEmpty(userId))
-                value += $"\r\n###{userId}";
-
-            return value;
+            var value = new StringBuilder(deckHint + "\n#main");
+            foreach (var id in Main)
+                if (BattleCatalog.TryGet(id, out _)) value.Append('\n').Append(id);
+            value.Append("\n#extra\n!side\n#pickup");
+            for (int i = 0; i < 3; i++)
+                value.Append("\n#").Append(i < Pickup.Count && BattleCatalog.TryGet(Pickup[i], out _) ? Pickup[i] : 0);
+            value.Append("\n#protector\n#").Append(Protector)
+                .Append("\n#case\n#").Append(Case)
+                .Append("\n#field\n#").Append(Field)
+                .Append("\n#grave\n#").Append(Grave)
+                .Append("\n#stand\n#").Append(Stand)
+                .Append("\n#mate\n#").Append(Mate);
+            return value.ToString();
         }
     }
 }

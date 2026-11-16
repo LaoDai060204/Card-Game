@@ -176,6 +176,8 @@ namespace MDPro3.Servant
 
         public void UpdatePrerelease()
         {
+            if (MDPro3.BattleSpirits.BattleSpiritsMode.IsEnabled)
+            { MessageManager.Cast("Battle Spirits card content is included with this application."); return; }
             if (!checkingPrereleaseUpdate)
             {
                 checkingPrereleaseUpdate = true;
@@ -398,6 +400,8 @@ namespace MDPro3.Servant
 
         public void DownloadYPK()
         {
+            if (MDPro3.BattleSpirits.BattleSpiritsMode.IsEnabled)
+            { MessageManager.Cast("Battle Spirits card content is included with this application."); return; }
             if (!downloadingYPK)
             {
                 var selections = new List<string>()

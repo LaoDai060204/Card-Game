@@ -1,5 +1,4 @@
 using MDPro3.UI.ServantUI;
-using Percy;
 using System.Collections;
 using TMPro;
 using UnityEngine;
@@ -40,71 +39,21 @@ namespace MDPro3.UI
         #endregion
 
         public string replayName;
-        private YRP yrp;
-
         public override void Refresh()
         {
             base.Refresh();
-
-            Title.text = replayName;
-            yrp = Program.instance.replay.GetUI<ReplaySelectorUI>().CacheYRP(replayName);
-
-            NumBadge.SetActive(false);
-            TextClear.SetActive(false);
-            Art.SetArt(yrp == null ? 0 : yrp.playerData[0].main[0]);
+            Title.text = System.IO.Path.GetFileNameWithoutExtension(replayName);
+            NumBadge.SetActive(false); TextClear.SetActive(false);
+            int preview = MDPro3.BattleSpirits.BattleCatalog.GetNumericId("26RBS03-X01");
+            Art.SetArt(preview);
         }
-
         protected override void CallToggleOnEvent()
         {
             base.CallToggleOnEvent();
             Program.instance.replay.lastSelectedReplayItem = this;
-            Program.instance.replay.GetUI<ReplaySelectorUI>().superScrollView.selected = index;
-
             var ui = Program.instance.replay.GetUI<ReplaySelectorUI>();
-            if (yrp == null)
-            {
-                ui.TextOverview.text = string.Empty;
-                ui.ButtonPlayer0.gameObject.SetActive(false);
-                ui.ButtonPlayer1.gameObject.SetActive(false);
-                ui.ButtonPlayer2.gameObject.SetActive(false);
-                ui.ButtonPlayer3.gameObject.SetActive(false);
-            }
-            else
-            {
-                ui.ButtonPlayer0.gameObject.SetActive(true);
-                ui.ButtonPlayer1.gameObject.SetActive(true);
-                ui.ButtonPlayer2.gameObject.SetActive(true);
-                ui.ButtonPlayer3.gameObject.SetActive(true);
-
-                var description = "";
-                bool tag = false;
-                if ((yrp.opt & 0x20) > 0)
-                {
-                    description += StringHelper.GetUnsafe(1246) + Program.STRING_LINE_BREAK;//Tag Duel mode
-                    tag = true;
-                }
-                description += StringHelper.GetUnsafe((int)(1259 + (yrp.opt >> 16))) + Program.STRING_LINE_BREAK;//Rules
-                description += StringHelper.GetUnsafe(1231) + yrp.StartLp + Program.STRING_LINE_BREAK;//Starting LP:
-                description += StringHelper.GetUnsafe(1232) + yrp.StartHand + Program.STRING_LINE_BREAK;//Starting hand size:
-                description += StringHelper.GetUnsafe(1233) + yrp.DrawCount + Program.STRING_LINE_BREAK;//Cards drawn per turn:
-                if ((yrp.opt & 0x10) > 0)
-                    description += StringHelper.GetUnsafe(1230) + Program.STRING_LINE_BREAK;
-
-                ui.ButtonPlayer0.SetButtonText(yrp.playerData[0].name);
-                ui.ButtonPlayer1.SetButtonText(yrp.playerData[1].name);
-                if (tag)
-                {
-                    ui.ButtonPlayer2.SetButtonText(yrp.playerData[2].name);
-                    ui.ButtonPlayer3.SetButtonText(yrp.playerData[3].name);
-                }
-                else
-                {
-                    ui.ButtonPlayer2.gameObject.SetActive(false);
-                    ui.ButtonPlayer3.gameObject.SetActive(false);
-                }
-
-                ui.TextOverview.text = description;
-            }
+            ui.superScrollView.selected = index;
+            ui.TextOverview.text = "Battle Spirits — recorded rules commands and events\n" + System.IO.Path.GetFileName(replayName);
         }
 
         protected override void CallSubmitEvent()

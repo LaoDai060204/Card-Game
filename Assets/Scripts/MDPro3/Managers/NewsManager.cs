@@ -84,6 +84,16 @@ public class NewsManager : Manager
         showing = false;
     }
 
+    public void LoadLocalNews(News[] entries, IReadOnlyList<Texture2D> pictures)
+    {
+        CancelImageLoad(); Hide(); ClearImages(); closeRequested = false;
+        loadedEntries = (entries ?? Array.Empty<News>()).Where(e => e != null).Take(maxLoad).ToArray();
+        news = new MyCardNews { EnglishUS = loadedEntries };
+        for (int i = 0; i < loadedEntries.Length; i++)
+            newsPics.Add(pictures != null && i < pictures.Count && pictures[i] != null ? pictures[i] : Texture2D.blackTexture);
+        Show();
+    }
+
     public void LoadNews()
     {
         CancelImageLoad();

@@ -601,6 +601,25 @@ namespace MDPro3.UI.ServantUI
             InitializeAutoRPS();
 
             InitializeExpansions();
+            ConfigureBattleSpiritsSettings();
+        }
+
+        private static void Unavailable(SelectionButton_Setting button)
+        {
+            if (button == null) return;
+            button.SetModeText("Unavailable");
+            button.GetSelectable().interactable = false;
+        }
+        private void ConfigureBattleSpiritsSettings()
+        {
+            Unavailable(ButtonSyncDeck); Unavailable(ButtonCardStyle); Unavailable(ButtonVideoCard);
+            Unavailable(ButtonDuelCharacter); Unavailable(ButtonWatchCharacter); Unavailable(ButtonReplayCharacter);
+            Unavailable(ButtonDuelVoice); Unavailable(ButtonWatchVoice); Unavailable(ButtonReplayVoice);
+            Unavailable(ButtonDuelPendulum); Unavailable(ButtonWatchPendulum); Unavailable(ButtonReplayPendulum);
+            Unavailable(ButtonDuelChain); Unavailable(ButtonWatchChain); Unavailable(ButtonReplayChain);
+            Unavailable(ButtonDuelDice); Unavailable(ButtonWatchDice); Unavailable(ButtonReplayDice);
+            Unavailable(ButtonDuelCoin); Unavailable(ButtonWatchCoin); Unavailable(ButtonReplayCoin);
+            Unavailable(ButtonExpansionSupport); Unavailable(ButtonDownloadYPK);
         }
 
         public override void SelectDefaultSelectable()
@@ -1588,6 +1607,11 @@ namespace MDPro3.UI.ServantUI
         }
         public void RefreshCharacterName()
         {
+            if (MDPro3.BattleSpirits.BattleSpiritsMode.IsEnabled)
+            {
+                ButtonDuelCharacter.SetModeText("Unavailable"); ButtonWatchCharacter.SetModeText("Unavailable");
+                ButtonReplayCharacter.SetModeText("Unavailable"); return;
+            }
             if (CharacterSelector.characters == null)
                 return;
 
@@ -2230,6 +2254,7 @@ namespace MDPro3.UI.ServantUI
 
         public void OnImport()
         {
+            if (MDPro3.BattleSpirits.BattleSpiritsMode.IsEnabled) { MessageManager.Cast("Unavailable for Battle Spirits."); return; }
             if (Program.instance.ocgcore.showing)
             {
                 MessageManager.Toast(InterString.Get("This operation cannot be performed during a duel."));
@@ -2279,6 +2304,7 @@ namespace MDPro3.UI.ServantUI
         }
         public void OnClearArtVideos()
         {
+            if (MDPro3.BattleSpirits.BattleSpiritsMode.IsEnabled) { MessageManager.Cast("Unavailable for Battle Spirits."); return; }
             if (Program.instance.ocgcore.showing)
             {
                 MessageManager.Toast(InterString.Get("This operation cannot be performed during a duel."));
@@ -2313,6 +2339,7 @@ namespace MDPro3.UI.ServantUI
 
         public void OnSupportExpansions()
         {
+            if (MDPro3.BattleSpirits.BattleSpiritsMode.IsEnabled) { MessageManager.Cast("Unavailable for Battle Spirits."); return; }
             if (Program.instance.ocgcore.showing)
             {
                 MessageManager.Toast(InterString.Get("This option cannot be changed during a duel."));
@@ -2328,6 +2355,7 @@ namespace MDPro3.UI.ServantUI
 
         public void OnClearExpansions()
         {
+            if (MDPro3.BattleSpirits.BattleSpiritsMode.IsEnabled) { MessageManager.Cast("Unavailable for Battle Spirits."); return; }
             if (Program.instance.ocgcore.showing)
             {
                 MessageManager.Toast(InterString.Get("This operation cannot be performed during a duel."));
@@ -2389,84 +2417,22 @@ namespace MDPro3.UI.ServantUI
         }
 
         public void OnAboutGame()
-        {
-            var address = Language.UseChinese() ? "AboutGame" : "AboutGame_en";
-            var handle = Addressables.LoadAssetAsync<TextAsset>(address);
-            handle.Completed += (result) =>
-            {
-                var selections = new List<string>()
-                {
-                    InterString.Get("About the Game"),
-                    GetAboutText(result.Result.text)
-                };
-                if (Language.UseChinese())
-                    UIManager.ShowPopupText(selections);
-                else
-                    UIManager.ShowPopupText(selections, TMPro.HorizontalAlignmentOptions.Left);
-            };
-        }
+        { UIManager.ShowPopupText(new List<string> { "About Battle Spirits", "Battle Spirits card battle client. Original card artwork and rules © BNP/BANDAI and the respective crossover rights holders. Preserved interface framework: MDPro3 and its original contributors; third-party credits and licenses are retained with the application." }, TMPro.HorizontalAlignmentOptions.Left); }
         public void OnAboutVersion()
-        {
-            var address = Language.UseChinese() ? "AboutVersion" : "AboutVersion_en";
-            var handle = Addressables.LoadAssetAsync<TextAsset>(address);
-            handle.Completed += (result) =>
-            {
-                var selections = new List<string>()
-                {
-                    InterString.Get("About Version Numbers."),
-                    GetAboutText(result.Result.text)
-                };
-                UIManager.ShowPopupText(selections, TMPro.HorizontalAlignmentOptions.Left);
-            };
-        }
+        { UIManager.ShowPopupText(new List<string> { "Battle Spirits", "Battle Spirits client — four Standard decks, Solo, puzzles, local network play and recorded battles." }, TMPro.HorizontalAlignmentOptions.Left); }
         public void OnAboutUpdate()
-        {
-            var address = Language.UseChinese() ? "AboutUpdate" : "AboutUpdate_en";
-            var handle = Addressables.LoadAssetAsync<TextAsset>(address);
-            handle.Completed += (result) =>
-            {
-                var selections = new List<string>()
-                {
-                    InterString.Get("About Updates"),
-                    GetAboutText(result.Result.text)
-                };
-                if (Language.UseChinese())
-                    UIManager.ShowPopupText(selections);
-                else
-                    UIManager.ShowPopupText(selections, TMPro.HorizontalAlignmentOptions.Left);
-            };
-        }
+        { UIManager.ShowPopupText(new List<string> { "Updates", "Battle Spirits card content is included with the application." }, TMPro.HorizontalAlignmentOptions.Left); }
         public void OnUpdateContent()
-        {
-            var handle = Addressables.LoadAssetAsync<TextAsset>(Language.UseChinese() ? "UpdateContent" : "UpdateContent_en");
-            handle.Completed += (result) =>
-            {
-                var selections = new List<string>()
-                {
-                    InterString.Get("Patch Notes"),
-                    result.Result.text
-                };
-                UIManager.ShowPopupText(selections, TMPro.HorizontalAlignmentOptions.Left);
-            };
-        }
+        { UIManager.ShowPopupText(new List<string> { "Battle Spirits content", "Four Standard competition decks, English cards, Battle Spirits rules and effects, Solo opponents and ten playable puzzles." }, TMPro.HorizontalAlignmentOptions.Left); }
 
         #endregion
 
         public void OnSurrender()
         {
-            Program.instance.ocgcore.OnDuelResultConfirmed(true);
+            MDPro3.BattleSpirits.BattleIntegration.Concede();
         }
 
-        public void OnRetry()
-        {
-            if (OcgCore.condition != OcgCore.Condition.Duel || !RoomServant.FromSolo)
-                return;
-            if (!Program.instance.solo.CanRetryLastSoloDuel())
-                return;
-
-            Program.instance.ocgcore.onSurrenderConfirmed = Program.instance.solo.QueueRetryLastSoloDuel;
-            Program.instance.ocgcore.OnDuelResultConfirmed(true);
-        }
+        public void OnRetry() { MDPro3.BattleSpirits.BattleIntegration.Retry(); }
 
         public void OnCheckDecks()
         {

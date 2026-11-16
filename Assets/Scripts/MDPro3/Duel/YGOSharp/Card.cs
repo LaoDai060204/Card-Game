@@ -1,3 +1,4 @@
+using MDPro3.BattleSpirits;
 using System;
 using System.Data;
 using MDPro3.Utility;
@@ -13,6 +14,8 @@ namespace MDPro3.Duel.YGOSharp
         public const int UNKNOWN_BATTLE_VALUE = -2;
 
         public int Id;
+        public string BattleSpiritsId;
+        public bool IsBattleSpirits => !string.IsNullOrEmpty(BattleSpiritsId);
         public int Ot;
         public int Alias;
         public int RuleCode;
@@ -67,6 +70,7 @@ namespace MDPro3.Duel.YGOSharp
             Card r = new()
             {
                 Id = Id,
+                BattleSpiritsId = BattleSpiritsId,
                 Ot = Ot,
                 Alias = Alias,
                 RuleCode = RuleCode,
@@ -99,6 +103,7 @@ namespace MDPro3.Duel.YGOSharp
         public void CloneTo(Card r)
         {
             r.Id = Id;
+            r.BattleSpiritsId = BattleSpiritsId;
             r.Ot = Ot;
             r.Alias = Alias;
             r.RuleCode = RuleCode;
@@ -241,17 +246,19 @@ namespace MDPro3.Duel.YGOSharp
 
         public int GetCredit()
         {
+            if (IsBattleSpirits) return 0;
             return BanlistManager.currentGenesysBanList.GetCredit(Id);
         }
 
         public string GetCreditString()
         {
+            if (IsBattleSpirits) return string.Empty;
             return BanlistManager.currentGenesysBanList.GetCreditString(Id);
         }
 
         public bool IsRushDuelCard()
         {
-            return Id >= 120000000 && Id < 130000000;
+            return !IsBattleSpirits && Id >= 120000000 && Id < 130000000;
         }
 
         public bool IsMaximumCard(bool forRender)
@@ -784,6 +791,7 @@ namespace MDPro3.Duel.YGOSharp
 
         public string GetTypeForUI()
         {
+            if (IsBattleSpirits && BattleCatalog.TryGet(BattleSpiritsId, out var definition)) return definition.type + " · " + BattleCardAdapter.Colors(definition);
             var re = string.Empty;
             if (Id == 0)
                 return re;

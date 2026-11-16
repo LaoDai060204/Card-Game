@@ -1,3 +1,4 @@
+using MDPro3.BattleSpirits;
 using DG.Tweening;
 using MDPro3.UI;
 using MDPro3.Duel.YGOSharp;
@@ -40,12 +41,17 @@ namespace MDPro3.Servant
                     returnServant = Program.instance.deckSelector;
                     DeckName = Config.GetConfigDeckName();
 
-                    var deckPath = Program.PATH_DECK + DeckName + Program.EXPANSION_YDK;
+                    BattleDeckStorage.EnsureInitialized();
+                    string deckPath;
+                    try { deckPath = BattleDeckStorage.ResolveDeckPath(DeckName); }
+                    catch (System.ArgumentException) { deckPath = string.Empty; }
+                    if (!System.IO.File.Exists(deckPath))
+                    {
+                        DeckName = BattleDeckStorage.DefaultDeckName;
+                        deckPath = BattleDeckStorage.ResolveDeckPath(DeckName);
+                    }
 
-                    // Auto-fix the file on disk (pre-release ids -> official ids).
-                    YdkIdHelper.NormalizeYdkFile(deckPath);
-
-                    Deck = new Deck(deckPath);
+                    Deck = System.IO.File.Exists(deckPath) ? new Deck(deckPath) : new Deck();
                     DeckIsFromLocal = true;
                     historyCards = new();
                     break;

@@ -1,5 +1,4 @@
 using MDPro3.Duel.YGOSharp;
-using NUnit.Framework;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -41,6 +40,7 @@ namespace MDPro3.UI
 
         public void ShowCard(Card data)
         {
+            if (data == null) return;
             Content.alpha = 1f;
             Content.blocksRaycasts = true;
 
@@ -50,6 +50,9 @@ namespace MDPro3.UI
 
         public void ShowCard(List<int> cards, int index)
         {
+            if (cards == null || cards.Count == 0) return;
+            cards = new List<int>(cards);
+            index = Mathf.Clamp(index, 0, cards.Count - 1);
             Content.alpha = 1f;
             Content.blocksRaycasts = true;
 

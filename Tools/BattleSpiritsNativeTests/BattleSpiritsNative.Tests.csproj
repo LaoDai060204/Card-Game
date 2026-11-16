@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><LangVersion>9.0</LangVersion><ImplicitUsings>disable</ImplicitUsings><Nullable>disable</Nullable><EnableDefaultCompileItems>false</EnableDefaultCompileItems></PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../Assets/BattleSpirits/Runtime/Core/CardDefinition.cs" />
+    <Compile Include="../../Assets/BattleSpirits/Runtime/Core/DeckDefinition.cs" />
+    <Compile Include="../../Assets/BattleSpirits/Runtime/Core/AbilityRegistry.cs" />
+    <Compile Include="../../Assets/BattleSpirits/Runtime/Data/BattleCatalog.cs" />
+    <Compile Include="../../Assets/BattleSpirits/Runtime/NativeAdapters/BattleCardAdapter.cs" />
+    <Compile Include="../../Assets/BattleSpirits/Runtime/NativeAdapters/BattleDeckStorage.cs" />
+    <Compile Include="../../Assets/Scripts/MDPro3/Duel/YGOSharp/Card.cs" />
+    <Compile Include="../../Assets/Scripts/MDPro3/Duel/YGOSharp/CardsManager.cs" />
+    <Compile Include="../../Assets/Scripts/MDPro3/Duel/YGOSharp/Deck.cs" />
+    <Compile Include="../../Assets/Scripts/MDPro3/Duel/YGOSharp/YGOSharpOCGWrapperEnums.cs" />
+    <Compile Include="Program.cs" /><Compile Include="Stubs.cs" />
+    <Reference Include="Newtonsoft.Json"><HintPath>$(MSBuildToolsPath)/Newtonsoft.Json.dll</HintPath></Reference>
+  </ItemGroup>
+</Project>

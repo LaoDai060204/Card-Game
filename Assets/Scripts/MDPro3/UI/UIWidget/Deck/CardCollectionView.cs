@@ -1,3 +1,4 @@
+using MDPro3.BattleSpirits;
 using MDPro3.Duel.YGOSharp;
 using System;
 using System.Collections.Generic;
@@ -238,6 +239,7 @@ namespace MDPro3.UI
 
         public void SelectDefaultItem()
         {
+            if (EventSystem.current == null || superScrollView == null) return;
             if (superScrollView.gameObjects.Count > 0)
                 EventSystem.current.SetSelectedGameObject(superScrollView.gameObjects[0]);
             else if(showingRelatedCards)
@@ -513,12 +515,14 @@ namespace MDPro3.UI
 
         public void OnRalatedAreaNavigationDown()
         {
-            if(Program.instance.deckEditor.lastSelectedCardInCollection != null)
+            if(Program.instance.deckEditor.lastSelectedCardInCollection != null
+                && superScrollView.gameObjects.Contains(Program.instance.deckEditor.lastSelectedCardInCollection.gameObject))
             {
                 UserInput.NextSelectionIsAxis = true;
                 EventSystem.current.SetSelectedGameObject
                     (Program.instance.deckEditor.lastSelectedCardInCollection.gameObject);
             }
+            else SelectDefaultItem();
         }
 
         public void SetDropAreaActive(bool active)
@@ -608,6 +612,8 @@ namespace MDPro3.UI
 
         protected void PrintCards(List<int> cards)
         {
+            cards = (cards ?? new List<int>()).Where(id => BattleCatalog.TryGet(id, out _)).Distinct().ToList();
+            Program.instance.deckEditor.lastSelectedCardInCollection = null;
             TextNoItem.gameObject.SetActive(cards.Count == 0);
             printedCards = cards;
 

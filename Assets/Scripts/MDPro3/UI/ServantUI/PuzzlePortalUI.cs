@@ -4,6 +4,7 @@ using MDPro3.Servant;
 using NUnit.Framework;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 using static MDPro3.Servant.PuzzleSelector;
@@ -53,12 +54,6 @@ namespace MDPro3.UI.ServantUI
         #endregion
 
         #region ServantUI
-
-        private void Awake()
-        {
-            if (!Directory.Exists(Program.PATH_PUZZLE))
-                Directory.CreateDirectory(Program.PATH_PUZZLE);
-        }
 
         public override void Show(bool cover)
         {
@@ -162,17 +157,8 @@ namespace MDPro3.UI.ServantUI
             };
             CreatePuzzleGroupButton(puzzleGroup);
 
-            var folders = Directory.GetDirectories(Program.PATH_PUZZLE);
-            foreach (var folder in folders)
-            {
-                string folderName = Path.GetFileName(folder) + "/";
-                var pg = new PuzzleGroup
-                {
-                    pathPrefix = folderName,
-                    namePattern = GetPuzzleNamePattern(folderName)
-                };
-                CreatePuzzleGroupButton(pg);
-            }
+            foreach (var category in MDPro3.BattleSpirits.Puzzles.BattlePuzzleCatalog.All.Select(p => p.category).Distinct())
+                CreatePuzzleGroupButton(new PuzzleGroup { pathPrefix = category + "/", namePattern = "" });
         }
 
         private void CreatePuzzleGroupButton(PuzzleGroup puzzleGroup)
@@ -208,49 +194,16 @@ namespace MDPro3.UI.ServantUI
             }
         }
 
-        public static string GetPuzzleGroupName(PuzzleGroup puzzleGroup)
-        {
-            return puzzleGroup.pathPrefix switch
-            {
-                "" => InterString.Get("Puzzle Challenge"),
-                PuzzlePortal.PATH_PUZZLE_CARD_EFFECT => InterString.Get("Card Effect Animation Preview"),
-                PuzzlePortal.PATH_PUZZLE_FINAL_ATTACK => InterString.Get("Final Attack Animation Preview"),
-                PuzzlePortal.PATH_PUZZLE_SPECIAL_WIN => InterString.Get("Special Victory Animation Preview"),
-                PuzzlePortal.PATH_PUZZLE_TEST => InterString.Get("Card Test"),
-                _ => puzzleGroup.pathPrefix
-            };
-        }
-
-        public static string GetPuzzleNamePattern(string pathPrefix)
-        {
-            return pathPrefix switch
-            {
-                PuzzlePortal.PATH_PUZZLE_CARD_EFFECT => "[?]",
-                PuzzlePortal.PATH_PUZZLE_FINAL_ATTACK => "[?]",
-                PuzzlePortal.PATH_PUZZLE_SPECIAL_WIN => "[?]",
-                _ => string.Empty
-            };
-        }
-
-        public static string GetPuzzleDisplayName(string puzzleFileName, string namePattern)
-        {
-            if (namePattern == string.Empty)
-                return puzzleFileName;
-            var code = puzzleFileName.ExtractLeadingInt();
-            if (code.HasValue)
-            {
-                var card = CardsManager.Get(code.Value, true);
-                return namePattern.Replace("[?]", card.Name);
-            }
-            else
-                return puzzleFileName;
-        }
+        public static string GetPuzzleGroupName(PuzzleGroup group) => string.IsNullOrEmpty(group.pathPrefix)
+            ? "Battle Spirits Puzzles" : group.pathPrefix.TrimEnd('/');
+        public static string GetPuzzleNamePattern(string prefix) => "";
+        public static string GetPuzzleDisplayName(string title, string pattern) => title;
 
         private void SetRecommendPuzzleButtons()
         {
             int need = 2;
             var recommendPuzzles = PuzzleSelectorUI.GetRecommendPuzzles(need);
-            for (int i = 0; i < 2; i++)
+            for (int i = 0; i < recommendPuzzles.Count && i < 2; i++)
                 SetRecommendPuzzleButton(i == 0 ? RecommendButton1 : RecommendButton2, recommendPuzzles[i]);
             if (recommendPuzzles.Count < 2)
                 RecommendButton2.gameObject.SetActive(false);
@@ -283,7 +236,7 @@ namespace MDPro3.UI.ServantUI
             sbn.SetClickEvent(() =>
             {
                 Program.instance.puzzle.puzzleGroup = puzzleGroup;
-                Program.instance.puzzle.currentPuzzle = Program.PATH_PUZZLE + puzzleGroup.pathPrefix + puzzle.name;
+                Program.instance.puzzle.currentPuzzle = puzzle.GetPath();
                 Program.instance.puzzle.StartCurrentPuzzle(false);
             });
         }

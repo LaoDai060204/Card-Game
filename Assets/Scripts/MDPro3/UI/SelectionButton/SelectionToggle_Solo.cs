@@ -47,7 +47,7 @@ namespace MDPro3.UI
         {
             base.Refresh();
             Title.text = botInfo.name;
-            isDiyDeck = botInfo.command.Contains("Lucky");
+            isDiyDeck = false;
             Art.SetArt(botInfo.main0);
 
             NumBadge.SetActive(false);

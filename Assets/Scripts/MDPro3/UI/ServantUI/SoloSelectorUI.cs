@@ -78,8 +78,8 @@ namespace MDPro3.UI.ServantUI
         #endregion
 
         private const int DEFAULT_PORT = 7911;
-        private const int DEFAULT_LP = 8000;
-        private const int DEFAULT_HAND = 5;
+        private const int DEFAULT_LP = 5;
+        private const int DEFAULT_HAND = 4;
         private const int DEFAULT_DRAW = 1;
 
         public SuperScrollView superScrollView;
@@ -94,28 +94,15 @@ namespace MDPro3.UI.ServantUI
         {
             base.ShowEvent();
 
-            switch (SoloSelector.condition)
-            {
-                case SoloSelector.Condition.ForSolo:
-                    ToggleNoCheck.gameObject.SetActive(true);
-                    ToggleNoShuffle.gameObject.SetActive(true);
-                    InputPort.gameObject.SetActive(true);
-                    InputLP.gameObject.SetActive(true);
-                    InputHand.gameObject.SetActive(true);
-                    InputDraw.gameObject.SetActive(true);
-
-                    YgoServer.StopServer();
-                    break;
-                case SoloSelector.Condition.ForRoom:
-                    ToggleNoCheck.gameObject.SetActive(false);
-                    ToggleNoShuffle.gameObject.SetActive(false);
-                    InputPort.gameObject.SetActive(false);
-                    InputLP.gameObject.SetActive(false);
-                    InputHand.gameObject.SetActive(false);
-                    InputDraw.gameObject.SetActive(false);
-                    break;
-            }
-
+            // Standard Battle Spirits fixes life, opening hand, draw and shuffle rules.
+            // Preserve the settings panel and mark its old custom-rule inputs unavailable.
+            ToggleLockHand.GetSelectable().interactable = false;
+            ToggleNoCheck.GetSelectable().interactable = false;
+            ToggleNoShuffle.GetSelectable().interactable = false;
+            InputPort.interactable = false;
+            InputLP.interactable = false; InputLP.text = "5";
+            InputHand.interactable = false; InputHand.text = "4";
+            InputDraw.interactable = false; InputDraw.text = "1";
             ButtonDeck.SetButtonText(Config.GetConfigDeckName());
         }
 
@@ -238,6 +225,10 @@ namespace MDPro3.UI.ServantUI
 
         public void OnPlay()
         {
+            if (superScrollView == null || superScrollView.items.Count == 0
+                || superScrollView.selected < 0 || superScrollView.selected >= superScrollView.items.Count)
+                return;
+
             if (SoloSelector.condition == SoloSelector.Condition.ForSolo)
                 Program.instance.solo.StartAIForSolo(superScrollView.selected, ButtonDeck.gameObject.activeSelf);
             else
@@ -252,7 +243,7 @@ namespace MDPro3.UI.ServantUI
 
         public void SelectOnRight()
         {
-            ToggleLockHand.GetSelectable().Select();
+            ButtonDeck.GetSelectable().Select();
         }
 
         public void OnSelectAIDeck()

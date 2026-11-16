@@ -1,0 +1,66 @@
+{
+  "id": "bs-04-block",
+  "title": "04 — Choose your blocker",
+  "category": "Battle",
+  "description": "Block the opposing attack with your Lv2 Scud Beast.",
+  "hint": "The blocker has 6000 BP; the opposing Spirit has 2000 BP.",
+  "previewCardId": "26RBS01-003",
+  "seed": 20261116,
+  "turnNumber": 2,
+  "activePlayer": 1,
+  "maxCommands": 20,
+  "maxTurnNumber": 2,
+  "phase": "Block",
+  "pendingAttackerId": 200,
+  "pendingBlockerId": -1,
+  "flashPlayerIndex": -1,
+  "players": [
+    {
+      "life": 5,
+      "reserveNormal": 3,
+      "reserveSoul": true,
+      "trashNormal": 0,
+      "trashSoul": false,
+      "hand": [],
+      "discard": [],
+      "field": [
+        {
+          "cardId": "26RBS01-003",
+          "instanceId": 100,
+          "normalCores": 2
+        }
+      ]
+    },
+    {
+      "life": 5,
+      "reserveNormal": 3,
+      "reserveSoul": true,
+      "trashNormal": 0,
+      "trashSoul": false,
+      "hand": [],
+      "discard": [],
+      "field": [
+        {
+          "cardId": "26RBS02-002",
+          "instanceId": 200,
+          "normalCores": 1,
+          "exhausted": true
+        }
+      ]
+    }
+  ],
+  "goal": {
+    "kind": "Block",
+    "owner": 0,
+    "instanceId": 100
+  },
+  "solution": [
+    {
+      "actor": 0,
+      "command": {
+        "action": "block",
+        "source": 100
+      }
+    }
+  ]
+}

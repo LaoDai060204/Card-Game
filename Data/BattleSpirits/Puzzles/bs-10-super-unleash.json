@@ -1,0 +1,63 @@
+{
+  "id": "bs-10-super-unleash",
+  "title": "10 — Soul Core level alternative",
+  "category": "Core Skills",
+  "description": "Reach Rashead’s Lv2 using its Soul Core alternative.",
+  "hint": "Rashead normally needs three cores for Lv2; its Soul Core alternative can satisfy that level.",
+  "previewCardId": "26RSD03-003",
+  "seed": 20261116,
+  "turnNumber": 2,
+  "activePlayer": 0,
+  "maxCommands": 20,
+  "maxTurnNumber": 2,
+  "phase": "Main",
+  "pendingAttackerId": -1,
+  "pendingBlockerId": -1,
+  "flashPlayerIndex": -1,
+  "players": [
+    {
+      "life": 5,
+      "reserveNormal": 3,
+      "reserveSoul": true,
+      "trashNormal": 0,
+      "trashSoul": false,
+      "hand": [],
+      "discard": [],
+      "field": [
+        {
+          "cardId": "26RSD03-003",
+          "instanceId": 100,
+          "normalCores": 1
+        }
+      ]
+    },
+    {
+      "life": 5,
+      "reserveNormal": 8,
+      "reserveSoul": true,
+      "trashNormal": 0,
+      "trashSoul": false,
+      "hand": [],
+      "discard": [],
+      "field": []
+    }
+  ],
+  "goal": {
+    "kind": "Level",
+    "owner": 0,
+    "instanceId": 100,
+    "amount": 2
+  },
+  "solution": [
+    {
+      "actor": 0,
+      "command": {
+        "action": "transfer",
+        "source": -1,
+        "target": 100,
+        "soul": true,
+        "mode": 1
+      }
+    }
+  ]
+}

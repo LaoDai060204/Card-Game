@@ -1,3 +1,4 @@
+using MDPro3.BattleSpirits;
 using UnityEngine;
 using static YgomSystem.UI.ColorContainer;
 using YgomSystem.UI;
@@ -119,7 +120,7 @@ namespace MDPro3.UI
                 if (this == null || gameObject == null)
                     return;
 
-                var sprite = await Program.items.LoadDeckCaseIconAsync(deckCase, "_L_SD");
+                var sprite = await BattleCardAdapter.BackIconAsync(destroyCancellationToken);
                 if (this == null || gameObject == null || sprite == null)
                     return;
 
@@ -158,6 +159,7 @@ namespace MDPro3.UI
                     return;
 
                 await RefreshCardImageAsync("CardImage2", card2, protectorMaterial, cancellationToken);
+                if (CanContinueRefresh(cancellationToken)) refreshed = true;
             }
             catch (System.OperationCanceledException)
             {
@@ -173,25 +175,21 @@ namespace MDPro3.UI
             if (!TryGetCardImage(elementName, cancellationToken, out var cardImage))
                 return protectorMaterial;
 
-            if (cardCode != 0)
+            if (BattleCatalog.TryGet(cardCode, out _))
             {
-                var texture = await CardImageLoader.LoadCardAsync(cardCode, true);
+                var texture = await CardImageLoader.LoadCardAsync(cardCode, true, cancellationToken);
                 if (!CanApplyDeckImage(cardImage, cancellationToken))
                     return protectorMaterial;
 
-                cardImage.texture = texture;
-                cardImage.material = null;
+                BattleCardAdapter.FitFace(cardImage, texture);
                 return protectorMaterial;
             }
 
-            if (protectorMaterial == null)
-                protectorMaterial = await ABLoader.LoadProtectorMaterial(protector, cancellationToken);
-            if (!CanApplyDeckImage(cardImage, cancellationToken))
-                return protectorMaterial;
+            var back = await BattleCardAdapter.BackAsync(cancellationToken);
+            if (CanApplyDeckImage(cardImage, cancellationToken)) BattleCardAdapter.FitFace(cardImage, back);
+            return null;
 
-            cardImage.texture = null;
-            cardImage.material = protectorMaterial;
-            return protectorMaterial;
+
         }
 
         private bool TryGetCardImage(string elementName, CancellationToken cancellationToken, out RawImage cardImage)

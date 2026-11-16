@@ -1,3 +1,4 @@
+using MDPro3.BattleSpirits;
 using MDPro3.Duel.YGOSharp;
 using System.Collections;
 using UnityEngine;
@@ -73,7 +74,14 @@ namespace MDPro3.UI
         {
             if (data == null)
             {
+                CancelCurrentLoad();
+                card = null;
                 ReleaseCard();
+                return;
+            }
+            if (!data.IsBattleSpirits)
+            {
+                SetProtector(protectorCode);
                 return;
             }
 
@@ -108,7 +116,7 @@ namespace MDPro3.UI
 
         public void RefreshRarity(int code)
         {
-            if (card == null || card.Id != code)
+            if (card == null || card.Id != code || card.IsBattleSpirits)
                 return;
 
             if (tempMat != null)
@@ -166,6 +174,22 @@ namespace MDPro3.UI
                 if (card == null || card.Id != targetCardId || loadId != currentLoadId)
                     return;
 
+                if (card.IsBattleSpirits)
+                {
+                    var face = await CardImageLoader.LoadCardAsync(targetCardId, cache, token);
+                    if (card == null || card.Id != targetCardId || loadId != currentLoadId)
+                    {
+                        if (face != null) CardImageLoader.ReleaseCard(targetCardId);
+                        return;
+                    }
+                    if (loadedCardId != 0) CardImageLoader.ReleaseCard(loadedCardId);
+                    loadedCardId = targetCardId;
+                    BattleCardAdapter.FitFace(RawImage, face);
+                    m_Refreshed = true;
+                    isRenderTexture = false;
+                    return;
+                }
+
                 if (normalMat == null)
                     normalMat = MaterialLoader.GetCardMaterial(-1);
 
@@ -191,7 +215,7 @@ namespace MDPro3.UI
                 if (card == null || card.Id != targetCardId || loadId != currentLoadId)
                 {
                     if (cardTex != null)
-                        CardImageLoader.ReleaseCard(card.Id);
+                        CardImageLoader.ReleaseCard(targetCardId);
                     return;
                 }
 
@@ -255,20 +279,18 @@ namespace MDPro3.UI
             CancelCurrentLoad();
             ReleaseCard();
             card = null;
+            int loadId = currentLoadId;
+            cts = CancellationTokenSource.CreateLinkedTokenSource(destroyCancellationToken);
+            var token = cts.Token;
 
             try
             {
-                var material = await ABLoader.LoadProtectorMaterial(
-                    code.ToString(),
-                    destroyCancellationToken);
-
-                if (material != null)
-                {
-                    RawImage.material = material;
-                    RawImage.texture = null;
-                    m_Refreshed = true;
-                }
+                var back = await BattleCardAdapter.BackAsync(token);
+                if (this == null || token.IsCancellationRequested || loadId != currentLoadId) return;
+                BattleCardAdapter.FitFace(RawImage, back);
+                m_Refreshed = true;
             }
+            catch (System.OperationCanceledException) { }
             catch (System.Exception e)
             {
                 Debug.LogError($"Load protector failed: {e.Message}");
@@ -301,6 +323,7 @@ namespace MDPro3.UI
 
         private void OnVideoCardConfigChange()
         {
+            if (card == null || card.IsBattleSpirits) return;
             var config = Config.GetBool("VideoCard", true);
             if (config && ResourceManager.CardHasVideo(card.Id))
                 _ = ReloadAsync();

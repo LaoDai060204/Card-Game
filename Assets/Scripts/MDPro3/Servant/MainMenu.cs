@@ -27,7 +27,7 @@ namespace MDPro3.Servant
             Program.instance.currentServant = this;
             Program.instance.depth = 0;
 
-            StartCoroutine(CheckUpdateAsync());
+
             LoadUI();
         }
 
@@ -51,12 +51,11 @@ namespace MDPro3.Servant
         {
             base.FirstLoadEvent();
             servantUI.ResetUI();
-            StartCoroutine(LoadMyCardNewsAsync());
+            StartCoroutine(LoadBattleSpiritsNews());
 
             EnsureButtonsWidth();
             Program.instance.ReadParams();
-            if(!Program.exitOnReturn)
-                VersionIntroduction.Show();
+
         }
 
         protected override void ApplyShowArrangement(int preDepth)
@@ -106,48 +105,28 @@ namespace MDPro3.Servant
                 GetUI<MainMenuUI>().SelectDefaultSelectable();
         }
 
-        private IEnumerator CheckUpdateAsync()
+        private IEnumerator LoadBattleSpiritsNews()
         {
-            yield return new WaitForSeconds(3);
-            using var www = UnityWebRequest.Get(Settings.Data.MDPro3VersionUrl);
-            www.SetRequestHeader("Cache-Control", "max-age=0, no-cache, no-store");
-            www.SetRequestHeader("Pragma", "no-cache");
-            yield return www.SendWebRequest();
-            if (www.result == UnityWebRequest.Result.Success)
+            yield return null;
+            var entries = new[]
             {
-                var result = www.downloadHandler.text;
-                var lines = result.Replace("\r", "").Split('\n');
-                if (Application.version != lines[0])
-                    MessageManager.Cast(InterString.Get("A new version \"[?]\" has been detected.", lines[0]));
-            }
-            else
-                MessageManager.Cast(InterString.Get("Failed to check for updates!"));
-
-            var filePath = Path.Combine(Program.PATH_EXPANSIONS, Path.GetFileName(Settings.Data.PrereleasePackUrl));
-            if (!File.Exists(filePath))
+                new News { title = "Battle Spirits — four Standard decks in Solo", url = "https://www.battlespirits.com/feature/bsleague/2026/season3/" },
+                new News { title = "Ten Battle Spirits puzzles — cores, battle and card effects", url = "https://www.battlespirits.com/rule/" },
+                new News { title = "Ritenia — summon cutscene preview", url = "https://www.battlespirits.com/" }
+            };
+            var pictures = new List<Texture2D>();
+            foreach (var id in new[] { "26RBS03-X01", "26RBS03-004", "26RSD03-X02" })
             {
-                Config.Set("Prerelease", "0");
-                Config.Save();
+                string path = MDPro3.BattleSpirits.BattleCatalog.CardImagePath(id);
+                Texture2D texture = null;
+                if (!string.IsNullOrEmpty(path) && File.Exists(path))
+                {
+                    texture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+                    if (!texture.LoadImage(File.ReadAllBytes(path))) { Destroy(texture); texture = null; }
+                }
+                pictures.Add(texture != null ? texture : Texture2D.blackTexture);
             }
-
-            using var www2 = UnityWebRequest.Get(Settings.GetPrereleasePackVersionUrl());
-            yield return www2.SendWebRequest();
-            if (www2.result == UnityWebRequest.Result.Success)
-            {
-                var result = www2.downloadHandler.text;
-                var lines = result.Replace("\r", "").Split('\n');
-                if (Config.Get("Prerelease", "0") != lines[0])
-                    MessageManager.Cast(InterString.Get("A new version of the Pre-Release Cards was detected. Go to [SETTINGS] > [Expansions] > [Update Pre-Release Cards] to update them."));
-            }
-        }
-
-        private IEnumerator LoadMyCardNewsAsync()
-        {
-            while(OnlineService.myCardNews == null)
-                yield return null;
-            var news = OnlineService.myCardNews;
-            GetUI<MainMenuUI>().News.news = news;
-            GetUI<MainMenuUI>().News.LoadNews();
+            GetUI<MainMenuUI>().News.LoadLocalNews(entries, pictures);
         }
 
         private SelectionButton_MainMenu[] buttons;

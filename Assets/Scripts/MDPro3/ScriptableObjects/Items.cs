@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using MDPro3.BattleSpirits;
 using MDPro3.Servant;
 using MDPro3.Utility;
 using System;
@@ -130,6 +131,13 @@ namespace MDPro3
 
         public void Initialize()
         {
+            if (BattleSpiritsMode.IsEnabled)
+            {
+                instance = this;
+                BattleCosmetics.Apply(this);
+                initialized = true;
+                return;
+            }
             if (!initialized)
             {
                 instance = this;
@@ -243,6 +251,7 @@ namespace MDPro3
 
         private string GetName(int code, string mName)
         {
+            if (BattleSpiritsMode.IsEnabled) return string.IsNullOrEmpty(mName) ? STRING_NULL : mName;
             names.TryGetValue(code, out var returnValue);
             if (string.IsNullOrEmpty(returnValue))
             {
@@ -281,6 +290,11 @@ namespace MDPro3
 
         public Item GetRandomItem(ItemType type)
         {
+            if (BattleSpiritsMode.IsEnabled)
+            {
+                var list = BattleCosmetics.GetList(type);
+                return list != null && list.Count > 0 ? list[UnityEngine.Random.Range(0, list.Count)] : default;
+            }
             var result = type switch
             {
                 ItemType.Wallpaper => wallpapers[UnityEngine.Random.Range(0, wallpapers.Count)],
@@ -303,6 +317,7 @@ namespace MDPro3
 
         public string GetWallpaperPath(string code)
         {
+            if (BattleSpiritsMode.IsEnabled) return BattleCosmetics.GetPath(code, ItemType.Wallpaper);
             const string DEFAULT_WALLPAPER_PATH = "Wallpaper/Front0001";
 
             if(code == CODE_RANDOM.ToString())
@@ -316,6 +331,8 @@ namespace MDPro3
 
         public string GetSameCode(ItemType type, string mapCode)
         {
+            if (BattleSpiritsMode.IsEnabled) return BattleCosmetics.ResolveId(mapCode, type);
+            mapCode ??= string.Empty;
             if (mapCode.Length != 7)
                 mapCode = "1090001";
             if (mapCode == "1098001" && type != ItemType.Mat)
@@ -338,6 +355,7 @@ namespace MDPro3
 
         public string GetAssetPath(string code, ItemType type, int player = 0)
         {
+            if (BattleSpiritsMode.IsEnabled) return BattleCosmetics.GetPath(code, type);
             if(code == CODE_RANDOM.ToString())
             {
                 var item = GetRandomItem(type);
@@ -399,6 +417,8 @@ namespace MDPro3
         /// <returns></returns>
         public static string GetIconAddress(string id, int size = 0)
         {
+            if (BattleSpiritsMode.IsEnabled) return BattleCosmetics.GetPath(id, ItemType.Unknown);
+            if (string.IsNullOrEmpty(id) || id.Length < 3) return PATH_ICON_NONE;
             if (id == CODE_RANDOM.ToString())
                 return PATH_ICON_RANDOM;
             if(id == CODE_SAME.ToString())
@@ -490,6 +510,7 @@ namespace MDPro3
 
         public async UniTask<Sprite> LoadItemIconAsync(string id, ItemType type)
         {
+            if (BattleSpiritsMode.IsEnabled) return BattleCosmetics.LoadIcon(id, type);
             lock (cachedIcons)
                 if (cachedIcons.ContainsKey(id))
                     return cachedIcons[id];
@@ -549,6 +570,7 @@ namespace MDPro3
 
         public async UniTask<Sprite> TryLoadItemIconAsync(string id, ItemType type)
         {
+            if (BattleSpiritsMode.IsEnabled) return BattleCosmetics.LoadIcon(id, type);
             var address = GetIconAddress(id);
             if (!await HasItemIconAddress(address))
                 return null;
@@ -558,6 +580,11 @@ namespace MDPro3
 
         public async UniTask<Sprite> LoadConcreteItemIconAsync(string id, ItemType type, int player = 0)
         {
+            if (BattleSpiritsMode.IsEnabled)
+            {
+                id = BattleCosmetics.ResolveId(id, type);
+                return BattleCosmetics.LoadIcon(id, type);
+            }
             if(id == CODE_RANDOM.ToString())
             {
                 id = GetRandomItem(type).id.ToString();
@@ -602,6 +629,7 @@ namespace MDPro3
 
         public bool ListHaveRandom(List<Item> target)
         {
+            if (BattleSpiritsMode.IsEnabled) return target != null && target.Count > 1;
             if(target == wallpapers) 
                 return true;
             else if (target == faces)
@@ -626,6 +654,7 @@ namespace MDPro3
 
         public bool ListHaveSame(List<Item> target)
         {
+            if (BattleSpiritsMode.IsEnabled) return false;
             if (target == graves)
                 return true;
             else if (target == stands)
@@ -636,6 +665,7 @@ namespace MDPro3
 
         public bool ListHaveNone(List<Item> target)
         {
+            if (BattleSpiritsMode.IsEnabled) return target == wallpapers && target != null && target.Count > 0;
             if (target == wallpapers)
                 return true;
             else if (target == faces)
@@ -660,6 +690,7 @@ namespace MDPro3
 
         public bool ListHaveDIY(List<Item> target)
         {
+            if (BattleSpiritsMode.IsEnabled) return false;
             if (target == faces)
                 return true;
             else
@@ -668,6 +699,7 @@ namespace MDPro3
 
         public async UniTask<Sprite> LoadDeckCaseIconAsync(int code, string suffix)
         {
+            if (BattleSpiritsMode.IsEnabled) return null;
             var sprite = await TryLoadAddressableSprite(GetDeckCaseAddress(code, suffix));
             if (sprite != null)
                 return sprite;
