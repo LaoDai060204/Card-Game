@@ -1,0 +1,59 @@
+{
+  "id": "bs-05-life-to-reserve",
+  "title": "05 — Life becomes a core",
+  "category": "Battle",
+  "description": "Take the unblocked attack from Roppu=Yāra. Observe your Life fall to four and its core enter Reserve.",
+  "hint": "Choose Take Life during the Block Step.",
+  "previewCardId": "26RBS02-002",
+  "seed": 20261116,
+  "turnNumber": 2,
+  "activePlayer": 1,
+  "maxCommands": 20,
+  "maxTurnNumber": 2,
+  "phase": "Block",
+  "pendingAttackerId": 200,
+  "pendingBlockerId": -1,
+  "flashPlayerIndex": -1,
+  "players": [
+    {
+      "life": 5,
+      "reserveNormal": 3,
+      "reserveSoul": true,
+      "trashNormal": 0,
+      "trashSoul": false,
+      "hand": [],
+      "discard": [],
+      "field": []
+    },
+    {
+      "life": 5,
+      "reserveNormal": 3,
+      "reserveSoul": true,
+      "trashNormal": 0,
+      "trashSoul": false,
+      "hand": [],
+      "discard": [],
+      "field": [
+        {
+          "cardId": "26RBS02-002",
+          "instanceId": 200,
+          "normalCores": 1,
+          "exhausted": true
+        }
+      ]
+    }
+  ],
+  "goal": {
+    "kind": "Life",
+    "owner": 0,
+    "amount": 4
+  },
+  "solution": [
+    {
+      "actor": 0,
+      "command": {
+        "action": "take-life"
+      }
+    }
+  ]
+}

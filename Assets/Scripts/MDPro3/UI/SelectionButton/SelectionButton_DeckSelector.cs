@@ -1,3 +1,4 @@
+using MDPro3.BattleSpirits;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using MDPro3.Duel.YGOSharp;
@@ -108,12 +109,18 @@ namespace MDPro3.UI
 
         public void SetConfigDeck(string hint)
         {
+            BattleDeckStorage.EnsureInitialized();
             var configDeck = Config.GetConfigDeckName();
-            var path = Program.PATH_DECK + configDeck + Program.EXPANSION_YDK;
+            string path;
+            try { path = BattleDeckStorage.ResolveDeckPath(configDeck); }
+            catch (ArgumentException) { path = string.Empty; }
             if (!File.Exists(path))
-                SetDeck(null, hint);
-            else
-                SetDeck(new Deck(path), configDeck);
+            {
+                configDeck = BattleDeckStorage.DefaultDeckName;
+                path = BattleDeckStorage.ResolveDeckPath(configDeck);
+                Config.SetConfigDeck(configDeck, true);
+            }
+            SetDeck(File.Exists(path) ? new Deck(path) : null, File.Exists(path) ? configDeck : hint);
         }
 
         public void SetDeck(Deck deck, string deckName)
@@ -147,79 +154,31 @@ namespace MDPro3.UI
         private async UniTask RefreshAsync(int deckCase = 1080001, int protector = 1070001, int card0 = 0, int card1 = 0, int card2 = 0)
         {
             refreshed = false;
-
             DisposeRefreshCts();
             var refreshCts = new CancellationTokenSource();
             cts = refreshCts;
             var token = refreshCts.Token;
-
             try
             {
-                await UniTask.WaitUntil(() => Items.initialized, cancellationToken: token);
-                await UniTask.WaitWhile(() => TextureManager.container == null, cancellationToken: token);
-
-                ImageDeck.color = Color.clear;
-                ImageCard0.color =Color.clear;
-                ImageCard1.color = Color.clear;
-                ImageCard2.color = Color.clear;
-
-                ImageDeck.sprite = await Program.items.LoadDeckCaseIconAsync(deckCase, "_L_SD");
+                ImageDeck.sprite = await BattleCardAdapter.BackIconAsync(token);
                 ImageDeck.color = Color.white;
-
-                if (card0 == 0)
+                var images = new[] { ImageCard0, ImageCard1, ImageCard2 };
+                var ids = new[] { card0, card1, card2 };
+                for (int i = 0; i < images.Length; i++)
                 {
-                    ImageCard0.texture = null;
-                    ImageCard0.material = await ABLoader.LoadProtectorMaterial(protector.ToString(), token);
+                    var texture = BattleCatalog.TryGet(ids[i], out _)
+                        ? await CardImageLoader.LoadCardAsync(ids[i], true, token)
+                        : await BattleCardAdapter.BackAsync(token);
+                    if (token.IsCancellationRequested) return;
+                    BattleCardAdapter.FitFace(images[i], texture);
+                    images[i].color = Color.white;
                 }
-                else
-                {
-                    ImageCard0.material = MaterialLoader.GetCardMaterial(card0);
-                    ImageCard0.texture = await CardImageLoader.LoadCardAsync(card0, true);
-                }
-                ImageCard0.color = Color.white;
-
-                if (card1 == 0)
-                {
-                    ImageCard1.texture = null;
-                    ImageCard1.material = await ABLoader.LoadProtectorMaterial(protector.ToString(), token);
-                }
-                else
-                {
-                    ImageCard1.material = MaterialLoader.GetCardMaterial(card1);
-                    ImageCard1.texture = await CardImageLoader.LoadCardAsync(card1, true);
-                }
-                ImageCard1.color = Color.white;
-
-                if (card2 == 0)
-                {
-                    ImageCard2.texture = null;
-                    ImageCard2.material = await ABLoader.LoadProtectorMaterial(protector.ToString(), token);
-                }
-                else
-                {
-                    ImageCard2.material = MaterialLoader.GetCardMaterial(card2);
-                    ImageCard2.texture = await CardImageLoader.LoadCardAsync(card2, true);
-                }
-                ImageCard2.color = Color.white;
-
                 refreshed = true;
             }
-            catch (OperationCanceledException)
-            {
-            }
+            catch (OperationCanceledException) { }
             finally
             {
-                if (ReferenceEquals(cts, refreshCts))
-                {
-                    cts = null;
-                    try
-                    {
-                        refreshCts.Dispose();
-                    }
-                    catch (ObjectDisposedException)
-                    {
-                    }
-                }
+                if (ReferenceEquals(cts, refreshCts)) { cts = null; refreshCts.Dispose(); }
             }
         }
 

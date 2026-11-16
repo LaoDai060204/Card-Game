@@ -39,35 +39,8 @@ namespace MDPro3.UI.ServantUI
         private static readonly List<Card> cards = new();
         public SuperScrollView superScrollView;
 
-        private void Awake()
-        {
-#if UNITY_ANDROID || UNITY_STANDALONE_LINUX
-            var files = Directory.GetFiles(Program.root + "CrossDuel", "*.bundle");
-            foreach (var file in files)
-            {
-                var fileName = Path.GetFileName(file).Replace(".bundle", "");
-                crossDuelMates.Add(int.Parse(fileName));
-            }
-#endif
-            Load();
-        }
-
-        public void Load()
-        {
-            cards.Clear();
-            for (int i = 0; i < crossDuelMates.Count; i++)
-            {
-                var card = CardsManager.Get(crossDuelMates[i], true);
-                if (card.Id == 0)
-                {
-                    card.Id = crossDuelMates[i];
-                    card.Name = GetRushDuelMateName(crossDuelMates[i]);
-                }
-                cards.Add(card);
-            }
-            cards.Sort(CardsManager.ComparisonOfCard());
-            Print();
-        }
+        private void Awake() { Load(); }
+        public void Load() { cards.Clear(); crossDuelMates.Clear(); Print(); }
 
         public void Print(string search = "")
         {
@@ -78,16 +51,6 @@ namespace MDPro3.UI.ServantUI
                 if (card.Name.IndexOf(search, System.StringComparison.OrdinalIgnoreCase) >= 0)
                 {
                     string[] task = new string[] { card.Id.ToString(), card.Name };
-                    tasks.Add(task);
-                }
-            }
-            foreach (var mate in Program.items.mates)
-            {
-                if (!string.IsNullOrEmpty(mate.name)
-                    && mate.name.IndexOf(search, System.StringComparison.OrdinalIgnoreCase) >= 0
-                    && !mate.notReady)
-                {
-                    string[] task = new string[] { mate.id.ToString(), mate.name };
                     tasks.Add(task);
                 }
             }
@@ -165,7 +128,8 @@ namespace MDPro3.UI.ServantUI
 
         public void SelectLastMateItem()
         {
-            Program.instance.mate.lastSelectedMateItem.GetSelectable().Select();
+            if (Program.instance.mate.lastSelectedMateItem != null)
+                Program.instance.mate.lastSelectedMateItem.GetSelectable().Select();
         }
     }
 }

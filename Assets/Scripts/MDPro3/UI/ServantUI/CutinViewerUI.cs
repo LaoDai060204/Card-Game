@@ -100,7 +100,8 @@ namespace MDPro3.UI.ServantUI
         public void SelectLastCutinItem()
         {
             UserInput.NextSelectionIsAxis = true;
-            Program.instance.cutin.lastSelectedCutinItem.GetSelectable().Select();
+            if (Program.instance.cutin.lastSelectedCutinItem != null)
+                Program.instance.cutin.lastSelectedCutinItem.GetSelectable().Select();
         }
 
     }

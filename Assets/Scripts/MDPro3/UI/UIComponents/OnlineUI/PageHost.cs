@@ -93,16 +93,18 @@ namespace MDPro3.UI
 
         private void ResetArgs()
         {
-            ButtonRegulation.SetButtonText(BanlistManager.Banlists[0].Name);
-            ButtonPool.SetButtonText(StringHelper.GetUnsafe(1481));
-            ButtonMode.SetButtonText(StringHelper.GetUnsafe(1244));
-            ToggleCheck.SetToggleOff();
-            ToggleShuffle.SetToggleOff();
-
-            InputTime.text = OnlineServant.DEFAULT_TIME.ToString();
-            InputLP.text = OnlineServant.DEFAULT_LP.ToString();
-            InputHand.text = OnlineServant.DEFAULT_HAND.ToString();
-            InputDraw.text = OnlineServant.DEFAULT_DRAW.ToString();
+            ButtonRegulation.SetButtonText("Standard");
+            ButtonPool.SetButtonText("Battle Spirits");
+            ButtonMode.SetButtonText("1 vs 1");
+            ButtonRegulation.GetSelectable().interactable = false;
+            ButtonPool.GetSelectable().interactable = false;
+            ButtonMode.GetSelectable().interactable = false;
+            ToggleCheck.GetSelectable().interactable = false;
+            ToggleShuffle.GetSelectable().interactable = false;
+            InputTime.text = "180"; InputTime.interactable = false;
+            InputLP.text = "5"; InputLP.interactable = false;
+            InputHand.text = "4"; InputHand.interactable = false;
+            InputDraw.text = "1"; InputDraw.interactable = false;
         }
 
         public void OnRegulation()

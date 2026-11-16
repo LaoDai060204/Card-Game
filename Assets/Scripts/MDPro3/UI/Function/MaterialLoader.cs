@@ -1,3 +1,4 @@
+using MDPro3.BattleSpirits;
 using Cysharp.Threading.Tasks;
 using MDPro3.Duel.YGOSharp;
 using MDPro3.Utility;
@@ -159,6 +160,8 @@ namespace MDPro3
 
         public static Material GetCardMaterial(int code, bool use3D = false)
         {
+            if (BattleCatalog.TryGet(code, out _))
+                return new Material(Shader.Find(use3D ? "Unlit/Texture" : "UI/Default"));
             Material mat = null;
 
             if (code < 0)

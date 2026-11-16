@@ -25,7 +25,7 @@ namespace MDPro3.Servant
                     returnServant = Program.instance.menu;
                     break;
                 case Condition.ForDuel:
-                    returnServant = Program.instance.room;
+                    returnServant = Program.instance.online;
                     break;
                 case Condition.ForSolo:
                     returnServant = Program.instance.solo;

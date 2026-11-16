@@ -88,7 +88,7 @@ namespace MDPro3.UI
             public string password;
         }
         private readonly List<HostAddress> addresses = new();
-        private readonly string pathSaveAddress = Utility.Language.UseChinese() ? "Data/hosts.conf" : "Data/hosts2.conf";
+        private readonly string pathSaveAddress = "Data/BattleSpirits/hosts.conf";
         private SuperScrollView hostSuperScrollView;
         private bool addressedLoaded = false;
 
@@ -100,8 +100,8 @@ namespace MDPro3.UI
         private void ResetLegacy()
         {
             InputName.text = Config.Get("DuelPlayerName0", Config.EMPTY_STRING);
-            InputHost.text = Config.Get("Host", "s1.ygo233.com");
-            InputPort.text = Config.Get("Port", "233");
+            InputHost.text = Config.Get("BattleSpiritsHost", "127.0.0.1");
+            InputPort.text = Config.Get("BattleSpiritsPort", "7911");
             InputPassword.text = Config.Get("Password", Config.EMPTY_STRING);
         }
 
@@ -140,6 +140,7 @@ namespace MDPro3.UI
                 content += address.port + " ";
                 content += address.password + Program.STRING_LINE_BREAK;
             }
+            Directory.CreateDirectory(Path.GetDirectoryName(pathSaveAddress));
             File.WriteAllText(pathSaveAddress, content);
         }
 
@@ -183,24 +184,10 @@ namespace MDPro3.UI
             hostSuperScrollView?.Clear();
             ypkSuperScrollView?.Clear();
 
-            InitializeYpkServers();
+            // Foreign expansion/server lists are unavailable in Battle Spirits.
+            SetYpkAddressActive(false);
 
             List<string[]> ypkTasks = null;
-            if (ypkServerConfigs == null || ypkServerConfigs.Count == 0)
-                SetYpkAddressActive(false);
-            else
-            {
-                SetYpkAddressActive(true);
-                ypkTasks = new();
-                foreach(var config in ypkServerConfigs)
-                {
-                    if (config.ServerName.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0)
-                    {
-                        string[] task = new string[] { config.ServerName, config.ServerHost, config.ServerPort, string.Empty, Config.STRING_NO };
-                        ypkTasks.Add(task);
-                    }
-                }
-            }
 
             var tasks = new List<string[]>();
             foreach (var address in addresses)
@@ -316,14 +303,14 @@ namespace MDPro3.UI
 
         public void OnHostChange(string host)
         {
-            Config.Set("Host", host);
+            Config.Set("BattleSpiritsHost", host);
             Config.Save();
         }
 
         public void OnPortChange(string port)
         {
 
-            Config.Set("Port", port);
+            Config.Set("BattleSpiritsPort", port);
             Config.Save();
         }
 

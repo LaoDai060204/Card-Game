@@ -1,56 +1,60 @@
-## MDPro3
+# Battle Spirits
 
-A new version of YGOPro in Unity with MasterDuel Assets.
+An unofficial Battle Spirits Standard fan client, using the established native
+interface layout from the English project. Startup, decks, Solo opponents,
+puzzles, LAN matches and replays use the Battle Spirits rules engine directly.
 
-Unity version: 6000.0.24f1
+## Open the project
 
-This branch, `mdpro3-english`, restores the original **MDPro3 1.4.7** snapshot
-from before Vietnamese localization. UI, card and prerelease languages default
-to English. Known URP/texture compatibility settings are retained; optimization
-and a new Battle Spirits conversion are deferred. See [restore notes](RESTORE_ENGLISH.md)
-for the exact baseline, backup, preserved branches and validation limits.
+1. Check out `mdpro3-english` and open the project in **Unity 6000.0.24f1**.
+2. Let Unity restore packages. The renderer uses **URP 17.0.3**.
+3. Keep the existing interface Addressables/bundles available; the interface
+   layout still uses them. The upstream `Platforms` bundle source is
+   <https://code.mycard.moe/sherry_chaos/mdpro3-assetbundles>. Build Addressables
+   when creating a new player.
+4. Open **`Assets/Scenes/Boot.unity`** and press Play. The target is Windows x64.
 
-The deep English migration also converts application comments, Editor menus,
-lookup keys and authored prefab text to English. Legacy input keys and original
-multilingual card/locale data remain compatible. See [English migration details](ENGLISH_MIGRATION.md).
+There is no alternate-game toggle. Solo selects one of four Battle Spirits
+opponent decks, Deck edits the Battle Spirits library, Puzzle contains ten
+playable challenges, and Online hosts or joins another compatible client over
+LAN. Replays record completed Battle Spirits matches.
 
-### Other required folders
+## Included content
 
-* Platforms: https://code.mycard.moe/sherry_chaos/mdpro3-assetbundles
-* Picture/Art: https://code.mycard.moe/mycard/hd-arts
-* Picture/Closeup: https://code.mycard.moe/mycard/ygopro2-closeup
-* Picture/DIY: You can find it from the released MDPro3
-* Sound: https://code.moenext.com/mycard/mdpro3-sound
+- 62 card definitions with explicit tested effect profiles, English inspection
+  text, verified printed symbols and persistent numeric IDs.
+- Four exact 40-card Standard competition example decks. These are published
+  recipes, not a claim of an exhaustive current tier ranking.
+- 61 unofficial English printed card faces and the supplied original Pisketona
+  face; Pisketona has English inspection text.
+- 43 transparent paper standees, 18 empty card frames, blue Core, red Soul Core,
+  the supplied card back and three field appearances.
+- Native two-player mirrored field, card inspection, legal-action selection,
+  core placement/payment choices and the Ritenia summon presentation.
+- Battle Spirits wallpaper/avatar choices in the existing appearance widgets.
 
-### Tools
+Sections without replacement content keep their existing place in the menu and
+show an empty library or disabled action. Music/voice slots await supplied Battle
+Spirits audio; native interface clicks use original procedural tones.
 
-* DumpShaders: Used for replacement during built-in assets packaging.
-* YGO Classes: Used to compile dependencies from YGOPro in this project.
-* Translations: python scripts used to split translation.csv to translation.conf.
-* QuickBMS: decrypt IDS\_ITEM.bytes(names of items in Master Duel) and IDS\_ITEMDESC.bytes(descriptions of items in Master Duel);
+Decks and replays are saved below
+`Application.persistentDataPath/BattleSpirits`. Existing legacy deck and replay
+folders are not migrated or overwritten.
 
-### For Contributors:
+## Verification
 
-* If you want to edit in-game translations, please visit https://docs.google.com/spreadsheets/d/1BbSTxgobDqLyHL7De6uFSqfGiK9WIH3no5fQPW2Xwls/edit?usp=sharing.
-* If you want to edit bot.conf(Windbot), please edit it on YGOMobile(https://github.com/fallenstardust/YGOMobile-cn-ko-en), this project copy these files from it.
+See [integration and test scope](BATTLE_SPIRITS_INTEGRATION.md),
+[catalog provenance](Tools/BattleSpiritsImport/README.md), and
+[native deck checks](Tools/BattleSpiritsNativeTests/README.md).
+Production-source C# harnesses and static audits do **not** replace Unity Play
+Mode, shader/render checks or a Windows player build.
 
-### Unity Notes:
+## Attribution
 
-Unity 6000.32f1 Crashes when loading the following Assetbundles:
-fxp\_HL\_EXdeck\_001 (Material 2020.3.48f1)
-PlayableGuide\_C001\_Far
-PlayableGuide\_C001\_Far\_Mat13
-PlayableGuide\_C001\_Near
-PlayableGuide\_C001\_Near\_Mat13
-
-
-The CID startup-data fix ships `Data/cards_Lite.json`, so opening mates/items
-does not require a separately downloaded full `cards.json`. See
-[runtime mapping data and verification](Tools/RuntimeData/README.md).
-
-WindBot also fits long names into the existing PlayerInfo field without changing
-the selected bot/deck. See [handshake fix and test limits](Tools/RuntimeData/WINDBOT_HANDSHAKE.md).
-
-Optional news/avatar images now fail gracefully: English news keeps its title
-and link over a local fallback when the upstream thumbnail is unavailable. See
-[remote image diagnostics and validation](Tools/RuntimeData/REMOTE_IMAGES.md).
+This project retains interface framework code and third-party notices from
+MDPro3. Original Battle Spirits card designs
+and artwork belong to BNP/BANDAI and their respective creators; crossover rights
+remain with their owners. Source images, credits and official reference snapshots
+are preserved in `Data/BattleSpirits/provenance`. English card translations and
+paper-standee derivatives are unofficial. Existing third-party license files
+remain in their original locations.

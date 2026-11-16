@@ -44,14 +44,14 @@ namespace MDPro3.UI
 
         private string GetPuzzlePath()
         {
-            return Program.PATH_PUZZLE + puzzle.pathPrefix + puzzle.name;
+            return puzzle.GetPath();
         }
 
         public override void Refresh()
         {
             base.Refresh();
             Title.text = PuzzlePortalUI.GetPuzzleDisplayName(puzzle.name, puzzle.namePattern);
-            Art.SetArt(int.Parse(puzzle.firstCard));
+            Art.SetArt(int.TryParse(puzzle.firstCard, out var code) ? code : 0);
             RefreshBadge();
         }
 
@@ -68,7 +68,7 @@ namespace MDPro3.UI
             Program.instance.puzzle.GetUI<PuzzleSelectorUI>().superScrollView.selected = index;
             Program.instance.puzzle.GetUI<PuzzleSelectorUI>().SetOverview(puzzle.description + Program.STRING_LINE_BREAK + puzzle.solution);
 
-            Program.instance.puzzle.GetUI<PuzzleSelectorUI>().Art.SetArt(int.Parse(puzzle.firstCard));
+            Program.instance.puzzle.GetUI<PuzzleSelectorUI>().Art.SetArt(int.TryParse(puzzle.firstCard, out var code) ? code : 0);
             Program.instance.puzzle.currentPuzzle = GetPuzzlePath();
             Program.instance.puzzle.lastPuzzleItem = this;
         }

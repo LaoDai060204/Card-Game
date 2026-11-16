@@ -1,4 +1,5 @@
 using System;
+using MDPro3.BattleSpirits;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
@@ -83,6 +84,26 @@ namespace MDPro3.UI
                 if (cancellationToken.IsCancellationRequested || this == null)
                     return;
 
+                if (BattleSpiritsMode.IsEnabled)
+                {
+                    var type = BattleCosmetics.GetItemType(itemID.ToString());
+                    Icon.material = null;
+                    Icon.sprite = BattleCosmetics.LoadIcon(itemID.ToString(), type);
+                    Icon.color = Color.white;
+                    Icon.preserveAspect = true;
+                    bool protector = type == Items.ItemType.Protector;
+                    Icon.gameObject.SetActive(!protector);
+                    Protector.gameObject.SetActive(protector);
+                    Protector.material = null;
+                    Protector.texture = protector ? BattleCosmetics.LoadTexture(BattleCosmetics.GetPath(itemID.ToString(), type)) : null;
+                    Protector.color = Color.white;
+                    WallpaperBG.gameObject.SetActive(type == Items.ItemType.Wallpaper);
+                    if (type == Items.ItemType.Wallpaper) WallpaperBG.color = BattleCosmetics.Navy;
+                    loaded = true;
+                    PushLoadedPreviewToDetail();
+                    return;
+                }
+
                 if (path.StartsWith("Protector"))
                 {
                     Icon.gameObject.SetActive(false);
@@ -164,6 +185,42 @@ namespace MDPro3.UI
             Program.instance.appearance.lastSelectedItem = this;
             Program.instance.currentServant.lastSelectable = Selectable;
             GetSelectable().Select();
+
+            if (BattleSpiritsMode.IsEnabled)
+            {
+                if (Appearance.condition == Appearance.Condition.DeckEditor)
+                {
+                    var ui = Program.instance.deckEditor.GetUI<DeckEditorUI>();
+                    if (AppearanceUI.currentContent == "Protector")
+                    {
+                        DeckEditor.Deck.Protector = itemID;
+                        ui.IconProtector.material = null;
+                        ui.IconProtector.sprite = BattleCosmetics.LoadIcon(itemID.ToString(), Items.ItemType.Protector);
+                        ui.IconProtector.color = Color.white;
+                    }
+                    else if (AppearanceUI.currentContent == "Field")
+                    {
+                        DeckEditor.Deck.Field = itemID;
+                        ui.IconField.sprite = Icon.sprite;
+                        ui.IconField.color = Color.white;
+                    }
+                    ui.DeckView.SetDirty(true);
+                }
+                else
+                {
+                    string key = AppearanceUI.currentContent == "Wallpaper" ? "Wallpaper"
+                        : Appearance.condition.ToString() + AppearanceUI.currentContent + Appearance.player;
+                    Config.Set(key, itemID.ToString());
+                    if (AppearanceUI.currentContent == "Wallpaper")
+                    {
+                        UIManager.currentWallpaper = itemID.ToString();
+                        Program.instance.ui_.ChangeWallpaper(UIManager.currentWallpaper);
+                    }
+                    if (AppearanceUI.currentContent == "Face")
+                        _ = Program.instance.appearance.LoadSettingAssets();
+                }
+                return;
+            }
 
             if (Appearance.condition == Appearance.Condition.DeckEditor)
             {

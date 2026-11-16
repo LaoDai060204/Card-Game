@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using MDPro3.BattleSpirits;
 using MDPro3.Servant;
 using MDPro3.Utility;
 using System.Threading;
@@ -100,6 +101,21 @@ namespace MDPro3.UI
             if (code != currentCode)
                 return;
 
+            if (BattleSpiritsMode.IsEnabled)
+            {
+                if (sprite != null)
+                {
+                    ResetPreview();
+                    Image.sprite = sprite;
+                    Image.preserveAspect = true;
+                    Image.gameObject.SetActive(true);
+                    bool wallpaper = BattleCosmetics.GetItemType(code.ToString()) == Items.ItemType.Wallpaper;
+                    WallpaperBG.gameObject.SetActive(wallpaper);
+                    if (wallpaper) WallpaperBG.color = BattleCosmetics.Navy;
+                }
+                return;
+            }
+
             if (currentIsCard)
             {
                 if (sprite == null)
@@ -136,6 +152,21 @@ namespace MDPro3.UI
             var codeString = code.ToString();
 
             ResetPreview();
+            if (BattleSpiritsMode.IsEnabled)
+            {
+                if (token.IsCancellationRequested || code != currentCode) return;
+                var sprite = BattleCosmetics.LoadIcon(codeString, BattleCosmetics.GetItemType(codeString));
+                if (sprite != null)
+                {
+                    Image.sprite = sprite;
+                    Image.preserveAspect = true;
+                    Image.gameObject.SetActive(true);
+                    bool wallpaper = BattleCosmetics.GetItemType(codeString) == Items.ItemType.Wallpaper;
+                    WallpaperBG.gameObject.SetActive(wallpaper);
+                    if (wallpaper) WallpaperBG.color = BattleCosmetics.Navy;
+                }
+                return;
+            }
 
             if (isCard) //Cross Duel Mate
             {
@@ -199,6 +230,7 @@ namespace MDPro3.UI
             Image.material = null;
             RawImage.gameObject.SetActive(false);
             RawImage.material = null;
+            RawImage.texture = null;
             WallpaperBG.gameObject.SetActive(false);
         }
 

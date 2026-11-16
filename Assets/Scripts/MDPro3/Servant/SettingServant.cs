@@ -54,7 +54,7 @@ namespace MDPro3.Servant
                 servantUI.SelectDefaultSelectable();
             }
 
-            if (Program.instance.currentServant == Program.instance.ocgcore)
+            if (Program.instance.currentServant is MDPro3.BattleSpirits.BattleDuelServant)
             {
                 Program.instance.currentSubServant = this;
                 UIManager.ShowFPSRight();
@@ -176,6 +176,8 @@ namespace MDPro3.Servant
 
         public void UpdatePrerelease()
         {
+            if (MDPro3.BattleSpirits.BattleSpiritsMode.IsEnabled)
+            { MessageManager.Cast("Battle Spirits card content is included with this application."); return; }
             if (!checkingPrereleaseUpdate)
             {
                 checkingPrereleaseUpdate = true;
@@ -398,6 +400,8 @@ namespace MDPro3.Servant
 
         public void DownloadYPK()
         {
+            if (MDPro3.BattleSpirits.BattleSpiritsMode.IsEnabled)
+            { MessageManager.Cast("Battle Spirits card content is included with this application."); return; }
             if (!downloadingYPK)
             {
                 var selections = new List<string>()

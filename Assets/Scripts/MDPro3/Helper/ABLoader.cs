@@ -1,4 +1,4 @@
-using Cysharp.Threading.Tasks;
+﻿using Cysharp.Threading.Tasks;
 using Spine.Unity;
 using System;
 using System.Collections.Generic;
@@ -584,7 +584,7 @@ namespace MDPro3
         private static AssetBundle mdBundleSprites;
         private static AssetBundle mdBundleTextures;
 
-        public static async UniTask CacheMasterDuelOutDuelBundles()
+        public static async UniTask CacheInterfaceBundles()
         {
             mdCachedProgress = 0f;
             await CacheFromFileAsync(Program.root + "MasterDuel/Built-in/shaders");

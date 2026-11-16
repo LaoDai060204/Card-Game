@@ -1,0 +1,71 @@
+{
+  "id": "bs-06-lumius-removal",
+  "title": "06 — Lumius chooses a target",
+  "category": "Card Effects",
+  "description": "Summon Lumius and resolve its When Summoned effect to destroy the opposing Roppu=Yāra.",
+  "hint": "After summoning, resolve your target choice.",
+  "previewCardId": "26RBS03-004",
+  "seed": 20261116,
+  "turnNumber": 2,
+  "activePlayer": 0,
+  "maxCommands": 20,
+  "maxTurnNumber": 2,
+  "phase": "Main",
+  "pendingAttackerId": -1,
+  "pendingBlockerId": -1,
+  "flashPlayerIndex": -1,
+  "players": [
+    {
+      "life": 5,
+      "reserveNormal": 6,
+      "reserveSoul": true,
+      "trashNormal": 0,
+      "trashSoul": false,
+      "hand": [
+        "26RBS03-004"
+      ],
+      "discard": [],
+      "field": []
+    },
+    {
+      "life": 5,
+      "reserveNormal": 3,
+      "reserveSoul": true,
+      "trashNormal": 0,
+      "trashSoul": false,
+      "hand": [],
+      "discard": [],
+      "field": [
+        {
+          "cardId": "26RBS02-002",
+          "instanceId": 200,
+          "normalCores": 1
+        }
+      ]
+    }
+  ],
+  "goal": {
+    "kind": "Destroy",
+    "owner": 1,
+    "instanceId": 200,
+    "cardId": "26RBS02-002"
+  },
+  "solution": [
+    {
+      "actor": 0,
+      "command": {
+        "action": "summon",
+        "index": 0
+      }
+    },
+    {
+      "actor": 0,
+      "command": {
+        "action": "choose",
+        "selection": [
+          0
+        ]
+      }
+    }
+  ]
+}

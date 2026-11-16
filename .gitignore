@@ -88,3 +88,17 @@ __pycache__/
 # Optional remote-image regression harness output
 /Tools/Tests/RemoteImages/bin/
 /Tools/Tests/RemoteImages/obj/
+
+# Shipped Battle Spirits data is part of the game, not a generated cache.
+!/Assets/StreamingAssets/
+/Assets/StreamingAssets/*
+!/Assets/StreamingAssets/BattleSpirits/
+!/Assets/StreamingAssets/BattleSpirits/**
+
+# Reproducible source harnesses; never publish their build output.
+!Tools/Tests/BattleSpirits*/**/*.csproj
+!Tools/BattleSpiritsNativeTests/*.csproj
+/Tools/Tests/BattleSpirits*/**/bin/
+/Tools/Tests/BattleSpirits*/**/obj/
+/Tools/BattleSpiritsNativeTests/bin/
+/Tools/BattleSpiritsNativeTests/obj/

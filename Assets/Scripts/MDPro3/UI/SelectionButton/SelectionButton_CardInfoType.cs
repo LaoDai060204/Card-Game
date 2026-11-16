@@ -1,3 +1,4 @@
+using MDPro3.BattleSpirits;
 using UnityEngine;
 using UnityEngine.Events;
 using MDPro3.Servant;
@@ -56,7 +57,7 @@ namespace MDPro3.UI
 
         private void ClickEvent()
         {
-            var type = (DeckEditor.CardInfoType)(((int)DeckEditor.cardInfoType + 1) % 4);
+            var type = DeckEditor.cardInfoType == DeckEditor.CardInfoType.None ? DeckEditor.CardInfoType.Detail : DeckEditor.CardInfoType.None;
             Program.instance.deckEditor.SetCardInfoType(type);
         }
 
@@ -71,10 +72,7 @@ namespace MDPro3.UI
 
         public static void SetGenesysCredits(int gc)
         {
-            if (instance == null)
-                return;
-            instance.TextGC.text = gc.ToString();
-            instance.TextGC.color = BanlistManager.currentGenesysBanList.GetCreditLimitColor(gc);
+            // BS has no Genesys point system; this original label stays hidden.
         }
     }
 }

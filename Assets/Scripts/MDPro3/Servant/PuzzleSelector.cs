@@ -9,7 +9,7 @@ namespace MDPro3.Servant
 
         [HideInInspector] public string currentPuzzle;
         [HideInInspector] public SelectionToggle_Puzzle lastPuzzleItem;
-        private PercyOCG percy;
+
 
         #region Servant
 
@@ -34,7 +34,8 @@ namespace MDPro3.Servant
             if (!forced && !UserInput.NeedDefaultSelect())
                 return;
 
-            lastPuzzleItem.GetSelectable().Select();
+            if (lastPuzzleItem != null) lastPuzzleItem.GetSelectable().Select();
+            else servantUI?.SelectDefaultSelectable();
         }
 
         public override void OnExit()
@@ -73,9 +74,11 @@ namespace MDPro3.Servant
             Config.Set("LastPlayPuzzle", puzzle);
             Config.Save();
 
-            percy?.Dispose();
-            percy = new PercyOCG();
-            percy.StartPuzzle(puzzle + Program.EXPANSION_LUA);
+            if (MDPro3.BattleSpirits.BattleIntegration.StartPuzzle(puzzle))
+            {
+                Config.Set("BattleSpirits/Puzzles/" + puzzle + "_Enter", Config.STRING_YES);
+                Config.Save();
+            }
         }
 
         public void SelectLastPuzzleItem()

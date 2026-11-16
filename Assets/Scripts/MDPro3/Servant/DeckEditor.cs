@@ -1,3 +1,4 @@
+using MDPro3.BattleSpirits;
 using DG.Tweening;
 using MDPro3.UI;
 using MDPro3.Duel.YGOSharp;
@@ -33,6 +34,8 @@ namespace MDPro3.Servant
         public static Condition condition = Condition.EditDeck;
         public void SwitchCondition(Condition condition, string deckName = "", Deck deck = null)
         {
+            if (condition == Condition.ChangeSide || condition == Condition.OnlineDeck)
+                condition = Condition.EditDeck;
             DeckEditor.condition = condition;
             switch (condition)
             {
@@ -40,21 +43,18 @@ namespace MDPro3.Servant
                     returnServant = Program.instance.deckSelector;
                     DeckName = Config.GetConfigDeckName();
 
-                    var deckPath = Program.PATH_DECK + DeckName + Program.EXPANSION_YDK;
+                    BattleDeckStorage.EnsureInitialized();
+                    string deckPath;
+                    try { deckPath = BattleDeckStorage.ResolveDeckPath(DeckName); }
+                    catch (System.ArgumentException) { deckPath = string.Empty; }
+                    if (!System.IO.File.Exists(deckPath))
+                    {
+                        DeckName = BattleDeckStorage.DefaultDeckName;
+                        deckPath = BattleDeckStorage.ResolveDeckPath(DeckName);
+                    }
 
-                    // Auto-fix the file on disk (pre-release ids -> official ids).
-                    YdkIdHelper.NormalizeYdkFile(deckPath);
-
-                    Deck = new Deck(deckPath);
+                    Deck = System.IO.File.Exists(deckPath) ? new Deck(deckPath) : new Deck();
                     DeckIsFromLocal = true;
-                    historyCards = new();
-                    break;
-
-                case Condition.OnlineDeck:
-                    returnServant = Program.instance.onlineDeckViewer;
-                    DeckName = deckName;
-                    Deck = null;
-                    DeckIsFromLocal = false;
                     historyCards = new();
                     break;
 
@@ -66,12 +66,6 @@ namespace MDPro3.Servant
                     historyCards = new();
                     break;
 
-                case Condition.ChangeSide:
-                    DeckName = Config.GetConfigDeckName();
-                    Deck = TcpHelper.deck;
-                    DeckIsFromLocal = false;
-                    historyCards = OcgCore.sideReference.Main;
-                    break;
             }
         }
 

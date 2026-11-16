@@ -41,7 +41,7 @@ namespace MDPro3.Servant
             returnServant = Program.instance.menu;
             base.Initialize();
             targetCamera = Program.instance.camera_.cameraDuelOverlay2D;
-            LoadSeData();
+
         }
 
         protected override void ApplyShowArrangement(int preDepth)
@@ -173,7 +173,7 @@ namespace MDPro3.Servant
             if (lastSelectedMateItem == null)
                 return;
 
-            lastSelectedMateItem.GetSelectable().Select();
+            if (lastSelectedMateItem != null) lastSelectedMateItem.GetSelectable().Select();
         }
 
         #endregion
@@ -203,6 +203,7 @@ namespace MDPro3.Servant
 
         public void ViewMate(int code)
         {
+            if (MDPro3.BattleSpirits.BattleSpiritsMode.IsEnabled) return;
             if (mate != null)
             {
                 if (mate.code == code)

@@ -35,7 +35,19 @@ namespace MDPro3.UI
         private List<int> cardCodes;
         private int index;
         private bool shifting;
+        private Tween cardShiftTween;
         public object blockMark;
+
+        private void ResetCardShift()
+        {
+            cardShiftTween?.Kill();
+            cardShiftTween = null;
+            if (shifting)
+            {
+                Window.anchoredPosition = new Vector2(0f, -32f);
+                Window.GetComponent<CanvasGroup>().alpha = 1f;
+            }
+        }
 
         protected override void Awake()
         {
@@ -63,6 +75,11 @@ namespace MDPro3.UI
 
         public void Show(List<Card> cards, int index, object blockMark)
         {
+            if (cards == null || cards.Count == 0) return;
+            ResetCardShift();
+            BG.DOKill();
+            cards = new List<Card>(cards);
+            index = Mathf.Clamp(index, 0, cards.Count - 1);
             showing = true;
             shifting = true;
             this.cards = cards;
@@ -87,6 +104,11 @@ namespace MDPro3.UI
 
         public void Show(List<int> cardCodes, int index, object blockMark)
         {
+            if (cardCodes == null || cardCodes.Count == 0) return;
+            ResetCardShift();
+            BG.DOKill();
+            cardCodes = new List<int>(cardCodes);
+            index = Mathf.Clamp(index, 0, cardCodes.Count - 1);
             showing = true;
             shifting = true;
             cards = null;
@@ -111,6 +133,7 @@ namespace MDPro3.UI
 
         protected void SetCardData(int index)
         {
+            if (index < 0 || index >= GetCardsCount()) return;
             Card data;
             if (cards != null)
                 data = cards[index];
@@ -139,6 +162,8 @@ namespace MDPro3.UI
 
         public void Hide()
         {
+            ResetCardShift();
+            shifting = true;
             AudioManager.PlaySE("SE_MENU_CANCEL");
             UIManager.ShowFPSRight();
 
@@ -164,7 +189,7 @@ namespace MDPro3.UI
 
         public void OnNext()
         {
-            if (shifting) return;
+            if (shifting || !showing || index >= GetCardsCount() - 1) return;
             if (cards != null && index == cards.Count - 1)
                 return;
             if(cardCodes != null && index == cardCodes.Count - 1)
@@ -179,7 +204,7 @@ namespace MDPro3.UI
             var cg = rect.GetComponent<CanvasGroup>();
             cg.alpha = 1f;
 
-            DOTween.Sequence()
+            cardShiftTween = DOTween.Sequence()
                 .Append(rect.DOAnchorPos(new Vector2(-480f, -32f), 0.1f).SetEase(Ease.InCubic))
                 .Join(cg.DOFade(0f, 0.1f).OnComplete(() =>
                 {
@@ -196,7 +221,7 @@ namespace MDPro3.UI
 
         public void OnPrev()
         {
-            if(index == 0 || shifting) return;
+            if(index <= 0 || shifting || !showing) return;
             shifting = true;
             AudioManager.PlaySE("SE_MENU_SELECT_01");
 
@@ -206,7 +231,7 @@ namespace MDPro3.UI
             var cg = rect.GetComponent<CanvasGroup>();
             cg.alpha = 1f;
 
-            DOTween.Sequence()
+            cardShiftTween = DOTween.Sequence()
                 .Append(rect.DOAnchorPos(new Vector2(480f, -32f), 0.1f).SetEase(Ease.InCubic))
                 .Join(cg.DOFade(0f, 0.1f).OnComplete(() =>
                 {
@@ -229,7 +254,7 @@ namespace MDPro3.UI
         private int GetCardsCount()
         {
             if(cards == null)
-                return cardCodes.Count;
+                return cardCodes?.Count ?? 0;
             else return cards.Count;
         }
 

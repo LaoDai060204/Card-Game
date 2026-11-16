@@ -1,3 +1,4 @@
+using MDPro3.BattleSpirits;
 using MDPro3.Duel.YGOSharp;
 using MDPro3.Servant;
 using System.Collections.Generic;
@@ -217,7 +218,7 @@ namespace MDPro3.UI.ServantUI
         public override void SelectDefaultSelectable()
         {
             if (condition == Condition.DeckEditor)
-                Page04Case.GetSelectable().Select();
+                Page10Pickup.GetSelectable().Select();
             else
                 Page00PlayerName.GetSelectable().Select();
         }
@@ -271,9 +272,9 @@ namespace MDPro3.UI.ServantUI
             {
                 Program.instance.setting.GetUI<SettingServantUI>().RefreshAppearanceModeText();
 
-                if (UIManager.currentWallpaper != Config.Get("Wallpaper", Program.items.wallpapers[0].id.ToString()))
+                if (UIManager.currentWallpaper != Config.Get("Wallpaper", (Program.items.wallpapers.Count > 0 ? Program.items.wallpapers[0].id.ToString() : Items.CODE_NONE.ToString())))
                 {
-                    UIManager.currentWallpaper = Config.Get("Wallpaper", Program.items.wallpapers[0].id.ToString());
+                    UIManager.currentWallpaper = Config.Get("Wallpaper", (Program.items.wallpapers.Count > 0 ? Program.items.wallpapers[0].id.ToString() : Items.CODE_NONE.ToString()));
                     Program.instance.ui_.ChangeWallpaper(UIManager.currentWallpaper);
                 }
             }
@@ -289,6 +290,7 @@ namespace MDPro3.UI.ServantUI
                     item.GetComponent<SelectionToggle_AppearanceItem>().Dispose();
                 pool.Value.Clear();
             }
+            onlyOpSideShowItems.Clear();
             Config.Save();
         }
 
@@ -385,6 +387,17 @@ namespace MDPro3.UI.ServantUI
                     foreach (var item in pool.Value)
                         item.GetComponent<SelectionToggle_AppearanceItem>().Hide();
 
+            if (targetItems == null || targetItems.Count == 0 || currentList == null)
+            {
+                if (currentList != null)
+                    foreach (var emptyItem in currentList)
+                        if (emptyItem != null) emptyItem.GetComponent<SelectionToggle_AppearanceItem>().Hide();
+                Program.instance.appearance.lastSelectedItem = null;
+                TextHover.text = string.Empty;
+                Detail.SetItem(Items.CODE_NONE, "No Items", "No Battle Spirits items are available in this category.", false);
+                return;
+            }
+
             if (currentList.Count == 0)
             {
                 int itemCount = 0;
@@ -408,7 +421,7 @@ namespace MDPro3.UI.ServantUI
                 }
 
 #if UNITY_ANDROID || UNITY_STANDALONE_LINUX
-                if (currentContent == "Mate")
+                if (!BattleSpiritsMode.IsEnabled && currentContent == "Mate")
                 {
                     var files = new DirectoryInfo(Program.root + "CrossDuel").GetFiles("*.bundle");
                     for (int i = 0; i < files.Length; i++)
@@ -502,7 +515,7 @@ namespace MDPro3.UI.ServantUI
                         currentList.Add(item);
                     }
 
-                    if (targetItems == Program.items.mats)
+                    if (!BattleSpiritsMode.IsEnabled && targetItems == Program.items.mats)
                     {
                         GameObject item = Instantiate(Template);
                         item.SetActive(true);
@@ -535,60 +548,39 @@ namespace MDPro3.UI.ServantUI
                     itemMono.Show();
             }
 
+            bool selectedItem = false;
             foreach (var item in currentList)
             {
                 var itemMono = item.GetComponent<SelectionToggle_AppearanceItem>();
-
+                string selectedCode;
                 if (currentContent == "Wallpaper")
+                    selectedCode = Config.Get("Wallpaper", targetItems[0].id.ToString());
+                else if (condition == Condition.DeckEditor)
                 {
-                    if (itemMono.itemID.ToString() == Config.Get("Wallpaper", targetItems[0].id.ToString()))
+                    int code = currentContent switch
                     {
-                        itemMono.SetToggleOn();
-                        break;
-                    }
+                        "Case" => DeckEditor.Deck.Case,
+                        "Protector" => DeckEditor.Deck.Protector,
+                        "Field" => DeckEditor.Deck.Field,
+                        "Grave" => DeckEditor.Deck.Grave,
+                        "Stand" => DeckEditor.Deck.Stand,
+                        "Mate" => PremiumMateRules.GetBaseMateId(DeckEditor.Deck.Mate),
+                        _ => Items.CODE_NONE,
+                    };
+                    selectedCode = code.ToString();
                 }
                 else
-                {
-                    var itemID = itemMono.itemID;
-                    if (currentContent == "Mate" && PremiumMateRules.IsPremiumVariantId(itemID))
-                        continue;
+                    selectedCode = Config.Get(condition.ToString() + currentContent + player, targetItems[0].id.ToString());
 
-                    if (condition == Condition.DeckEditor)
-                    {
-                        if (currentContent == "Mate")
-                        {
-                            var selectedMate = PremiumMateRules.GetBaseMateId(DeckEditor.Deck.Mate);
-                            if (itemID == selectedMate)
-                            {
-                                itemMono.SetToggleOn();
-                                break;
-                            }
-                        }
-                        else if (itemID == DeckEditor.Deck.Case
-                            || itemID == DeckEditor.Deck.Protector
-                            || itemID == DeckEditor.Deck.Field
-                            || itemID == DeckEditor.Deck.Grave
-                            || itemID == DeckEditor.Deck.Stand
-                            || itemID == DeckEditor.Deck.Mate)
-                        {
-                                itemMono.SetToggleOn();
-                                break;
-                        }
-                    }
-                    else
-                    {
-                        var selectedCode = Config.Get(condition.ToString() + currentContent + player, targetItems[0].id.ToString());
-                        if (currentContent == "Mate" && int.TryParse(selectedCode, out var selectedMateCode))
-                            selectedCode = PremiumMateRules.GetBaseMateId(selectedMateCode).ToString();
-
-                        if (itemID.ToString() == selectedCode)
-                        {
-                            itemMono.SetToggleOn();
-                            break;
-                        }
-                    }
-                }
+                if (currentContent == "Mate" && int.TryParse(selectedCode, out var selectedMateCode))
+                    selectedCode = PremiumMateRules.GetBaseMateId(selectedMateCode).ToString();
+                if (itemMono.itemID.ToString() != selectedCode) continue;
+                selectedItem = true;
+                itemMono.SetToggleOn();
+                break;
             }
+            if (BattleSpiritsMode.IsEnabled && !selectedItem && currentList.Count > 0)
+                currentList[0].GetComponent<SelectionToggle_AppearanceItem>().SetToggleOn();
         }
 
         public void SwitchPlayer(string player)
@@ -621,10 +613,14 @@ namespace MDPro3.UI.ServantUI
             if (currentContent == "Pickup")
                 return null;
 
-            if (Program.instance.appearance.lastSelectedItem != null 
+            if (Program.instance.appearance.lastSelectedItem != null
+                && currentList != null && currentList.Contains(Program.instance.appearance.lastSelectedItem.gameObject)
                 && Program.instance.appearance.lastSelectedItem.gameObject.activeSelf)
                 return Program.instance.appearance.lastSelectedItem.gameObject;
-            return ScrollRect.content.GetChild(0).gameObject;
+            if (currentList != null)
+                foreach (var item in currentList)
+                    if (item != null && item.activeSelf) return item;
+            return null;
         }
 
         public void SelectPlayerNameToggle()

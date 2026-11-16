@@ -1,3 +1,4 @@
+using MDPro3.BattleSpirits;
 using DG.Tweening;
 using MDPro3.Duel.YGOSharp;
 using MDPro3.Net;
@@ -370,9 +371,46 @@ namespace MDPro3.UI
 
         protected virtual void SetCardData(Card data)
         {
+            if (data == null) return;
             if (Card != null && Card.Id == data.Id)
                 return;
             Card = data;
+            if (data.IsBattleSpirits && BattleCatalog.TryGet(data.BattleSpiritsId, out var definition))
+            {
+                TextCardName.text = " " + data.Name;
+                IconAttribute.sprite = BattleCardAdapter.ColorIcon(definition);
+                IconLimit.gameObject.SetActive(false);
+                SetCardCount();
+                if (PoolArea != null) PoolArea.SetActive(false);
+                IconLevel.enabled = false;
+                IconLevel.gameObject.SetActive(true);
+                TextLevel.text = "Cost " + definition.cost;
+                IconRank.gameObject.SetActive(false);
+                IconLink.gameObject.SetActive(false);
+                IconPendulumScale.gameObject.SetActive(false);
+                IconRace.gameObject.SetActive(false);
+                IconTuner.gameObject.SetActive(false);
+                SpellTrapType.SetActive(false);
+                IconAtk.enabled = false;
+                IconAtk.gameObject.SetActive(true);
+                TextAtk.text = definition.IsSpirit ? "BP " + data.Attack : definition.type;
+                IconDef.enabled = false;
+                IconDef.gameObject.SetActive(true);
+                TextDef.text = "Symbols " + BattleCardAdapter.Symbols(definition);
+                TextDescriptionItem.text = definition.type + " · " + BattleCardAdapter.Colors(definition);
+                TextDescriptionValue.text = data.Desc;
+                if (TextArea != null) { TextArea.StopMovement(); TextArea.verticalNormalizedPosition = 1f; }
+                if (PendulumDescriptionArea != null) PendulumDescriptionArea.SetActive(false);
+                if (MenuArea != null)
+                {
+                    ToggleRarityR.gameObject.SetActive(false);
+                    ToggleRarityUR.gameObject.SetActive(false);
+                    ToggleRarityGR.gameObject.SetActive(false);
+                    ToggleRarityMR.gameObject.SetActive(false);
+                    RefreshBookmarkToggle();
+                }
+                return;
+            }
 
             #region Title Area
 
@@ -574,6 +612,7 @@ namespace MDPro3.UI
 
         public virtual void RefreshRegulation()
         {
+            if (Card != null && Card.IsBattleSpirits) { IconLimit.gameObject.SetActive(false); return; }
             if(Card == null) return;
             IconLimit.sprite = TextureManager.container
                 .GetCardRegulationIcon(Card.Id, DeckEditor.Banlist);

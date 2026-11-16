@@ -26,7 +26,7 @@ namespace MDPro3.UI.ServantUI
         {
             base.Initialize(servant);
 
-            Title.text = "MDPro3 v" + Application.version;
+            Title.text = "Battle Spirits v" + Application.version;
         }
 
         #region Button Function

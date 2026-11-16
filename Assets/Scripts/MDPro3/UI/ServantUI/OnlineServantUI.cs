@@ -57,6 +57,7 @@ namespace MDPro3.UI.ServantUI
 
         private void Awake()
         {
+            foreach (Transform child in PageMyCard.transform) child.gameObject.SetActive(false);
             ToggleLegacy.SetToggleOn();
         }
 
@@ -88,7 +89,7 @@ namespace MDPro3.UI.ServantUI
                 if (lastSelectable != null && lastSelectable.transform.IsChildOf(PageMyCard.transform))
                     lastSelectable.Select();
                 else
-                    PageMyCard.SelectDefault();
+                    ToggleMyCard.GetSelectable().Select();
             }
         }
 
