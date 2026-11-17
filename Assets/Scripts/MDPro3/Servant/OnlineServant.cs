@@ -2,6 +2,7 @@ using MDPro3.Duel.YGOSharp;
 using MDPro3.Net;
 using MDPro3.UI;
 using MDPro3.UI.ServantUI;
+using Cysharp.Threading.Tasks;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -119,6 +120,12 @@ namespace MDPro3.Servant
 
         public void CreateServer(List<string> serverArgs)
         {
+            if (!Program.Running || !TcpHelper.canJoin || YgoServer.IsBusy)
+            {
+                MessageManager.Cast("The local duel is starting or stopping. Please wait.");
+                return;
+            }
+
             int port = 7911;
             while (!TcpHelper.IsPortAvailable(port))
             {
@@ -141,12 +148,57 @@ namespace MDPro3.Servant
                 serverArgs[6],
                 "0");
 
+            if (!YgoServer.TryStartServer(args))
+            {
+                MessageManager.Cast("Unable to start the local duel server. Please try again.");
+                return;
+            }
+
             RoomServant.FromSolo = false;
             RoomServant.FromLocalHost = true;
             RoomServant.FromHandTest = false;
 
-            YgoServer.StartServer(args);
-            TcpHelper.LinkStart("127.0.0.1", Config.Get("DuelPlayerName0", Config.EMPTY_STRING), port.ToString(), string.Empty, true, null);
+            _ = JoinCreatedServerAsync(port, YgoServer.serverThread);
+        }
+
+        private async UniTask JoinCreatedServerAsync(int port, System.Threading.Thread serverThread)
+        {
+            bool joined = false;
+            bool OwnsServer() => serverThread != null && ReferenceEquals(YgoServer.serverThread, serverThread);
+            try
+            {
+                if (OwnsServer() && TcpHelper.LinkStart("127.0.0.1", Config.Get("DuelPlayerName0", Config.EMPTY_STRING),
+                    port.ToString(), string.Empty, true, () =>
+                    {
+                        if (OwnsServer())
+                            System.Threading.Volatile.Write(ref joined, true);
+                    }))
+                {
+                    var deadline = Time.realtimeSinceStartup + 10f;
+                    while (!System.Threading.Volatile.Read(ref joined) && Program.Running
+                        && OwnsServer() && YgoServer.ServerRunning() && Time.realtimeSinceStartup < deadline)
+                        await UniTask.Delay(50);
+                }
+            }
+            catch (Exception exception)
+            {
+                Debug.LogError("Unable to join the local duel server: " + exception);
+            }
+            finally
+            {
+                if (!System.Threading.Volatile.Read(ref joined))
+                {
+                    var currentServerThread = YgoServer.serverThread;
+                    if (currentServerThread == null || ReferenceEquals(currentServerThread, serverThread))
+                    {
+                        if (OwnsServer())
+                            YgoServer.StopServer();
+                        RoomServant.FromLocalHost = false;
+                        if (Program.Running)
+                            MessageManager.Cast("Unable to join the local duel server. Please try again.");
+                    }
+                }
+            }
         }
 
         private string GetPoolCodeByName(string pool)

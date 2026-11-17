@@ -8,7 +8,7 @@ namespace YGOSharp.OCGWrapper
 {
     public static class NamedCardsManager
     {
-        private static IDictionary<int, NamedCard> _cards;
+        private static volatile IDictionary<int, NamedCard> _cards = new Dictionary<int, NamedCard>();
 
         public static void Init(string databaseFullPath)
         {
@@ -19,7 +19,7 @@ namespace YGOSharp.OCGWrapper
                     throw new Exception("Could not find the cards database.");
                 }
 
-                _cards = new Dictionary<int, NamedCard>();
+                var cards = new Dictionary<int, NamedCard>();
 
                 using (SqliteConnection connection = new SqliteConnection("Data Source=" + databaseFullPath))
                 {
@@ -34,11 +34,12 @@ namespace YGOSharp.OCGWrapper
                         {
                             while (reader.Read())
                             {
-                                LoadCard(reader);
+                                LoadCard(reader, cards);
                             }
                         }
                     }
                 }
+                _cards = cards;
             }
             catch (Exception ex)
             {
@@ -50,7 +51,7 @@ namespace YGOSharp.OCGWrapper
         {
             try
             {
-                _cards = new Dictionary<int, NamedCard>();
+                var cards = new Dictionary<int, NamedCard>();
 
                 foreach(var databaseFullPath in databaseFullPaths)
                 {
@@ -70,12 +71,13 @@ namespace YGOSharp.OCGWrapper
                             {
                                 while (reader.Read())
                                 {
-                                    LoadCard(reader);
+                                    LoadCard(reader, cards);
                                 }
                             }
                         }
                     }
                 }
+                _cards = cards;
             }
             catch (Exception ex)
             {
@@ -85,22 +87,23 @@ namespace YGOSharp.OCGWrapper
 
         internal static NamedCard GetCard(int id)
         {
-            if (_cards.ContainsKey(id))
-                return _cards[id];
-            return null;
-        }
-        internal static IList<NamedCard> GetAllCards()
-        {
-            var returnValue = new List<NamedCard>();
-            foreach (NamedCard card in _cards.Values)
-                returnValue.Add(card);
-            return returnValue;
+            var cards = _cards;
+            cards.TryGetValue(id, out var card);
+            return card;
         }
 
-        private static void LoadCard(IDataRecord reader)
+        internal static IList<NamedCard> GetAllCards()
+        {
+            // Published dictionaries are never mutated; readers retain one snapshot
+            // while another room bot builds a replacement catalog privately.
+            var cards = _cards;
+            return new List<NamedCard>(cards.Values);
+        }
+
+        private static void LoadCard(IDataRecord reader, IDictionary<int, NamedCard> cards)
         {
             NamedCard card = new NamedCard(reader);
-            _cards[card.Id] = card;
+            cards[card.Id] = card;
         }
     }
 }

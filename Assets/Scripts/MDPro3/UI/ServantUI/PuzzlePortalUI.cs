@@ -248,14 +248,15 @@ namespace MDPro3.UI.ServantUI
 
         private void SetRecommendPuzzleButtons()
         {
-            int need = 2;
-            var recommendPuzzles = PuzzleSelectorUI.GetRecommendPuzzles(need);
-            for (int i = 0; i < 2; i++)
-                SetRecommendPuzzleButton(i == 0 ? RecommendButton1 : RecommendButton2, recommendPuzzles[i]);
-            if (recommendPuzzles.Count < 2)
-                RecommendButton2.gameObject.SetActive(false);
-            if(recommendPuzzles.Count < 1)
-                RecommendButton1.gameObject.SetActive(false);
+            var buttons = new[] { RecommendButton1, RecommendButton2 };
+            var recommendPuzzles = PuzzleSelectorUI.GetRecommendPuzzles(buttons.Length);
+            for (int i = 0; i < buttons.Length; i++)
+            {
+                bool hasPuzzle = i < recommendPuzzles.Count;
+                buttons[i].gameObject.SetActive(hasPuzzle);
+                if (hasPuzzle)
+                    SetRecommendPuzzleButton(buttons[i], recommendPuzzles[i]);
+            }
 
             var lastPlayPuzzle = PuzzleSelectorUI.GetLastPlayPuzzle();
             if(lastPlayPuzzle != null)

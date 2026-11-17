@@ -110,42 +110,53 @@ namespace MDPro3.Servant
         {
             yield return new WaitForSeconds(3);
             using var www = UnityWebRequest.Get(Settings.Data.MDPro3VersionUrl);
+            www.timeout = 15;
             www.SetRequestHeader("Cache-Control", "max-age=0, no-cache, no-store");
             www.SetRequestHeader("Pragma", "no-cache");
             yield return www.SendWebRequest();
             if (www.result == UnityWebRequest.Result.Success)
             {
-                var result = www.downloadHandler.text;
-                var lines = result.Replace("\r", "").Split('\n');
-                if (Application.version != lines[0])
-                    MessageManager.Cast(InterString.Get("A new version \"[?]\" has been detected.", lines[0]));
+                if (Settings.TryReadPrereleaseVersion(www.downloadHandler.text, out var version)
+                    && Application.version != version)
+                    MessageManager.Cast(InterString.Get("A new version \"[?]\" has been detected.", version));
             }
             else
                 MessageManager.Cast(InterString.Get("Failed to check for updates!"));
 
-            var filePath = Path.Combine(Program.PATH_EXPANSIONS, Path.GetFileName(Settings.Data.PrereleasePackUrl));
+            var packageUrl = Settings.GetPrereleasePackUrl();
+            var versionUrl = Settings.GetPrereleasePackVersionUrl();
+            if (Settings.IsRetiredPrereleaseUrl(packageUrl) || Settings.IsRetiredPrereleaseUrl(versionUrl))
+            {
+                Debug.LogWarning("The configured TransSuperpre source has been retired; keeping installed pre-release cards and skipping its optional update check.");
+                yield break;
+            }
+            if (!NetUtil.TryGetDownloadFileName(packageUrl, new[] { ".zip", ".ypk" }, out var fileName))
+                yield break;
+            var filePath = Path.Combine(Program.PATH_EXPANSIONS, fileName);
             if (!File.Exists(filePath))
             {
                 Config.Set("Prerelease", "0");
                 Config.Save();
             }
 
-            using var www2 = UnityWebRequest.Get(Settings.GetPrereleasePackVersionUrl());
+            using var www2 = UnityWebRequest.Get(versionUrl);
+            www2.timeout = 15;
             yield return www2.SendWebRequest();
             if (www2.result == UnityWebRequest.Result.Success)
             {
-                var result = www2.downloadHandler.text;
-                var lines = result.Replace("\r", "").Split('\n');
-                if (Config.Get("Prerelease", "0") != lines[0])
+                if (Settings.TryReadPrereleaseVersion(www2.downloadHandler.text, out var version)
+                    && Config.Get("Prerelease", "0") != version)
                     MessageManager.Cast(InterString.Get("A new version of the Pre-Release Cards was detected. Go to [SETTINGS] > [Expansions] > [Update Pre-Release Cards] to update them."));
             }
         }
 
         private IEnumerator LoadMyCardNewsAsync()
         {
-            while(OnlineService.myCardNews == null)
+            while (!OnlineService.MyCardNewsInitialized)
                 yield return null;
             var news = OnlineService.myCardNews;
+            if (news == null)
+                yield break;
             GetUI<MainMenuUI>().News.news = news;
             GetUI<MainMenuUI>().News.LoadNews();
         }

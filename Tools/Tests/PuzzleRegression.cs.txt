@@ -1,0 +1,332 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text.Json;
+using System.Text.RegularExpressions;
+
+namespace MDPro3.Utility
+{
+    public static class LegacyTextContracts
+    {
+        public static string Root;
+        public static string[] Get(string key) => JsonSerializer.Deserialize<Dictionary<string, string[]>>(
+            File.ReadAllText(Path.Combine(Root, "Data/locales/legacy-text-contracts.json")))[key];
+    }
+}
+
+namespace PuzzleRegression
+{
+    public struct PuzzleGroup { public string pathPrefix; public string namePattern; }
+    public static class PuzzlePortal
+    {
+        public const string PATH_PUZZLE_CARD_EFFECT = "CardEffect/";
+        public const string PATH_PUZZLE_FINAL_ATTACK = "FinalAttack/";
+        public const string PATH_PUZZLE_SPECIAL_WIN = "SpecialWin/";
+        public const string PATH_PUZZLE_TEST = "Test/";
+    }
+    public static class Config
+    {
+        public const string EMPTY_STRING = "";
+        public static bool Entered;
+        public static bool Cleared;
+        public static string Last = "";
+        public static int Saves;
+        public static bool GetBool(string key, bool fallback) => key.EndsWith("_Clear") ? Cleared : Entered;
+        public static string Get(string key, string fallback) => Last;
+        public static void Set(string key, string value) { Last = value; }
+        public static void Save() { Saves++; }
+    }
+    public sealed class FakeObject
+    {
+        public bool activeSelf = true;
+        public void SetActive(bool value) => activeSelf = value;
+    }
+    public sealed class SelectionButton
+    {
+        public readonly FakeObject gameObject = new FakeObject();
+        public string AssignedName;
+    }
+    public sealed class PuzzlePortalUI
+    {
+        public readonly SelectionButton RecommendButton1 = new SelectionButton();
+        public readonly SelectionButton RecommendButton2 = new SelectionButton();
+        public readonly SelectionButton LastPlayButton = new SelectionButton();
+        public void Apply() => SetRecommendPuzzleButtons();
+        private void SetRecommendPuzzleButton(SelectionButton button, PuzzleSelectorUI.Puzzle puzzle) => button.AssignedName = puzzle.name;
+        @@PORTAL_METHOD@@
+        @@NAME_PATTERN_METHOD@@
+    }
+    public static class PuzzleDependencies
+    {
+        internal static List<int> FindMissingPuzzleCardIds(string text, Predicate<int> hasCard) =>
+            PuzzleLauncher.FindMissingPuzzleCardIds(text, hasCard);
+    }
+    public static class UserInput
+    {
+        public static bool DefaultSelection = true;
+        public static bool NeedDefaultSelect() => DefaultSelection;
+    }
+    public sealed class FakePuzzleItem
+    {
+        public int Selections;
+        public FakePuzzleItem GetSelectable() => this;
+        public void Select() { Selections++; }
+    }
+    public static class CardsManager
+    {
+        public static readonly HashSet<int> Known = new HashSet<int>();
+        public static object GetCardRaw(int id) => Known.Contains(id) ? new object() : null;
+    }
+    public static class MessageManager
+    {
+        public static string Last;
+        public static void Cast(string message) { Last = message; }
+    }
+    public static class InterString
+    {
+        public static string Get(string key, string value) => key.Replace("[?]", value);
+    }
+    public static class Debug
+    {
+        public static void LogWarning(string message) { }
+    }
+    public sealed class PercyOCG
+    {
+        public static int Created, Started, Disposed;
+        public static string LastPath;
+        public PercyOCG() { Created++; }
+        public void Dispose() { Disposed++; }
+        public void StartPuzzle(string path) { Started++; LastPath = path; }
+        public static void Reset() { Created = Started = Disposed = 0; LastPath = null; }
+    }
+    public sealed class Runtime
+    {
+        public PuzzleLauncher puzzle;
+        public object currentServant;
+    }
+    public sealed class PuzzleLauncher
+    {
+        public string currentPuzzle;
+        public FakePuzzleItem lastPuzzleItem;
+        private PercyOCG percy;
+        @@DEPENDENCY_METHOD@@
+        @@LAUNCH_METHODS@@
+    }
+    public static class PuzzleSelectorUI
+    {
+        public struct Puzzle
+        {
+            public string name, firstCard, description, solution, pathPrefix, namePattern;
+            public string GetPath() => Program.PATH_PUZZLE + pathPrefix + name + Program.EXPANSION_LUA;
+            public string GetEnterConfigKey() => GetPath() + "_Enter";
+            public string GetClearConfigKey() => GetPath() + "_Clear";
+        }
+        @@IGNORE_PREFIXES@@
+        private static readonly List<Puzzle> puzzles = new List<Puzzle>();
+        private static readonly List<Puzzle> allPuzzles = new List<Puzzle>();
+        public static void Reset() { puzzles.Clear(); allPuzzles.Clear(); }
+        public static Puzzle Read(string path) => GetPuzzle(path);
+        public static int Scan(PuzzleGroup group) { GetPuzzles(group); return puzzles.Count; }
+        @@SELECTOR_METHODS@@
+    }
+    public static class Program
+    {
+        public const string PATH_PUZZLE = "Puzzle/";
+        public const string EXPANSION_LUA = ".lua";
+        public const string STRING_LINE_BREAK = "\r\n";
+        public static readonly Runtime instance = new Runtime();
+        private static int scenarios;
+        private static void Require(bool condition, string message)
+        {
+            if (!condition) throw new Exception(message);
+        }
+        private static void Fixture(string directory, int count)
+        {
+            Directory.SetCurrentDirectory(directory);
+            if (Directory.Exists("Puzzle")) Directory.Delete("Puzzle", true);
+            Directory.CreateDirectory("Puzzle");
+            for (int i = 0; i < count; i++)
+                File.WriteAllText("Puzzle/Fixture" + i + ".lua", "Debug.AddCard(" + (100 + i) + ",0,0,0,0,0)\n");
+            PuzzleSelectorUI.Reset();
+            Config.Entered = Config.Cleared = false;
+            Config.Last = "";
+        }
+        private static void CheckButtons(PuzzlePortalUI ui, int expected)
+        {
+            ui.Apply();
+            Require(ui.RecommendButton1.gameObject.activeSelf == (expected > 0), "First recommendation state");
+            Require(ui.RecommendButton2.gameObject.activeSelf == (expected > 1), "Second recommendation state");
+            if (expected > 0) Require(!string.IsNullOrEmpty(ui.RecommendButton1.AssignedName), "First recommendation missing data");
+            if (expected > 1) Require(!string.IsNullOrEmpty(ui.RecommendButton2.AssignedName), "Second recommendation missing data");
+        }
+        public static void Main(string[] args)
+        {
+            string root = args[0];
+            MDPro3.Utility.LegacyTextContracts.Root = root;
+            string temporary = Path.Combine(Path.GetTempPath(), "puzzle-fixtures-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(temporary);
+            try
+            {
+                for (int count = 0; count <= 3; count++)
+                {
+                    Fixture(temporary, count);
+                    var ui = new PuzzlePortalUI();
+                    CheckButtons(ui, Math.Min(count, 2));
+                    Require(!ui.LastPlayButton.gameObject.activeSelf, "No previous game must hide Last Play");
+                    scenarios++;
+                }
+                var reused = new PuzzlePortalUI();
+                foreach (int count in new[] { 2, 0, 1, 2 }) { Fixture(temporary, count); CheckButtons(reused, Math.Min(count, 2)); }
+                scenarios++;
+                Config.Last = "Puzzle/Fixture0";
+                reused.Apply();
+                Require(reused.LastPlayButton.gameObject.activeSelf && reused.LastPlayButton.AssignedName == "Fixture0", "Valid Last Play not bound");
+                Config.Last = "Puzzle/Missing";
+                reused.Apply();
+                Require(!reused.LastPlayButton.gameObject.activeSelf, "Deleted Last Play remains visible");
+                scenarios++;
+                Config.Entered = Config.Cleared = true;
+                PuzzleSelectorUI.Reset();
+                Require(PuzzleSelectorUI.GetRecommendPuzzles(2).Count == 2, "Completed puzzles must remain eligible as fallback");
+                scenarios++;
+                var missing = PuzzleSelectorUI.GetFirstPuzzle(new PuzzleGroup { pathPrefix = "Empty/", namePattern = "" });
+                Require(missing.name == null && missing.firstCard == null, "Empty group should return a safe default");
+                scenarios++;
+
+                Directory.SetCurrentDirectory(root);
+                PuzzleSelectorUI.Reset();
+                Config.Entered = Config.Cleared = false;
+                Config.Last = "";
+                using var json = JsonDocument.Parse(File.ReadAllText("Tools/RuntimeData/puzzle-source.json"));
+                int imported = 0, numericFirstCards = 0;
+                foreach (var record in json.RootElement.GetProperty("files").EnumerateArray())
+                {
+                    string path = record.GetProperty("path").GetString();
+                    var puzzle = PuzzleSelectorUI.Read(path);
+                    Require(puzzle.name == Path.GetFileNameWithoutExtension(path), "Name differs: " + path);
+                    Require(puzzle.GetPath() == path, "Runtime path differs: " + path);
+                    Require(puzzle.description != null && puzzle.solution != null, "Null puzzle metadata: " + path);
+                    if (int.TryParse(puzzle.firstCard, out int card) && card > 0) numericFirstCards++;
+                    imported++;
+                }
+                Require(imported == json.RootElement.GetProperty("fileCount").GetInt32(), "Imported count mismatch");
+                scenarios++;
+                foreach (var group in json.RootElement.GetProperty("folderCounts").EnumerateObject())
+                {
+                    string prefix = group.Name == "Puzzle" ? "" : group.Name.Substring("Puzzle/".Length) + "/";
+                    int actual = PuzzleSelectorUI.Scan(new PuzzleGroup { pathPrefix = prefix, namePattern = PuzzlePortalUI.GetPuzzleNamePattern(prefix) });
+                    Require(actual == group.Value.GetInt32(), "Scanner count differs: " + group.Name);
+                }
+                Require(PuzzleSelectorUI.GetRecommendPuzzles(200).Count == imported, "Full import is not discoverable");
+                scenarios++;
+                Require(PuzzleDependencies.FindMissingPuzzleCardIds(null, _ => false).Count == 0, "Null setup text must be safe");
+                Require(PuzzleDependencies.FindMissingPuzzleCardIds("Debug.AddCard(100,0,0,0,0,0)", _ => true).Count == 0,
+                    "Known card must not block a Puzzle");
+                scenarios++;
+                var missingIds = PuzzleDependencies.FindMissingPuzzleCardIds(
+                    "-- Debug.AddCard(88,0,0,0,0,0)\n" +
+                    "Debug.AddCard(30,0,0,0,0,0)\n" +
+                    "local a = Debug.AddCard(20,0,0,0,0,0)\n" +
+                    "b = Debug.AddCard(30,0,0,0,0,0)\n" +
+                    "Debug.AddCard(100,0,0,0,0,0)\n" +
+                    "Debug.AddCard(cardId,0,0,0,0,0)\n" +
+                    "Debug.AddCard(0,0,0,0,0,0)\n" +
+                    "Debug.AddCard(9999999999999999999999,0,0,0,0,0)\n" +
+                    "description = 'unrelated 77'\n", id => id == 100);
+                Require(missingIds.SequenceEqual(new[] { 20, 30 }), "Missing IDs must be sorted, unique and limited to literal setup calls");
+                scenarios++;
+                bool rejectedNullPredicate = false;
+                try { PuzzleDependencies.FindMissingPuzzleCardIds("", null); }
+                catch (ArgumentNullException) { rejectedNullPredicate = true; }
+                Require(rejectedNullPredicate, "A missing lookup predicate must not silently mark every card as absent");
+                scenarios++;
+                var known = new HashSet<int>(JsonSerializer.Deserialize<int[]>(File.ReadAllText(args[1])));
+                int incompletePuzzles = 0;
+                var legacy = new HashSet<int>();
+                foreach (var record in json.RootElement.GetProperty("files").EnumerateArray())
+                {
+                    string path = record.GetProperty("path").GetString();
+                    var missingCards = PuzzleDependencies.FindMissingPuzzleCardIds(File.ReadAllText(path), known.Contains);
+                    if (missingCards.Count > 0) incompletePuzzles++;
+                    foreach (int id in missingCards) legacy.Add(id);
+                }
+                Require(incompletePuzzles == 5 && imported - incompletePuzzles == 99, "Unexpected legacy dependency coverage");
+                Require(legacy.SetEquals(new[] { 511000228, 511000229, 511001039, 511002993, 511002995, 511002997 }),
+                    "Wrong legacy card IDs reported by the production preflight helper");
+                scenarios++;
+
+                Directory.SetCurrentDirectory(temporary);
+                Fixture(temporary, 1);
+                var launcher = new PuzzleLauncher();
+                instance.puzzle = launcher;
+                instance.currentServant = launcher;
+                UserInput.DefaultSelection = true;
+                launcher.Select();
+                launcher.Select(true);
+                Require(PercyOCG.Created == 0, "Empty selection should not start the native core");
+                scenarios++;
+
+                launcher.lastPuzzleItem = new FakePuzzleItem();
+                UserInput.DefaultSelection = false;
+                launcher.Select();
+                Require(launcher.lastPuzzleItem.Selections == 0, "Pointer navigation must not force selection");
+                launcher.Select(true);
+                Require(launcher.lastPuzzleItem.Selections == 1, "Forced valid selection must remain available");
+                scenarios++;
+
+                PercyOCG.Reset();
+                launcher.currentPuzzle = null;
+                launcher.StartCurrentPuzzle();
+                launcher.currentPuzzle = "Puzzle/Missing";
+                launcher.StartCurrentPuzzle();
+                Require(PercyOCG.Created == 0, "Empty/deleted current puzzle must not create a native core");
+                scenarios++;
+
+                launcher.currentPuzzle = "Puzzle/Fixture0";
+                instance.currentServant = new object();
+                launcher.StartCurrentPuzzle();
+                Require(PercyOCG.Created == 0, "A repeated click from another screen must be ignored");
+                instance.currentServant = launcher;
+                scenarios++;
+
+                Config.Last = "previous";
+                Config.Saves = 0;
+                MessageManager.Last = null;
+                launcher.StartPuzzle(null);
+                launcher.StartPuzzle("Puzzle/Missing");
+                Require(PercyOCG.Created == 0 && Config.Last == "previous" && Config.Saves == 0,
+                    "An unreadable puzzle must leave previous history and native state untouched");
+                Require(MessageManager.Last.Contains("Missing"), "Missing file must produce a usable failure message");
+                scenarios++;
+
+                MessageManager.Last = null;
+                CardsManager.Known.Clear();
+                launcher.StartPuzzle("Puzzle/Fixture0");
+                Require(PercyOCG.Created == 0 && Config.Saves == 0,
+                    "Missing card data must fail before native creation and history writes");
+                Require(MessageManager.Last.Contains("100"), "Missing-card message must identify the required card");
+                scenarios++;
+
+                CardsManager.Known.Add(100);
+                launcher.StartCurrentPuzzle();
+                Require(PercyOCG.Started == 1 && PercyOCG.LastPath == "Puzzle/Fixture0.lua" &&
+                    Config.Last == "Puzzle/Fixture0" && Config.Saves == 1,
+                    "A valid puzzle must save history and launch the original path exactly once");
+                launcher.StartCurrentPuzzle(false);
+                Require(PercyOCG.Started == 2 && PercyOCG.Disposed == 1,
+                    "A second explicit launch must dispose the old core first");
+                scenarios++;
+
+                Console.WriteLine(JsonSerializer.Serialize(new { status = "PASS", scenarios, actualProductionMethods = 15,
+                    importedPuzzlesParsed = imported, numericFirstCards, puzzlesWithCompleteBaseCardData = imported - incompletePuzzles,
+                    puzzlesNeedingLegacyCards = incompletePuzzles, missingLegacyCardIds = legacy.OrderBy(id => id), unityPlayTested = false }));
+            }
+            finally
+            {
+                Directory.SetCurrentDirectory(root);
+                Directory.Delete(temporary, true);
+            }
+        }
+    }
+}

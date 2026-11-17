@@ -1,5 +1,11 @@
 # Restored MDPro3 English baseline
 
+For the recovered game and current checks, use
+[ENGLISH_REPAIR.md](ENGLISH_REPAIR.md). The remote `mdpro3-english` branch was
+subsequently repurposed for Battle Spirits; the repair branch recovers the last
+English MDPro3 commit before that conversion. The notes below describe the
+historical restoration, rather than the current contents of that remote branch.
+
 This document records the initial restore at `e9ba63fa6`. The subsequent
 [deep English migration](ENGLISH_MIGRATION.md) adds English source/lookup keys
 and authored UI text while preserving the restored gameplay baseline. The
@@ -39,9 +45,9 @@ Close Unity before switching branches. Preserve local edits with a commit or
 stash; ignored personal data needs its own backup. Then:
 
 ```bash
-git fetch origin
-git switch mdpro3-english
-git pull --ff-only origin mdpro3-english
+git fetch origin fix/mdpro3-english-repair-20261117
+git switch fix/mdpro3-english-repair-20261117
+git pull --ff-only origin fix/mdpro3-english-repair-20261117
 ```
 
 Open `Assets/Scenes/Boot.unity` in Unity 6000.0.24f1, Windows x64. Keep `Data`,

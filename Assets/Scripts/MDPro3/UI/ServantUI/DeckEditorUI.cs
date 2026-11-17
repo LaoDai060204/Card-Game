@@ -1108,6 +1108,11 @@ namespace MDPro3.UI.ServantUI
 
         private bool TryStartHandTest(HandTestSettings settings)
         {
+            if (!Program.Running || !TcpHelper.canJoin || YgoServer.IsBusy)
+            {
+                MessageManager.Toast("The local duel is starting or stopping. Please wait.");
+                return false;
+            }
             if (!DeckView.deckLoaded)
                 return false;
             if (condition == Condition.ChangeSide)
@@ -1124,6 +1129,9 @@ namespace MDPro3.UI.ServantUI
 
         private async UniTask HandTestAsync(HandTestSettings settings)
         {
+            if (!Program.Running || !TcpHelper.canJoin || YgoServer.IsBusy)
+                return;
+
             var launchSettings = settings != null ? settings.Clone() : HandTestSettings.Load();
             launchSettings.Clamp();
 
@@ -1137,29 +1145,83 @@ namespace MDPro3.UI.ServantUI
 
             string args = launchSettings.BuildServerArgs(port);
 
-            RoomServant.FromSolo = false;
-            RoomServant.FromLocalHost = false;
-            RoomServant.FromHandTest = true;
-            YgoServer.StartServer(args);
+            if (!YgoServer.TryStartServer(args))
+            {
+                MessageManager.Toast("Unable to start the local duel server. Please try again.");
+                return;
+            }
 
-            UIManager.UIBlackIn(0.3f);
-            await UniTask.WaitForSeconds(0.3f);
+            var serverThread = YgoServer.serverThread;
+            bool OwnsServer() => serverThread != null && ReferenceEquals(YgoServer.serverThread, serverThread);
+            bool completed = false;
+            try
+            {
+                RoomServant.FromSolo = false;
+                RoomServant.FromLocalHost = false;
+                RoomServant.FromHandTest = true;
 
-            OcgCore.handler = Program.instance.room.Handler;
+                UIManager.UIBlackIn(0.3f);
+                await UniTask.WaitForSeconds(0.3f);
+                if (!Program.Running || !OwnsServer() || !YgoServer.ServerRunning())
+                    return;
 
-            Program.instance.solo.StartAIForHandTest(port);
-            await UniTask.Delay(100);
-            bool joined = false;
-            TcpHelper.LinkStart("127.0.0.1", Config.Get("DuelPlayerName0", Config.EMPTY_STRING), port.ToString(), string.Empty, true, () => joined = true);
-            await UniTask.WaitUntil(() => joined);
+                OcgCore.handler = Program.instance.room.Handler;
 
-            var deck = DeckView.FromObjectDeckToCodedDeck();
-            TcpHelper.CtosMessage_UpdateDeck(deck);
-            TcpHelper.CtosMessage_HsReady();
-            await UniTask.Delay(50);
-            TcpHelper.CtosMessage_HandResult(2);
-            await UniTask.Delay(50);
-            TcpHelper.CtosMessage_TpResult(true);
+                Program.instance.solo.StartAIForHandTest(port);
+                await UniTask.Delay(100);
+                if (!Program.Running || !OwnsServer() || !YgoServer.ServerRunning())
+                    return;
+
+                bool joined = false;
+                if (!TcpHelper.LinkStart("127.0.0.1", Config.Get("DuelPlayerName0", Config.EMPTY_STRING),
+                    port.ToString(), string.Empty, true, () =>
+                    {
+                        if (OwnsServer())
+                            System.Threading.Volatile.Write(ref joined, true);
+                    }))
+                    return;
+
+                var deadline = Time.realtimeSinceStartup + 10f;
+                while (!System.Threading.Volatile.Read(ref joined) && Program.Running
+                    && OwnsServer() && YgoServer.ServerRunning() && Time.realtimeSinceStartup < deadline)
+                    await UniTask.Delay(50);
+
+                if (!System.Threading.Volatile.Read(ref joined) || !Program.Running || !OwnsServer() || !YgoServer.ServerRunning())
+                    return;
+
+                var deck = DeckView.FromObjectDeckToCodedDeck();
+                TcpHelper.CtosMessage_UpdateDeck(deck);
+                TcpHelper.CtosMessage_HsReady();
+                await UniTask.Delay(50);
+                if (!Program.Running || !OwnsServer() || !YgoServer.ServerRunning())
+                    return;
+                TcpHelper.CtosMessage_HandResult(2);
+                await UniTask.Delay(50);
+                if (!Program.Running || !OwnsServer() || !YgoServer.ServerRunning())
+                    return;
+                TcpHelper.CtosMessage_TpResult(true);
+                completed = true;
+            }
+            catch (Exception exception)
+            {
+                Debug.LogError("Unable to start the hand test: " + exception);
+            }
+            finally
+            {
+                if (!completed)
+                {
+                    var currentServerThread = YgoServer.serverThread;
+                    if (currentServerThread == null || ReferenceEquals(currentServerThread, serverThread))
+                    {
+                        if (OwnsServer())
+                            YgoServer.StopServer();
+                        RoomServant.FromHandTest = false;
+                        UIManager.UIBlackOut(0.3f);
+                        if (Program.Running)
+                            MessageManager.Toast("Unable to start the hand test. Please try again.");
+                    }
+                }
+            }
 
         }
 

@@ -518,7 +518,7 @@ namespace MDPro3.Duel
         {
             /*var lenth = */reader.ReadInt16();
             var buffer = reader.ReadToEnd();
-            var text = Encoding.UTF8.GetString(buffer, 0, buffer.Length);
+            var text = InterString.GetIfDefined(Encoding.UTF8.GetString(buffer, 0, buffer.Length).TrimEnd('\0'));
             MessageManager.Cast(text);
 
             return UniTask.CompletedTask;
@@ -528,7 +528,7 @@ namespace MDPro3.Duel
         {
             var length = reader.ReadInt16();
             var buffer = reader.ReadBytes(length + 1);
-            var text = Encoding.UTF8.GetString(buffer, 0, buffer.Length);
+            var text = InterString.GetIfDefined(Encoding.UTF8.GetString(buffer, 0, buffer.Length).TrimEnd('\0'));
 
             name_0 = Config.Get("DuelPlayerName0", Config.EMPTY_STRING);
             name_0_c = name_0;

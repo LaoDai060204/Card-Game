@@ -91,6 +91,9 @@ namespace MDPro3.UI.ServantUI
 
             if(Program.instance.lastServant != Program.instance.ocgcore || superScrollView == null)
             {
+                Program.instance.puzzle.lastPuzzleItem = null;
+                Program.instance.puzzle.currentPuzzle = string.Empty;
+                SetOverview(string.Empty);
                 GetPuzzles(Program.instance.puzzle.puzzleGroup);
                 Print();
                 Title.text = PuzzlePortalUI.GetPuzzleGroupName(Program.instance.puzzle.puzzleGroup);
@@ -210,6 +213,7 @@ namespace MDPro3.UI.ServantUI
         public void Print()
         {
             superScrollView?.Clear();
+            ButtonPlay.SetInteractable(puzzles.Count > 0);
             List<string[]> tasks = new();
 
             for (int i = 0; i < puzzles.Count; i++)
@@ -280,11 +284,17 @@ namespace MDPro3.UI.ServantUI
 
         public void OnPlayPuzzle()
         {
+            if (Program.instance.puzzle.lastPuzzleItem == null)
+                return;
+
             Program.instance.puzzle.StartCurrentPuzzle();
         }
 
         public void SelectLastPuzzleItem()
         {
+            if (Program.instance.puzzle.lastPuzzleItem == null)
+                return;
+
             UserInput.NextSelectionIsAxis = true;
             Program.instance.puzzle.lastPuzzleItem.GetSelectable().Select();
         }

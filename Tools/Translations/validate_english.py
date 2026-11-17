@@ -85,8 +85,15 @@ def verify(base=None):
     # Comment/source scan is lexical; Roslyn tests additionally decode C# literals.
     source_files = [path for path in (ROOT / "Assets").rglob("*") if path.suffix in {".cs", ".shader", ".compute"}]
     assert all(not HAN.search(path.read_text(encoding="utf-8-sig")) for path in source_files)
-    names = git("ls-files").splitlines()
-    assert not any(HAN.search(name) for name in names)
+    # NUL output preserves actual Unicode names instead of Git's quoted escapes.
+    # Official external Puzzle filenames are immutable provenance, not UI keys.
+    puzzle_manifest = json.loads((ROOT / "Tools/RuntimeData/puzzle-source.json").read_text())
+    assert puzzle_manifest["sourcePuzzleTree"] == "4da0f2aaa80190b12b0b001c9753aadad26961be"
+    original_puzzles = {entry["path"] for entry in puzzle_manifest["files"]}
+    assert len(original_puzzles) == 104
+    names = git("ls-files", "-z", "--cached", "--others", "--exclude-standard").split("\0")
+    han_names = {name for name in names if HAN.search(name)}
+    assert han_names <= original_puzzles, sorted(han_names - original_puzzles)
     grammar = json.loads((ROOT / "Data/locales/legacy-text-contracts.json").read_text())
     assert digest(grammar) == manifest["legacyGrammarHash"]
     assert "Flip Effect" not in grammar["CardSetNameSuffixes"]
@@ -142,7 +149,8 @@ def verify(base=None):
             compared += 1
     return {"status": "PASS", "legacyLookupAliases": len(aliases), "localeFiles": len(locales),
             "valuesPreserved": True, "csvLocaleColumnsPreserved": True, "productionSourceFilesScanned": len(source_files),
-            "hanSourceFiles": 0, "hanFileNames": 0, "attributionTextExceptions": len(remaining),
+            "hanSourceFiles": 0, "hanFileNames": len(han_names), "unapprovedHanFileNames": 0,
+            "preservedOfficialPuzzleFiles": len(original_puzzles), "attributionTextExceptions": len(remaining),
             "serializedStructuresCompared": compared, "unityEditorPlayOrBuildTested": False}
 
 

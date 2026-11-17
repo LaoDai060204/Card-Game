@@ -17,7 +17,6 @@ using UnityEngine.Rendering.Universal;
 using UnityEngine.UI;
 using YgomSystem.LocalFileSystem;
 using static MDPro3.CardRenderer;
-using static MDPro3.Net.NetUtil;
 
 namespace MDPro3.Servant
 {
@@ -27,7 +26,6 @@ namespace MDPro3.Servant
         [HideInInspector] public SelectionToggle_Setting lastSelectedToggle;
         [HideInInspector] public SelectionButton_Setting lastSelectedButton;
 
-        private string unsafeDownloadUrl;
 
         #region Servant
 
@@ -178,6 +176,12 @@ namespace MDPro3.Servant
         {
             if (!checkingPrereleaseUpdate)
             {
+                if (Settings.IsRetiredPrereleaseUrl(Settings.GetPrereleasePackUrl()))
+                {
+                    Debug.LogWarning("The configured TransSuperpre package source has been retired. Keeping installed cards; configure an available package URL before updating.");
+                    MessageManager.Cast(pHints.CheckFailure);
+                    return;
+                }
                 checkingPrereleaseUpdate = true;
                 StartCoroutine(UpdatePrereleaseChunkedCoroutine());
             }
@@ -186,27 +190,31 @@ namespace MDPro3.Servant
         private IEnumerator UpdatePrereleaseChunkedCoroutine()
         {
             var url = Settings.GetPrereleasePackUrl();
-            var filePath = Path.Combine(Program.PATH_EXPANSIONS, Path.GetFileName(url));
-            if (!File.Exists(filePath) || Language.GetConfig() != Language.GetPrereleaseConfig())
+            if (!NetUtil.TryGetDownloadFileName(url, new[] { ".zip", ".ypk" }, out var fileName))
             {
-                Config.Set("Prerelease", Config.STRING_NO);
-                Config.Save();
+                checkingPrereleaseUpdate = false;
+                MessageManager.Cast(pHints.CheckFailure);
+                yield break;
             }
-
+            var targetPath = Path.Combine(Program.PATH_EXPANSIONS, fileName);
+            var filePath = targetPath + "." + Guid.NewGuid().ToString("N") + ".download";
             var etagConfigKey = "Prerelease";
             const long chunkSize = 10 * 1024 * 1024;
 
             var ui = GetUI<SettingServantUI>();
+            var activeRequests = new List<UnityWebRequest>();
             ui.ButtonUpdatePrerelease.SetModeText(pHints.CheckingUpdate);
 
             try
             {
+                Directory.CreateDirectory(Program.PATH_EXPANSIONS);
                 using var headRequest = UnityWebRequest.Head(url);
+                headRequest.timeout = 15;
                 yield return headRequest.SendWebRequest();
 
                 if (headRequest.result != UnityWebRequest.Result.Success)
                 {
-                    Debug.LogError($"HEAD request failed: {headRequest.error}");
+                    OnlineService.LogRequestFailure(headRequest, "prerelease package HEAD");
                     MessageManager.Cast(pHints.CheckFailure);
                     yield break;
                 }
@@ -223,7 +231,8 @@ namespace MDPro3.Servant
                 if (!string.IsNullOrEmpty(remoteEtag))
                 {
                     string localEtag = Config.Get(etagConfigKey, Config.STRING_NO);
-                    if (localEtag == remoteEtag && File.Exists(filePath))
+                    if (localEtag == remoteEtag && File.Exists(targetPath)
+                        && Language.GetConfig() == Language.GetPrereleaseConfig())
                     {
                         MessageManager.Cast(pHints.Updated);
                         yield break;
@@ -232,6 +241,7 @@ namespace MDPro3.Servant
 
                 bool supportsRange = false;
                 using var probeRequest = UnityWebRequest.Get(url);
+                probeRequest.timeout = 15;
                 probeRequest.SetRequestHeader("Range", "bytes=0-0");
                 yield return probeRequest.SendWebRequest();
 
@@ -260,7 +270,6 @@ namespace MDPro3.Servant
                     }
 
                     int nextChunkIndex = 0;
-                    List<UnityWebRequest> activeRequests = new List<UnityWebRequest>();
                     List<int> activeChunkIndices = new List<int>();
 
                     while (totalDownloadedBytes < totalSize)
@@ -277,6 +286,7 @@ namespace MDPro3.Servant
                         {
                             int idx = nextChunkIndex++;
                             var req = UnityWebRequest.Get(url);
+                            req.timeout = 120;
                             req.SetRequestHeader("Range", $"bytes={chunkStart[idx]}-{chunkEnd[idx]}");
                             req.SendWebRequest();
                             activeRequests.Add(req);
@@ -291,22 +301,19 @@ namespace MDPro3.Servant
                             if (req.isDone)
                             {
                                 int chunkIdx = activeChunkIndices[i];
-                                if (req.result != UnityWebRequest.Result.Success)
+                                byte[] data = req.downloadHandler.data;
+                                if (req.result != UnityWebRequest.Result.Success || req.responseCode != 206
+                                    || !NetUtil.IsExpectedRange(req.GetResponseHeader("Content-Range"),
+                                        chunkStart[chunkIdx], chunkEnd[chunkIdx], totalSize, data?.LongLength ?? 0))
                                 {
-                                    Debug.LogError($"Range request failed for chunk {chunkIdx}: {req.error}");
-                                    foreach (var r in activeRequests) r.Dispose();
+                                    OnlineService.LogRequestFailure(req, "prerelease package range");
                                     MessageManager.Cast(pHints.UpdateFailure);
-                                    File.Delete(filePath);
                                     yield break;
                                 }
 
-                                byte[] data = req.downloadHandler.data;
-                                if (data != null && data.Length > 0)
-                                {
-                                    fs.Seek(chunkStart[chunkIdx], SeekOrigin.Begin);
-                                    fs.Write(data, 0, data.Length);
-                                    totalDownloadedBytes += data.Length;
-                                }
+                                fs.Seek(chunkStart[chunkIdx], SeekOrigin.Begin);
+                                fs.Write(data, 0, data.Length);
+                                totalDownloadedBytes += data.Length;
 
                                 req.Dispose();
                                 activeRequests.RemoveAt(i);
@@ -317,17 +324,18 @@ namespace MDPro3.Servant
 
                     ui.ButtonUpdatePrerelease.SetModeText(pHints.Progress(1f));
 
-                    if (new FileInfo(filePath).Length != totalSize)
+                    fs.Flush();
+                    if (fs.Length != totalSize)
                     {
                         Debug.LogError("Downloaded file size mismatch.");
                         MessageManager.Cast(pHints.UpdateFailure);
-                        File.Delete(filePath);
                         yield break;
                     }
                 }
                 else
                 {
                     using var fullRequest = UnityWebRequest.Get(url);
+                    fullRequest.timeout = 120;
                     fullRequest.downloadHandler = new DownloadHandlerBuffer();
                     var operation = fullRequest.SendWebRequest();
 
@@ -355,9 +363,8 @@ namespace MDPro3.Servant
 
                     if (fullRequest.result != UnityWebRequest.Result.Success)
                     {
-                        Debug.LogError($"Full download failed: {fullRequest.error}");
+                        OnlineService.LogRequestFailure(fullRequest, "prerelease package download");
                         MessageManager.Cast(pHints.UpdateFailure);
-                        File.Delete(filePath);
                         yield break;
                     }
 
@@ -367,25 +374,31 @@ namespace MDPro3.Servant
                         fs.Write(finalData, (int)writtenBytes, finalData.Length - (int)writtenBytes);
                     }
 
-                    if (new FileInfo(filePath).Length != totalSize)
+                    fs.Flush();
+                    if (fs.Length != totalSize)
                     {
                         Debug.LogError("Downloaded file size mismatch.");
                         MessageManager.Cast(pHints.UpdateFailure);
-                        File.Delete(filePath);
                         yield break;
                     }
                 }
 
-                if (!string.IsNullOrEmpty(remoteEtag))
+                if (!NetUtil.TryCommitDownload(filePath, targetPath))
                 {
-                    Config.Set(etagConfigKey, remoteEtag);
-                    Config.Save();
+                    MessageManager.Cast(pHints.UpdateFailure);
+                    yield break;
                 }
+                Config.Set(etagConfigKey, string.IsNullOrEmpty(remoteEtag) ? Config.STRING_NO : remoteEtag);
+                Language.SetPrereleaseConfig(Language.GetConfig());
+                Config.Save();
                 MessageManager.Cast(pHints.UpdateSuccess);
                 Program.instance.InitializeForDataChange();
             }
             finally
             {
+                foreach (var request in activeRequests)
+                    request.Dispose();
+                NetUtil.DeleteTemporaryDownload(filePath);
                 ui.ButtonUpdatePrerelease.SetModeText(string.Empty);
                 checkingPrereleaseUpdate = false;
             }
@@ -413,115 +426,49 @@ namespace MDPro3.Servant
 
         private void DownloadYPK(string url)
         {
+            if (downloadingYPK)
+                return;
             string[] supportedExts = new string[] { ".zip", ".ypk" };
-            if (!NetUtil.IsValidDownloadUrl(url, supportedExts))
+            if (!NetUtil.TryGetDownloadFileName(url, supportedExts, out var fileName))
             {
                 MessageManager.Toast(InterString.Get("Invalid Download URL."));
                 return;
             }
-            StartCoroutine(DownloadYpkCoroutine(url));
+            StartCoroutine(DownloadYpkCoroutine(url, fileName));
         }
 
-
-        private IEnumerator DownloadYpkCoroutine(string url)
+        private IEnumerator DownloadYpkCoroutine(string url, string fileName)
         {
             downloadingYPK = true;
-            using var request = UnityWebRequest.Get(url);
-            request.SendWebRequest();
-            while (!request.isDone)
+            try
             {
-                GetUI<SettingServantUI>().ButtonDownloadYPK.SetModeText((request.downloadProgress * 100f).ToString("0.##") + "%");
-                yield return new WaitForSeconds(0.3f);
-            }
+                using var request = UnityWebRequest.Get(url);
+                request.timeout = 120;
+                request.SendWebRequest();
+                while (!request.isDone)
+                {
+                    GetUI<SettingServantUI>().ButtonDownloadYPK.SetModeText((request.downloadProgress * 100f).ToString("0.##") + "%");
+                    yield return new WaitForSeconds(0.3f);
+                }
 
-            if (request.result == UnityWebRequest.Result.Success)
-            {
-                var filePath = Path.Combine(Program.PATH_EXPANSIONS, Path.GetFileName(url));
-                if (!Directory.Exists(Program.PATH_EXPANSIONS))
-                    Directory.CreateDirectory(Program.PATH_EXPANSIONS);
-                File.WriteAllBytes(filePath, request.downloadHandler.data);
-                MessageManager.Cast(InterString.Get("Download successful."));
-                Program.instance.InitializeForDataChange();
-            }
-            else
-            {
-                //MessageManager.Cast(InterString.Get("Download failed."));
-
-                string errorMessage = string.Empty;
-
-                // 1. Certificate security issue (SSL error)
-                if (request.result == UnityWebRequest.Result.ConnectionError &&
-                    (request.error.Contains("SSL") || request.error.Contains("certificate")))
+                var filePath = Path.Combine(Program.PATH_EXPANSIONS, fileName);
+                if (request.result == UnityWebRequest.Result.Success
+                    && NetUtil.TrySaveDownload(request.downloadHandler.data, filePath))
                 {
-                    List<string> selections = new()
-                    {
-                        InterString.Get("The download link is not secure."),
-                        InterString.Get("Security certificate validation failed! The connection may be unsafe.@nDo you want to continue downloading?"),
-                        InterString.Get("Confirm"),
-                        InterString.Get("Cancel"),
-                        Config.STRING_YES
-                    };
-                    unsafeDownloadUrl = url;
-                    UIManager.ShowPopupYesOrNo(selections, DownloadYpkUnsafe, null);
+                    MessageManager.Cast(InterString.Get("Download successful."));
+                    Program.instance.InitializeForDataChange();
                 }
-                // 2. Network connection error
-                else if (request.result == UnityWebRequest.Result.ConnectionError)
-                {
-                    errorMessage = InterString.Get("Network connection failed:") + request.error;
-                }
-                // 3. HTTP protocol error (404, 500, etc.)
-                else if (request.result == UnityWebRequest.Result.ProtocolError)
-                {
-                    errorMessage = InterString.Get("The server returned an error:") + request.responseCode;
-                }
-                // 4. Data processing error
-                else if (request.result == UnityWebRequest.Result.DataProcessingError)
-                {
-                    errorMessage = InterString.Get("Data processing error:") + request.error;
-                }
-                // 5. Other unknown error
                 else
                 {
-                    errorMessage = InterString.Get("Unknown error:") + request.error;
+                    OnlineService.LogRequestFailure(request, "expansion download");
+                    MessageManager.Cast(InterString.Get("Download failed."));
                 }
-
-                if(errorMessage != string.Empty)
-                    MessageManager.Cast(errorMessage);
             }
-            GetUI<SettingServantUI>().ButtonDownloadYPK.SetModeText(string.Empty);
-            downloadingYPK = false;
-        }
-
-        private void DownloadYpkUnsafe()
-        {
-            StartCoroutine(DownloadYpkUnsafeCoroutine(unsafeDownloadUrl));
-        }
-
-        private IEnumerator DownloadYpkUnsafeCoroutine(string url)
-        {
-            downloadingYPK = true;
-            using var request = UnityWebRequest.Get(url);
-            request.certificateHandler = new AcceptAllCertificateHandler();
-            request.SendWebRequest();
-            while (!request.isDone)
+            finally
             {
-                GetUI<SettingServantUI>().ButtonDownloadYPK.SetModeText((request.downloadProgress * 100f).ToString("0.##") + "%");
-                yield return new WaitForSeconds(0.3f);
+                GetUI<SettingServantUI>().ButtonDownloadYPK.SetModeText(string.Empty);
+                downloadingYPK = false;
             }
-
-            if (request.result == UnityWebRequest.Result.Success)
-            {
-                var filePath = Path.Combine(Program.PATH_EXPANSIONS, Path.GetFileName(url));
-                if (!Directory.Exists(Program.PATH_EXPANSIONS))
-                    Directory.CreateDirectory(Program.PATH_EXPANSIONS);
-                File.WriteAllBytes(filePath, request.downloadHandler.data);
-                MessageManager.Cast(InterString.Get("Download successful."));
-                Program.instance.InitializeForDataChange();
-            }
-            else
-                MessageManager.Cast(InterString.Get("Download failed."));
-            GetUI<SettingServantUI>().ButtonDownloadYPK.SetModeText(string.Empty);
-            downloadingYPK = false;
         }
 
         #endregion

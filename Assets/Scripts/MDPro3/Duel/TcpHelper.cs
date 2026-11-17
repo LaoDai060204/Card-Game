@@ -16,10 +16,10 @@ namespace MDPro3
 {
     public static class TcpHelper
     {
-        public static TcpClient tcpClient;
+        public static volatile TcpClient tcpClient;
         private static NetworkStream networkStream;
-        public static bool canJoin = true;
-        public static bool onDisConnected;
+        public static volatile bool canJoin = true;
+        public static volatile bool onDisConnected;
         private static readonly List<byte[]> datas = new List<byte[]>();
         private static readonly object locker = new object();
         public static Deck deck;
@@ -30,6 +30,7 @@ namespace MDPro3
         private static readonly Queue<Package> messageQueue = new Queue<Package>();
         static Thread senderThread;
         static Thread linkThread;
+        private static TcpClient senderClient;
 
         public static string joinedAddress;
         public static string joinedPort;
@@ -38,60 +39,81 @@ namespace MDPro3
 
         public static bool LinkStart(string ipString, string name, string portString, string pswString, bool local, Action doWhenSuccess)
         {
-            if(!canJoin)
-                return false;
-
-            linkThread?.Abort();
-
-            canJoin = false;
-            linkThread = new Thread(() => 
+            lock (locker)
             {
-                bool joined = false;
-                if (local)
+                if (!canJoin || (linkThread != null && linkThread.IsAlive)
+                    || (tcpClient != null && tcpClient.Connected))
+                    return false;
+
+                canJoin = false;
+                onDisConnected = false;
+                linkThread = new Thread(() =>
                 {
-                    while (YgoServer.ServerRunning() && !joined)
+                    bool joined = false;
+                    try
                     {
-                        try
+                        if (local)
+                        {
+                            while (Program.Running && YgoServer.ServerRunning() && !joined)
+                            {
+                                joined = Join(ipString, name, portString, pswString, doWhenSuccess);
+                                if (!joined)
+                                    Thread.Sleep(100);
+                            }
+                        }
+                        else if (Program.Running)
                         {
                             joined = Join(ipString, name, portString, pswString, doWhenSuccess);
                         }
-                        catch (Exception ex)
-                        {
-                            Debug.LogException(ex);
-                            joined = false;
-                        }
-                        Thread.Sleep(100);
                     }
-                }
-                else
-                {
-                    Join(ipString, name, portString, pswString, doWhenSuccess);
-                }
-                canJoin = true;
-            });
-            linkThread.Start();
-            return true;
+                    catch (Exception ex)
+                    {
+                        Debug.LogException(ex);
+                    }
+                    finally
+                    {
+                        lock (locker)
+                            if (ReferenceEquals(linkThread, Thread.CurrentThread))
+                            {
+                                if (!joined)
+                                    onDisConnected = true;
+                                canJoin = true;
+                            }
+                    }
+                }) { IsBackground = true };
+                linkThread.Start();
+                return true;
+            }
         }
 
         private static bool Join(string ipString, string name, string portString, string pswString, Action doWhenSuccess)
         {
             Program.instance.room.duelEnded = false;
-
-            if (tcpClient != null && tcpClient.Connected)
-            {
-                onDisConnected = true;
-                return false;
-            }
-
+            TcpClient client = null;
             try
             {
-                Debug.LogFormat("Try Address: {0}, Port: {1}, Password: {2}", ipString, portString, pswString);
-
-                tcpClient = new TcpClientWithTimeout(ipString, int.Parse(portString), 3000).Connect();
-                networkStream = tcpClient.GetStream();
-                var t = new Thread(Receiver);
-                t.Start();
-                messageQueue.Clear();
+                Debug.LogFormat("Try Address: {0}, Port: {1}", ipString, portString);
+                client = new TcpClientWithTimeout(ipString, int.Parse(portString), 3000).Connect();
+                var stream = client.GetStream();
+                lock (datas)
+                {
+                    lock (locker)
+                    {
+                        if (!Program.Running || (tcpClient != null && tcpClient.Connected))
+                        {
+                            client.Close();
+                            return false;
+                        }
+                        // Publish one connection and discard packets left by an earlier session.
+                        tcpClient = client;
+                        networkStream = stream;
+                        messageQueue.Clear();
+                        datas.Clear();
+                        onDisConnected = false;
+                    }
+                }
+                var receiver = new Thread(() => Receiver(client, stream)) { IsBackground = true };
+                receiver.Start();
                 InitializeSender();
                 CtosMessage_ExternalAddress(ipString);
                 CtosMessage_PlayerInfo(name);
@@ -102,53 +124,101 @@ namespace MDPro3
                 OcgCore.mycardDuel = joinedAddress == MyCard.duelUrl;
                 doWhenSuccess?.Invoke();
 
-                Debug.LogFormat("Joind Address: {0}, Port: {1}, Password: {2}", joinedAddress, joinedPort, joinedPassword);
+                Debug.LogFormat("Joined Address: {0}, Port: {1}", joinedAddress, joinedPort);
                 return true;
             }
-            catch /*(Exception e)*/
+            catch (Exception ex)
             {
-                //MessageManager.messageFromSubString = "JoinError: " + e;
+                client?.Close();
+                if (client != null)
+                    MarkDisconnected(client);
+                Debug.LogException(ex);
                 return false;
             }
         }
 
         public static void InitializeSender()
         {
-            try
+            lock (locker)
             {
-                senderThread?.Abort();
-                senderThread = new Thread(Sender)
-                {
-                    IsBackground = true
-                };
+                var client = tcpClient;
+                var stream = networkStream;
+                if (client == null || stream == null)
+                    return;
+                if (senderThread != null && senderThread.IsAlive && ReferenceEquals(senderClient, client))
+                    return;
+
+                senderClient = client;
+                senderThread = new Thread(() => Sender(client, stream)) { IsBackground = true };
                 senderThread.Start();
-            }
-            catch
-            {
-                if (Program.instance.solo.showing)
-                    MessageManager.messageFromSubString = InterString.Get("The port is occupied. Please try modifying the port before attempting again. The port number should be greater than 0 and less than 65535.");
             }
         }
 
         public static void Receiver()
         {
+            var client = tcpClient;
+            var stream = networkStream;
+            if (client != null && stream != null)
+                Receiver(client, stream);
+        }
+
+        private static void Receiver(TcpClient client, NetworkStream stream)
+        {
             try
             {
-                while (tcpClient != null
-                    && networkStream != null
-                    && tcpClient.Connected
-                    && Program.Running
+                while (ReferenceEquals(tcpClient, client) && Program.Running
                     && !Program.instance.room.duelEnded)
                 {
-                    var data = SocketMaster.ReadPacket(networkStream);
-                    AddDateJumoLine(data);
+                    var data = SocketMaster.ReadPacket(stream);
+                    lock (datas)
+                        if (ReferenceEquals(tcpClient, client))
+                            datas.Add(data);
                 }
-                onDisConnected = true;
             }
-            catch
+            catch (IOException) { }
+            catch (SocketException) { }
+            catch (ObjectDisposedException) { }
+            catch (Exception ex)
             {
-                onDisConnected = true;
+                if (ReferenceEquals(tcpClient, client) && Program.Running)
+                    Debug.LogException(ex);
             }
+            finally
+            {
+                MarkDisconnected(client);
+            }
+        }
+
+        private static void MarkDisconnected(TcpClient client)
+        {
+            lock (locker)
+                if (ReferenceEquals(tcpClient, client))
+                    onDisConnected = true;
+        }
+
+        private static bool TryCloseConnection(TcpClient expectedClient, bool onlyIfDisconnected)
+        {
+            TcpClient client;
+            lock (datas)
+            {
+                lock (locker)
+                {
+                    // A delayed disconnect must not close a newer session or an
+                    // accepted connection attempt that has cleared the old flag.
+                    if (!ReferenceEquals(tcpClient, expectedClient)
+                        || (onlyIfDisconnected && (!onDisConnected || !canJoin)))
+                        return false;
+                    client = tcpClient;
+                    tcpClient = null;
+                    networkStream = null;
+                    messageQueue.Clear();
+                    datas.Clear();
+                    onDisConnected = false;
+                }
+            }
+            // Closing the socket wakes a blocked reader without Thread.Abort.
+            client?.Close();
+            return true;
         }
 
         public static void AddDateJumoLine(byte[] data)
@@ -257,22 +327,17 @@ namespace MDPro3
                     Monitor.Exit(datas);
                 }
 
-            if (onDisConnected)
+            TcpClient disconnectedClient;
+            lock (locker)
             {
-                if (tcpClient != null && tcpClient.Connected)
-                {
-                    try
-                    {
-                        tcpClient.Client.Shutdown(0);
-                        tcpClient.Close();
-                    }
-                    catch { }
-                }
-                onDisConnected = false;
-                tcpClient = null;
+                if (!onDisConnected || !canJoin)
+                    return;
+                disconnectedClient = tcpClient;
+            }
+            if (TryCloseConnection(disconnectedClient, true))
+            {
                 deck = null;
                 deckStrings.Clear();
-                canJoin = true;
                 if (Program.instance.ocgcore.showing)
                 {
                     Program.instance.room.duelEnded = true;
@@ -301,48 +366,47 @@ namespace MDPro3
             }
         }
 
-        private static void Sender()
+        private static void Sender(TcpClient client, NetworkStream stream)
         {
-            while (tcpClient != null && tcpClient.Connected)
+            while (ReferenceEquals(tcpClient, client) && Program.Running)
             {
-                senderThread.Join(100);
-                Package currentMessage;
+                Package currentMessage = null;
                 lock (locker)
                 {
-                    if (messageQueue.Count == 0)
-                    {
-                        continue;
-                    }
-                    currentMessage = messageQueue.Dequeue();
+                    if (!ReferenceEquals(tcpClient, client))
+                        return;
+                    if (messageQueue.Count != 0)
+                        currentMessage = messageQueue.Dequeue();
+                }
+                if (currentMessage == null)
+                {
+                    Thread.Sleep(10);
+                    continue;
                 }
                 try
                 {
                     var data = currentMessage.Data.Get();
+                    if (data.Length >= ushort.MaxValue)
+                        throw new InvalidDataException("The outgoing duel packet exceeds the protocol length limit.");
                     using (MemoryStream memstream = new MemoryStream())
                     {
                         using (BinaryWriter b = new BinaryWriter(memstream))
                         {
-                            b.Write(BitConverter.GetBytes((short)(data.Length + 1)), 0, 2);
-                            b.Write(BitConverter.GetBytes((byte)currentMessage.Function), 0, 1);
-                            b.Write(data, 0, data.Length);
+                            b.Write((ushort)(data.Length + 1));
+                            b.Write((byte)currentMessage.Function);
+                            b.Write(data);
                         }
-                        byte[] s = memstream.ToArray();
-                        try
-                        {
-                            tcpClient.Client.Send(s);
-                        }
-                        catch (SocketException ex)
-                        {
-                            Debug.LogError($"Failed to send data: {ex.Message}");
-                            onDisConnected = true;
-                            break;
-                        }
+                        byte[] packet = memstream.ToArray();
+                        // NetworkStream.Write sends the complete buffer, unlike Socket.Send.
+                        stream.Write(packet, 0, packet.Length);
                     }
                 }
-                catch
+                catch (Exception ex)
                 {
-                    onDisConnected = true;
-                    break;
+                    if (ReferenceEquals(tcpClient, client))
+                        Debug.LogError($"Failed to send data: {ex.Message}");
+                    MarkDisconnected(client);
+                    return;
                 }
             }
         }
@@ -754,21 +818,23 @@ namespace MDPro3
     {
         public static void WriteUnicode(this BinaryWriter writer, string text, int len)
         {
-            try
-            {
-                var unicode = Encoding.Unicode.GetBytes(text);
-                var result = new byte[len * 2];
-                for (var i = 0; i < result.Length; i++) result[i] = 204;
-                var max = len * 2 - 2;
-                Array.Copy(unicode, result, unicode.Length > max ? max : unicode.Length);
-                result[unicode.Length] = 0;
-                result[unicode.Length + 1] = 0;
-                writer.Write(result);
-            }
-            catch (Exception e)
-            {
-                Debug.Log(e);
-            }
+            if (len < 1)
+                throw new ArgumentOutOfRangeException(nameof(len));
+            text = text ?? string.Empty;
+            int terminator = text.IndexOf('\0');
+            if (terminator >= 0)
+                text = text.Substring(0, terminator);
+            int count = Math.Min(text.Length, len - 1);
+            if (count > 0 && count < text.Length && char.IsHighSurrogate(text[count - 1])
+                && char.IsLowSurrogate(text[count]))
+                count--;
+            var unicode = Encoding.Unicode.GetBytes(text.Substring(0, count));
+            var result = new byte[len * 2];
+            for (var i = 0; i < result.Length; i++) result[i] = 204;
+            Array.Copy(unicode, result, unicode.Length);
+            result[unicode.Length] = 0;
+            result[unicode.Length + 1] = 0;
+            writer.Write(result);
         }
 
         public static string ReadUnicode(this BinaryReader reader, int len)
@@ -943,12 +1009,9 @@ namespace MDPro3
             while (rlen < buf.Length)
             {
                 var currentLength = stream.Read(buf, rlen, buf.Length - rlen);
-                rlen += currentLength;
                 if (currentLength == 0)
-                {
-                    TcpHelper.onDisConnected = true;
-                    break;
-                }
+                    throw new EndOfStreamException("The duel connection closed before a complete packet arrived.");
+                rlen += currentLength;
             }
             return buf;
         }
@@ -957,6 +1020,8 @@ namespace MDPro3
         {
             var hdr = ReadFull(stream, 2);
             var plen = BitConverter.ToUInt16(hdr, 0);
+            if (plen == 0)
+                throw new InvalidDataException("An incoming duel packet cannot be empty.");
             var buf = ReadFull(stream, plen);
             return buf;
         }
@@ -967,9 +1032,7 @@ namespace MDPro3
         protected string _hostname;
         protected int _port;
         protected int _timeout_milliseconds;
-        protected bool connected;
         protected TcpClient connection;
-        protected Exception exception;
 
         public TcpClientWithTimeout(string hostname, int port, int timeout_milliseconds)
         {
@@ -980,58 +1043,30 @@ namespace MDPro3
 
         public TcpClient Connect()
         {
-            // kick off the thread that tries to connect
-            connected = false;
-            exception = null;
-            var thread = new Thread(BeginConnect);
-            thread.IsBackground = true; // Run as a background thread.
-                                        // Do not keep the process alive longer than necessary.
-            thread.Start();
-
-            // Wait for the configured timeout.
-            thread.Join(_timeout_milliseconds);
-
-            if (connected)
-            {
-                // Return the TcpClient if the connection succeeds.
-                thread.Abort();
-                return connection;
-            }
-
-            if (exception != null)
-            {
-                // Throw an error if the connection fails.
-                thread.Abort();
-                TcpHelper.onDisConnected = true;
-                throw exception;
-            }
-
-            // Also propagate connection errors.
-            thread.Abort();
-            var message = string.Format("TcpClient connection to {0}:{1} timed out",
-                _hostname, _port);
-            TcpHelper.onDisConnected = true;
-            throw new TimeoutException(message);
-        }
-
-        protected void BeginConnect()
-        {
+            var client = new TcpClient();
             try
             {
-                connection = new TcpClient(_hostname, _port);
-                // Mark success and return to the caller.
-                connected = true;
+                var pending = BeginConnect(client);
+                using (var signal = pending.AsyncWaitHandle)
+                {
+                    if (!signal.WaitOne(_timeout_milliseconds))
+                        throw new TimeoutException(string.Format("TcpClient connection to {0}:{1} timed out",
+                            _hostname, _port));
+                    client.EndConnect(pending);
+                }
+                connection = client;
+                return client;
             }
-            catch (Exception ex)
+            catch
             {
-                // Mark failure.
-                exception = ex;
+                client.Close();
+                throw;
             }
         }
 
-
-
+        protected virtual IAsyncResult BeginConnect(TcpClient client)
+        {
+            return client.BeginConnect(_hostname, _port, null, null);
+        }
     }
-
-
 }

@@ -1,0 +1,229 @@
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using MDPro3;
+using MDPro3.Net;
+using MDPro3.Servant;
+using UnityEngine;
+
+namespace UnityEngine
+{
+    public static class Time { public static float realtimeSinceStartup; }
+    public static class Debug { public static void LogError(object value) { Fixture.Errors++; } }
+}
+public static class UniTask
+{
+    public static Task Delay(int milliseconds)
+    {
+        Time.realtimeSinceStartup += milliseconds / 1000f;
+        Fixture.OnDelay?.Invoke();
+        return Task.CompletedTask;
+    }
+    public static Task WaitForSeconds(float seconds) => Delay((int)(seconds * 1000));
+}
+namespace MDPro3
+{
+    public static class Program
+    {
+        public static bool Running;
+        public static readonly FakeProgram instance = new FakeProgram();
+    }
+    public sealed class FakeProgram
+    {
+        public readonly FakeRoom room = new FakeRoom();
+        public readonly FakeSolo solo = new FakeSolo();
+    }
+    public sealed class FakeRoom { public object Handler = new object(); }
+    public sealed class FakeSolo { public void StartAIForHandTest(int port) { Fixture.Bots++; } }
+    public static class Config
+    {
+        public const string EMPTY_STRING = "";
+        public static string Get(string key, string fallback) => "Player";
+    }
+    public static class InterString { public static string Get(string text) => text; }
+    public static class MessageManager
+    {
+        public static void Cast(string text) { Fixture.Messages++; }
+        public static void Toast(string text) { Fixture.Messages++; }
+    }
+    public static class UIManager
+    {
+        public static void UIBlackIn(float time) { Fixture.BlackIn++; }
+        public static void UIBlackOut(float time) { Fixture.BlackOut++; }
+    }
+    public static class OcgCore { public static object handler; }
+    public static class BanlistManager { public static int GetIndexByName(string name) => 0; }
+}
+namespace MDPro3.Net
+{
+    public static class YgoServer
+    {
+        public static bool IsBusy, Reject, Running;
+        public static Thread serverThread;
+        public static int Starts, Stops;
+        public static bool TryStartServer(string args)
+        {
+            Starts++;
+            if (Reject) return false;
+            IsBusy = Running = true;
+            serverThread = new Thread(() => { });
+            return true;
+        }
+        public static bool ServerRunning() => Running;
+        public static void StopServer() { Stops++; IsBusy = Running = false; serverThread = null; }
+    }
+    public static class TcpHelper
+    {
+        public static bool canJoin, Accept, Complete;
+        public static Action Success;
+        public static int Joins;
+        public static readonly List<string> Packets = new List<string>();
+        public static bool IsPortAvailable(int port) => true;
+        public static bool LinkStart(string host, string name, string port, string password, bool local, Action success)
+        {
+            Joins++; Success = success;
+            if (Accept && Complete) success?.Invoke();
+            return Accept;
+        }
+        public static void CtosMessage_UpdateDeck(object deck) { Packets.Add("deck"); }
+        public static void CtosMessage_HsReady() { Packets.Add("ready"); }
+        public static void CtosMessage_HandResult(int result) { Packets.Add("hand"); }
+        public static void CtosMessage_TpResult(bool result) { Packets.Add("turn"); }
+    }
+}
+namespace MDPro3.Servant
+{
+    public static class RoomServant { public static bool FromSolo, FromLocalHost, FromHandTest; }
+    public sealed class HandTestSettings
+    {
+        public HandTestSettings Clone() => new HandTestSettings();
+        public static HandTestSettings Load() => new HandTestSettings();
+        public void Clamp() { }
+        public string BuildServerArgs(int port) => port + " -1 5 0 5 T T 8000 5 1 0 0";
+    }
+    public sealed class OnlineServant
+    {
+        private string GetPoolCodeByName(string name) => "5";
+        private string GetModeCodeByName(string name) => "0";
+        public void Launch() => CreateServer(new List<string> { "", "banlist", "pool", "mode", "T", "F", "180", "8000", "5", "1" });
+        @@LAN@@
+    }
+}
+namespace MDPro3.UI.ServantUI
+{
+    public sealed class FakeDeckView
+    {
+        public bool deckLoaded = true;
+        public object FromObjectDeckToCodedDeck() => new object();
+    }
+    public sealed class DeckEditorUI
+    {
+        public enum Condition { Edit, ChangeSide }
+        public Condition condition;
+        public bool DeckIsFromLocal = true;
+        public FakeDeckView DeckView = new FakeDeckView();
+        public bool TryLaunch() => TryStartHandTest(new HandTestSettings());
+        public Task Launch() => HandTestAsync(new HandTestSettings());
+        @@HAND@@
+    }
+}
+internal static class Fixture
+{
+    public static Action OnDelay;
+    public static int Bots, BlackIn, BlackOut, Messages, Errors, Passed;
+    private static void Require(bool value, string message) { if (!value) throw new Exception(message); }
+    private static void Reset()
+    {
+        Program.Running = true;
+        Time.realtimeSinceStartup = 0;
+        OnDelay = null;
+        Bots = BlackIn = BlackOut = Messages = Errors = 0;
+        YgoServer.IsBusy = YgoServer.Reject = YgoServer.Running = false;
+        YgoServer.Starts = YgoServer.Stops = 0; YgoServer.serverThread = null;
+        TcpHelper.canJoin = TcpHelper.Accept = TcpHelper.Complete = true;
+        TcpHelper.Success = null; TcpHelper.Joins = 0; TcpHelper.Packets.Clear();
+        RoomServant.FromSolo = RoomServant.FromHandTest = RoomServant.FromLocalHost = false;
+    }
+    private static void Case(string name, Action test)
+    {
+        Reset(); test(); Passed++; Console.WriteLine("PASS " + name);
+    }
+    private static void Main()
+    {
+        Case("LAN creates one server and retains a successful join", () => {
+            new OnlineServant().Launch();
+            Require(YgoServer.Starts == 1 && YgoServer.Stops == 0 && TcpHelper.Joins == 1 && RoomServant.FromLocalHost, "Successful LAN launch was lost");
+        });
+        Case("LAN rejects active/stopping servers without starting or joining", () => {
+            YgoServer.IsBusy = true; new OnlineServant().Launch();
+            Require(YgoServer.Starts == 0 && TcpHelper.Joins == 0, "Busy server was replaced");
+        });
+        Case("LAN rejected native start never joins", () => {
+            YgoServer.Reject = true; new OnlineServant().Launch();
+            Require(YgoServer.Starts == 1 && TcpHelper.Joins == 0, "Rejected LAN native start still joined");
+        });
+        Case("LAN rejected connection stops only its newly created server", () => {
+            TcpHelper.Accept = false; new OnlineServant().Launch();
+            Require(YgoServer.Stops == 1 && !RoomServant.FromLocalHost, "Rejected LAN join leaked a server");
+        });
+        Case("LAN connection timeout is bounded and releases its server", () => {
+            TcpHelper.Complete = false; new OnlineServant().Launch();
+            Require(Time.realtimeSinceStartup >= 10 && Time.realtimeSinceStartup < 10.2f && YgoServer.Stops == 1, "LAN connection wait was unbounded");
+        });
+        Case("LAN Play-stop exits pending join and releases server", () => {
+            TcpHelper.Complete = false; OnDelay = () => Program.Running = false; new OnlineServant().Launch();
+            Require(YgoServer.Stops == 1 && Messages == 0, "Stopped Play leaked LAN state or showed stale feedback");
+        });
+        Case("LAN stale monitor cannot stop or reset replacement session", () => {
+            TcpHelper.Complete = false;
+            OnDelay = () => { YgoServer.serverThread = new Thread(() => { }); RoomServant.FromLocalHost = true; };
+            new OnlineServant().Launch();
+            Require(YgoServer.Stops == 0 && RoomServant.FromLocalHost && Messages == 0, "Stale LAN monitor modified replacement session");
+        });
+        Case("Hand-test success keeps packet order and transfers server ownership", () => {
+            new MDPro3.UI.ServantUI.DeckEditorUI().Launch().GetAwaiter().GetResult();
+            Require(string.Join(",", TcpHelper.Packets) == "deck,ready,hand,turn" && Bots == 1 && YgoServer.Stops == 0, "Hand-test handshake changed");
+        });
+        Case("Hand-test entry rejects an active native server", () => {
+            YgoServer.IsBusy = true;
+            Require(!new MDPro3.UI.ServantUI.DeckEditorUI().TryLaunch() && YgoServer.Starts == 0, "Busy hand test started");
+        });
+        Case("Hand-test rejected native start creates no AI or transition", () => {
+            YgoServer.Reject = true; new MDPro3.UI.ServantUI.DeckEditorUI().Launch().GetAwaiter().GetResult();
+            Require(TcpHelper.Joins == 0 && Bots == 0 && BlackIn == 0, "Rejected native start touched hand-test UI");
+        });
+        Case("Hand-test rejected connection cleans transition and server", () => {
+            TcpHelper.Accept = false; new MDPro3.UI.ServantUI.DeckEditorUI().Launch().GetAwaiter().GetResult();
+            Require(YgoServer.Stops == 1 && BlackOut == 1 && !RoomServant.FromHandTest && TcpHelper.Packets.Count == 0, "Rejected hand test leaked state");
+        });
+        Case("Hand-test failed connection times out without sending gameplay", () => {
+            TcpHelper.Complete = false; new MDPro3.UI.ServantUI.DeckEditorUI().Launch().GetAwaiter().GetResult();
+            Require(Time.realtimeSinceStartup >= 10 && Time.realtimeSinceStartup < 10.6f && YgoServer.Stops == 1 && BlackOut == 1 && TcpHelper.Packets.Count == 0, "Hand-test timeout lost cleanup");
+        });
+        Case("Hand-test Play-stop before AI cleans server and black transition", () => {
+            OnDelay = () => Program.Running = false; new MDPro3.UI.ServantUI.DeckEditorUI().Launch().GetAwaiter().GetResult();
+            Require(YgoServer.Stops == 1 && BlackOut == 1 && Bots == 0 && Messages == 0, "Play-stop spawned AI or leaked transition");
+        });
+        Case("Hand-test native exit stops waiting before connection deadline", () => {
+            TcpHelper.Complete = false;
+            OnDelay = () => { if (TcpHelper.Joins > 0) YgoServer.Running = false; };
+            new MDPro3.UI.ServantUI.DeckEditorUI().Launch().GetAwaiter().GetResult();
+            Require(YgoServer.Stops == 1 && Time.realtimeSinceStartup < 1 && BlackOut == 1, "Native exit left hand-test wait active");
+        });
+        Case("Hand-test stale continuation cannot stop replacement or clear its UI", () => {
+            TcpHelper.Complete = false;
+            OnDelay = () => {
+                if (TcpHelper.Joins > 0) { YgoServer.serverThread = new Thread(() => { }); RoomServant.FromHandTest = true; }
+            };
+            new MDPro3.UI.ServantUI.DeckEditorUI().Launch().GetAwaiter().GetResult();
+            Require(YgoServer.Stops == 0 && BlackOut == 0 && RoomServant.FromHandTest && Messages == 0, "Stale hand-test monitor clobbered replacement");
+        });
+        Case("Hand-test stops sending after Play exits between handshake actions", () => {
+            OnDelay = () => { if (TcpHelper.Packets.Contains("ready")) Program.Running = false; };
+            new MDPro3.UI.ServantUI.DeckEditorUI().Launch().GetAwaiter().GetResult();
+            Require(string.Join(",", TcpHelper.Packets) == "deck,ready" && YgoServer.Stops == 1 && BlackOut == 1, "Late handshake packets sent after Play stopped");
+        });
+        Console.WriteLine("PASS: " + Passed + " production LAN/hand-test launch scenarios; controlled Unity timing, not Unity Play.");
+    }
+}

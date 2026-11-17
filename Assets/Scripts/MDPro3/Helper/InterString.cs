@@ -17,6 +17,7 @@ namespace MDPro3
         private static readonly Dictionary<string, string> translations = new();
         private static readonly Dictionary<string, string> englishTranslations = new();
         private static Dictionary<string, string> legacyKeys = new();
+        private static Dictionary<string, string> puzzleDisplayTexts = new();
         private static Dictionary<string, string> translationsForRender = new();
         private static Dictionary<string, string> translationsForPrerelease = new();
 
@@ -31,6 +32,7 @@ namespace MDPro3
             translationsForRender = new();
             translationsForPrerelease = new();
             legacyKeys = new();
+            puzzleDisplayTexts = new();
             string legacyPath = Path.Combine(Program.PATH_LOCALES, "legacy-ui-keys.json");
             try
             {
@@ -40,6 +42,17 @@ namespace MDPro3
             catch (Exception error) when (error is IOException || error is UnauthorizedAccessException || error is JsonException)
             {
                 UnityEngine.Debug.LogWarning("Legacy UI key compatibility data could not be loaded: " + error.Message);
+            }
+            string puzzleTextPath = Path.Combine(Program.PATH_LOCALES, "puzzle-display-text.json");
+            try
+            {
+                if (File.Exists(puzzleTextPath))
+                    puzzleDisplayTexts = JsonConvert.DeserializeObject<Dictionary<string, string>>(File.ReadAllText(puzzleTextPath))
+                        ?? new Dictionary<string, string>();
+            }
+            catch (Exception error) when (error is IOException || error is UnauthorizedAccessException || error is JsonException)
+            {
+                UnityEngine.Debug.LogWarning("Puzzle display compatibility data could not be loaded: " + error.Message);
             }
             ReadLanguage(Language.English, englishTranslations);
             path = ReadLanguage(Language.GetConfig(), translations);
@@ -108,6 +121,33 @@ namespace MDPro3
         }
 
         private static string Format(string text) => text.Replace(CONFIG_LINE_BREAK, Program.STRING_LINE_BREAK).Replace(STRING_EMPTY, string.Empty);
+
+        // Externally supplied display text is not a request to register a new UI
+        // key. Keep unrecognized server/player text unchanged and never write it
+        // into a locale file. Original Puzzle input maps live beside the locales.
+        public static string GetIfDefined(string original, int type = 0)
+        {
+            if (string.IsNullOrEmpty(original))
+                return original;
+
+            string key = CanonicalKey(original);
+            if (GetTranslations(type).TryGetValue(key, out string value))
+                return Format(value);
+
+            string language = type switch
+            {
+                1 => Language.GetCardConfig(),
+                2 => Language.GetPrereleaseConfig(),
+                _ => Language.GetConfig()
+            };
+            if (language == Language.SimplifiedChinese || language == Language.TraditionalChinese)
+                return original;
+
+            if ((puzzleDisplayTexts.TryGetValue(original, out value) || englishTranslations.TryGetValue(key, out value)) && value != null)
+                return Format(value);
+
+            return original;
+        }
 
         public static string Get(string original, string replace, int type = 0)
         {

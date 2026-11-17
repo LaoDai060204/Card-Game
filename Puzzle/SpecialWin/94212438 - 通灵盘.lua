@@ -1,0 +1,16 @@
+--created by assaultcore
+Debug.SetAIName("通灵盘")
+Debug.ReloadFieldBegin(DUEL_ATTACK_FIRST_TURN+DUEL_SIMPLE_AI,5)
+Debug.SetPlayerInfo(0,8000,0,0)
+Debug.SetPlayerInfo(1,8000,0,0)
+
+Debug.AddCard(94212438 ,0,0,LOCATION_SZONE,0,POS_FACEUP_ATTACK)
+Debug.AddCard(31893528 ,0,0,LOCATION_SZONE,1,POS_FACEUP_ATTACK)
+Debug.AddCard(67287533 ,0,0,LOCATION_SZONE,2,POS_FACEUP_ATTACK)
+Debug.AddCard(94772232 ,0,0,LOCATION_SZONE,3,POS_FACEUP_ATTACK)
+Debug.AddCard(40771118 ,0,0,LOCATION_SZONE,4,POS_FACEUP_ATTACK)
+Debug.AddCard(30170981 ,0,0,LOCATION_GRAVE,0,POS_FACEUP_ATTACK)
+
+Debug.ReloadFieldEnd()
+Debug.ShowHint("在这个回合取得胜利！")
+aux.BeginPuzzle()

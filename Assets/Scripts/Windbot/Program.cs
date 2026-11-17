@@ -12,24 +12,34 @@ namespace WindBot
 {
     public class Program
     {
-        internal static Random Rand;
+        [ThreadStatic] private static Random _rand;
+        internal static Random Rand => _rand ?? (_rand = new Random(Guid.NewGuid().GetHashCode()));
+        private static readonly object StartupConfigLock = new object();
 
         internal static void Main(string[] args)
         {
             Logger.WriteLine("WindBot starting...");
 
-            Config.Load(args);
-
-            string databasePath = Config.GetString("DbPath", "cards.cdb");
+            string databasePath;
+            bool serverMode;
+            int serverPort;
+            WindBotInfo info;
+            // Config is shared by the embedded room bots. Capture every option before
+            // another worker loads its arguments; database and duel work stay outside.
+            lock (StartupConfigLock)
+            {
+                Config.Load(args);
+                databasePath = Config.GetString("DbPath", "cards.cdb");
+                serverMode = Config.GetBool("ServerMode", false);
+                serverPort = serverMode ? Config.GetInt("ServerPort", 2399) : 0;
+                info = serverMode ? null : ReadBotInfo();
+            }
 
             InitDatas(databasePath);
-
-            bool serverMode = Config.GetBool("ServerMode", false);
 
             if (serverMode)
             {
                 // Run in server mode, provide a http interface to create bot.
-                int serverPort = Config.GetInt("ServerPort", 2399);
                 RunAsServer(serverPort);
             }
             else
@@ -41,40 +51,44 @@ namespace WindBot
                     Logger.WriteLine("No input found, tring to connect to localhost YGOPro host.");
                     Logger.WriteLine("If it fail, the program will quit sliently.");
                 }
-                RunFromArgs();
+                Run(info);
             }
         }
 
         public static void InitDatas(string databasePath)
         {
-            Rand = new Random();
             DecksManager.Init();
-            string absolutePath = Path.GetFullPath(databasePath);
-            //if (!File.Exists(absolutePath))
-            //    // In case windbot is placed in a folder under ygopro folder
-            //    absolutePath = Path.GetFullPath("../" + databasePath);
-            //if (!File.Exists(absolutePath))
-            //    // In case windbot is placed in a folder under ygopro2 folder
-            //    absolutePath = Path.GetFullPath("../cdb/" + databasePath);
-            absolutePath = Path.GetFullPath("Data/locales/" + MDPro3.Utility.Language.GetConfig() + "/" + databasePath);
+            string absolutePath = ResolveDatabasePath(databasePath);
             if (!File.Exists(absolutePath))
-            {
-                Logger.WriteErrorLine("Can't find cards database file.");
-                Logger.WriteErrorLine("Please place cards.cdb next to WindBot.exe or Bot.exe .");
-                Logger.WriteLine("Press any key to quit...");
-                Console.ReadKey();
-                System.Environment.Exit(1);
-            }
+                throw new FileNotFoundException("WindBot could not find its card database.", absolutePath);
+
             var paths = new System.Collections.Generic.List<string> { absolutePath };
             var zipCdbs = ResourceManager.GetAllCdbInZipPaths();
             if (zipCdbs != null)
                 paths.AddRange(zipCdbs);
-            foreach (var cdb in Directory.GetFiles(MDPro3.Program.PATH_EXPANSIONS, "*.cdb"))
-                paths.Add(cdb);
+            if (Directory.Exists(MDPro3.Program.PATH_EXPANSIONS))
+                foreach (var cdb in Directory.GetFiles(MDPro3.Program.PATH_EXPANSIONS, "*.cdb"))
+                    paths.Add(cdb);
             NamedCardsManager.InitForMulti(paths);
         }
 
-        private static void RunFromArgs()
+        internal static string ResolveDatabasePath(string databasePath)
+        {
+            if (string.IsNullOrWhiteSpace(databasePath))
+                databasePath = "cards.cdb";
+
+            // Keep an explicitly configured file, including a standalone bot's local database.
+            var configuredPath = Path.GetFullPath(databasePath);
+            if (Path.IsPathRooted(databasePath) || Path.GetFileName(databasePath) != databasePath
+                || File.Exists(configuredPath))
+                return configuredPath;
+
+            // The selected card database can use a different language from the interface.
+            return Path.GetFullPath(Path.Combine("Data", "locales",
+                MDPro3.Utility.Language.GetCardConfig(), databasePath));
+        }
+
+        private static WindBotInfo ReadBotInfo()
         {
             WindBotInfo Info = new WindBotInfo();
             Info.Name = Config.GetString("Name", Info.Name);
@@ -88,7 +102,7 @@ namespace WindBot
             Info.Hand = Config.GetInt("Hand", Info.Hand);
             Info.Debug = Config.GetBool("Debug", Info.Debug);
             Info.Chat = Config.GetBool("Chat", Info.Chat);
-            Run(Info);
+            return Info;
         }
 
         private static void RunAsServer(int ServerPort)

@@ -1,0 +1,149 @@
+{
+  "recordedDate": "2026-11-17",
+  "baselineBranch": "backup/2026-11-15-before-card-review-publication",
+  "baselineCommit": "2c7fd2ee7e5d2100eb85cccff7fb8418ec52439c",
+  "repairBranch": "fix/mdpro3-english-repair-20261117",
+  "checks": [
+    {
+      "name": "english-data",
+      "exitCode": 0,
+      "status": "PASS",
+      "seconds": 40.47
+    },
+    {
+      "name": "english-production",
+      "exitCode": 0,
+      "status": "PASS",
+      "seconds": 1.67
+    },
+    {
+      "name": "source-audit",
+      "exitCode": 0,
+      "status": "PASS",
+      "seconds": 3.74
+    },
+    {
+      "name": "all-source-syntax",
+      "exitCode": 0,
+      "status": "PASS",
+      "seconds": 5.89
+    },
+    {
+      "name": "cid-data",
+      "exitCode": 0,
+      "status": "PASS",
+      "seconds": 1.47
+    },
+    {
+      "name": "remote-images",
+      "exitCode": 0,
+      "status": "PASS",
+      "seconds": 1.37
+    },
+    {
+      "name": "windbot-handshake",
+      "exitCode": 0,
+      "status": "PASS",
+      "seconds": 3.24
+    },
+    {
+      "name": "windbot-startup",
+      "exitCode": 0,
+      "status": "PASS",
+      "seconds": 1.73
+    },
+    {
+      "name": "windbot-concurrency",
+      "exitCode": 0,
+      "status": "PASS",
+      "seconds": 1.72
+    },
+    {
+      "name": "solo-launch",
+      "exitCode": 0,
+      "status": "PASS",
+      "seconds": 1.62
+    },
+    {
+      "name": "local-server-callers",
+      "exitCode": 0,
+      "status": "PASS",
+      "seconds": 1.52
+    },
+    {
+      "name": "native-server",
+      "exitCode": 0,
+      "status": "PASS",
+      "seconds": 8.75
+    },
+    {
+      "name": "tcp-transport",
+      "exitCode": 0,
+      "status": "PASS",
+      "seconds": 1.93
+    },
+    {
+      "name": "puzzle-regression",
+      "exitCode": 0,
+      "status": "PASS",
+      "seconds": 1.82
+    },
+    {
+      "name": "puzzle-display",
+      "exitCode": 0,
+      "status": "PASS",
+      "seconds": 1.97
+    },
+    {
+      "name": "puzzle-data-lua",
+      "exitCode": 0,
+      "status": "PASS",
+      "seconds": 0.11
+    },
+    {
+      "name": "network-metadata",
+      "exitCode": 0,
+      "status": "PASS",
+      "seconds": 1.52
+    },
+    {
+      "name": "download-lifecycle",
+      "exitCode": 0,
+      "status": "PASS",
+      "seconds": 1.62
+    },
+    {
+      "name": "native-puzzle-diagnostic",
+      "exitCode": 1,
+      "status": "FAIL",
+      "seconds": 11.31
+    },
+    {
+      "name": "authored-whitespace",
+      "exitCode": 0,
+      "status": "PASS",
+      "seconds": 0.08,
+      "scope": "git diff --cached --check excluding byte-preserved upstream Puzzle/**"
+    }
+  ],
+  "nativePuzzleInitialization": {
+    "bundledCore": {
+      "passed": 97,
+      "failed": 2,
+      "skippedMissingCards": 5
+    },
+    "diagnosticSourceBuild": {
+      "passed": 98,
+      "failed": 1,
+      "skippedMissingCards": 5,
+      "minimumObservedGlibc": "2.38"
+    },
+    "scope": "Lua setup and initial card effects only; not puzzle solutions or Unity Play",
+    "shippedNativeBinariesChanged": false
+  },
+  "fullUnitySemanticCompilationTested": false,
+  "unityPlayTested": false,
+  "windowsPlayerBuildTested": false,
+  "liveOpenUPMRestore": "Blocked by cloud proxy CONNECT 403 for package.openupm.com",
+  "sourceAndOriginalDataPreserved": "Original CDBs, Lua scripts, runtime artwork/audio and Unity resource GUIDs are preserved. Native diagnostic failures are documented in PUZZLES.md."
+}

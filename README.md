@@ -4,7 +4,14 @@ A new version of YGOPro in Unity with MasterDuel Assets.
 
 Unity version: 6000.0.24f1
 
-This branch, `mdpro3-english`, restores the original **MDPro3 1.4.7** snapshot
+The recovered English project is on **`fix/mdpro3-english-repair-20261117`**.
+Its source is `backup/2026-11-15-before-card-review-publication` at
+`2c7fd2ee7`, the last MDPro3 English commit before
+`mdpro3-english` was changed into a Battle Spirits application. This tree keeps
+the Yu-Gi-Oh! game and repairs its startup, connection, download and Puzzle paths.
+See [recovery and verification](ENGLISH_REPAIR.md) for commands and limitations.
+
+The original English restoration uses the **MDPro3 1.4.7** snapshot
 from before Vietnamese localization. UI, card and prerelease languages default
 to English. Known URP/texture compatibility settings are retained; optimization
 and a new Battle Spirits conversion are deferred. See [restore notes](RESTORE_ENGLISH.md)
