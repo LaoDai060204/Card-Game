@@ -1076,69 +1076,78 @@ internal static class Entry
                 session.Disconnect();Assert(texture.released&&field.IsDisposed&&image.texture==null,"Field render target not cleaned.");
                 session.AttachField(image);Assert(go.GetComponents<BattleFieldVisuals>().Any(value=>!value.IsDisposed&&value.IsLoaded),"Cached native form cannot create next field.");
             });
-            Case("Summon presentation uses the exact card face and matching illustration once",()=>{
+            Case("Native summons preserve inspection and action access without allocating an overlay",()=>{
                 fake.View=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);
-                var screen=Screen(BattleNativeScreen.Duel);var presentation=screen.GetComponentInChildren<BattleSummonPresentation>(true);
+                var screen=Screen(BattleNativeScreen.Duel);int objects=GameObject.All.Count,requests=fake.RequestedArt.Count;
                 string id=catalog.cards.First(card=>card.IsPlayableFor(BattleRulesFormat.Standard)).id;
-                var action=new PublicBattleEvent{kind="Summoned",actor=0,spiritId=101,cardId=id};fake.Emit(action);
-                Assert(presentation.IsPlaying&&fake.IsPresentationBusy&&!fake.CanSendCommands,"Presentation did not hold local controls.");
-                var face=Field<RawImage>(presentation,"cardArt");var illustration=Field<RawImage>(presentation,"illustrationArt");
-                Assert(face.texture==fake.ArtTextures[id]&&illustration.texture==face.texture,"Summon substituted a different card/artwork.");
-                var crop=BattleFieldVisuals.GetIllustrationUv(id);Assert(illustration.uvRect.x==crop.x&&illustration.uvRect.y==crop.y&&illustration.uvRect.width==crop.width&&illustration.uvRect.height==crop.height,"Illustration included the wrong printed region.");
-                fake.Emit(action);fake.Refresh();Assert(presentation.PendingCount==0,"Duplicate event/status redraw queued a second summon.");
-                TickPresentation(0.25f);TickPresentation(0.25f);
-                float expected=face.texture.width*crop.width/(face.texture.height*crop.height);
-                Assert(Math.Abs(illustration.GetComponent<AspectRatioFitter>().aspectRatio-expected)<0.00001f,"Illustration is stretched to the full-card aspect.");
-                for(int frame=0;frame<10;frame++)TickPresentation(0.25f);
-                Assert(!presentation.IsPlaying&&!fake.IsPresentationBusy&&fake.CanSendCommands,"Summon did not release local controls.");
-                Assert(GameObject.All.Count(go=>!go.destroyed&&go.GetComponent<Canvas>()!=null)==1,"Summon created another Canvas.");
+                var action=new PublicBattleEvent{kind="Summoned",actor=0,spiritId=101,cardId=id};fake.Emit(action);fake.Emit(action);
+                fake.Emit(new PublicBattleEvent{kind="NexusPlaced",actor=1,spiritId=102,cardId=id});
+                for(int frame=0;frame<12;frame++)TickPresentation(.25f);
+                Assert(screen.GetComponentInChildren<BattleSummonPresentation>(true)==null&&Find(screen.transform,"BS_SummonPresentation")==null,
+                    "Ordinary summons still attach a presenter or full-screen input curtain.");
+                Assert(!fake.IsPresentationBusy&&fake.CanSendCommands&&fake.Commands.Count==0,
+                    "A public summon disables local actions or sends a gameplay command.");
+                Assert(GameObject.All.Count==objects&&fake.RequestedArt.Count==requests&&fake.RevealedModels.Count==0,
+                    "A public summon allocates visual effects, requests duplicate art or delays a character reveal.");
+                Click(screen.transform,"BS_Hand/BS_Card_"+fake.View.ownHand[0]);Click(screen.transform,"BS_InspectZoom");
+                Assert(Find(screen.transform,"BS_CardZoom").gameObject.activeSelf,"A summon prevents the existing card inspection and zoom actions.");
+                Assert(GameObject.All.Count(go=>!go.destroyed&&go.GetComponent<Canvas>()!=null)==1,"A summon created another Canvas.");
             });
-            Case("Summon queue is bounded and never issues gameplay commands",()=>{
+            Case("Legacy summon presenter remains inert for event bursts and repeated cleanup",()=>{
                 fake.View=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);
-                var screen=Screen(BattleNativeScreen.Duel);var presentation=screen.GetComponentInChildren<BattleSummonPresentation>(true);
+                var owner=new GameObject("LegacySummonPresenter",typeof(RectTransform));var presentation=owner.AddComponent<BattleSummonPresentation>();
+                int objects=GameObject.All.Count,requests=fake.RequestedArt.Count;string state=JsonConvert.SerializeObject(fake.View);
+                presentation.Configure(fake);
                 string id=catalog.cards.First(card=>card.IsPlayableFor(BattleRulesFormat.Standard)).id;
-                fake.Emit(new PublicBattleEvent{kind="GameWon",cardId=id});fake.Emit(new PublicBattleEvent{kind="Summoned",cardId="unknown-id"});Assert(!presentation.IsPlaying,"Non-summon or unknown card started a presentation.");
-                for(int index=1;index<=20;index++)fake.Emit(new PublicBattleEvent{kind="Summoned",actor=index%2,spiritId=index,cardId=id});
-                Assert(presentation.IsPlaying&&presentation.PendingCount<=4,"A burst of network events grew an unbounded queue.");
-                for(int frame=0;frame<60;frame++)TickPresentation(0.25f);
-                Assert(!presentation.IsPlaying&&presentation.PendingCount==0&&!fake.IsPresentationBusy,"A bounded queue could not drain.");
-                Assert(fake.Commands.Count==0,"Visual queue sent a rules/network action.");
+                foreach(string kind in new[]{"Summoned","NexusPlaced","GameWon"})
+                    for(int index=1;index<=20;index++)presentation.Enqueue(new PublicBattleEvent{kind=kind,actor=index%2,spiritId=index,cardId=id});
+                foreach(float delta in new[]{0f,.25f,-1f,float.NaN,float.PositiveInfinity})presentation.Tick(delta);
+                Assert(!presentation.IsPlaying&&presentation.PendingCount==0&&!fake.IsPresentationBusy&&fake.CanSendCommands,
+                    "A retained component queues effects or creates a fake busy interval.");
+                Assert(GameObject.All.Count==objects&&owner.transform.children.Count==0&&fake.RequestedArt.Count==requests&&fake.RevealedModels.Count==0,
+                    "The compatibility presenter creates UI, reloads art or defers an already-visible standee.");
+                presentation.Clear();presentation.Dispose();presentation.Dispose();presentation.Configure(fake);presentation.Enqueue(null);
+                Assert(JsonConvert.SerializeObject(fake.View)==state&&fake.Commands.Count==0&&!fake.IsPresentationBusy,
+                    "Legacy presenter cleanup changes public match state or command authority.");
             });
-            Case("Actual received summon snapshot emits once while status rerenders remain silent",()=>{
+            Case("Actual received summon snapshots keep public events without holding local presentation",()=>{
                 var match=SummonedFixture(out _,out _,out _);var session=BattleNativeSession.Ensure();int count=0;
                 session.PresentationEvent+=item=>{if(item.kind=="Summoned")count++;};
                 var snapshot=ViewFactory.Create(match,0);Call(session,"Receive",new WireMessage{type="state",rulesFormat="Standard",view=snapshot});
-                var presentation=program.currentServant.servantUI.GetComponentInChildren<BattleSummonPresentation>(true);
-                Assert(count==1&&presentation.IsPlaying&&session.IsPresentationBusy,"Actual network snapshot did not forward its summon.");
-                Call(session,"Notify");Call(session,"Notify");Assert(count==1&&presentation.PendingCount==0,"Status-only notifications replayed the previous summon.");
-                string id=snapshot.events.Single(item=>item.kind=="Summoned").cardId;
-                Pump(()=>Field<RawImage>(presentation,"cardArt").texture!=null&&Field<RawImage>(presentation,"cardArt").texture!=Texture2D.blackTexture);
-                Assert(Field<RawImage>(presentation,"cardArt").texture==Field<Dictionary<string,Texture2D>>(session,"textures")[id],"Actual session loaded a different face for its summon.");
-                presentation.Clear();Assert(!session.IsPresentationBusy,"Actual session retained busy state after clearing presentation.");
+                var screen=program.currentServant.servantUI;
+                Assert(count==1&&!session.IsPresentationBusy&&screen.GetComponentInChildren<BattleSummonPresentation>(true)==null,
+                    "An accepted network summon was lost or reintroduced a blocking cinematic.");
+                Call(session,"Notify");Call(session,"Notify");
+                Assert(count==1&&!session.IsPresentationBusy&&Find(screen.transform,"BS_SummonPresentation")==null,
+                    "Status-only notifications replay a summon or create an overlay.");
+                Assert(snapshot.players.SelectMany(player=>player.field).All(spirit=>Find(screen.transform,"BS_FieldCard_"+spirit.instanceId)!=null),
+                    "Accepted summons wait for a cinematic before their actual field target exists.");
             });
-            Case("Replay seeking is silent and stepping forward presents its accepted summon once",()=>{
+            Case("Replay seeking and accepted forward summons remain free of presentation delays",()=>{
                 SummonedFixture(out int seed,out DeckDefinition[] decks,out List<FixtureAction> actions);
                 var session=BattleNativeSession.Ensure();int count=0;session.PresentationEvent+=item=>{if(item.kind=="Summoned")count++;};
                 string path=Path.Combine(temporary,"summoned-fixture-replay.json");
                 File.WriteAllText(path,JsonConvert.SerializeObject(new{schema=Protocol.Version,catalogHash=CatalogFingerprint.Compute(catalog.cards),rulesFormat="Standard",seed,names=new[]{"Fixture0","Fixture1"},decks,actions}));
-                session.LoadReplay(path,actions.Count);var presentation=program.currentServant.servantUI.GetComponentInChildren<BattleSummonPresentation>(true);
-                Assert(session.IsReplay&&count==0&&!presentation.IsPlaying,"Seeking to an old summon started a new cinematic.");
+                session.LoadReplay(path,actions.Count);var screen=program.currentServant.servantUI;
+                Assert(session.IsReplay&&count==0&&!session.IsPresentationBusy,"Seeking to an old summon starts a presentation delay.");
                 session.StepReplay(-1);Assert(count==0,"Backward seek replayed an old summon.");session.StepReplay(1);
-                Assert(count==1&&presentation.IsPlaying&&!session.CanSendCommands,"Forward replay either lost its summon or obtained live gameplay authority.");
-                session.Disconnect();Assert(!presentation.IsPlaying&&!session.IsPresentationBusy,"Leaving replay retained queued presentation.");
+                Assert(count==1&&!session.IsPresentationBusy&&!session.CanSendCommands,
+                    "Forward replay loses its accepted summon, starts a delay or obtains live gameplay authority.");
+                Assert(screen.GetComponentInChildren<BattleSummonPresentation>(true)==null&&Find(screen.transform,"BS_SummonPresentation")==null,
+                    "Replay still attaches the removed summon overlay.");
+                session.Disconnect();Assert(!session.IsPresentationBusy,"Leaving replay retains presentation ownership.");
             });
-            Case("Missing artwork, skip, hiding and disconnect release summon ownership",()=>{
-                fake.View=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);
-                fake.MissingArtwork=true;var screen=Screen(BattleNativeScreen.Duel);var presentation=screen.GetComponentInChildren<BattleSummonPresentation>(true);
+            Case("Missing artwork and native form lifecycle never hold summon controls",()=>{
+                fake.View=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);fake.MissingArtwork=true;
+                var screen=Screen(BattleNativeScreen.Duel);int requests=fake.RequestedArt.Count;
                 string id=catalog.cards.First(card=>card.IsPlayableFor(BattleRulesFormat.Standard)).id;
-                var action=new PublicBattleEvent{kind="Summoned",actor=0,spiritId=9,cardId=id};fake.Emit(action);TickPresentation(0.25f);
-                Assert(Field<RawImage>(presentation,"cardArt").color.a==0,"Black loading sentinel was presented as card art.");
-                for(int frame=0;frame<8;frame++)TickPresentation(0.25f);
-                Assert(!presentation.IsPlaying&&!fake.IsPresentationBusy,"Missing artwork held the UI indefinitely.");
-                fake.MissingArtwork=false;fake.Emit(action);Click(screen.transform,"BS_SummonPresentation/BS_SkipSummon");Assert(!presentation.IsPlaying&&fake.CanSendCommands,"Skip did not release controls.");
-                fake.Emit(action);screen.gameObject.SetActive(false);Assert(!presentation.IsPlaying&&!fake.IsPresentationBusy,"Hiding the native form retained summon ownership.");
-                screen.gameObject.SetActive(true);fake.Emit(action);fake.Disconnect();Assert(!presentation.IsPlaying&&!fake.IsPresentationBusy,"Disconnected room retained a summon.");
-                var borrowed=fake.ArtTextures[id];presentation.Dispose();Assert(borrowed!=null,"Disposing a presentation destroyed cached artwork.");
+                var action=new PublicBattleEvent{kind="Summoned",actor=0,spiritId=9,cardId=id};
+                fake.Emit(action);TickPresentation(.25f);
+                Assert(!fake.IsPresentationBusy&&fake.CanSendCommands&&fake.RequestedArt.Count==requests,
+                    "Missing art starts a black summon overlay, artwork wait or busy interval.");
+                screen.gameObject.SetActive(false);fake.Emit(action);screen.gameObject.SetActive(true);fake.Emit(action);fake.Disconnect();
+                Assert(!fake.IsPresentationBusy&&screen.GetComponentInChildren<BattleSummonPresentation>(true)==null,
+                    "Hiding, reopening or disconnecting the native form revives summon effects.");
             });
             Case("Field card and floating illustration share each public card's own artwork",()=>{
                 var output=new GameObject("CardField",typeof(RectTransform)).AddComponent<RawImage>();var field=output.gameObject.AddComponent<BattleFieldVisuals>();
@@ -1158,15 +1167,12 @@ internal static class Entry
                 }
                 Assert(fake.RequestedArt.SequenceEqual(ids.Take(2)),"Field requested a hand/private card rather than public units.");
             });
-            Case("Field skin uses six proper color symbols and public deck backs without private card requests",()=>{
+            Case("Field leaves the center clear and uses public deck backs without private card requests",()=>{
                 var output=new GameObject("SkinnedField",typeof(RectTransform)).AddComponent<RawImage>();var field=output.gameObject.AddComponent<BattleFieldVisuals>();field.SetArtworkProvider(fake.LoadArt);field.Load(output);
                 var snapshot=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);field.Render(snapshot);
                 var stage=Field<GameObject>(field,"stage");
-                foreach(CardColor color in Enum.GetValues(typeof(CardColor)))
-                {
-                    var symbol=stage.GetComponentsInChildren<MeshRenderer>(true).Single(renderer=>renderer.name=="ColorSymbol_"+color);
-                    Assert(symbol.sharedMaterial.mainTexture==Resources.Load<Texture2D>("BattleSpirits/Skin/Color"+color),"Field color symbol has another color's artwork: "+color);
-                }
+                Assert(!stage.GetComponentsInChildren<MeshRenderer>(true).Any(renderer=>renderer.name.StartsWith("ColorSymbol",StringComparison.Ordinal)),
+                    "Decorative colored gem symbols remain across the center of the field.");
                 var backs=stage.GetComponentsInChildren<MeshRenderer>(true).Where(renderer=>renderer.name=="DeckCardBack").ToArray();
                 Assert(backs.Length==2&&backs.All(renderer=>renderer.sharedMaterial.mainTexture==BattleTheme.CardBack),"Decks expose a face or lack the Battle Spirits back.");
                 Assert(backs.All(renderer=>Math.Abs(renderer.transform.localScale.z-1.2f*BattleTheme.CardBack.height/BattleTheme.CardBack.width)<0.00001f),"Deck back artwork has a stretched aspect.");
@@ -1186,7 +1192,7 @@ internal static class Entry
                 Assert(ownedMaterials.All(material=>material==null)&&ownedMeshes.All(mesh=>mesh==null),"Field-owned style resources leaked after disposal.");
                 Assert(back!=null&&mat!=null&&BattleTheme.CardBack==back&&BattleTheme.PlaymatStandard==mat,"Closing a field destroyed shared Resources artwork.");
             });
-            Case("Life, Reserve, Trash and Spirit Cores display camera-facing blue and red gem artwork",()=>{
+            Case("Life, Reserve, Trash and Spirit Cores use the supplied normal and Soul artwork",()=>{
                 var output=new GameObject("CoreGemField",typeof(RectTransform)).AddComponent<RawImage>();
                 var field=output.gameObject.AddComponent<BattleFieldVisuals>();field.SetArtworkProvider(fake.LoadArt);field.Load(output);
                 var snapshot=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);
@@ -1199,7 +1205,12 @@ internal static class Entry
                 var stage=Field<GameObject>(field,"stage");var normal=Field<Material>(field,"normalGemMaterial");var soul=Field<Material>(field,"soulGemMaterial");
                 var gems=stage.GetComponentsInChildren<MeshRenderer>(true).Where(item=>new[]{"Core","SoulCore","SpiritCore","SpiritSoulCore"}.Contains(item.name)).ToArray();
                 Assert(gems.Count(item=>item.name=="Core"||item.name=="SpiritCore")==22&&gems.Count(item=>item.name=="SoulCore"||item.name=="SpiritSoulCore")==2,"Gem rendering changed public Core quantities.");
-                Assert(normal.mainTexture==BattleTheme.ColorIcon(CardColor.Blue)&&soul.mainTexture==BattleTheme.ColorIcon(CardColor.Red),"Default Core and Soul use chips or another card color instead of the provided gem artwork.");
+                Assert(normal.mainTexture==BattleTheme.CoreNormal&&normal.mainTexture==Resources.Load<Texture2D>("BattleSpirits/Skin/CoreNormal")
+                    &&soul.mainTexture==BattleTheme.SoulCore&&soul.mainTexture==Resources.Load<Texture2D>("BattleSpirits/Skin/SoulCore"),
+                    "Resource markers do not use the supplied blue flat hexagon and silver/red Soul pentagon.");
+                var symbols=Enum.GetValues(typeof(CardColor)).Cast<CardColor>().Select(BattleTheme.ColorIcon).ToArray();
+                Assert(symbols.All(symbol=>symbol!=normal.mainTexture&&symbol!=soul.mainTexture),
+                    "A card color symbol is being reused as an actual gameplay Core resource.");
                 var mesh=Field<Mesh>(field,"skinQuad");var camera=Field<Camera>(field,"camera");
                 foreach(var gem in gems)
                 {
@@ -1212,7 +1223,7 @@ internal static class Entry
                 }
                 Assert(JsonConvert.SerializeObject(snapshot)==before,"Displaying gems mutated public match data.");
             });
-            Case("Core skins change only normal gem artwork while Soul and match state remain unchanged",()=>{
+            Case("Legacy colored Core settings preserve the supplied resource artwork and public state",()=>{
                 var output=new GameObject("CosmeticCoreField",typeof(RectTransform)).AddComponent<RawImage>();
                 var field=output.gameObject.AddComponent<BattleFieldVisuals>();field.SetArtworkProvider(fake.LoadArt);field.Load(output);
                 var snapshot=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);field.Render(snapshot);
@@ -1222,14 +1233,15 @@ internal static class Entry
                 foreach(string name in new[]{"Blue","Purple","Green","Yellow","White","purple","Red","not-a-skin",""})
                 {
                     MDPro3.Config.Set(BattleTheme.CoreSkinConfig,name);Call(field,"Update");field.Render(snapshot);
-                    string canonical=BattleTheme.NormalizeCoreSkin(name);
-                    Assert(normal.mainTexture==Resources.Load<Texture2D>("BattleSpirits/Skin/Color"+canonical),"Cosmetic Core selection did not update existing markers.");
-                    Assert(soul.mainTexture==soulTexture&&soulTexture==BattleTheme.ColorIcon(CardColor.Red),"Changing ordinary Core skin recolored the unique Soul Core.");
+                    Assert(normal.mainTexture==BattleTheme.CoreNormal&&BattleTheme.CoreGem(name)==BattleTheme.CoreNormal,
+                        "A legacy color preference replaces actual normal Core artwork with a card symbol.");
+                    Assert(soul.mainTexture==soulTexture&&soulTexture==BattleTheme.SoulCore,"A legacy color preference replaces actual Soul Core artwork.");
                     Assert(materials.Count==materialCount&&meshes.Count==meshCount,"Changing Core appearance allocated unbounded field resources.");
                     Assert(JsonConvert.SerializeObject(snapshot)==state&&fake.Commands.Count==0,"A local skin setting changed match state or sent a command.");
                 }
-                Assert(BattleTheme.NormalizeCoreSkin("Red")=="Blue"&&BattleTheme.NormalizeCoreSkin(null)=="Blue","Invalid/default ordinary Core style can impersonate the red Soul Core.");
-                var owned=materials.ToArray();var blue=BattleTheme.ColorIcon(CardColor.Blue);field.Dispose();
+                Assert(BattleTheme.NormalizeCoreSkin("Purple")==BattleTheme.DefaultCoreSkin&&BattleTheme.NormalizeCoreSkin(null)==BattleTheme.DefaultCoreSkin,
+                    "A retired colored resource style remains selectable through the compatibility API.");
+                var owned=materials.ToArray();var blue=BattleTheme.CoreNormal;field.Dispose();
                 Assert(owned.All(item=>item==null)&&Field<Material>(field,"normalGemMaterial")==null&&Field<Material>(field,"soulGemMaterial")==null,"Core material ownership leaked on field disposal.");
                 Assert(blue!=null&&soulTexture!=null,"Disposing Core markers destroyed shared source gem images.");
             });
@@ -1416,8 +1428,8 @@ internal static class Entry
                 MDPro3.Config.Set(BattleTheme.StandeeModeConfig,"1");Call(field,"Update");
                 Assert(standee.Visible&&standee.template.mesh==mesh&&GameObject.All.Count==objects&&fake.RequestedArt.Count==requests&&fake.RequestedStandees.Count==cutoutRequests
                     &&JsonConvert.SerializeObject(snapshot)==state,"A cosmetic mode recreated geometry, reloaded artwork or changed public state.");
-                Assert(field.RevealSpiritModel(501),"An active paper character cannot reveal after the card cinematic.");var floor=Field<Transform>(figure,"card");var scale=floor.localScale;
-                Call(field,"Update");Assert(floor.localScale.x==scale.x&&floor.localScale.y==scale.y,"Standee reveal shrank or lifted the already-landed printed card.");
+                Assert(field.RevealSpiritModel(501),"An active paper character cannot refresh its visible presentation.");var floor=Field<Transform>(figure,"card");var scale=floor.localScale;
+                Call(field,"Update");Assert(floor.localScale.x==scale.x&&floor.localScale.y==scale.y,"Refreshing a standee shrank or lifted its printed card.");
                 field.Dispose();Assert(mesh==null&&borrowed!=null,"Field disposal leaked owned paper geometry or destroyed borrowed cutout artwork.");
             });
             Case("Cutout loading is independent from floor art and missing paper stays a printed card",()=>{
@@ -1462,15 +1474,37 @@ internal static class Entry
                 Assert(sizes[0]<sizes[1]&&sizes[1]<sizes[2],"Quality choices do nothing on a normal-sized window below all caps.");
                 field.Dispose();
             });
-            Case("Cinematic card landing uses the screen-mapped field rectangle and reveals a model only once",()=>{
-                fake.View=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);var screen=Screen(BattleNativeScreen.Duel);
-                string id=BattleSpiritModelLibrary.SupportedIds[0];fake.Bounds[701]=new Rect(.2f,.3f,.1f,.1f);fake.ScreenBounds[701]=new Rect(.392f,.396f,.076f,.072f);
-                var e=new PublicBattleEvent{kind="Summoned",actor=0,spiritId=701,cardId=id};fake.Emit(e);fake.Emit(e);
-                for(int i=0;i<7;i++)TickPresentation(.25f);var presenter=Field<BattleSummonPresentation>(Field<BattleNativeDuelView>(screen,"duel"),"summonPresentation");
-                var slot=Field<RectTransform>(presenter,"cardSlot");float landing=BattleSummonMotion.Sample(1.75f).landing;
-                float x=.31f+(.392f+.076f*.5f-.31f)*landing;float y=.53f+(.396f+.072f*.5f-.53f)*landing;
-                Assert(Math.Abs((slot.anchorMin.x+slot.anchorMax.x)*.5f-x)<.0001f&&Math.Abs((slot.anchorMin.y+slot.anchorMax.y)*.5f-y)<.0001f,"Card cinematic lands in field-local coordinates rather than the visible root.");
-                for(int i=0;i<5;i++)TickPresentation(.25f);Assert(fake.RevealedModels.SequenceEqual(new[]{701})&&fake.Commands.Count==0,"Model reveal duplicates public events or issues a gameplay command.");
+            Case("New field cards and paper characters appear immediately while gameplay event motion remains",()=>{
+                var output=new GameObject("ImmediateSummonField",typeof(RectTransform)).AddComponent<RawImage>();
+                var field=output.gameObject.AddComponent<BattleFieldVisuals>();field.SetArtworkProvider(fake.LoadArt);field.SetStandeeProvider(fake.LoadStandee);field.SetCatalog(catalog.cards);field.Load(output);
+                const string id="26RBS01-064";string nexusId=catalog.cards.First(card=>card.type=="Nexus").id;
+                var snapshot=ViewFactory.Create(BattleMatch.CreateDefault(catalog.cards,format:BattleRulesFormat.Standard),0);
+                snapshot.players[0].field=new[]{new SpiritView{instanceId=701,cardId=id,normalCores=1,soulCore=true},new SpiritView{instanceId=702,cardId=nexusId}};
+                string state=JsonConvert.SerializeObject(snapshot);field.Render(snapshot);
+                var units=(System.Collections.IDictionary)Field<object>(field,"units");
+                foreach(int instance in new[]{701,702})
+                {
+                    var unit=units[instance];var figure=Field<BattleCardFigure>(unit,"figure");var card=Field<Transform>(figure,"card");var floor=Field<Transform>(figure,"floorPivot");
+                    Assert(Field<BattleVisualPose>(unit,"pose")==BattleVisualPose.Idle&&Field<Renderer>(figure,"cardRenderer").enabled,
+                        "An accepted public card still waits in a summon pose before appearing.");
+                    Assert(Math.Abs(card.localScale.x-BattleCardFigure.CardWidth)<.0001f&&Math.Abs(card.localScale.y-BattleCardFigure.CardHeight)<.0001f
+                        &&Math.Abs(floor.localPosition.y-.04f)<.0001f,"A newly placed card starts small or suspended above the table.");
+                    field.PlayEvent(new PublicBattleEvent{kind=instance==701?"Summoned":"NexusPlaced",actor=0,spiritId=instance,cardId=instance==701?id:nexusId});
+                    Assert(Field<BattleVisualPose>(unit,"pose")==BattleVisualPose.Idle,"A public summon event restarts transient field motion.");
+                    Assert(!figure.root.GetComponentsInChildren<Transform>(true).Any(node=>node.name=="SummonHalo"),"A colored summon ring remains on a field figure.");
+                }
+                var spirit=Field<BattleCardFigure>(units[701],"figure");var standee=Field<BattleCharacterStandee>(spirit,"standee");
+                Assert(standee!=null&&standee.Visible&&Math.Abs(standee.root.transform.localScale.x-1)<.0001f,
+                    "A mapped paper character is hidden or collapsed until a cinematic reveal.");
+                var shadow=Field<Material>(spirit,"shadowMaterial");
+                Assert(shadow.Floats["_Ring"]==0&&shadow.Floats["_Shadow"]==1&&shadow.Floats["_Glow"]==0,
+                    "The retained character shadow still renders a colored ring or glow.");
+                field.PlayEvent(new PublicBattleEvent{kind="Attacked",actor=0,spiritId=701,cardId=id});
+                Assert(Field<BattleVisualPose>(units[701],"pose")==BattleVisualPose.Attack,"Removing summon effects also removed gameplay attack feedback.");
+                field.PlayEvent(new PublicBattleEvent{kind="Blocked",actor=0,spiritId=701,cardId=id});
+                Assert(Field<BattleVisualPose>(units[701],"pose")==BattleVisualPose.Block,"Removing summon effects also removed gameplay block feedback.");
+                Assert(JsonConvert.SerializeObject(snapshot)==state&&fake.Commands.Count==0,"Immediate card presentation changes public state or sends gameplay commands.");
+                field.Dispose();
             });
             Case("Actual session maps viewport through its field anchors and model reveal does not alter the snapshot",()=>{
                 var session=BattleNativeSession.Ensure();var output=new GameObject("CinematicMappedField",typeof(RectTransform)).AddComponent<RawImage>();

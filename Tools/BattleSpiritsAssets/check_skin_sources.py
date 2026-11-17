@@ -57,6 +57,10 @@ def verify():
         for setting in ("textureType: 0", "maxTextureSize: 2048", "textureCompression: 0", "enableMipMap: 0"):
             assert setting in metadata, relative + ": " + setting
         assert item["sourceUrl"].startswith("https://")
+        if item.get("userReferencePath"):
+            reference = (ROOT / item["userReferencePath"]).resolve()
+            assert reference.is_relative_to(ROOT.resolve())
+            assert hashlib.sha256(reference.read_bytes()).hexdigest() == item["userReferenceSha256"]
         if item["name"].startswith("Chrome"):
             assert (ROOT / item["sourcePath"]).read_bytes() == data
     return {"status": "PASS", "skinImages": len(assets), "uniqueGuids": len(guids),

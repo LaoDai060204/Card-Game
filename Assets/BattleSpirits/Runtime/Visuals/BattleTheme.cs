@@ -28,31 +28,10 @@ namespace LaoDai.BattleSpirits.Visuals
         public static Texture2D PlaymatStandard => Texture("PlaymatStandard");
         public static Texture2D PlaymatReference => Texture("PlaymatReference");
         public static Texture2D ColorIcon(CardColor color) => Texture("Color" + color);
-        public static string NormalizeCoreSkin(string value)
-        {
-            switch ((value ?? string.Empty).Trim().ToLowerInvariant())
-            {
-                case "purple": return "Purple";
-                case "green": return "Green";
-                case "yellow": return "Yellow";
-                case "white": return "White";
-                default: return DefaultCoreSkin;
-            }
-        }
-
-        // A cosmetic choice changes ordinary Core artwork only. Red remains
-        // reserved for the unique Soul Core and never follows a card's color.
-        public static Texture2D CoreGem(string style)
-        {
-            switch (NormalizeCoreSkin(style))
-            {
-                case "Purple": return ColorIcon(CardColor.Purple);
-                case "Green": return ColorIcon(CardColor.Green);
-                case "Yellow": return ColorIcon(CardColor.Yellow);
-                case "White": return ColorIcon(CardColor.White);
-                default: return ColorIcon(CardColor.Blue);
-            }
-        }
+        // Retain the old preference API for saved settings. Resource counters
+        // always use the supplied blue Core image; card symbols are distinct.
+        public static string NormalizeCoreSkin(string value) => DefaultCoreSkin;
+        public static Texture2D CoreGem(string style) => CoreNormal;
         public static Sprite ButtonSprite => SlicedSprite("ChromeButton", 22);
         public static Sprite PanelSprite => SlicedSprite("ChromePanel", 16);
 

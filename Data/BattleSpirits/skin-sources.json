@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "retrievedAt": "2026-11-06",
+  "retrievedAt": "2026-11-17",
   "notice": "Battle Spirits names/art/designs retain rights of BANDAI and respective owners. Color symbols and playmat are official source bytes. Card back is a public mirror with explicit attachment differences. Template chrome is retained under existing MDPro3/Master Duel provenance, not newly authored art.",
   "inlineAttachmentsAvailableAsOriginalFiles": false,
   "textureImport": "Default Texture2D, max 2048, no mipmaps, compression None; PNG transparency preserved",
@@ -81,25 +81,43 @@
       "name": "CoreNormal",
       "path": "Assets/BattleSpirits/Art/Resources/BattleSpirits/Skin/CoreNormal.png",
       "resourcePath": "BattleSpirits/Skin/CoreNormal",
-      "width": 47,
-      "height": 47,
-      "sha256": "a124ac28b5c2e6e0d61341492c64ee7a27c80bbb9152e90089396dd9dcd44619",
-      "sourceUrl": "https://www.battlespirits.com/rule/official-rule-manual-standard/img/page03_ic01.png",
-      "pixelModification": "none; original file bytes copied",
-      "usage": "Normal/Soul Core chip",
-      "attachmentMatch": "Same official artwork family; source resolution is 47x47, not the high-resolution inline attachment bytes"
+      "width": 128,
+      "height": 128,
+      "sha256": "1f2faec1f9a0da3836120ee429b5627bd95b354e3a00bf070dea332f02ddce12",
+      "sourceUrl": "https://raw.githubusercontent.com/LaoDai060204/Card-Game/4c422e7bcd036de486b27a09c6510260305969a4/design/hologram-arena-v1/assets/core.png",
+      "pixelModification": "none in this update; exact reviewed 128x128 RGBA user-reference asset copied",
+      "usage": "Ordinary physical Core; flat blue resource piece",
+      "attachmentMatch": "Matches the physical resource-piece design in the supplied Core and Soul Core reference, not a printed card-color symbol",
+      "previousReference": {
+        "width": 47,
+        "height": 47,
+        "sha256": "a124ac28b5c2e6e0d61341492c64ee7a27c80bbb9152e90089396dd9dcd44619",
+        "sourceUrl": "https://www.battlespirits.com/rule/official-rule-manual-standard/img/page03_ic01.png",
+        "pixelModification": "none; original file bytes copied"
+      },
+      "userReferencePath": "Data/BattleSpirits/References/Core-and-Soul-Core.png",
+      "userReferenceSha256": "e4ce63d4e470b3f66e06049819c812a3a7756747820631bac72ac2523ad8554f"
     },
     {
       "name": "SoulCore",
       "path": "Assets/BattleSpirits/Art/Resources/BattleSpirits/Skin/SoulCore.png",
       "resourcePath": "BattleSpirits/Skin/SoulCore",
-      "width": 47,
-      "height": 47,
-      "sha256": "1a2812696ce56224fe166174854a22929d9b0217a299b1b1ed43bb375a89dd7b",
-      "sourceUrl": "https://www.battlespirits.com/rule/official-rule-manual-standard/img/page03_ic02.png",
-      "pixelModification": "none; original file bytes copied",
-      "usage": "Normal/Soul Core chip",
-      "attachmentMatch": "Same official artwork family; source resolution is 47x47, not the high-resolution inline attachment bytes"
+      "width": 128,
+      "height": 128,
+      "sha256": "6a779756ccda03d17ace475010a4c76e4978740c5c7b2202fe3c748df3eed8d1",
+      "sourceUrl": "https://raw.githubusercontent.com/LaoDai060204/Card-Game/4c422e7bcd036de486b27a09c6510260305969a4/design/hologram-arena-v1/assets/soul-core.png",
+      "pixelModification": "none in this update; exact reviewed 128x128 RGBA user-reference asset copied",
+      "usage": "Unique Soul Core; metallic silver pentagonal frame with red center",
+      "attachmentMatch": "Matches the physical resource-piece design in the supplied Core and Soul Core reference, not a printed card-color symbol",
+      "previousReference": {
+        "width": 47,
+        "height": 47,
+        "sha256": "1a2812696ce56224fe166174854a22929d9b0217a299b1b1ed43bb375a89dd7b",
+        "sourceUrl": "https://www.battlespirits.com/rule/official-rule-manual-standard/img/page03_ic02.png",
+        "pixelModification": "none; original file bytes copied"
+      },
+      "userReferencePath": "Data/BattleSpirits/References/Core-and-Soul-Core.png",
+      "userReferenceSha256": "e4ce63d4e470b3f66e06049819c812a3a7756747820631bac72ac2523ad8554f"
     },
     {
       "name": "CardBack",
@@ -182,5 +200,6 @@
       "spriteBorderPixels": 30,
       "usage": "Retained template GUI chrome only; independent resource copy for runtime 9-slice Sprite.Create"
     }
-  ]
+  ],
+  "resourcePieceUpdate": "Use the two approved physical resource-piece textures; remove colored Symbol artwork from resource counters and summon decoration."
 }

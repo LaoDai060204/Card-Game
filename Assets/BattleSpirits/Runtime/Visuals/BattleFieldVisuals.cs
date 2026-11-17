@@ -54,12 +54,11 @@ namespace LaoDai.BattleSpirits.Visuals
         private readonly Transform[] mateAnchors = new Transform[2];
         private readonly Transform[,] poolRoots = new Transform[2, 4];
         private readonly Renderer[] decisionRails = new Renderer[2];
-        private Material dark, panel, trim, white, red, purple, green, blue, yellow, crystal, soul;
+        private Material dark, panel, trim, crystal, soul;
         private Material zoneSurface, zoneFrame, guide;
         private Material playerAccent, opponentAccent;
         private Material cardBackMaterial;
         private Material normalGemMaterial, soulGemMaterial;
-        private string normalCoreSkin;
         private Mesh skinQuad;
         private Shader shader, artworkShader;
         private BattleStandeeLibrary standeeLibrary;
@@ -79,9 +78,7 @@ namespace LaoDai.BattleSpirits.Visuals
         public void SetArtworkProvider(Action<string, RawImage> provider) => artworkProvider = provider;
         public void SetStandeeProvider(Action<string, RawImage> provider) => standeeProvider = provider;
 
-        // The cinematic card landing can reveal its already-created standee
-        // without replaying field audio, moving the printed card or changing
-        // the authoritative snapshot.
+        // Retained for callers that request the already-visible standee.
         public bool RevealSpiritModel(int instanceId)
         {
             if (disposed || stage == null || !units.TryGetValue(instanceId, out var unit) || unit.removed) return false;
@@ -170,17 +167,10 @@ namespace LaoDai.BattleSpirits.Visuals
             guide = Material("CyanGuide", new Color(0.13f, 0.42f, 0.49f), 0.2f);
             playerAccent = Material("PlayerActionLime", BattleTheme.Accent, 0.35f);
             opponentAccent = Material("OpponentActionRed", BattleTheme.Red, 0.3f);
-            white = Material("IvoryArmor", new Color(0.81f, 0.88f, 0.91f));
-            red = Material("DragonRed", new Color(0.58f, 0.035f, 0.045f));
-            purple = Material("WingPurple", new Color(0.25f, 0.08f, 0.32f));
-            green = Material("ForestGreen", new Color(0.13f, 0.42f, 0.20f));
-            blue = Material("IceBlue", new Color(0.10f, 0.33f, 0.67f));
-            yellow = Material("SolarYellow", new Color(0.93f, 0.72f, 0.16f));
             crystal = Material("CoreBlue", new Color(0.17f, 0.8f, 1f), 0.6f);
             soul = Material("SoulCore", new Color(0.95f, 0.12f, 0.17f), 0.7f);
-            normalCoreSkin = BattleTheme.NormalizeCoreSkin(Config.Get(BattleTheme.CoreSkinConfig, BattleTheme.DefaultCoreSkin));
-            normalGemMaterial = ArtworkMaterial("NormalCoreGem", BattleTheme.CoreGem(normalCoreSkin), new Rect(0, 0, 1, 1));
-            soulGemMaterial = ArtworkMaterial("SoulCoreGem", BattleTheme.ColorIcon(CardColor.Red), new Rect(0, 0, 1, 1));
+            normalGemMaterial = ArtworkMaterial("NormalCore", BattleTheme.CoreNormal, new Rect(0, 0, 1, 1));
+            soulGemMaterial = ArtworkMaterial("SoulCore", BattleTheme.SoulCore, new Rect(0, 0, 1, 1));
             if (BattleTheme.CardBack != null)
                 cardBackMaterial = ArtworkMaterial("BattleSpiritsCardBack", BattleTheme.CardBack, new Rect(0, 0, 1, 1));
             font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
@@ -343,19 +333,6 @@ namespace LaoDai.BattleSpirits.Visuals
                 mateAnchors[side] = BattleSpiritGeometry.Pivot(stage.transform, side == 0 ? "NearMate" : "FarMate", new Vector3(side == 0 ? -15.5f : 15.5f, 0.25f, sign * 3));
                 Label(half, side == 0 ? "BATTLE SPIRITS" : "STANDARD", new Vector3(0, 0.12f, sign * 12), side);
             }
-            var colors = new[] { red, purple, green, white, yellow, blue };
-            var cardColors = new[] { CardColor.Red, CardColor.Purple, CardColor.Green, CardColor.White, CardColor.Yellow, CardColor.Blue };
-            for (int index = 0; index < colors.Length; index++)
-            {
-                var icon = BattleTheme.ColorIcon(cardColors[index]);
-                if (icon != null)
-                    TexturedPlane(stage.transform, "ColorSymbol_" + cardColors[index],
-                        new Vector3((index - 2.5f) * 0.9f, 0.14f, -0.75f), new Vector2(0.68f, 0.68f),
-                        ArtworkMaterial("ColorSymbol_" + cardColors[index], icon, new Rect(0, 0, 1, 1)));
-                else
-                    Part(stage.transform, "ColorSymbolFallback_" + cardColors[index], PrimitiveType.Sphere,
-                        new Vector3((index - 2.5f) * 0.9f, 0.17f, -0.75f), new Vector3(0.38f, 0.14f, 0.38f), colors[index]);
-            }
         }
 
         private void BuildPlaymatChrome()
@@ -448,7 +425,6 @@ namespace LaoDai.BattleSpirits.Visuals
         public void Render(FilteredMatchView view)
         {
             if (disposed || stage == null || view == null || view.players == null) return;
-            RefreshCoreGemSkin();
             viewer = view.viewer;
             present.Clear();
             foreach (var player in view.players)
@@ -526,7 +502,7 @@ namespace LaoDai.BattleSpirits.Visuals
             var figure = new BattleCardFigure(stage.transform, target.transform, spirit.cardId ?? string.Empty,
                 artworkShader, camera, accent, artworkProvider, IsNexus(spirit.cardId), null, standeeLibrary, standeeProvider);
             var unit = new Unit { owner = owner, cardId = spirit.cardId, figure = figure, nexus = IsNexus(spirit.cardId) };
-            Animate(unit, BattleVisualPose.Summon); return unit;
+            return unit;
         }
 
         private bool IsNexus(string id) => id != null && catalog.TryGetValue(id, out var card)
@@ -612,20 +588,6 @@ namespace LaoDai.BattleSpirits.Visuals
             return gem;
         }
 
-        private void RefreshCoreGemSkin()
-        {
-            string desired = BattleTheme.NormalizeCoreSkin(Config.Get(BattleTheme.CoreSkinConfig, BattleTheme.DefaultCoreSkin));
-            if (normalGemMaterial == null || desired == normalCoreSkin) return;
-            bool wasTextured = normalGemMaterial.mainTexture != null;
-            normalCoreSkin = desired;
-            normalGemMaterial.mainTexture = BattleTheme.CoreGem(desired);
-            if (wasTextured == (normalGemMaterial.mainTexture != null)) return;
-            // Rebuild only if the loader changes between image and fallback
-            // geometry. Normal cosmetic changes update the shared material.
-            poolSignature = null;
-            foreach (var unit in units.Values) unit.visibleNormalCores = -1;
-        }
-
         public void PlayEvent(PublicBattleEvent message)
         {
             if (disposed || stage == null || message == null) return;
@@ -634,7 +596,6 @@ namespace LaoDai.BattleSpirits.Visuals
             switch (message.kind)
             {
                 case "NexusPlaced": case "Summoned":
-                    if (unit != null) Animate(unit, BattleVisualPose.Summon);
                     BattleAudio.PlayCue(message.cardId == "BS01-X01" || message.cardId == "BS01-097" ? "boss_summon" : "summon");
                     PlayMate(side, Mate.MateAction.Entry); break;
                 case "Attacked":
@@ -670,7 +631,6 @@ namespace LaoDai.BattleSpirits.Visuals
         {
             if (stage == null || disposed) return;
             RefreshRenderTarget();
-            RefreshCoreGemSkin();
             float time = Time.unscaledTime; expired.Clear();
             foreach (var pair in units)
             {
@@ -735,7 +695,7 @@ namespace LaoDai.BattleSpirits.Visuals
             { mates[side] = null; mateAnchors[side] = null; decisionRails[side] = null; for (int zone = 0; zone < 4; zone++) { counts[side, zone] = null; poolRoots[side, zone] = null; } }
             texture = null; camera = null; stage = null; poolSignature = null; skinQuad = null; cardBackMaterial = null;
             pendingWidth = pendingHeight = 0; resizeReadyAt = 0;
-            normalGemMaterial = soulGemMaterial = null; normalCoreSkin = null;
+            normalGemMaterial = soulGemMaterial = null;
         }
     }
 }

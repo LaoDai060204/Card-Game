@@ -54,7 +54,6 @@ namespace LaoDai.BattleSpirits.NativeUI
             internal GameObject selection;
         }
         private RawImage backdrop;
-        private BattleSummonPresentation summonPresentation;
         private IBattleNativePresentationSession presentationSession;
         internal BattleNativeDuelView(Transform root, IBattleNativeSession session)
         { this.root = root; this.session = session; cards = session.Cards.ToDictionary(card => card.id, StringComparer.Ordinal); }
@@ -93,27 +92,18 @@ namespace LaoDai.BattleSpirits.NativeUI
             ArrangeLife("LP1", .735f, .905f, .975f, .995f);
             BuildInspector();
             SetButton("ButtonSetting", "NHẬN THUA", () => session.Send(new WireMessage { type = "action", action = "concede" }));
-            summonPresentation = root.gameObject.AddComponent<BattleSummonPresentation>();
-            summonPresentation.Configure(session);
             presentationSession = session as IBattleNativePresentationSession;
             if (presentationSession != null)
             {
-                presentationSession.PresentationEvent += summonPresentation.Enqueue;
-                presentationSession.PresentationReset += summonPresentation.Clear;
                 presentationSession.PresentationReset += ResetInspection;
             }
             Render();
         }
-        internal void SuspendPresentation() { summonPresentation?.Clear(); ResetInspection(); }
+        internal void SuspendPresentation() => ResetInspection();
         internal void Dispose()
         {
-            if (presentationSession != null && summonPresentation != null)
-            {
-                presentationSession.PresentationEvent -= summonPresentation.Enqueue;
-                presentationSession.PresentationReset -= summonPresentation.Clear;
+            if (presentationSession != null)
                 presentationSession.PresentationReset -= ResetInspection;
-            }
-            summonPresentation?.Dispose();
         }
         internal void ResumeVisuals()
         {
@@ -125,7 +115,7 @@ namespace LaoDai.BattleSpirits.NativeUI
             var view = session.View;
             if (view == null || view.players == null || view.players.Length != 2)
             {
-                summonPresentation?.Clear(); ResetInspection();
+                ResetInspection();
                 phase.text = "ĐANG CHỜ TRẬN ĐẤU"; actionHint.text = string.Empty;
                 foreach (var slot in handSlots) slot.Hide();
                 foreach (var slot in fieldSlots.Values) slot.button.gameObject.SetActive(false);

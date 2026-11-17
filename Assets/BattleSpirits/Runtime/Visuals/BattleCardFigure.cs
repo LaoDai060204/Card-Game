@@ -14,9 +14,9 @@ namespace LaoDai.BattleSpirits.Visuals
         internal const float CardHeight = 3.5f;
         internal readonly GameObject root;
         internal readonly RawImage artwork;
-        private readonly Transform floorPivot, card, illustration, halo;
-        private readonly Renderer cardRenderer, illustrationRenderer, haloRenderer;
-        private readonly Material cardMaterial, illustrationMaterial, haloMaterial;
+        private readonly Transform floorPivot, card, illustration, shadow;
+        private readonly Renderer cardRenderer, illustrationRenderer, shadowRenderer;
+        private readonly Material cardMaterial, illustrationMaterial, shadowMaterial;
         private readonly Mesh quad;
         private readonly Camera camera;
         private readonly bool nexus;
@@ -30,7 +30,6 @@ namespace LaoDai.BattleSpirits.Visuals
         private BattleCharacterStandee standee;
         private Texture triedStandeeTexture;
         private bool standeeRequested, hadReadyStandeeTexture;
-        private float modelRevealStarted = -1;
         private Texture assignedTexture;
         private bool hadReadyTexture;
         private float portraitWidth = 2.8f, portraitHeight = 2.5f;
@@ -57,15 +56,19 @@ namespace LaoDai.BattleSpirits.Visuals
             quad.RecalculateNormals(); quad.RecalculateBounds();
             cardMaterial = MakeMaterial(shader, "Card_" + cardId, accent, new Rect(0, 0, 1, 1), 0);
             illustrationMaterial = MakeMaterial(shader, "Illustration_" + cardId, accent, illustrationUv, 0.045f);
-            haloMaterial = MakeMaterial(shader, "SummonHalo_" + cardId, accent, new Rect(0, 0, 1, 1), 0);
-            haloMaterial.SetFloat("_Ring", 1);
-            haloMaterial.SetColor("_BaseColor", accent);
+            shadowMaterial = MakeMaterial(shader, "StandeeShadow_" + cardId, Color.clear, new Rect(0, 0, 1, 1), 0);
+            shadowMaterial.SetFloat("_Ring", 0);
+            shadowMaterial.SetFloat("_Shadow", 1);
+            shadowMaterial.SetFloat("_Glow", 0);
+            shadowMaterial.SetColor("_BaseColor", new Color(.005f, .008f, .015f, .8f));
             card = Quad(floorPivot, "PrintedCard", cardMaterial, out cardRenderer);
             card.localRotation = Quaternion.Euler(90, 0, 0);
             illustration = Quad(root.transform, "FloatingIllustration", illustrationMaterial, out illustrationRenderer);
-            halo = Quad(root.transform, "SummonHalo", haloMaterial, out haloRenderer);
-            halo.localRotation = Quaternion.Euler(90, 0, 0);
-            cardRenderer.enabled = illustrationRenderer.enabled = false;
+            shadow = Quad(root.transform, "StandeeShadow", shadowMaterial, out shadowRenderer);
+            shadow.localRotation = Quaternion.Euler(90, 0, 0);
+            shadow.localPosition = new Vector3(0, .025f, 1.1f);
+            shadow.localScale = new Vector3(2.8f, 2.1f, 1);
+            cardRenderer.enabled = illustrationRenderer.enabled = shadowRenderer.enabled = false;
 
             var carrier = new GameObject("BS_ArtworkCarrier_" + cardId, typeof(RectTransform));
             carrier.layer = artworkParent.gameObject.layer; carrier.transform.SetParent(artworkParent, false);
@@ -158,8 +161,7 @@ namespace LaoDai.BattleSpirits.Visuals
                         standee?.Dispose(); standee = null;
                         try
                         {
-                            if (standeeLibrary.TryCreate(cardId, candidate, root.transform, accent, out standee))
-                                modelRevealStarted = Time.unscaledTime;
+                            standeeLibrary.TryCreate(cardId, candidate, root.transform, accent, out standee);
                         }
                         catch (Exception error) { Debug.LogWarning("Battle Spirits standee " + cardId + ": " + error.Message); }
                     }
@@ -171,45 +173,33 @@ namespace LaoDai.BattleSpirits.Visuals
             return standee.Visible;
         }
 
-        internal bool RevealModel()
-        {
-            if (disposed || !RefreshStandeeMode()) return false;
-            modelRevealStarted = Time.unscaledTime;
-            return true;
-        }
+        internal bool RevealModel() => !disposed && RefreshStandeeMode();
 
         internal void Animate(BattleVisualPose pose, float age, float clock, Vector3 position,
             float facing, bool exhausted, float layoutScale = 1)
         {
             if (disposed) return;
+            // Legacy callers can still request this pose; field cards and
+            // standees appear at their final size without a summon animation.
+            if (pose == BattleVisualPose.Summon) pose = BattleVisualPose.Idle;
             if (float.IsNaN(age) || float.IsInfinity(age)) age = 0;
             if (float.IsNaN(layoutScale) || float.IsInfinity(layoutScale) || layoutScale <= 0) layoutScale = 1;
             RefreshArtwork();
             var sample = BattleVisualMotion.Sample(pose, age, clock);
             float duration = Math.Max(0.001f, BattleVisualMotion.Duration(pose));
             float t = Math.Max(0, Math.Min(1, age / duration));
-            bool summon = pose == BattleVisualPose.Summon;
-            float reveal = summon ? 1 - (1 - t) * (1 - t) * (1 - t) : 1;
             float fade = pose == BattleVisualPose.Death ? 1 - t : 1;
             root.transform.localPosition = position;
             root.transform.localRotation = Quaternion.identity;
             root.transform.localScale = Vector3.one * layoutScale;
             bool modelVisible = standee != null && standee.Visible;
-            if (modelVisible)
-            {
-                float revealAge = Math.Max(0, Time.unscaledTime - modelRevealStarted);
-                if (modelRevealStarted >= 0 && (revealAge >= BattleVisualMotion.Duration(BattleVisualPose.Summon)
-                    || (pose != BattleVisualPose.Idle && pose != BattleVisualPose.Summon))) modelRevealStarted = -1;
-                standee.Animate(modelRevealStarted >= 0 ? BattleVisualPose.Summon : pose,
-                    modelRevealStarted >= 0 ? revealAge : age, clock, facing, exhausted);
-            }
-            floorPivot.localPosition = new Vector3(0, 0.04f + (summon ? (1 - reveal) * 2.8f : 0), 0);
+            if (modelVisible) standee.Animate(pose, age, clock, facing, exhausted);
+            floorPivot.localPosition = new Vector3(0, 0.04f, 0);
             floorPivot.localRotation = Quaternion.Euler(0, (facing < 0 ? 180 : 0) + (exhausted ? 90 : 0), 0);
-            float floorScale = summon ? 0.2f + reveal * 0.8f : 1;
-            card.localScale = new Vector3(CardWidth * floorScale, CardHeight * floorScale, 1);
+            card.localScale = new Vector3(CardWidth, CardHeight, 1);
 
             float lift = nexus ? 0.3f : 0.45f;
-            illustration.localPosition = new Vector3(0, lift + portraitHeight * 0.5f * reveal + sample.height,
+            illustration.localPosition = new Vector3(0, lift + portraitHeight * 0.5f + sample.height,
                 // Keep the standing artwork behind the printed face from the
                 // camera's direction, so the floor card can still be read.
                 CardHeight * 0.48f + sample.advance * facing);
@@ -219,22 +209,14 @@ namespace LaoDai.BattleSpirits.Visuals
             // preserves the original left/right orientation.
             illustration.rotation = camera.transform.rotation
                 * Quaternion.Euler(sample.tilt * 0.35f, 0, pose == BattleVisualPose.Damage ? sample.tilt : 0);
-            float artScale = (0.12f + reveal * 0.88f) * (pose == BattleVisualPose.Death ? sample.scale : 1);
+            float artScale = pose == BattleVisualPose.Death ? sample.scale : 1;
             illustration.localScale = new Vector3(portraitWidth * artScale, portraitHeight * artScale, 1);
             cardMaterial.SetFloat("_Opacity", fade);
-            illustrationMaterial.SetFloat("_Opacity", fade * reveal * (exhausted ? 0.78f : 1));
+            illustrationMaterial.SetFloat("_Opacity", fade * (exhausted ? 0.78f : 1));
             cardMaterial.SetFloat("_Glow", sample.glow * 0.2f);
             illustrationMaterial.SetFloat("_Glow", sample.glow * 0.45f);
-            bool summoning = summon && t < 1;
-            haloRenderer.enabled = summoning || modelVisible;
-            haloMaterial.SetFloat("_Ring", summoning ? 1 : 0);
-            haloMaterial.SetFloat("_Shadow", summoning ? 0 : 1);
-            haloMaterial.SetColor("_BaseColor", summoning ? accent : new Color(.005f, .008f, .015f, .8f));
-            halo.localPosition = new Vector3(0, .025f, summoning ? 0 : 1.1f);
-            float radius = 2.5f + 4f * t;
-            halo.localScale = summoning ? new Vector3(radius, radius, 1) : new Vector3(2.8f, 2.1f, 1);
-            haloMaterial.SetFloat("_Opacity", summoning ? (1 - t) * .9f : .48f * fade);
-            haloMaterial.SetFloat("_Glow", summoning ? .85f : 0);
+            shadowRenderer.enabled = modelVisible;
+            shadowMaterial.SetFloat("_Opacity", .48f * fade);
         }
 
         public void Dispose()
@@ -245,7 +227,7 @@ namespace LaoDai.BattleSpirits.Visuals
             if (standeeArtwork != null) Object.Destroy(standeeArtwork.gameObject);
             if (artwork != null) Object.Destroy(artwork.gameObject);
             Object.Destroy(root); Object.Destroy(quad);
-            Object.Destroy(cardMaterial); Object.Destroy(illustrationMaterial); Object.Destroy(haloMaterial);
+            Object.Destroy(cardMaterial); Object.Destroy(illustrationMaterial); Object.Destroy(shadowMaterial);
             // The session owns assignedTexture; destroying it here could break
             // the player's hand, details or another copy of the same card.
             assignedTexture = null;
