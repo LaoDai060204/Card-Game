@@ -601,6 +601,33 @@ namespace MDPro3.UI.ServantUI
             InitializeAutoRPS();
 
             InitializeExpansions();
+            ConfigureBattleSpiritsSettings();
+        }
+
+        private static void Unavailable(SelectionButton_Setting button)
+        {
+            if (button == null) return;
+            button.SetModeText("Unavailable");
+            button.GetSelectable().interactable = false;
+        }
+        private void ConfigureBattleSpiritsSettings()
+        {
+            Unavailable(ButtonSyncDeck); Unavailable(ButtonCardStyle); Unavailable(ButtonVideoCard);
+            Unavailable(ButtonDuelCharacter); Unavailable(ButtonWatchCharacter); Unavailable(ButtonReplayCharacter);
+            Unavailable(ButtonDuelVoice); Unavailable(ButtonWatchVoice); Unavailable(ButtonReplayVoice);
+            Unavailable(ButtonDuelCloseup); Unavailable(ButtonWatchCloseup); Unavailable(ButtonReplayCloseup);
+            Unavailable(ButtonDuelFaceDown); Unavailable(ButtonWatchFaceDown); Unavailable(ButtonReplayFaceDown);
+            Unavailable(ButtonDuelAcc); Unavailable(ButtonWatchAcc); Unavailable(ButtonReplayAcc);
+            Unavailable(ButtonDuelPendulum); Unavailable(ButtonWatchPendulum); Unavailable(ButtonReplayPendulum);
+            Unavailable(ButtonDuelChain); Unavailable(ButtonWatchChain); Unavailable(ButtonReplayChain);
+            Unavailable(ButtonDuelDice); Unavailable(ButtonWatchDice); Unavailable(ButtonReplayDice);
+            Unavailable(ButtonDuelCoin); Unavailable(ButtonWatchCoin); Unavailable(ButtonReplayCoin);
+            Unavailable(ButtonExpansionSupport); Unavailable(ButtonDownloadYPK);
+            foreach (string label in new[] { "Import", "ExportDeck", "ExportReplay", "ExportPicture", "ClearPicture", "ClearArtVideo", "ClearExpansions" })
+            {
+                var button = Manager.GetElement<SelectionButton>(label);
+                if (button != null) button.GetSelectable().interactable = false;
+            }
         }
 
         public override void SelectDefaultSelectable()
@@ -612,47 +639,18 @@ namespace MDPro3.UI.ServantUI
         public override void ShowEvent()
         {
             base.ShowEvent();
-
-            if (Program.instance.currentServant == Program.instance.ocgcore)
+            var session = MDPro3.BattleSpirits.BattleIntegration.Current;
+            if (Program.instance.currentServant is MDPro3.BattleSpirits.BattleDuelServant && session != null)
             {
-                if (OcgCore.condition == OcgCore.Condition.Duel)
-                {
-                    ToggleDuel.gameObject.SetActive(true);
-                    ToggleWatch.gameObject.SetActive(false);
-                    ToggleReplay.gameObject.SetActive(false);
-
-                    var canRetrySolo = RoomServant.FromSolo;
-                    ButtonRetry.gameObject.SetActive(canRetrySolo);
-                    if (canRetrySolo)
-                        ButtonRetry.SetButtonText(InterString.Get("Retry"));
-                    ButtonSurrender.gameObject.SetActive(true);
-                    ButtonSurrender.SetButtonText(InterString.Get("Surrender"));
-
-                    bool needShowCheckDecks = !OcgCore.inPuzzle;
-                    ButtonCheckDecks.gameObject.SetActive(needShowCheckDecks);
-                }
-                else if (OcgCore.condition == OcgCore.Condition.Watch)
-                {
-                    ToggleDuel.gameObject.SetActive(false);
-                    ToggleWatch.gameObject.SetActive(true);
-                    ToggleReplay.gameObject.SetActive(false);
-
-                    ButtonRetry.gameObject.SetActive(false);
-                    ButtonSurrender.gameObject.SetActive(true);
-                    ButtonSurrender.SetButtonText(InterString.Get("Exit Spectate"));
-                    ButtonCheckDecks.gameObject.SetActive(false);
-                }
-                else if (OcgCore.condition == OcgCore.Condition.Replay)
-                {
-                    ToggleDuel.gameObject.SetActive(false);
-                    ToggleWatch.gameObject.SetActive(false);
-                    ToggleReplay.gameObject.SetActive(true);
-
-                    ButtonRetry.gameObject.SetActive(false);
-                    ButtonSurrender.gameObject.SetActive(true);
-                    ButtonSurrender.SetButtonText(InterString.Get("Exit Replay"));
-                    ButtonCheckDecks.gameObject.SetActive(false);
-                }
+                ToggleDuel.gameObject.SetActive(!session.IsReplay);
+                ToggleWatch.gameObject.SetActive(false);
+                ToggleReplay.gameObject.SetActive(session.IsReplay);
+                ButtonRetry.gameObject.SetActive(!session.IsOnline && !session.IsReplay && session.View != null);
+                ButtonRetry.SetButtonText(session.Puzzle != null ? "Reset Puzzle" : InterString.Get("Retry"));
+                ButtonSurrender.gameObject.SetActive(true);
+                ButtonSurrender.SetButtonText(session.IsReplay ? InterString.Get("Exit Replay") : InterString.Get("Surrender"));
+                ButtonCheckDecks.gameObject.SetActive(session.View != null);
+                ButtonCheckDecks.SetButtonText("Visible Cards");
                 TogglePort.gameObject.SetActive(false);
                 ToggleExpansions.gameObject.SetActive(false);
             }
@@ -674,7 +672,7 @@ namespace MDPro3.UI.ServantUI
         {
             base.HideEvent();
             Save();
-            if (Program.instance.ocgcore.showing)
+            if (Program.instance.currentServant is MDPro3.BattleSpirits.BattleDuelServant)
             {
                 UIManager.HideBlackBack(Program.instance.setting.TransitionTime);
                 UIManager.HideExitButton(Program.instance.setting.TransitionTime);
@@ -690,7 +688,7 @@ namespace MDPro3.UI.ServantUI
         protected override void AfterHideEvent()
         {
             base.AfterHideEvent();
-            if (Program.instance.ocgcore.showing)
+            if (Program.instance.currentServant is MDPro3.BattleSpirits.BattleDuelServant)
                 UIManager.ShowFPSLeft();
         }
 
@@ -1242,7 +1240,7 @@ namespace MDPro3.UI.ServantUI
         }
         private void OnLayoutClicked()
         {
-            if (Program.instance.ocgcore.showing)
+            if (Program.instance.currentServant is MDPro3.BattleSpirits.BattleDuelServant)
             {
                 MessageManager.Toast(InterString.Get("This option cannot be changed during a duel."));
                 return;
@@ -1373,7 +1371,7 @@ namespace MDPro3.UI.ServantUI
 
         private void OnCardStyleChange()
         {
-            if (Program.instance.ocgcore.showing)
+            if (Program.instance.currentServant is MDPro3.BattleSpirits.BattleDuelServant)
             {
                 MessageManager.Toast(InterString.Get("This option cannot be changed during a duel."));
                 return;
@@ -1437,7 +1435,7 @@ namespace MDPro3.UI.ServantUI
         }
         private void OnCardLanguageClicked()
         {
-            if (Program.instance.ocgcore.showing)
+            if (Program.instance.currentServant is MDPro3.BattleSpirits.BattleDuelServant)
             {
                 MessageManager.Toast(InterString.Get("This option cannot be changed during a duel."));
                 return;
@@ -1479,7 +1477,7 @@ namespace MDPro3.UI.ServantUI
         }
         private void OnLanguageClicked()
         {
-            if (Program.instance.ocgcore.showing)
+            if (Program.instance.currentServant is MDPro3.BattleSpirits.BattleDuelServant)
             {
                 MessageManager.Toast(InterString.Get("This option cannot be changed during a duel."));
                 return;
@@ -1588,6 +1586,11 @@ namespace MDPro3.UI.ServantUI
         }
         public void RefreshCharacterName()
         {
+            if (MDPro3.BattleSpirits.BattleSpiritsMode.IsEnabled)
+            {
+                ButtonDuelCharacter.SetModeText("Unavailable"); ButtonWatchCharacter.SetModeText("Unavailable");
+                ButtonReplayCharacter.SetModeText("Unavailable"); return;
+            }
             if (CharacterSelector.characters == null)
                 return;
 
@@ -1625,7 +1628,6 @@ namespace MDPro3.UI.ServantUI
             ButtonDuelVoice.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("DuelVoice", !config);
 
-            Program.instance.ocgcore.CheckCharaFace();
         }
         private void OnWatchVoiceClick()
         {
@@ -1633,7 +1635,6 @@ namespace MDPro3.UI.ServantUI
             ButtonWatchVoice.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("WatchVoice", !config);
 
-            Program.instance.ocgcore.CheckCharaFace();
         }
         private void OnReplayVoiceClick()
         {
@@ -1641,7 +1642,6 @@ namespace MDPro3.UI.ServantUI
             ButtonReplayVoice.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("ReplayVoice", !config);
 
-            Program.instance.ocgcore.CheckCharaFace();
         }
 
         #endregion
@@ -1667,21 +1667,18 @@ namespace MDPro3.UI.ServantUI
             var config = Config.GetBool("DuelCloseup", false);
             ButtonDuelCloseup.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("DuelCloseup", !config);
-            Program.instance.ocgcore.RefreshAllCardsLabel();
         }
         private void OnWatchCloseupClick()
         {
             var config = Config.GetBool("WatchCloseup", false);
             ButtonWatchCloseup.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("WatchCloseup", !config);
-            Program.instance.ocgcore.RefreshAllCardsLabel();
         }
         private void OnReplayCloseupClick()
         {
             var config = Config.GetBool("ReplayCloseup", false);
             ButtonReplayCloseup.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("ReplayCloseup", !config);
-            Program.instance.ocgcore.RefreshAllCardsLabel();
         }
 
         #endregion
@@ -2009,8 +2006,6 @@ namespace MDPro3.UI.ServantUI
             ButtonDuelFaceDown.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("DuelFaceDown", !config);
 
-            foreach (var card in OcgCore.cards)
-                card.ShowFaceDownCardOrNot(card.NeedShowFaceDownCard());
         }
         private void OnWatchFaceDownClick()
         {
@@ -2018,8 +2013,6 @@ namespace MDPro3.UI.ServantUI
             ButtonWatchFaceDown.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("WatchFaceDown", !config);
 
-            foreach (var card in OcgCore.cards)
-                card.ShowFaceDownCardOrNot(card.NeedShowFaceDownCard());
         }
         private void OnReplayFaceDownClick()
         {
@@ -2027,8 +2020,6 @@ namespace MDPro3.UI.ServantUI
             ButtonReplayFaceDown.SetModeText(InterString.Get(config ? "Toggle Off" : "Toggle On"));
             Config.SetBool("ReplayFaceDown", !config);
 
-            foreach (var card in OcgCore.cards)
-                card.ShowFaceDownCardOrNot(card.NeedShowFaceDownCard());
         }
 
         #endregion
@@ -2127,28 +2118,16 @@ namespace MDPro3.UI.ServantUI
         {
             string result = value.ToString();
             ButtonDuelAcc.SetModeText(result.Length > 4 ? result[..4] : result);
-            if (Program.instance.ocgcore.showing)
-                if (OcgCore.condition == OcgCore.Condition.Duel)
-                    if (OcgCore.Accing)
-                        Program.instance.ocgcore.GetUI<OcgCoreUI>().OnAcc();
         }
         private void OnWatchAccChange(float value)
         {
             string result = value.ToString();
             ButtonWatchAcc.SetModeText(result.Length > 4 ? result[..4] : result);
-            if (Program.instance.ocgcore.showing)
-                if (OcgCore.condition == OcgCore.Condition.Watch)
-                    if (OcgCore.Accing)
-                        Program.instance.ocgcore.GetUI<OcgCoreUI>().OnAcc();
         }
         private void OnReplayAccChange(float value)
         {
             string result = value.ToString();
             ButtonReplayAcc.SetModeText(result.Length > 4 ? result[..4] : result);
-            if (Program.instance.ocgcore.showing)
-                if (OcgCore.condition == OcgCore.Condition.Replay)
-                    if (OcgCore.Accing)
-                        Program.instance.ocgcore.GetUI<OcgCoreUI>().OnAcc();
         }
 
         #endregion
@@ -2230,7 +2209,8 @@ namespace MDPro3.UI.ServantUI
 
         public void OnImport()
         {
-            if (Program.instance.ocgcore.showing)
+            if (MDPro3.BattleSpirits.BattleSpiritsMode.IsEnabled) { MessageManager.Cast("Unavailable for Battle Spirits."); return; }
+            if (Program.instance.currentServant is MDPro3.BattleSpirits.BattleDuelServant)
             {
                 MessageManager.Toast(InterString.Get("This operation cannot be performed during a duel."));
                 return;
@@ -2244,42 +2224,24 @@ namespace MDPro3.UI.ServantUI
         }
         public void OnExportDeck()
         {
-            PortHelper.ExportAllDecks();
+            MessageManager.Cast("Battle Spirits deck export is unavailable in this version.");
         }
         public void OnExportReplay()
         {
-            PortHelper.ExportAllReplays();
+            MessageManager.Cast("Battle Spirits replay export is unavailable in this version.");
         }
         public void OnExportPicture()
         {
-            PortHelper.ExportAllPictures();
+            MessageManager.Cast("Battle Spirits card content is included with this application.");
         }
         public void OnClearPicture()
         {
-            if (Program.instance.ocgcore.showing)
-            {
-                MessageManager.Toast(InterString.Get("This operation cannot be performed during a duel."));
-                return;
-            }
-
-            var selections = new List<string>
-            {
-                InterString.Get("Confirm Clear"),
-                InterString.Get("Are you sure you want to delete all imported card art?"),
-                InterString.Get("Confirm"),
-                InterString.Get("Cancel")
-            };
-            UIManager.ShowPopupYesOrNo(selections, () =>
-            {
-                if (!Directory.Exists(Program.PATH_ALT_ART))
-                    Directory.CreateDirectory(Program.PATH_ALT_ART);
-                foreach (var file in Directory.GetFiles(Program.PATH_ALT_ART))
-                    File.Delete(file);
-            }, null);
+            MessageManager.Cast("Battle Spirits card content is included with this application.");
         }
         public void OnClearArtVideos()
         {
-            if (Program.instance.ocgcore.showing)
+            if (MDPro3.BattleSpirits.BattleSpiritsMode.IsEnabled) { MessageManager.Cast("Unavailable for Battle Spirits."); return; }
+            if (Program.instance.currentServant is MDPro3.BattleSpirits.BattleDuelServant)
             {
                 MessageManager.Toast(InterString.Get("This operation cannot be performed during a duel."));
                 return;
@@ -2313,7 +2275,8 @@ namespace MDPro3.UI.ServantUI
 
         public void OnSupportExpansions()
         {
-            if (Program.instance.ocgcore.showing)
+            if (MDPro3.BattleSpirits.BattleSpiritsMode.IsEnabled) { MessageManager.Cast("Unavailable for Battle Spirits."); return; }
+            if (Program.instance.currentServant is MDPro3.BattleSpirits.BattleDuelServant)
             {
                 MessageManager.Toast(InterString.Get("This option cannot be changed during a duel."));
                 return;
@@ -2328,7 +2291,8 @@ namespace MDPro3.UI.ServantUI
 
         public void OnClearExpansions()
         {
-            if (Program.instance.ocgcore.showing)
+            if (MDPro3.BattleSpirits.BattleSpiritsMode.IsEnabled) { MessageManager.Cast("Unavailable for Battle Spirits."); return; }
+            if (Program.instance.currentServant is MDPro3.BattleSpirits.BattleDuelServant)
             {
                 MessageManager.Toast(InterString.Get("This operation cannot be performed during a duel."));
                 return;
@@ -2354,7 +2318,7 @@ namespace MDPro3.UI.ServantUI
 
         public void OnUpdatePrerelease()
         {
-            if (Program.instance.ocgcore.showing)
+            if (Program.instance.currentServant is MDPro3.BattleSpirits.BattleDuelServant)
             {
                 MessageManager.Toast(InterString.Get("This operation cannot be performed during a duel."));
                 return;
@@ -2364,7 +2328,7 @@ namespace MDPro3.UI.ServantUI
 
         public void OnDownloadYPK()
         {
-            if (Program.instance.ocgcore.showing)
+            if (Program.instance.currentServant is MDPro3.BattleSpirits.BattleDuelServant)
             {
                 MessageManager.Toast(InterString.Get("This operation cannot be performed during a duel."));
                 return;
@@ -2389,96 +2353,54 @@ namespace MDPro3.UI.ServantUI
         }
 
         public void OnAboutGame()
-        {
-            var address = Language.UseChinese() ? "AboutGame" : "AboutGame_en";
-            var handle = Addressables.LoadAssetAsync<TextAsset>(address);
-            handle.Completed += (result) =>
-            {
-                var selections = new List<string>()
-                {
-                    InterString.Get("About the Game"),
-                    GetAboutText(result.Result.text)
-                };
-                if (Language.UseChinese())
-                    UIManager.ShowPopupText(selections);
-                else
-                    UIManager.ShowPopupText(selections, TMPro.HorizontalAlignmentOptions.Left);
-            };
-        }
+        { UIManager.ShowPopupText(new List<string> { "About Battle Spirits", "Battle Spirits card battle client. Original card artwork and rules © BNP/BANDAI and the respective crossover rights holders. Preserved interface framework: MDPro3 and its original contributors; third-party credits and licenses are retained with the application." }, TMPro.HorizontalAlignmentOptions.Left); }
         public void OnAboutVersion()
-        {
-            var address = Language.UseChinese() ? "AboutVersion" : "AboutVersion_en";
-            var handle = Addressables.LoadAssetAsync<TextAsset>(address);
-            handle.Completed += (result) =>
-            {
-                var selections = new List<string>()
-                {
-                    InterString.Get("About Version Numbers."),
-                    GetAboutText(result.Result.text)
-                };
-                UIManager.ShowPopupText(selections, TMPro.HorizontalAlignmentOptions.Left);
-            };
-        }
+        { UIManager.ShowPopupText(new List<string> { "Battle Spirits", "Battle Spirits client — four Standard decks, Solo, puzzles, local network play and recorded battles." }, TMPro.HorizontalAlignmentOptions.Left); }
         public void OnAboutUpdate()
-        {
-            var address = Language.UseChinese() ? "AboutUpdate" : "AboutUpdate_en";
-            var handle = Addressables.LoadAssetAsync<TextAsset>(address);
-            handle.Completed += (result) =>
-            {
-                var selections = new List<string>()
-                {
-                    InterString.Get("About Updates"),
-                    GetAboutText(result.Result.text)
-                };
-                if (Language.UseChinese())
-                    UIManager.ShowPopupText(selections);
-                else
-                    UIManager.ShowPopupText(selections, TMPro.HorizontalAlignmentOptions.Left);
-            };
-        }
+        { UIManager.ShowPopupText(new List<string> { "Updates", "Battle Spirits card content is included with the application." }, TMPro.HorizontalAlignmentOptions.Left); }
         public void OnUpdateContent()
-        {
-            var handle = Addressables.LoadAssetAsync<TextAsset>(Language.UseChinese() ? "UpdateContent" : "UpdateContent_en");
-            handle.Completed += (result) =>
-            {
-                var selections = new List<string>()
-                {
-                    InterString.Get("Patch Notes"),
-                    result.Result.text
-                };
-                UIManager.ShowPopupText(selections, TMPro.HorizontalAlignmentOptions.Left);
-            };
-        }
+        { UIManager.ShowPopupText(new List<string> { "Battle Spirits content", "Four Standard competition decks, English cards, Battle Spirits rules and effects, Solo opponents and ten playable puzzles." }, TMPro.HorizontalAlignmentOptions.Left); }
 
         #endregion
 
         public void OnSurrender()
         {
-            Program.instance.ocgcore.OnDuelResultConfirmed(true);
+            var session = MDPro3.BattleSpirits.BattleIntegration.Current;
+            if (session == null) return;
+            if (session.PresentationBusy)
+            {
+                MessageManager.Cast("Finish or skip the current presentation first.");
+                return;
+            }
+            if (!session.IsReplay) MDPro3.BattleSpirits.BattleIntegration.Concede();
+            Program.instance.setting.OnExit();
+            if (Program.instance.currentServant is MDPro3.BattleSpirits.BattleDuelServant duel) duel.LeaveDuel();
         }
 
         public void OnRetry()
         {
-            if (OcgCore.condition != OcgCore.Condition.Duel || !RoomServant.FromSolo)
-                return;
-            if (!Program.instance.solo.CanRetryLastSoloDuel())
-                return;
-
-            Program.instance.ocgcore.onSurrenderConfirmed = Program.instance.solo.QueueRetryLastSoloDuel;
-            Program.instance.ocgcore.OnDuelResultConfirmed(true);
+            if (MDPro3.BattleSpirits.BattleIntegration.Retry()) Program.instance.setting.OnExit();
         }
 
         public void OnCheckDecks()
         {
-            Program.instance.setting.OnExit();
-            Deck deck = OcgCore.sideChangedDeck;
-            if(deck == null)
+            var session = MDPro3.BattleSpirits.BattleIntegration.Current;
+            var view = session?.View;
+            if (view == null || session.Seat < 0 || session.Seat >= view.Players.Length) return;
+            // The filtered snapshot supplies only information this player may see.
+            // Never read a deck file or expose either player's hidden deck order.
+            var own = view.Players[session.Seat];
+            var deck = new Deck();
+            void Add(string id)
             {
-                var deckName = Config.GetConfigDeckName();
-                var deckPath = Path.Combine(Program.PATH_DECK, deckName + Program.EXPANSION_YDK);
-                deck = new Deck(deckPath);
+                int numeric = MDPro3.BattleSpirits.BattleCatalog.GetNumericId(id);
+                if (numeric > 0) deck.Main.Add(numeric);
             }
-
+            foreach (var id in own.Hand) Add(id);
+            foreach (var card in own.Field) Add(card.CardId);
+            foreach (var id in own.Discard) Add(id);
+            foreach (var id in own.Removed) Add(id);
+            Program.instance.setting.OnExit();
             UIManager.ShowDeckBrowserUIForDuel(deck);
         }
 

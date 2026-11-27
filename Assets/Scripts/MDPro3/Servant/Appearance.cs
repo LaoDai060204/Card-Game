@@ -1,4 +1,5 @@
 using DG.Tweening;
+using MDPro3.BattleSpirits;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -198,6 +199,33 @@ namespace MDPro3.Servant
 
         private async UniTask LoadSettingAssetsCore()
         {
+            if (BattleSpiritsMode.IsEnabled)
+            {
+                Program.items.Initialize();
+                string face = BattleCosmetics.DefaultFaceId.ToString();
+                matForFace = null;
+                duelFace0 = await Program.items.LoadConcreteItemIconAsync(Config.Get("DuelFace0", face), Items.ItemType.Face);
+                duelFace1 = await Program.items.LoadConcreteItemIconAsync(Config.Get("DuelFace1", face), Items.ItemType.Face);
+                duelFace0Tag = await Program.items.LoadConcreteItemIconAsync(Config.Get("DuelFace0Tag", face), Items.ItemType.Face);
+                duelFace1Tag = await Program.items.LoadConcreteItemIconAsync(Config.Get("DuelFace1Tag", face), Items.ItemType.Face);
+                watchFace0 = await Program.items.LoadConcreteItemIconAsync(Config.Get("WatchFace0", face), Items.ItemType.Face);
+                watchFace1 = await Program.items.LoadConcreteItemIconAsync(Config.Get("WatchFace1", face), Items.ItemType.Face);
+                watchFace0Tag = await Program.items.LoadConcreteItemIconAsync(Config.Get("WatchFace0Tag", face), Items.ItemType.Face);
+                watchFace1Tag = await Program.items.LoadConcreteItemIconAsync(Config.Get("WatchFace1Tag", face), Items.ItemType.Face);
+                replayFace0 = await Program.items.LoadConcreteItemIconAsync(Config.Get("ReplayFace0", face), Items.ItemType.Face);
+                replayFace1 = await Program.items.LoadConcreteItemIconAsync(Config.Get("ReplayFace1", face), Items.ItemType.Face);
+                replayFace0Tag = await Program.items.LoadConcreteItemIconAsync(Config.Get("ReplayFace0Tag", face), Items.ItemType.Face);
+                replayFace1Tag = await Program.items.LoadConcreteItemIconAsync(Config.Get("ReplayFace1Tag", face), Items.ItemType.Face);
+                defaultFace0 = BattleCosmetics.LoadIcon(face, Items.ItemType.Face);
+                defaultFace1 = defaultFace0;
+                duelFrameMat0 = duelFrameMat1 = watchFrameMat0 = watchFrameMat1 = replayFrameMat0 = replayFrameMat1 = null;
+                duelFrameMat0Tag = duelFrameMat1Tag = watchFrameMat0Tag = watchFrameMat1Tag = replayFrameMat0Tag = replayFrameMat1Tag = null;
+                var protector = BattleCosmetics.LoadProtectorMaterial();
+                duelProtector0 = duelProtector1 = watchProtector0 = watchProtector1 = replayProtector0 = replayProtector1 = protector;
+                duelProtector0Tag = duelProtector1Tag = watchProtector0Tag = watchProtector1Tag = replayProtector0Tag = replayProtector1Tag = protector;
+                loaded = true;
+                return;
+            }
             matForFace = await ABLoader.LoadFrameMaterial(FaceFrameMaterialCode);
 
             #region Face

@@ -55,375 +55,80 @@ namespace MDPro3.UI.ServantUI
 
         #endregion
 
-        public const int DEFAULT_CARD = 5990062;
-        private static readonly List<string> ignoreInPuzzleListPrefix = new(MDPro3.Utility.LegacyTextContracts.Get("PuzzleIgnoredFilePrefixes"));
-
+        public const int DEFAULT_CARD = 0;
         public struct Puzzle
         {
-            public string name;
-            public string firstCard;
-            public string description;
-            public string solution;
-            public string pathPrefix;
-            public string namePattern;
-
-            public readonly string GetPath()
-            {
-                return Program.PATH_PUZZLE + pathPrefix + name + Program.EXPANSION_LUA;
-            }
-
-            public readonly string GetEnterConfigKey()
-            {
-                return Program.PATH_PUZZLE + pathPrefix + name + "_Enter";
-            }
-
-            public readonly string GetClearConfigKey()
-            {
-                return Program.PATH_PUZZLE + pathPrefix + name + "_Clear";
-            }
+            public string id, name, firstCard, description, solution, pathPrefix, namePattern;
+            public readonly string GetPath() => id;
+            public readonly string GetEnterConfigKey() => "BattleSpirits/Puzzles/" + id + "_Enter";
+            public readonly string GetClearConfigKey() => "BattleSpirits/Puzzles/" + id + "_Clear";
         }
         private static readonly List<Puzzle> puzzles = new();
         public SuperScrollView superScrollView;
-
         public override void ShowEvent()
         {
-            allPuzzles.Clear();
-
-            if(Program.instance.lastServant != Program.instance.ocgcore || superScrollView == null)
-            {
-                Program.instance.puzzle.lastPuzzleItem = null;
-                Program.instance.puzzle.currentPuzzle = string.Empty;
-                SetOverview(string.Empty);
-                GetPuzzles(Program.instance.puzzle.puzzleGroup);
-                Print();
-                Title.text = PuzzlePortalUI.GetPuzzleGroupName(Program.instance.puzzle.puzzleGroup);
-            }
-            else
-            {
-                var allToggles = superScrollView.gameObjects;
-                foreach(var toggle in allToggles)
-                {
-                    var mono = toggle.GetComponent<SelectionToggle_Puzzle>();
-                    mono.RefreshBadge();
-                }
-            }
+            base.ShowEvent();
+            GetPuzzles(Program.instance.puzzle.puzzleGroup); Print();
+            Title.text = PuzzlePortalUI.GetPuzzleGroupName(Program.instance.puzzle.puzzleGroup);
         }
-
-        private static PuzzleGroup? GetPuzzleGroupByPath(string path)
+        private static Puzzle Convert(MDPro3.BattleSpirits.Puzzles.PuzzleDefinition p) => new Puzzle
         {
-            try
-            {
-                if (File.Exists(path))
-                {
-                    var count = path.Count(c => c == '/');
-                    var prefix = string.Empty;
-                    //var folder = path.Replace(Path.GetFullPath(Program.PATH_PUZZLE), string.Empty).Split('/')[0];
-                    if (count == 0)
-                        throw new Exception("Invalid puzzle path");
-                    if (count == 2)
-                        prefix = path.Substring(Program.PATH_PUZZLE.Length, path.LastIndexOf('/') - Program.PATH_PUZZLE.Length + 1);
-                    var puzzleGroup = new PuzzleGroup
-                    {
-                        pathPrefix = prefix,
-                        namePattern = PuzzlePortalUI.GetPuzzleNamePattern(prefix)
-                    };
-                    return puzzleGroup;
-                }
-            }
-            catch { }
-            return new PuzzleGroup { pathPrefix = string.Empty, namePattern = string.Empty };
-        }
-
-        private static Puzzle GetPuzzle(string path)
+            id = p.id, name = p.title, firstCard = MDPro3.BattleSpirits.BattleCatalog.GetNumericId(p.previewCardId).ToString(),
+            description = p.description, solution = "Hint: " + p.hint, pathPrefix = p.category + "/", namePattern = ""
+        };
+        private static void GetPuzzles(PuzzleGroup group)
         {
-            var puzzleGroup = GetPuzzleGroupByPath(path);
-
-            string text = File.ReadAllText(path);
-            string st = text.Replace("\r", "");
-            string[] lines = st.Split(new string[] { "\n" }, StringSplitOptions.RemoveEmptyEntries);
-
-            string card = "0";
-            int messageStart = 0;
-            int messageEnd = 0;
-            int solutionStart = 0;
-            int solutionEnd = 0;
-            for (int i = 0; i < lines.Length; i++)
-            {
-                if (lines[i].StartsWith("Debug.AddCard(") && card == "0")
-                    card = lines[i].Replace("Debug.AddCard(", "").Split(',')[0];
-                else if (lines[i].StartsWith("--[[message"))
-                    messageStart = i + 1;
-                else if (lines[i].StartsWith("Solution:"))
-                    solutionStart = i;
-                else if (lines[i].StartsWith("]]"))
-                {
-                    if (messageEnd == 0)
-                        messageEnd = i;
-                    else
-                        solutionEnd = i;
-                }
-            }
-            string description = string.Empty;
-            string solution = string.Empty;
-            if (messageStart != 0 && messageEnd != 0)
-                for (int i = messageStart; i < messageEnd; i++)
-                    description += lines[i] + Program.STRING_LINE_BREAK;
-            if (solutionStart != 0 && solutionEnd != 0)
-                for (int i = solutionStart; i < solutionEnd; i++)
-                    solution += lines[i] + Program.STRING_LINE_BREAK;
-            description = description.Replace("\r\n\t\r\n\t", "\r\n\t");
-            Puzzle puzzle = new()
-            {
-                name = Path.GetFileNameWithoutExtension(path),
-                firstCard = card,
-                description = description,
-                solution = solution,
-                pathPrefix = puzzleGroup.Value.pathPrefix,
-                namePattern = puzzleGroup.Value.namePattern
-            };
-            return puzzle;
+            puzzles.Clear();
+            foreach (var p in MDPro3.BattleSpirits.Puzzles.BattlePuzzleCatalog.All)
+                if (string.IsNullOrEmpty(group.pathPrefix) || p.category + "/" == group.pathPrefix) puzzles.Add(Convert(p));
         }
-
-        private static void GetPuzzles(PuzzleGroup puzzleGroup)
-        {
-            puzzles?.Clear();
-            var path = Program.PATH_PUZZLE + puzzleGroup.pathPrefix;
-            if (!Directory.Exists(path))
-                Directory.CreateDirectory(path);
-            FileInfo[] fileInfos = new DirectoryInfo(path).GetFiles("*.lua");
-            foreach (FileInfo fileInfo in fileInfos)
-            {
-                bool skip = false;
-                if(puzzleGroup.pathPrefix == string.Empty)
-                    foreach (var prefix in ignoreInPuzzleListPrefix)
-                    {
-                        if (fileInfo.Name.StartsWith(prefix))
-                        {
-                            skip = true;
-                            break;
-                        }
-                    }
-                if (skip) continue;
-
-                var puzzle = GetPuzzle(path + fileInfo.Name);
-                puzzles.Add(puzzle);
-            }
-        }
-
         public void Print()
         {
             superScrollView?.Clear();
-            ButtonPlay.SetInteractable(puzzles.Count > 0);
-            List<string[]> tasks = new();
-
+            var tasks = new List<string[]>();
             for (int i = 0; i < puzzles.Count; i++)
             {
-                string[] task = new string[]
-                {
-                    i.ToString(),
-                    puzzles[i].name,
-                    puzzles[i].firstCard,
-                    puzzles[i].description,
-                    puzzles[i].solution,
-                    puzzles[i].pathPrefix,
-                    puzzles[i].namePattern
-                };
-                tasks.Add(task);
+                var p = puzzles[i];
+                tasks.Add(new[] { i.ToString(), p.name, p.firstCard, p.description, p.solution, p.pathPrefix, p.namePattern, p.id });
             }
             var handle = Addressables.LoadAssetAsync<GameObject>("UI/ItemPuzzle.prefab");
-            handle.Completed += (result) =>
+            handle.Completed += result =>
             {
-                var itemHeight = PropertyOverrider.NeedMobileLayout() ? 180f : 150f;
+                float itemHeight = PropertyOverrider.NeedMobileLayout() ? 180f : 150f;
                 float topPadding = PropertyOverrider.NeedMobileLayout() ? 148f : 134f;
                 float space = itemHeight - (PropertyOverrider.NeedMobileLayout() ? 152f : 122f);
                 float bottomPadding = (PropertyOverrider.NeedMobileLayout() ? 64f : 54f) - space;
-                superScrollView = new SuperScrollView(
-                    1,
-                    700,
-                    itemHeight,
-                    topPadding,
-                    bottomPadding,
-                    result.Result,
-                    ItemOnListRefresh,
-                    ScrollRect);
+                superScrollView = new SuperScrollView(1, 700, itemHeight, topPadding, bottomPadding,
+                    result.Result, ItemOnListRefresh, ScrollRect);
                 superScrollView.Print(tasks);
-                SelectFirst();
+                if (superScrollView.items.Count > 0) superScrollView.items[0].gameObject.GetComponent<SelectionToggle_Puzzle>().SetToggleOn();
+                else { SetOverview(""); Program.instance.puzzle.currentPuzzle = ""; }
             };
         }
-
-        private void SelectFirst()
-        {
-            if (superScrollView == null || superScrollView.gameObjects.Count == 0)
-                return;
-
-            var item0 = superScrollView.items[0].gameObject.GetComponent<SelectionToggle_Puzzle>();
-            item0.SetToggleOn();
-        }
-
         private void ItemOnListRefresh(string[] task, GameObject item)
         {
             var handler = item.GetComponent<SelectionToggle_Puzzle>();
-            Puzzle puzzle = new()
-            {
-                name = task[1],
-                firstCard = task[2],
-                description = task[3],
-                solution = task[4],
-                pathPrefix = task[5],
-                namePattern = task[6],
-            };
-            handler.puzzle = puzzle;
+            handler.puzzle = new Puzzle { id = task[7], name = task[1], firstCard = task[2], description = task[3],
+                solution = task[4], pathPrefix = task[5], namePattern = task[6] };
             handler.Refresh();
         }
-
         public void SetOverview(string overview)
-        {
-            TextOverview.text = overview;
-            TextOverview.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
-        }
-
-        public void OnPlayPuzzle()
-        {
-            if (Program.instance.puzzle.lastPuzzleItem == null)
-                return;
-
-            Program.instance.puzzle.StartCurrentPuzzle();
-        }
-
+        { TextOverview.text = overview; TextOverview.GetComponent<RectTransform>().anchoredPosition = Vector2.zero; }
+        public void OnPlayPuzzle() => Program.instance.puzzle.StartCurrentPuzzle();
         public void SelectLastPuzzleItem()
-        {
-            if (Program.instance.puzzle.lastPuzzleItem == null)
-                return;
-
-            UserInput.NextSelectionIsAxis = true;
-            Program.instance.puzzle.lastPuzzleItem.GetSelectable().Select();
-        }
-
-        public static Puzzle GetFirstPuzzle(PuzzleGroup puzzleGroup)
-        {
-            GetPuzzles(puzzleGroup);
-            if (puzzles.Count == 0)
-                return default;
-            return puzzles[0];
-        }
-
-        public static List<Puzzle> GetRecommendPuzzles(int count)
-        {
-            var returnValue = new List<Puzzle>();
-            var allPuzzles = GetAllPuzzles();
-
-            if (returnValue.Count < count)
-                for (int i = 0; i < allPuzzles.Count; i++)
-                    if (!returnValue.Contains(allPuzzles[i]))
-                    {
-                        AddRecommendPuzzle(returnValue, allPuzzles[i]);
-                        if (returnValue.Count >= count)
-                            break;
-                    }
-
-            if (returnValue.Count < count)
-                for (int i = 0; i < allPuzzles.Count; i++)
-                    if (!returnValue.Contains(allPuzzles[i]))
-                    {
-                        AddNotClearPuzzle(returnValue, allPuzzles[i]);
-                        if (returnValue.Count >= count)
-                            break;
-                    }
-
-            if (returnValue.Count < count)
-                for (int i = 0; i < allPuzzles.Count; i++)
-                    if (!returnValue.Contains(allPuzzles[i]))
-                    {
-                        returnValue.Add(allPuzzles[i]);
-                        if (returnValue.Count >= count)
-                            break;
-                    }
-
-            return returnValue;
-        }
-
-
-        private static readonly List<Puzzle> allPuzzles = new();
-        private static List<Puzzle> GetAllPuzzles()
-        {
-            if(allPuzzles.Count > 0)
-                return allPuzzles;
-
-            var puzzleGroup = new PuzzleGroup
-            {
-                pathPrefix = string.Empty,
-                namePattern = string.Empty
-            };
-            GetPuzzles(puzzleGroup);
-            allPuzzles.AddRange(puzzles);
-            var folders = Directory.GetDirectories(Program.PATH_PUZZLE);
-            foreach (var folder in folders)
-            {
-                string folderName = Path.GetFileName(folder) + "/";
-                var pg = new PuzzleGroup
-                {
-                    pathPrefix = folderName,
-                    namePattern = PuzzlePortalUI.GetPuzzleNamePattern(folderName)
-                };
-                GetPuzzles(pg);
-                allPuzzles.AddRange(puzzles);
-            }
-            return allPuzzles;
-        }
-
-        private static void AddRecommendPuzzle(List<Puzzle> list, Puzzle puzzle)
-        {
-            var isNew = !Config.GetBool(puzzle.GetEnterConfigKey(), false);
-            if (isNew) 
-                list.Add(puzzle);
-        }
-
-        private static void AddNotClearPuzzle(List<Puzzle> list, Puzzle puzzle)
-        {
-            var cleared = Config.GetBool(puzzle.GetClearConfigKey(), false);
-            if (!cleared)
-                list.Add(puzzle);
-        }
-
+        { UserInput.NextSelectionIsAxis = true; Program.instance.puzzle.Select(); }
+        public static Puzzle GetFirstPuzzle(PuzzleGroup group)
+        { GetPuzzles(group); return puzzles.Count > 0 ? puzzles[0] : default; }
+        public static List<Puzzle> GetRecommendPuzzles(int count) => MDPro3.BattleSpirits.Puzzles.BattlePuzzleCatalog.All
+            .Select(Convert).OrderBy(p => Config.GetBool(p.GetClearConfigKey(), false)).Take(Math.Max(0, count)).ToList();
         public static Puzzle? GetLastPlayPuzzle()
         {
-            try
-            {
-                var lastPlayPuzzleName = Config.Get("LastPlayPuzzle", Config.EMPTY_STRING);
-                if (lastPlayPuzzleName != Config.EMPTY_STRING)
-                {
-                    var path = lastPlayPuzzleName + Program.EXPANSION_LUA;
-                    if (File.Exists(path))
-                    {
-                        var count = path.Count(c => c == '/');
-                        var prefix = string.Empty;
-                        if(count == 0)
-                            throw new Exception("Invalid puzzle path");
-                        if(count == 2)
-                            prefix = path.Substring(Program.PATH_PUZZLE.Length, path.LastIndexOf('/') - Program.PATH_PUZZLE.Length + 1);
-                        var puzzleGroup = new PuzzleGroup
-                        {
-                            pathPrefix = prefix,
-                            namePattern = PuzzlePortalUI.GetPuzzleNamePattern(prefix)
-                        };
-                        return GetPuzzle(path);
-                    }
-                }
-            }
-            catch {}
-            return null;
+            return MDPro3.BattleSpirits.Puzzles.BattlePuzzleCatalog.TryGet(Config.Get("LastPlayPuzzle", ""), out var p)
+                ? Convert(p) : (Puzzle?)null;
         }
-
-        public static bool GroupHasNew(PuzzleGroup puzzleGroup)
-        {
-            GetPuzzles(puzzleGroup);
-            return puzzles.Any(p => !Config.GetBool(p.GetEnterConfigKey(), false));            
-        }
-
-        public static bool GroupAllClear(PuzzleGroup puzzleGroup)
-        {
-            GetPuzzles(puzzleGroup);
-            return puzzles.All(p => Config.GetBool(p.GetClearConfigKey(), false));
-        }
+        public static bool GroupHasNew(PuzzleGroup group)
+        { GetPuzzles(group); return puzzles.Any(p => !Config.GetBool(p.GetEnterConfigKey(), false)); }
+        public static bool GroupAllClear(PuzzleGroup group)
+        { GetPuzzles(group); return puzzles.Count > 0 && puzzles.All(p => Config.GetBool(p.GetClearConfigKey(), false)); }
     }
 }

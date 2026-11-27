@@ -1,3 +1,4 @@
+using MDPro3.BattleSpirits;
 using Cysharp.Threading.Tasks;
 using Ionic.Zip;
 using MDPro3.Duel.YGOSharp;
@@ -98,6 +99,7 @@ namespace MDPro3.Utility
             bool persistent = false,
             CancellationToken token = default)
         {
+            if (!BattleCatalog.TryGet(code, out _)) return await BattleCardAdapter.BackAsync(token);
             var lockObj = artLoadingLocks.GetOrAdd(code, _ => new SemaphoreSlim(1, 1));
             await lockObj.WaitAsync(token);
 
@@ -176,32 +178,12 @@ namespace MDPro3.Utility
                     UnityEngine.Object.Destroy(entry.Texture);
         }
 
-        public static async UniTask<Texture2D> LoadOverFrameAsync(
+        public static UniTask<Texture2D> LoadOverFrameAsync(
             int code,
             CancellationToken token = default)
         {
-            var lockObj = overFrameLoadingLocks.GetOrAdd(code, _ => new SemaphoreSlim(1, 1));
-            await lockObj.WaitAsync(token);
-
-            try
-            {
-                if (cachedOverFrames.TryGetValue(code, out var tex))
-                    return tex;
-
-                var of = await InternalLoadOverFrameAsync(code, token);
-                if(of != null)
-                    cachedOverFrames[code] = of;
-                return of;
-            }
-            catch (Exception e)
-            {
-                throw e;
-            }
-            finally
-            {
-                lockObj.Release();
-                overFrameLoadingLocks.TryRemove(code, out _);
-            }
+            // Printed BS faces already contain their complete frames.
+            return UniTask.FromResult<Texture2D>(null);
         }
 
 
@@ -211,14 +193,15 @@ namespace MDPro3.Utility
             CancellationToken token = default,
             bool forceTexture = false)
         {
-            if(ResourceManager.CardHasOverFrame(code))
+            if (!BattleCatalog.TryGet(code, out _)) return await BattleCardAdapter.BackAsync(token);
+            if (!BattleCatalog.TryGet(code, out _) && ResourceManager.CardHasOverFrame(code))
                 persistent = true;
 
             var lockObj = cardLoadingLocks.GetOrAdd(code, _ => new SemaphoreSlim(1, 1));
             await lockObj.WaitAsync(token);
             try
             {
-                if (!CardRenderer.CardHasVideoArt(code) || forceTexture)
+                if (BattleCatalog.TryGet(code, out _) || !CardRenderer.CardHasVideoArt(code) || forceTexture)
                 {
                     if (cachedCards.TryGetValue(code, out var entry))
                     {
@@ -411,6 +394,31 @@ namespace MDPro3.Utility
             public Task<Texture2D> LoadingTask;
         }
 
+        public static async UniTask<Texture2D> LoadBattleFaceAsync(string cardId, CancellationToken token = default)
+        {
+            var path = BattleCatalog.CardImagePath(cardId);
+            var texture = await LoadBattleTexturePathAsync(path, token);
+            lastCardFoundArt = texture != null;
+            lastCardRenderSucceed = texture != null;
+            return texture;
+        }
+
+        public static async UniTask<Texture2D> LoadBattleTexturePathAsync(string path, CancellationToken token = default)
+        {
+            if (string.IsNullOrWhiteSpace(path)) throw new IOException("A Battle Spirits image path is required.");
+            // Keep the complete printed face at its native resolution; no YGO crop, render or foil mask.
+            string uri = path.Contains("://") ? path : new Uri(Path.GetFullPath(path)).AbsoluteUri;
+            using var request = UnityWebRequestTexture.GetTexture(uri, true);
+            await request.SendWebRequest().ToUniTask(cancellationToken: token);
+            token.ThrowIfCancellationRequested();
+            if (request.result != UnityWebRequest.Result.Success) throw new IOException("Battle Spirits image could not be loaded: " + path);
+            var texture = DownloadHandlerTexture.GetContent(request);
+            texture.filterMode = FilterMode.Bilinear;
+            texture.wrapMode = TextureWrapMode.Clamp;
+            texture.anisoLevel = 4;
+            return texture;
+        }
+
         private static async Task<Texture2D> InternalLoadArtAsync(
             int code,
             CancellationToken token)
@@ -420,6 +428,7 @@ namespace MDPro3.Utility
 
             try
             {
+                if (BattleCatalog.TryGet(code, out var definition)) return await LoadBattleFaceAsync(definition.id, token);
                 var result = await ResourceManager.GetCardIllustAsync(code, token);
                 if(result == null)
                 {
@@ -439,6 +448,7 @@ namespace MDPro3.Utility
 
         private static async UniTask<Texture2D> InternalLoadOverFrameAsync(int code, CancellationToken token)
         {
+            if (BattleCatalog.TryGet(code, out _)) return null;
             await overFrameSemaphore.WaitAsync(token);
 
             try
@@ -469,6 +479,7 @@ namespace MDPro3.Utility
             int code,
             CancellationToken token)
         {
+            if (BattleCatalog.TryGet(code, out var definition)) return await LoadBattleFaceAsync(definition.id, token);
             await UniTask.WaitUntil(() => TextureManager.container != null, cancellationToken: token);
             await cardSemaphore.WaitAsync(token);
             lastCardRenderSucceed = true;

@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 using System.IO;
 using UnityEngine;
 using MDPro3.Utility;
+using MDPro3.BattleSpirits;
 
 namespace MDPro3
 {
@@ -180,24 +181,55 @@ namespace MDPro3
 
         public static string GetConfigDeckName(bool containType = true)
         {
-            var config = Get("DeckInUse", EMPTY_STRING);
-            if(config.StartsWith("/") && config.Length > 1)
-                config = config[1..];
-            if (!containType && config.Contains("/"))
-                config = Path.GetFileName(config);
-            return config;
+            BattleDeckStorage.EnsureInitialized();
+            var selected = Get("BattleSpirits/DeckInUse", EMPTY_STRING);
+            if (!TryGetBattleDeckName(selected, out var config, out var deckPath) || !File.Exists(deckPath))
+            {
+                config = string.Empty;
+                if (Directory.Exists(BattleDeckStorage.DeckDirectory)
+                    && TryGetBattleDeckName(BattleDeckStorage.DefaultDeckName, out var fallback, out deckPath)
+                    && File.Exists(deckPath))
+                    config = fallback;
+                Set("BattleSpirits/DeckInUse", config.Length == 0 ? EMPTY_STRING : config);
+            }
+            return containType ? config : Path.GetFileName(config);
         }
 
         public static void SetConfigDeck(string deckName, bool needCheck = false)
         {
-            if (needCheck)
+            if (string.IsNullOrWhiteSpace(deckName))
             {
-                var type = Program.instance.deckSelector.DeckType;
-                var config = type == string.Empty ? deckName : $"{type}/{deckName}";
-                Set("DeckInUse", config);
+                Set("BattleSpirits/DeckInUse", EMPTY_STRING);
+                return;
             }
-            else
-                Set("DeckInUse", deckName);
+            if (needCheck && !deckName.Contains("/") && !deckName.Contains("\\"))
+            {
+                var type = Program.instance?.deckSelector?.DeckType ?? string.Empty;
+                if (type.Length != 0) deckName = type + "/" + deckName;
+            }
+            if (TryGetBattleDeckName(deckName, out var config, out _))
+                Set("BattleSpirits/DeckInUse", config);
+        }
+
+        private static bool TryGetBattleDeckName(string value, out string name, out string deckPath)
+        {
+            name = string.Empty;
+            deckPath = string.Empty;
+            if (string.IsNullOrWhiteSpace(value)) return false;
+            value = value.Replace('\\', '/');
+            if (Path.IsPathRooted(value) || value.Contains(":")) return false;
+            foreach (var segment in value.Split('/'))
+                if (segment.Length == 0 || segment == "." || segment == "..") return false;
+            try
+            {
+                deckPath = BattleDeckStorage.ResolveDeckPath(value);
+                name = Path.GetRelativePath(BattleDeckStorage.DeckDirectory, deckPath).Replace('\\', '/');
+                name = name.Substring(0, name.Length - Program.EXPANSION_YDK.Length);
+                return name.Length > 0;
+            }
+            catch (ArgumentException) { return false; }
+            catch (NotSupportedException) { return false; }
+            catch (IOException) { return false; }
         }
     }
 }

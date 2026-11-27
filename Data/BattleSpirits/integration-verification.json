@@ -1,0 +1,331 @@
+{
+  "checkedAtUtc": "2026-11-16T17:35:09.902396+00:00",
+  "application": "Battle Spirits Standard fan client",
+  "workingBranch": "mdpro3-english",
+  "baselineCommit": "2c7fd2ee7e5d2100eb85cccff7fb8418ec52439c",
+  "backup": {
+    "backup": "backup/2026-11-16-before-solo-field-visibility-fixes",
+    "commit": "22314e5c134f01f282cc39d5882e7b7558851d6d",
+    "workingBranch": "mdpro3-english"
+  },
+  "startup": "Boot -> Program -> BattleIntegration; direct Battle Spirits only",
+  "rulesProfile": "standard-effects-20261116-r2",
+  "effectSourceSha256": "ecffec4e56e9c5478e34f501d4cf73e699a16893049cc9e6b14663483101343f",
+  "content": {
+    "cardDefinitions": 62,
+    "englishPrintedFaces": 61,
+    "originalPisketonaFaceWithEnglishInspection": 1,
+    "starterDecks": 4,
+    "cardsPerStarter": 40,
+    "alphaStandees": 43,
+    "emptyFrames": 18,
+    "fieldAppearances": 3,
+    "puzzles": 10,
+    "bossCutsceneCards": [
+      "26RBS03-022",
+      "26RBS03-X01"
+    ],
+    "exactSourceCopiesVerified": 192
+  },
+  "productionSourceChecks": [
+    {
+      "suite": "Core",
+      "status": "PASS",
+      "assertions": 116
+    },
+    {
+      "suite": "Effects",
+      "status": "PASS",
+      "assertions": 2754,
+      "exactProfiles": 62,
+      "publicCommandMatrix": {
+        "handPlays": 124,
+        "spiritAttacks": 43,
+        "spiritBlocks": 43,
+        "magicModesAndWindows": 40,
+        "soulMagicPayments": 10,
+        "activatedAbilities": 8,
+        "successionPayments": 14,
+        "levelUpDepletion": 9
+      }
+    },
+    {
+      "suite": "SoloPuzzles",
+      "status": "PASS",
+      "assertions": 3698,
+      "completeAiDeckPairings": 16,
+      "puzzles": 10
+    },
+    {
+      "suite": "NativeCatalogDeckSearchConfig",
+      "status": "PASS",
+      "assertions": 517
+    },
+    {
+      "suite": "SessionReplayLan",
+      "status": "PASS",
+      "assertions": 505,
+      "scope": "Clocked Solo/AI, ten puzzle wrappers, deterministic completed replays, full loopback match, privacy and malformed protocol. Count varies with loopback scheduling."
+    },
+    {
+      "suite": "NativeDuelUI",
+      "status": "PASS",
+      "controllerAssertions": 61,
+      "actualBridgeDriverAssertions": 44,
+      "actualSceneAndPrefabContracts": true
+    },
+    {
+      "suite": "Presentation",
+      "status": "PASS",
+      "assertions": 152,
+      "realAlphaPngsValidated": 43,
+      "gpuShaderCompilation": false
+    },
+    {
+      "suite": "SettingsActions",
+      "status": "PASS",
+      "assertions": 13
+    },
+    {
+      "suite": "Cosmetics",
+      "status": "PASS",
+      "assertions": 204
+    },
+    {
+      "suite": "Audio",
+      "status": "PASS",
+      "assertions": 42
+    },
+    {
+      "suite": "EnglishCompatibility",
+      "status": "PASS",
+      "scenarios": 23
+    },
+    {
+      "suite": "NativeManagerApi",
+      "status": "PASS",
+      "members": 17
+    },
+    {
+      "suite": "CatalogImport",
+      "status": "PASS",
+      "typedCards": 62,
+      "legalStandardRecipes": 4,
+      "provenanceSourceCopies": 192
+    },
+    {
+      "suite": "EnglishSourceValidator",
+      "status": "PASS",
+      "sourceFiles": 3335,
+      "hanFiles": 0,
+      "localeValuesPreserved": true
+    },
+    {
+      "suite": "DeepEnglishSourceAudit",
+      "status": "PASS",
+      "changedProductionSources": 181,
+      "csharp9Profiles": 3,
+      "syntaxOrSourceLanguageErrors": 0
+    },
+    {
+      "suite": "SoloCutin",
+      "status": "PASS",
+      "assertions": 53,
+      "actualPrefabMetaContracts": 8,
+      "actualSuperScrollViewCompiled": true
+    },
+    {
+      "suite": "DeckSearchLifecycle",
+      "status": "PASS",
+      "assertions": 163,
+      "actualCatalogCards": 62
+    },
+    {
+      "suite": "DeckInspectorLayout",
+      "status": "PASS",
+      "assertions": 42,
+      "serializedPrefabInputs": true
+    }
+  ],
+  "targetBclAssemblyCompatibility": {
+    "referenceProfile": "netstandard2.1",
+    "languageVersion": "9",
+    "bclReferenceCount": 121,
+    "assemblies": [
+      {
+        "assembly": "MDPro3.BattleSpirits.Core",
+        "sourceCount": 8,
+        "result": "PASS"
+      },
+      {
+        "assembly": "MDPro3.BattleSpirits.AI",
+        "sourceCount": 1,
+        "result": "PASS"
+      },
+      {
+        "assembly": "MDPro3.BattleSpirits.Puzzles",
+        "sourceCount": 2,
+        "result": "PASS"
+      },
+      {
+        "assembly": "BattleBackend",
+        "sourceCount": 4,
+        "result": "PASS"
+      },
+      {
+        "assembly": "BattleNativeAdapters",
+        "sourceCount": 9,
+        "result": "PASS"
+      }
+    ],
+    "limitations": "Compile only; unavailable Unity/TMP/UniTask framework types use doubles. Not Unity Play/build, shader, asset or runtime validation."
+  },
+  "nativeEntryAndAssetAudit": {
+    "status": "PASS",
+    "changedCSharpFiles": 93,
+    "syntaxConfigurations": [
+      "Windows player C#9",
+      "Windows editor C#9"
+    ],
+    "partialSemanticSourceFiles": 3028,
+    "auditedStaticMemberReferences": 273,
+    "auditedStaticInvocationArities": 232,
+    "sourceMethodsReachedFromNativeEntries": 2260,
+    "findings": [],
+    "unityEditorPlayOrBuildTested": false,
+    "limitations": "Partial source semantics do not replace a Unity compile. Entry traversal covers source calls and constant BattleSpiritsMode guards, not reflection, serialized UnityEvents or asset bundles.",
+    "preservedBaseline": "2c7fd2ee7e5d2100eb85cccff7fb8418ec52439c",
+    "assets": {
+      "catalogCards": 62,
+      "starterDecks": 4,
+      "puzzleFixtures": 10,
+      "newUnityMetadataFiles": 208,
+      "findings": []
+    }
+  },
+  "preservation": {
+    "existingPrefabSceneAndMetaFilesChanged": 0,
+    "protectedOriginalLayoutAndArtHashesUnchanged": 396,
+    "authorizedTitleScriptChange": "MainMenuUI title -> Battle Spirits",
+    "authorizedProductSettingsChanges": [
+      "companyName",
+      "productName",
+      "applicationIdentifier",
+      "applicationIcon"
+    ],
+    "legacySelectedDeckKeyPreserved": true,
+    "selectedDeckKey": "BattleSpirits/DeckInUse",
+    "deviceDecksAndReplaysRoot": "Application.persistentDataPath/BattleSpirits",
+    "mainLegacyAndReviewBranchesUnchanged": true
+  },
+  "unityEditor": {
+    "versionRequired": "6000.0.24f1",
+    "urpRequired": "17.0.3",
+    "target": "Windows x64",
+    "entryScene": "Assets/Scenes/Boot.unity",
+    "installedInVerificationEnvironment": false,
+    "assemblyBuildTested": false,
+    "playModeTested": false,
+    "renderingTested": false,
+    "shaderCompilationTested": false,
+    "windowsPlayerBuildTested": false
+  },
+  "limits": [
+    "Limited reviewed 62-card roster; not every Battle Spirits set.",
+    "Paper silhouettes are 2.5D standees, not rigged creature meshes.",
+    "Pisketona retains its supplied Japanese printed face with English inspection text.",
+    "Missing music/voice assets remain silent; unsupported content libraries remain empty.",
+    "Source harnesses use narrow unavailable Unity/native API doubles. Static entry audits do not inspect arbitrary reflection or runtime asset-bundle contents.",
+    "Target Unity Editor Play and player-build verification remain required.",
+    "Only explicitly approved Ritenia and Pisketona have boss presentations; no inference from cost/rarity.",
+    "Para-DX cost5 F Change is implemented but has no compatible source within this limited62-card roster; printed targeting is preserved."
+  ],
+  "fixBatchBaselineCommit": "22314e5c134f01f282cc39d5882e7b7558851d6d",
+  "runtimeUiCorrections": {
+    "canvas": "Dynamic duel is a full-stretch layer5 RectTransform under the real native UI Canvas, before backdrop/settings/popup siblings.",
+    "layer": "Dynamic field, hand, HUD, inspection and renderer labels inherit the actual UI layer; scene UI camera mask covers5+30.",
+    "input": "Entering the arena disables raycasts on the transparent global backdrop.",
+    "soloCutin": "Coalesced async lists, one scroll instance, valid selected opponent, artwork-only proportional Solo banners, selected boss preview/play.",
+    "cards": "Dedicated aspect-fit bounds, larger native faces, seven-column scrollable desktop deck, readable metadata/effects, initial full62-card collection.",
+    "arena": "Approved navy/silver15.6x15.2 mirrored geometry,42degree perspective, exact public counters,eight-step native phase HUD,selected-card legal commands,up to4K render target.",
+    "background": "Dark menu colors; play sheets are not menu wallpaper.",
+    "effects": "Physical Lv1 core maintenance takes priority over Level Up override; last-core removal depletes the Spirit. All62 IDs exercised through real public commands.",
+    "implementedFlagsChanged": false
+  },
+  "arenaReference": {
+    "catalog_date": "2026-11-17",
+    "scope": "Supplemental owner-supplied arena appearance and explicit summon-presentation approval; the original imported reference catalog remains byte-preserved.",
+    "references": [
+      {
+        "id": "BS-REF-20261117-ARENA",
+        "category": "native_arena_and_summon_presentation",
+        "source": "Owner-uploaded Battle Spirits \u2013 S\u00e0n \u0111\u1ea5u 2 ng\u01b0\u1eddi ch\u01a1i.html",
+        "original_filename": "Battle Spirits \u2013 S\u00e0n \u0111\u1ea5u 2 ng\u01b0\u1eddi ch\u01a1i.html",
+        "original_file": "arena-reference-20261117.html",
+        "original_bytes": 2542652,
+        "original_sha256": "520a63796835e2f96f3df7563f1918b2ab87af770034164a3cc32aebdb693a6c",
+        "unchanged_original": true,
+        "archive_status": "archived_from_user_upload",
+        "intended_role_en": "Navy and silver mirrored arena, perspective camera, resource-zone placement, player plates, hand and turn controls; explicit Pisketona and Ritenia cutscenes.",
+        "rules_reference_status": "appearance_only",
+        "approved_boss_ids": [
+          "26RBS03-X01",
+          "26RBS03-022"
+        ],
+        "boss_assignment_basis": "Explicit owner approval and both named cutscenes in this supplied HTML. No inference from artwork, cost or rarity.",
+        "native_geometry": {
+          "table_width": 15.6,
+          "table_depth": 15.2,
+          "field_of_view_degrees": 42,
+          "camera_target": [
+            0,
+            0,
+            2.2
+          ],
+          "camera_offset": [
+            0,
+            11,
+            11
+          ],
+          "camera_fit": "max(1.25, 2.1 / viewportAspect)",
+          "viewer_zones": {
+            "burst": [
+              -6.2,
+              1.45
+            ],
+            "deck": [
+              6.2,
+              1.45
+            ],
+            "life": [
+              -6.2,
+              3.85
+            ],
+            "reserve": [
+              -6.2,
+              6.2
+            ],
+            "trash_card": [
+              6.2,
+              4.0
+            ],
+            "trash_core": [
+              6.2,
+              6.25
+            ]
+          },
+          "opponent_zones": "Same geometry rotated 180 degrees."
+        },
+        "native_adaptations": [
+          "Native Unity rendering and legal-command dispatcher remain the runtime path.",
+          "Current Standard engine retains eight turn steps, including Second Main Step.",
+          "The five decorative HTML slots do not impose a field-card limit.",
+          "Printed costs, effects, legal deck sizes, payment and all match decisions use the reviewed native catalog and engine; the HTML fake decks, generated cards and scripted payment are not adopted.",
+          "Burst remains empty for the current engine roster; no hidden face-down card is invented.",
+          "Navy is the default field. Explicit Battle Spirits themes can add faint cropped decorative artwork beneath the native zones.",
+          "Existing reviewed card faces and 43 transparent standees remain unchanged source images."
+        ]
+      }
+    ]
+  }
+}

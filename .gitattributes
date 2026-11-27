@@ -1,0 +1,11 @@
+# Keep archived official responses byte-exact, including original line endings
+# and whitespace. Their SHA256 provenance must survive Windows checkouts.
+Data/BattleSpirits/provenance/**/*.html -text -whitespace
+
+# Source hashes and paired source/player fixtures must be stable across hosts.
+Assets/BattleSpirits/**/*.cs text eol=lf
+Assets/BattleSpirits/**/*.asmdef text eol=lf
+Assets/BattleSpirits/**/*.shader text eol=lf
+Assets/BattleSpirits/**/*.meta text eol=lf
+Assets/StreamingAssets/BattleSpirits/**/*.json text eol=lf
+Data/BattleSpirits/**/*.json text eol=lf

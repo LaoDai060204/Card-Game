@@ -1,0 +1,75 @@
+{
+  "id": "bs-02-soul-release",
+  "title": "02 — Release Raraia",
+  "category": "Core Skills",
+  "description": "Make Raraia declare an attack. It cannot attack without the Soul Core.",
+  "hint": "Move the Soul Core from Reserve onto Raraia, then enter the Attack Step.",
+  "previewCardId": "26RSD09-001",
+  "seed": 20261116,
+  "turnNumber": 2,
+  "activePlayer": 0,
+  "maxCommands": 20,
+  "maxTurnNumber": 2,
+  "phase": "Main",
+  "pendingAttackerId": -1,
+  "pendingBlockerId": -1,
+  "flashPlayerIndex": -1,
+  "players": [
+    {
+      "life": 5,
+      "reserveNormal": 3,
+      "reserveSoul": true,
+      "trashNormal": 0,
+      "trashSoul": false,
+      "hand": [],
+      "discard": [],
+      "field": [
+        {
+          "cardId": "26RSD09-001",
+          "instanceId": 100,
+          "normalCores": 1
+        }
+      ]
+    },
+    {
+      "life": 5,
+      "reserveNormal": 8,
+      "reserveSoul": true,
+      "trashNormal": 0,
+      "trashSoul": false,
+      "hand": [],
+      "discard": [],
+      "field": []
+    }
+  ],
+  "goal": {
+    "kind": "Attack",
+    "owner": 0,
+    "instanceId": 100
+  },
+  "solution": [
+    {
+      "actor": 0,
+      "command": {
+        "action": "transfer",
+        "source": -1,
+        "target": 100,
+        "soul": true,
+        "mode": 1
+      }
+    },
+    {
+      "actor": 0,
+      "command": {
+        "action": "advance"
+      }
+    },
+    {
+      "actor": 0,
+      "command": {
+        "action": "attack",
+        "source": 100
+      }
+    }
+  ]
+}

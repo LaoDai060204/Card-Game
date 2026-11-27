@@ -1,3 +1,4 @@
+using MDPro3.BattleSpirits;
 using Cysharp.Threading.Tasks;
 using MDPro3.Duel.YGOSharp;
 using MDPro3.Servant;
@@ -53,16 +54,15 @@ namespace MDPro3.UI
 
         public void SetPickups(Deck deck)
         {
-            SetPickup(CardsManager.Get(deck.Pickup[0]), 0, false);
-            SetPickup(CardsManager.Get(deck.Pickup[1]), 1, false);
-            SetPickup(CardsManager.Get(deck.Pickup[2]), 2, false);
+            for (int i = 0; i < 3; i++)
+                SetPickup(CardsManager.Get(deck?.Pickup != null && i < deck.Pickup.Count ? deck.Pickup[i] : 0), i, false);
 
             Pickup0.SetToggleOn();
         }
 
         public void SetPickup(Card card, int index, bool selectNext = true)
         {
-            if(card == null || card.Id == 0)
+            if(card == null || !card.IsBattleSpirits)
             {
                 ClearPickup(index, selectNext);
                 return;
@@ -138,11 +138,8 @@ namespace MDPro3.UI
 
         private async UniTask LoadDeckCaseAsync(int deckCase)
         {
-            var sprite = await Program.items.LoadDeckCaseIconAsync(deckCase, "_L_HD");
-            if (gameObject != null)
-                IconDeckCase.sprite = sprite;
-            else
-                IconDeckCase.gameObject.SetActive(false);
+            var sprite = await BattleCardAdapter.BackIconAsync(destroyCancellationToken);
+            if (this != null && sprite != null) IconDeckCase.sprite = sprite;
         }
 
         public void Select()

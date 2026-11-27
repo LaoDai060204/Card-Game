@@ -1,12 +1,11 @@
-using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using MDPro3.Servant;
-using MDPro3.Net;
 using System.Collections.Generic;
 using UnityEngine.AddressableAssets;
 using MDPro3.UI.PropertyOverride;
+using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace MDPro3.UI.ServantUI
 {
@@ -78,11 +77,16 @@ namespace MDPro3.UI.ServantUI
         #endregion
 
         private const int DEFAULT_PORT = 7911;
-        private const int DEFAULT_LP = 8000;
-        private const int DEFAULT_HAND = 5;
+        private const int DEFAULT_LP = 5;
+        private const int DEFAULT_HAND = 4;
         private const int DEFAULT_DRAW = 1;
 
         public SuperScrollView superScrollView;
+        private GameObject itemPrefab;
+        private AsyncOperationHandle<GameObject> itemHandle;
+        private bool loadingItems;
+        private bool disposed;
+        private List<string[]> pendingTasks = new();
 
         public override void Initialize(Servant.Servant servant)
         {            
@@ -94,46 +98,48 @@ namespace MDPro3.UI.ServantUI
         {
             base.ShowEvent();
 
-            switch (SoloSelector.condition)
-            {
-                case SoloSelector.Condition.ForSolo:
-                    ToggleNoCheck.gameObject.SetActive(true);
-                    ToggleNoShuffle.gameObject.SetActive(true);
-                    InputPort.gameObject.SetActive(true);
-                    InputLP.gameObject.SetActive(true);
-                    InputHand.gameObject.SetActive(true);
-                    InputDraw.gameObject.SetActive(true);
-
-                    YgoServer.StopServer();
-                    break;
-                case SoloSelector.Condition.ForRoom:
-                    ToggleNoCheck.gameObject.SetActive(false);
-                    ToggleNoShuffle.gameObject.SetActive(false);
-                    InputPort.gameObject.SetActive(false);
-                    InputLP.gameObject.SetActive(false);
-                    InputHand.gameObject.SetActive(false);
-                    InputDraw.gameObject.SetActive(false);
-                    break;
-            }
-
+            // Standard Battle Spirits fixes life, opening hand, draw and shuffle rules.
+            // Preserve the settings panel and mark its old custom-rule inputs unavailable.
+            ToggleLockHand.GetSelectable().interactable = false;
+            ToggleNoCheck.GetSelectable().interactable = false;
+            ToggleNoShuffle.GetSelectable().interactable = false;
+            InputPort.interactable = false;
+            InputLP.interactable = false; InputLP.text = "5";
+            InputHand.interactable = false; InputHand.text = "4";
+            InputDraw.interactable = false; InputDraw.text = "1";
             ButtonDeck.SetButtonText(Config.GetConfigDeckName());
         }
 
         public void Print()
         {
-            superScrollView?.Clear();
-            List<string[]> tasks = new();
-
+            pendingTasks = new List<string[]>();
             for (int i = 0; i < SoloSelector.bots.Count; i++)
+                pendingTasks.Add(new[] { i.ToString() });
+            if (itemPrefab != null) { PrintReadyItems(); return; }
+            if (loadingItems) return;
+            loadingItems = true;
+            itemHandle = Addressables.LoadAssetAsync<GameObject>("UI/ItemSolo.prefab");
+            itemHandle.Completed += result =>
             {
-                string[] task = new string[]
+                if (disposed || this == null) return;
+                loadingItems = false;
+                if (result.Status != AsyncOperationStatus.Succeeded || result.Result == null)
                 {
-                    i.ToString(),
-                };
-                tasks.Add(task);
-            }
-            var handle = Addressables.LoadAssetAsync<GameObject>("UI/ItemSolo.prefab");
-            handle.Completed += (result) =>
+                    TextOverview.text = "The Solo opponent list could not load. Return and try again.";
+                    Debug.LogError("Battle Spirits Solo: UI/ItemSolo.prefab could not load.");
+                    if (itemHandle.IsValid()) Addressables.Release(itemHandle);
+                    return;
+                }
+                itemPrefab = result.Result;
+                PrintReadyItems();
+            };
+        }
+
+        private void PrintReadyItems()
+        {
+            // One list owns the content and scrollbar. Two asynchronous Print
+            // calls must not leave overlapping rows or a second unselected list.
+            if (superScrollView == null)
             {
                 var itemHeight = PropertyOverrider.NeedMobileLayout() ? 180f : 150f;
                 float topPadding = PropertyOverrider.NeedMobileLayout() ? 148f : 134f;
@@ -145,30 +151,39 @@ namespace MDPro3.UI.ServantUI
                     itemHeight,
                     topPadding,
                     bottomPadding,
-                    result.Result,
+                    itemPrefab,
                     ItemOnListRefresh,
                     ScrollRect);
-                superScrollView.Print(tasks);
-                if(superScrollView.items.Count > 0)
+            }
+            foreach (var row in superScrollView.gameObjects)
+                if (row != null) row.SetActive(false);
+            int selected = Program.instance.solo.lastSoloItem != null ? Program.instance.solo.lastSoloItem.index : 0;
+            superScrollView.selected = pendingTasks.Count == 0 ? -1 : Mathf.Clamp(selected, 0, pendingTasks.Count - 1);
+            superScrollView.Print(pendingTasks);
+            if (superScrollView.selected >= 0)
+            {
+                var item = superScrollView.GetItemByIndex(superScrollView.selected) as SelectionToggle_Solo;
+                Program.instance.solo.lastSoloItem = item;
+                SetOverview(SoloSelector.bots[superScrollView.selected].desc, false);
+                if (item != null)
                 {
-                    var item0 = superScrollView.items[0].gameObject.GetComponent<SelectionToggle_Solo>();
-                    if(Cursor.lockState == CursorLockMode.Locked)
-                    {
-                        item0.GetSelectable().Select();
-                    }
-                    else
-                    {
-                        Program.instance.solo.lastSoloItem = item0;
-                        item0.SetToggleOn();
-                    }
+                    item.SetToggleOn();
+                    if (Cursor.lockState == CursorLockMode.Locked) item.GetSelectable().Select();
                 }
-            };
+            }
+            else
+            {
+                Program.instance.solo.lastSoloItem = null;
+                SetOverview("No Battle Spirits opponents are installed.", false);
+            }
         }
 
         private void ItemOnListRefresh(string[] task, GameObject item)
         {
             var handler = item.GetComponent<SelectionToggle_Solo>();
-            handler.index = int.Parse(task[0]);
+            if (handler == null || !int.TryParse(task[0], out int index)
+                || index < 0 || index >= SoloSelector.bots.Count) return;
+            handler.index = index;
             handler.botInfo = SoloSelector.bots[handler.index];
             handler.Refresh();
         }
@@ -238,6 +253,10 @@ namespace MDPro3.UI.ServantUI
 
         public void OnPlay()
         {
+            if (superScrollView == null || superScrollView.items.Count == 0
+                || superScrollView.selected < 0 || superScrollView.selected >= superScrollView.items.Count)
+                return;
+
             if (SoloSelector.condition == SoloSelector.Condition.ForSolo)
                 Program.instance.solo.StartAIForSolo(superScrollView.selected, ButtonDeck.gameObject.activeSelf);
             else
@@ -252,13 +271,29 @@ namespace MDPro3.UI.ServantUI
 
         public void SelectOnRight()
         {
-            ToggleLockHand.GetSelectable().Select();
+            // ButtonPlay is a named object in the preserved prefab, not an
+            // ElementObjectManager label. Resolve the existing button directly.
+            foreach (var button in GetComponentsInChildren<SelectionButton>(true))
+                if (button.gameObject.name == "ButtonPlay")
+                {
+                    button.GetSelectable().Select();
+                    return;
+                }
         }
 
         public void OnSelectAIDeck()
         {
             Program.instance.deckSelector.SwitchCondition(DeckSelector.Condition.ForSolo);
             Program.instance.ShiftToServant(Program.instance.deckSelector);
+        }
+
+        protected override void OnDestroy()
+        {
+            disposed = true;
+            if (superScrollView?.scrollRect != null && superScrollView.scrollRect.verticalScrollbar != null)
+                superScrollView.scrollRect.verticalScrollbar.onValueChanged.RemoveListener(superScrollView.OnScrollBarChange);
+            if (itemHandle.IsValid()) Addressables.Release(itemHandle);
+            base.OnDestroy();
         }
     }
 }

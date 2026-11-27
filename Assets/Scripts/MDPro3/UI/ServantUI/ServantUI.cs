@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using DG.Tweening;
@@ -63,6 +63,8 @@ namespace MDPro3.UI.ServantUI
         {
             parentServant = servant;
             UIManager.Translate(gameObject);
+            if (!(servant is MDPro3.BattleSpirits.BattleDuelServant))
+                MDPro3.BattleSpirits.BattleNativeLabels.Apply(gameObject);
         }
 
         public virtual void OnBack()

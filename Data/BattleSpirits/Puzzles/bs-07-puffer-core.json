@@ -1,0 +1,55 @@
+{
+  "id": "bs-07-puffer-core",
+  "title": "07 — A core from the Void",
+  "category": "Card Effects",
+  "description": "Summon Puffer. Its effect adds a core from the Void to your Trash.",
+  "hint": "Summon effects resolve before returning control to the Main Step.",
+  "previewCardId": "26RSD03-002",
+  "seed": 20261116,
+  "turnNumber": 2,
+  "activePlayer": 0,
+  "maxCommands": 20,
+  "maxTurnNumber": 2,
+  "phase": "Main",
+  "pendingAttackerId": -1,
+  "pendingBlockerId": -1,
+  "flashPlayerIndex": -1,
+  "players": [
+    {
+      "life": 5,
+      "reserveNormal": 5,
+      "reserveSoul": true,
+      "trashNormal": 0,
+      "trashSoul": false,
+      "hand": [
+        "26RSD03-002"
+      ],
+      "discard": [],
+      "field": []
+    },
+    {
+      "life": 5,
+      "reserveNormal": 8,
+      "reserveSoul": true,
+      "trashNormal": 0,
+      "trashSoul": false,
+      "hand": [],
+      "discard": [],
+      "field": []
+    }
+  ],
+  "goal": {
+    "kind": "TrashCore",
+    "owner": 0,
+    "amount": 4
+  },
+  "solution": [
+    {
+      "actor": 0,
+      "command": {
+        "action": "summon",
+        "index": 0
+      }
+    }
+  ]
+}

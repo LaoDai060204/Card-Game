@@ -1,3 +1,4 @@
+using MDPro3.BattleSpirits;
 using MDPro3.Duel.YGOSharp;
 using System.Collections.Generic;
 using TMPro;
@@ -27,8 +28,9 @@ namespace MDPro3.UI.Popup
 
         private void Start()
         {
+            ConfigureBattleFilters();
             var f = CardCollectionView.filters;
-            if (f.Count > 0)
+            if (f.Count >= 25)
             {
                 foreach (var toggle in transform.GetComponentsInChildren<SelectionToggle_SearchFilter>())
                 {
@@ -60,17 +62,17 @@ namespace MDPro3.UI.Popup
                         toggle.SetToggleOn();
                 }
 
-                if (f[13] > 0)
+                if (f[13] >= 0)
                     inputLevelFrom.text = f[13].ToString();
-                if (f[14] > 0)
+                if (f[14] >= 0)
                     inputLevelTo.text = f[14].ToString();
-                if (f[15] > 0)
+                if (f[15] >= 0)
                     inputAttackFrom.text = f[15].ToString();
-                if (f[16] > 0)
+                if (f[16] >= 0)
                     inputAttackTo.text = f[16].ToString();
-                if (f[17] > 0)
+                if (f[17] >= 0)
                     inputDefenceFrom.text = f[17].ToString();
-                if (f[18] > 0)
+                if (f[18] >= 0)
                     inputDefenceTo.text = f[18].ToString();
                 if (f[19] > 0)
                     inputScaleFrom.text = f[19].ToString();
@@ -88,6 +90,35 @@ namespace MDPro3.UI.Popup
             Manager.GetElement<SelectionButton>("ButtonPack")
                 .SetButtonText(CardCollectionView.packName == string.Empty 
                 ? InterString.Get("All Packs") : CardCollectionView.packName);
+        }
+
+        private void ConfigureBattleFilters()
+        {
+            foreach (var toggle in GetComponentsInChildren<SelectionToggle_SearchFilter>(true))
+            {
+                string label = null;
+                if (toggle.group == 0)
+                {
+                    if (toggle.code == 1054) { toggle.filterCode = 1; label = "Spirit"; }
+                    else if (toggle.code == 1051) { toggle.filterCode = 2; label = "Nexus"; }
+                    else if (toggle.code == 1052) { toggle.filterCode = 4; label = "Magic"; }
+                }
+                else if (toggle.group == 1 && toggle.code >= 1010 && toggle.code <= 1015)
+                {
+                    int color = toggle.code - 1010;
+                    toggle.filterCode = 1L << color;
+                    label = new[] { "Red", "Purple", "Green", "White", "Yellow", "Blue" }[color];
+                }
+                toggle.SetToggleOff(false);
+                toggle.gameObject.SetActive(label != null);
+                if (label != null) toggle.SetButtonText(label);
+            }
+            foreach (var child in GetComponentsInChildren<Transform>(true))
+                if ((child.name.StartsWith("Area ") && child.name != "Area Type" && child.name != "Area Attribute" && child.name != "Area Level" && child.name != "Area Pack")
+                    || child.name == "LabelScale" || child.name == "InputScaleFrom" || child.name == "InputScaleTo"
+                    || child.name == "LabelYear" || child.name == "InputYearFrom" || child.name == "InputYearTo"
+                    || child.name == "LabelGP" || child.name == "InputGPFrom" || child.name == "InputGPTo") child.gameObject.SetActive(false);
+            BattleNativeLabels.Apply(gameObject);
         }
 
         public override void Show()
@@ -169,84 +200,84 @@ namespace MDPro3.UI.Popup
             if (inputLevelFrom.text.Length > 0)
             {
                 dirty = true;
-                filters.Add(long.Parse(inputLevelFrom.text));
+                filters.Add(ParseBound(inputLevelFrom.text));
             }
             else
                 filters.Add(-233);
             if (inputLevelTo.text.Length > 0)
             {
                 dirty = true;
-                filters.Add(long.Parse(inputLevelTo.text));
+                filters.Add(ParseBound(inputLevelTo.text));
             }
             else
                 filters.Add(-233);
             if (inputAttackFrom.text.Length > 0)
             {
                 dirty = true;
-                filters.Add(long.Parse(inputAttackFrom.text));
+                filters.Add(ParseBound(inputAttackFrom.text));
             }
             else
                 filters.Add(-233);
             if (inputAttackTo.text.Length > 0)
             {
                 dirty = true;
-                filters.Add(long.Parse(inputAttackTo.text));
+                filters.Add(ParseBound(inputAttackTo.text));
             }
             else
                 filters.Add(-233);
             if (inputDefenceFrom.text.Length > 0)
             {
                 dirty = true;
-                filters.Add(long.Parse(inputDefenceFrom.text));
+                filters.Add(ParseBound(inputDefenceFrom.text));
             }
             else
                 filters.Add(-233);
             if (inputDefenceTo.text.Length > 0)
             {
                 dirty = true;
-                filters.Add(long.Parse(inputDefenceTo.text));
+                filters.Add(ParseBound(inputDefenceTo.text));
             }
             else
                 filters.Add(-233);
             if (inputScaleFrom.text.Length > 0)
             {
                 dirty = true;
-                filters.Add(long.Parse(inputScaleFrom.text));
+                filters.Add(ParseBound(inputScaleFrom.text));
             }
             else
                 filters.Add(-233);
             if (inputScaleTo.text.Length > 0)
             {
                 dirty = true;
-                filters.Add(long.Parse(inputScaleTo.text));
+                filters.Add(ParseBound(inputScaleTo.text));
             }
             else
                 filters.Add(-233);
             if (inputGPFrom.text.Length > 0)
             {
                 dirty = true;
-                filters.Add(long.Parse(inputGPFrom.text));
+                filters.Add(ParseBound(inputGPFrom.text));
             }
             else
                 filters.Add(-233);
             if (inputGPTo.text.Length > 0)
             {
                 dirty = true;
-                filters.Add(long.Parse(inputGPTo.text));
+                filters.Add(ParseBound(inputGPTo.text));
             }
             else
                 filters.Add(-233);
             if (inputYearFrom.text.Length > 0)
             {
                 dirty = true;
-                filters.Add(long.Parse(inputYearFrom.text));
+                filters.Add(ParseBound(inputYearFrom.text));
             }
             else
                 filters.Add(-233);
             if (inputYearTo.text.Length > 0)
             {
                 dirty = true;
-                filters.Add(long.Parse(inputYearTo.text));
+                filters.Add(ParseBound(inputYearTo.text));
             }
             else
                 filters.Add(-233);
@@ -257,6 +288,7 @@ namespace MDPro3.UI.Popup
                 dirty = true;
                 CardCollectionView.packName = btnPack.GetButtonText();
             }
+            else CardCollectionView.packName = string.Empty;
 
             if (dirty)
             {
@@ -275,6 +307,8 @@ namespace MDPro3.UI.Popup
             else if (view.area == Area.Bookmark)
                 view.PrintBookmarkCards();
         }
+
+        private static long ParseBound(string text) => long.TryParse(text, out long value) && value >= 0 ? value : -233;
 
         public void OnReset()
         {
@@ -309,9 +343,9 @@ namespace MDPro3.UI.Popup
 
         private void OnPackSelect()
         {
-            string selected = UnityEngine.EventSystems.EventSystem.current.
-                currentSelectedGameObject.GetComponent<SelectionButton>().GetButtonText();
-            Manager.GetElement<SelectionButton>("ButtonPack").SetButtonText(selected);
+            var current = UnityEngine.EventSystems.EventSystem.current?.currentSelectedGameObject;
+            if (current != null && current.TryGetComponent<SelectionButton>(out var button))
+                Manager.GetElement<SelectionButton>("ButtonPack").SetButtonText(button.GetButtonText());
         }
         private void OnPackClose()
         {

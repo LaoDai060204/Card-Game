@@ -1,4 +1,5 @@
 using System.Collections;
+using MDPro3.BattleSpirits;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -67,7 +68,8 @@ namespace MDPro3
 
             try
             {
-                currentWallpaper = Config.Get("Wallpaper", Program.items.wallpapers[0].id.ToString());
+                Program.items.Initialize();
+                currentWallpaper = Config.Get("Wallpaper", Program.items.wallpapers.Count > 0 ? Program.items.wallpapers[0].id.ToString() : Items.CODE_NONE.ToString());
                 ChangeWallpaper(currentWallpaper);
                 InitializeLanguage();
             }
@@ -213,6 +215,17 @@ namespace MDPro3
 
         public Transform ChangeWallpaper(string path)
         {
+            if (BattleSpiritsMode.IsEnabled)
+            {
+                if (wallpaper == null) return null;
+                for (int i = wallpaper.transform.childCount - 1; i >= 0; i--)
+                {
+                    var child = wallpaper.transform.GetChild(i).gameObject;
+                    child.SetActive(false);
+                    Destroy(child);
+                }
+                return BattleCosmetics.CreateWallpaper(wallpaper.transform, path);
+            }
             if (wallpaper.transform.childCount > 0)
                 Destroy(wallpaper.transform.GetChild(0).gameObject);
             if (path == Items.CODE_NONE.ToString())

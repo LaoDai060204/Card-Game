@@ -1,3 +1,4 @@
+using MDPro3.BattleSpirits;
 using System.CodeDom;
 using TMPro;
 using UnityEngine;
@@ -20,6 +21,7 @@ namespace MDPro3.UI.ServantUI
 {
     public class DeckSelectorUI : ServantUI
     {
+        private int printGeneration;
 
         #region Elements
 
@@ -134,21 +136,24 @@ namespace MDPro3.UI.ServantUI
         protected override void AfterHideEvent()
         {
             base.AfterHideEvent();
+            printGeneration++;
 
             Config.Save();
             TogglePickupCard.SetToggleOff();
-            superScrollView.Clear();
+            superScrollView?.Clear();
         }
 
         public void RefreshList()
         {
+            BattleDeckStorage.EnsureInitialized();
+            if (!Directory.Exists(GetCurrentTypePath())) deckType = string.Empty;
             decks.Clear();
             ShowDefaultButtons();
             TogglePickupCard.SetToggleOff();
             ButtonType.SetButtonText(GetTypeName());
 
-            if (!Directory.Exists(Program.PATH_DECK))
-                Directory.CreateDirectory(Program.PATH_DECK);
+            if (!Directory.Exists(BattleDeckStorage.DeckDirectory))
+                Directory.CreateDirectory(BattleDeckStorage.DeckDirectory);
             var path = GetCurrentTypePath();
             var files = Directory.GetFiles(path, "*.ydk");
             var fileList = files.ToList();
@@ -180,6 +185,8 @@ namespace MDPro3.UI.ServantUI
 
         public void Print(string search = "")
         {
+            int generation = ++printGeneration;
+            var matchingDecks = decks.Where(deck => deck.Key.IndexOf(search ?? string.Empty, StringComparison.OrdinalIgnoreCase) >= 0).ToArray();
             SwitchToDefaultLayout();
 
             superScrollView?.Clear();
@@ -187,6 +194,11 @@ namespace MDPro3.UI.ServantUI
             var handle = Addressables.LoadAssetAsync<GameObject>("UI/ItemDeck.prefab");
             handle.Completed += (result) =>
             {
+                if (this == null || generation != printGeneration || !gameObject.activeInHierarchy || result.Result == null)
+                {
+                    Addressables.Release(handle);
+                    return;
+                }
                 var itemWidth = PropertyOverrider.NeedMobileLayout() ? 336f : 260f;
                 var itemHeight = PropertyOverrider.NeedMobileLayout() ? 300f : 232f;
                 var space = PropertyOverrider.NeedMobileLayout() ? 30f : 24f;
@@ -200,11 +212,9 @@ namespace MDPro3.UI.ServantUI
                     result.Result,
                     ItemOnListRefresh,
                     Manager.GetElement<ScrollRect>("ScrollRect"));
-                List<string[]> tasks = new() { new string[7] { string.Empty, "0", "0", "0", "0", "0", "0" } };
-                foreach (var deck in decks)
+                List<string[]> tasks = new() { new string[8] { string.Empty, "0", "0", "0", "0", "0", "0", string.Empty } };
+                foreach (var deck in matchingDecks)
                 {
-                    if (deck.Key.IndexOf(search, System.StringComparison.OrdinalIgnoreCase) < 0)
-                        continue;
                     var task = new string[8]
                     {
                         deck.Key,
@@ -223,7 +233,8 @@ namespace MDPro3.UI.ServantUI
                     tasks.Add(task);
                 }
                 superScrollView.Print(tasks);
-                Program.instance.deckSelector.lastSelectedDeckItem = superScrollView.items[0].gameObject.GetComponent<SelectionToggle_Deck>();
+                Program.instance.deckSelector.lastSelectedDeckItem = superScrollView.items.Count > 0
+                    ? superScrollView.GetItemByIndex(0) as SelectionToggle_Deck : null;
                 if (Cursor.lockState == CursorLockMode.Locked)
                     Program.instance.deckSelector.Select();
                 UpdateDeckNum();
@@ -276,7 +287,7 @@ namespace MDPro3.UI.ServantUI
             SwitchToDefaultLayout();
             var selections = new List<string>()
             {
-                InterString.Get("Please enter a deck name.@n@nThe deck code in your clipboard will be imported automatically."),
+                "Enter a Battle Spirits deck name. A Battle Spirits deck JSON in your clipboard will be imported.",
                 string.Empty
             };
             UIManager.ShowPopupInput(selections, DeckCheck, null, TmpInputValidation.ValidationType.Path);
@@ -314,45 +325,30 @@ namespace MDPro3.UI.ServantUI
         {
             try
             {
-                var path = GetDeckPath(deckName);
-                File.Create(path).Close();
-
-                string clipBoard = GUIUtility.systemCopyBuffer;
-                if (clipBoard.Contains("#main"))
-                    File.WriteAllText(path!, clipBoard, Encoding.UTF8);
-                else if (clipBoard.Contains("ygotype=deck&v=1&d="))
+                var native = new Deck { type = deckType };
+                var clipboard = GUIUtility.systemCopyBuffer;
+                if (!string.IsNullOrWhiteSpace(clipboard) && clipboard.TrimStart().StartsWith("{", StringComparison.Ordinal))
                 {
-                    var uri = new Uri(clipBoard);
-                    var deck = DeckShareURL.UriToDeck(uri);
-                    deck.type = deckType;
-                    deck.Save(deckName, DateTime.UtcNow);
+                    var imported = JsonUtility.FromJson<MDPro3.BattleSpirits.Core.DeckDefinition>(clipboard);
+                    if (imported != null && imported.cards != null)
+                        foreach (var id in imported.cards)
+                            if (BattleCatalog.TryGet(id, out _)) native.Main.Add(BattleCatalog.GetNumericId(id));
                 }
-                else if (clipBoard.Contains(YdkeConverter.ydkeHeader))
-                {
-                    var deck = YdkeConverter.Ydke2Deck(clipBoard);
-                    deck.type = deckType;
-                    deck.Save(deckName, DateTime.UtcNow);
-                }
+                if (!native.Save(deckName, DateTime.UtcNow)) throw new IOException("Could not save Battle Spirits deck.");
                 Config.SetConfigDeck(deckName, true);
                 RefreshList();
             }
-            catch (Exception e)
-            {
-                Debug.LogException(e);
-                MessageManager.Cast(InterString.Get("Failed to create deck! Please check folder permissions."));
-            }
+            catch (Exception e) { Debug.LogException(e); MessageManager.Cast("Could not create Battle Spirits deck."); }
         }
 
         private void DeleteOnlineDecks(List<string> ids)
         {
-            if (MyCard.account == null || !Config.GetBool("SyncDeck", true))
-                return;
-            _ = OnlineDeck.DeleteDecks(ids);
+            // Local Battle Spirits decks never use the former YGO account service.
         }
 
         public void OnOnlineDeckView()
         {
-            Program.instance.ShiftToServant(Program.instance.onlineDeckViewer);
+            MessageManager.Toast("Battle Spirits decks are stored locally on this device.");
         }
 
         public void OnShowPickup()
@@ -430,7 +426,7 @@ namespace MDPro3.UI.ServantUI
             if(type == string.Empty)
                 return;
 
-            var path = Program.PATH_DECK + type + "/";
+            var path = BattleDeckStorage.DeckDirectory + type + "/";
             if (Directory.Exists(path))
             {
                 MessageManager.Cast(InterString.Get("This group already exists!"));
@@ -457,7 +453,7 @@ namespace MDPro3.UI.ServantUI
         {
             var type = UnityEngine.EventSystems.EventSystem.current.
                 currentSelectedGameObject.GetComponent<SelectionButton>().GetButtonText();
-            var path = Program.PATH_DECK + type + "/";
+            var path = BattleDeckStorage.DeckDirectory + type + "/";
             if (!Directory.Exists(path))
                 return;
             var files = Directory.GetFiles(path, "*.ydk");
@@ -480,7 +476,7 @@ namespace MDPro3.UI.ServantUI
 
         private void DeleteDeckType(string type)
         {
-            var path = Program.PATH_DECK + type + "/";
+            var path = BattleDeckStorage.DeckDirectory + type + "/";
             DeleteOnlineDecks(GetAllDeckIds(path));
             var files = Directory.GetFiles(path, "*.ydk");
             foreach (var file in files)
@@ -541,8 +537,8 @@ namespace MDPro3.UI.ServantUI
                 return;
             }
 
-            var path = Program.PATH_DECK + selectedType;
-            var newPath = Program.PATH_DECK + newType;
+            var path = BattleDeckStorage.DeckDirectory + selectedType;
+            var newPath = BattleDeckStorage.DeckDirectory + newType;
             Directory.Move(path, newPath);
             var files = Directory.GetFiles(newPath, "*.ydk");
 
@@ -590,9 +586,9 @@ namespace MDPro3.UI.ServantUI
         private string GetCurrentTypePath()
         {
             if (deckType == string.Empty)
-                return Program.PATH_DECK;
+                return BattleDeckStorage.DeckDirectory;
             else
-                return Program.PATH_DECK + deckType + "/";
+                return BattleDeckStorage.DeckDirectory + deckType + "/";
         }
 
         private string GetTypeName(string type)
@@ -611,9 +607,9 @@ namespace MDPro3.UI.ServantUI
         private string GetTypePath(string type)
         {
             if (type == string.Empty)
-                return Program.PATH_DECK;
+                return BattleDeckStorage.DeckDirectory;
             else
-                return Program.PATH_DECK + $"{type}/";
+                return BattleDeckStorage.DeckDirectory + $"{type}/";
         }
 
         private string GetDeckPath(string deckName, string type)
@@ -628,7 +624,7 @@ namespace MDPro3.UI.ServantUI
 
         private string[] GetAllDeckTypes(string excludeType = null)
         {
-            var folders = Directory.GetDirectories(Program.PATH_DECK);
+            var folders = Directory.GetDirectories(BattleDeckStorage.DeckDirectory);
             var types = folders.Select(f => Path.GetFileName(f)).ToArray();
             if(excludeType != null)
                 types = types.Where(t => t != excludeType).ToArray();
@@ -658,14 +654,14 @@ namespace MDPro3.UI.ServantUI
                     deleteIndexs.Add(i);
                     deleteIds.Add(superScrollView.items[i].args[7]);
                 }
-            var lastSelect = Program.instance.deckSelector.lastSelectedDeckItem.index;
+            var lastSelect = Program.instance.deckSelector.lastSelectedDeckItem != null ? Program.instance.deckSelector.lastSelectedDeckItem.index : 0;
             int removedCount = 0;
             for (int i = 0; i < deleteIndexs.Count; i++)
             {
                 superScrollView.RemoveAt(deleteIndexs[i] - removedCount);
                 removedCount++;
             }
-            Program.instance.deckSelector.lastSelectedDeckItem = (SelectionToggle_Deck)superScrollView.GetItemByIndex(lastSelect);
+            Program.instance.deckSelector.lastSelectedDeckItem = superScrollView.GetItemByIndex(Mathf.Clamp(lastSelect, 0, superScrollView.items.Count - 1)) as SelectionToggle_Deck;
             if (Cursor.lockState == CursorLockMode.Locked)
                 Program.instance.deckSelector.Select();
             DeleteOnlineDecks(deleteIds);
@@ -708,18 +704,18 @@ namespace MDPro3.UI.ServantUI
                     {
                         type = selectedType
                     };
-                    deck.Save(superScrollView.items[i].args[0], DateTime.UtcNow, true, false);
+                    if (!deck.Save(superScrollView.items[i].args[0], DateTime.UtcNow, true, false)) continue;
                     File.Delete(filePath);
                     moveIndexs.Add(i);
                 }
-            var lastSelect = Program.instance.deckSelector.lastSelectedDeckItem.index;
+            var lastSelect = Program.instance.deckSelector.lastSelectedDeckItem != null ? Program.instance.deckSelector.lastSelectedDeckItem.index : 0;
             int removedCount = 0;
             for (int i = 0; i < moveIndexs.Count; i++)
             {
                 superScrollView.RemoveAt(moveIndexs[i] - removedCount);
                 removedCount++;
             }
-            Program.instance.deckSelector.lastSelectedDeckItem = (SelectionToggle_Deck)superScrollView.GetItemByIndex(lastSelect);
+            Program.instance.deckSelector.lastSelectedDeckItem = superScrollView.GetItemByIndex(Mathf.Clamp(lastSelect, 0, superScrollView.items.Count - 1)) as SelectionToggle_Deck;
             if (Cursor.lockState == CursorLockMode.Locked)
                 Program.instance.deckSelector.Select();
 

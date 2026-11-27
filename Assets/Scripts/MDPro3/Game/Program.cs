@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -10,6 +10,7 @@ using MDPro3.Servant;
 using Cysharp.Threading.Tasks;
 using MDPro3.Utility;
 using MDPro3.IO;
+using MDPro3.BattleSpirits;
 
 
 
@@ -123,12 +124,13 @@ namespace MDPro3
             if (!Directory.Exists(PATH_DATA))
                 Directory.CreateDirectory(PATH_DATA);
             Config.Initialize(PATH_CONFIG);
+            BattleCatalog.Initialize(Application.streamingAssetsPath, Application.persistentDataPath);
 
             Screen.sleepTimeout = SleepTimeout.NeverSleep;
 
             await ResourceManager.InitializeAsync();
             if(!ABLoader.mdCached)
-                await ABLoader.CacheMasterDuelOutDuelBundles();
+                await ABLoader.CacheInterfaceBundles();
 
             if(items == null)
             {
@@ -137,103 +139,17 @@ namespace MDPro3
                 items = handle.Result;
             }
 
-            cardRenderer = (await Addressables.InstantiateAsync("Prefab/CardRenderer.prefab")).GetComponent<CardRenderer>();
-
             items.Initialize();
-            await BanlistManager.InitializeAsync();
             await CardImageLoader.InitializeAsync();
-            _ = OnlineService.InitializeAsync();
 
             InitializeAllManagers();
+            BattleIntegration.Initialize(this);
             InitializeAllServants();
         }
 
         public void ReadParams()
         {
-            var args = Environment.GetCommandLineArgs();
-            //args = new string[11]
-            //{
-                //"-r",
-                //"TURN023"
-
-                //"-s",
-                //"6ace for win!"
-
-            //    "-d",
-            //    "Lyrilusc Tri-Brigade",
-
-            //    "-n",
-            //    "Sample Player",
-
-            //    "-h",
-            //    "mygo.superpre.pro",
-            //    "-p",
-            //    "888",
-            //    "-w",
-            //    "M#1008611",
-            //    "-j"
-            //};
-
-            string nick = null;
-            string host = null;
-            string port = null;
-            string password = null;
-            string deck = null;
-            string replay = null;
-            string puzzle = null;
-            var join = false;
-            for (var i = 0; i < args.Length; i++)
-            {
-                if (args[i].ToLower() == "-n" && args.Length > i + 1)
-                {
-                    nick = args[++i];
-                    Config.Set("DuelPlayerName0", nick);
-                    Config.Save();
-                }
-
-                if (args[i].ToLower() == "-h" && args.Length > i + 1) 
-                    host = args[++i];
-                if (args[i].ToLower() == "-p" && args.Length > i + 1) 
-                    port = args[++i];
-                if (args[i].ToLower() == "-w" && args.Length > i + 1)
-                    password = args[++i];
-                if (args[i].ToLower() == "-d" && args.Length > i + 1)
-                    deck = args[++i];
-                if (args[i].ToLower() == "-r" && args.Length > i + 1)
-                    replay = args[++i];
-                if (args[i].ToLower() == "-s" && args.Length > i + 1)
-                    puzzle = args[++i];
-
-                if (args[i].ToLower() == "-j")
-                {
-                    join = true;
-                    Config.SetConfigDeck(deck);
-                    Config.Save();
-                }
-            }
-
-            if (join)
-            {
-                online.KF_OnlineGame(nick, host, port, password);
-                exitOnReturn = true;
-            }
-            else if (deck != null)
-            {
-                Config.SetConfigDeck(deck);
-                deckEditor.SwitchCondition(DeckEditor.Condition.EditDeck);
-                ShiftToServant(deckEditor);
-                exitOnReturn = true;
-            }
-            else if (replay != null)
-            {
-                exitOnReturn = true;
-                this.replay.PlayReplay(replay);
-            }
-            else if (puzzle != null)
-            {
-                this.puzzle.StartPuzzle(PATH_PUZZLE + puzzle);
-                exitOnReturn = true;
-            }
+            BattleIntegration.ReadCommandLine(Environment.GetCommandLineArgs());
         }
 
         public void InitializeForDataChange(Action delegation = null)
@@ -245,8 +161,6 @@ namespace MDPro3
         private async UniTask InitializeForDataChangeAsync(Action delegation)
         {
             await ResourceManager.InitializeAsync();
-            await BanlistManager.InitializeAsync();
-            await OnlineService.InitializeAsync();
             await CardImageLoader.InitializeAsync();
 
             await UniTask.RunOnThreadPool(() =>
@@ -285,11 +199,7 @@ namespace MDPro3
             servants.Add(mate);
             servants.Add(deckSelector);
             servants.Add(appearance);
-            servants.Add(character);
-            servants.Add(ocgcore);
-            servants.Add(room);
             servants.Add(deckEditor);
-            servants.Add(onlineDeckViewer);
             servants.Add(deckBrowser);
             foreach (Servant.Servant servant in servants)
                 servant.Initialize();
@@ -358,10 +268,9 @@ namespace MDPro3
 
         private void Update()
         {
-            TcpHelper.PerFrameFunction();
             foreach (Manager manager in managers) 
                 manager.PerFrameFunction();
-            foreach (Servant.Servant servant in servants) 
+            foreach (Servant.Servant servant in servants.ToArray())
                 servant.PerFrameFunction();
 
 #if UNITY_EDITOR
@@ -390,6 +299,13 @@ namespace MDPro3
 #if UNITY_EDITOR
             UnityEngine.Debug.Log(text);
 #endif
+        }
+
+        public void RegisterServant(Servant.Servant servant)
+        {
+            if (servant == null || servants.Contains(servant)) return;
+            servants.Add(servant);
+            servant.Initialize();
         }
 
         public void ShiftToServant(Servant.Servant servant)
@@ -454,13 +370,8 @@ namespace MDPro3
             Running = false;
             Config.Save();
             ClearCache();
-            YgoServer.StopServer();
+            BattleIntegration.Shutdown();
             FileManager.Dispose();
-            try
-            { TcpHelper.tcpClient.Close(); }
-            catch { }
-            TcpHelper.tcpClient = null;
-            MyCard.CloseAthleticWatchListWebSocket();
         }
 
         private void ClearCache()

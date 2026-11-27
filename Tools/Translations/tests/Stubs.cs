@@ -62,7 +62,7 @@ namespace MDPro3
     public class Manager:UnityEngine.MonoBehaviour { }
     public class Program
     {
-        public const string STRING_LINE_BREAK="\r\n";public static string PATH_LOCALES;public static bool noAccess;
+        public const string STRING_LINE_BREAK="\r\n",EXPANSION_YDK=".ydk";public static string PATH_LOCALES;public static bool noAccess;
         public static Program instance=new Program();public Selector deckSelector=new Selector();public Menu menu=new Menu();
     }
     public class Selector {public string DeckType="";}
@@ -90,6 +90,18 @@ namespace MDPro3
     }
 }
 namespace MDPro3.Utility {public static class TaskUtility {public static Task WaitUntil(Func<bool> ready){if(!ready())throw new Exception("Fake download did not complete.");return Task.CompletedTask;} } }
+// Deck selection is exercised with the actual storage in BattleSpiritsNativeTests.
+// Localization scenarios must never reach these unrelated dependencies.
+namespace MDPro3.BattleSpirits
+{
+    public static class BattleDeckStorage
+    {
+        public static string DeckDirectory => throw new InvalidOperationException("Unexpected deck access in a localization scenario.");
+        public static string DefaultDeckName => throw new InvalidOperationException("Unexpected deck access in a localization scenario.");
+        public static void EnsureInitialized() => throw new InvalidOperationException("Unexpected deck access in a localization scenario.");
+        public static string ResolveDeckPath(string name) => throw new InvalidOperationException("Unexpected deck access in a localization scenario.");
+    }
+}
 namespace MDPro3.Net
 {
     public class MyCardNews {public News[] EnglishUS{get;set;}public News[] ChineseCN{get;set;} }

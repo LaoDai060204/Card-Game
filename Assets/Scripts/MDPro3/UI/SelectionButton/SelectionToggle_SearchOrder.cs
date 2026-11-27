@@ -1,3 +1,4 @@
+using MDPro3.BattleSpirits;
 using MDPro3.UI.ServantUI;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -21,6 +22,7 @@ namespace MDPro3.UI
 
         private void Start()
         {
+            SetButtonText(GetSortText());
             if (sortOrder == _SortOrder)
             {
                 SetToggleOn();
@@ -53,16 +55,16 @@ namespace MDPro3.UI
             {
                 SortOrder.ByType => InterString.Get("Type"),
                 SortOrder.ByTypeReverse => InterString.Get("Type"),
-                SortOrder.ByLevelUp => InterString.Get("Level/Rank/Link"),
-                SortOrder.ByLevelDown => InterString.Get("Level/Rank/Link"),
-                SortOrder.ByAttackUp => InterString.Get("ATK"),
-                SortOrder.ByAttackDown => InterString.Get("ATK"),
-                SortOrder.ByDefenceUp => InterString.Get("Defense"),
-                SortOrder.ByDefenceDown => InterString.Get("Defense"),
+                SortOrder.ByLevelUp => "Cost",
+                SortOrder.ByLevelDown => "Cost",
+                SortOrder.ByAttackUp => "BP",
+                SortOrder.ByAttackDown => "BP",
+                SortOrder.ByDefenceUp => "Symbols",
+                SortOrder.ByDefenceDown => "Symbols",
                 SortOrder.ByRarityUp => InterString.Get("Rarity"),
                 SortOrder.ByRarityDown => InterString.Get("Rarity"),
-                SortOrder.ByGPUp => InterString.Get("Genesys Points"),
-                SortOrder.ByGPDown => InterString.Get("Genesys Points"),
+                SortOrder.ByGPUp => "Color",
+                SortOrder.ByGPDown => "Color",
                 _ => string.Empty
             };
         }

@@ -1,3 +1,4 @@
+using MDPro3.BattleSpirits;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using MDPro3.Duel.YGOSharp;
@@ -303,9 +304,24 @@ namespace MDPro3.UI
         private List<int> cards;
         private int cardIndex;
         private bool shifting;
+        private Tween cardShiftTween;
+
+        private void ResetCardShift()
+        {
+            cardShiftTween?.Kill();
+            cardShiftTween = null;
+            if (shifting)
+            {
+                WindowCG.alpha = 1f;
+                Window.anchoredPosition = new Vector2(0f, -32f);
+            }
+            shifting = false;
+        }
 
         public void Show(Card data)
         {
+            if (data == null) return;
+            ResetCardShift();
             cards = null;
             SetData(data);
             ButtonNext.gameObject.SetActive(false);
@@ -316,9 +332,11 @@ namespace MDPro3.UI
 
         public void Show(List<int> cards, int index)
         {
-            this.cards = cards;
-            cardIndex = index;
-            SetData(CardsManager.Get(cards[index]));
+            if (cards == null || cards.Count == 0) return;
+            ResetCardShift();
+            this.cards = new List<int>(cards);
+            cardIndex = Mathf.Clamp(index, 0, cards.Count - 1);
+            SetData(CardsManager.Get(cards[cardIndex]));
             ButtonNext.gameObject.SetActive(true);
             ButtonPrev.gameObject.SetActive(true);
             SetButtons();
@@ -328,6 +346,7 @@ namespace MDPro3.UI
 
         public override void Hide()
         {
+            ResetCardShift();
             base.Hide();
             if(Program.instance.currentServant != Program.instance.ocgcore)
                 UIManager.ShowFPSRight();
@@ -336,6 +355,27 @@ namespace MDPro3.UI
         private void SetData(Card data)
         {
             card = data;
+            if (data.IsBattleSpirits && BattleCatalog.TryGet(data.BattleSpiritsId, out var definition))
+            {
+                ImageCard.SetCard(data);
+                IconLimit.gameObject.SetActive(false);
+                TextCardName.text = " " + data.Name;
+                IconAttribute.sprite = BattleCardAdapter.ColorIcon(definition);
+                ParamatorAreaTop.SetActive(false);
+                ParamatorAreaBottom.SetActive(false);
+                PlateParamator.gameObject.SetActive(false);
+                PendulumDescriptionArea.SetActive(false);
+                PoolGroup.gameObject.SetActive(false);
+                TextDescriptionItem.text = definition.type + " · " + BattleCardAdapter.Colors(definition);
+                TextDescriptionValue.text = data.Desc;
+                TextDescriptionValue.enableAutoSizing = false;
+                TextDescriptionValue.enableWordWrapping = true;
+                TextDescriptionValue.richText = false;
+                TextDescriptionValue.lineSpacing = 4f;
+                TextDescriptionValue.overflowMode = TextOverflowModes.Overflow;
+                BattleNativeLabels.Apply(gameObject);
+                return;
+            }
 
             #region Card Area
 
@@ -502,7 +542,7 @@ namespace MDPro3.UI
 
             WindowCG.alpha = 1f;
 
-            DOTween.Sequence()
+            cardShiftTween = DOTween.Sequence()
                 .SetUpdate(true)
                 .Append(Window.DOAnchorPos(new Vector2(-480f, -32f), 0.1f).SetEase(Ease.InCubic))
                 .Join(WindowCG.DOFade(0f, 0.1f).OnComplete(() =>
@@ -529,7 +569,7 @@ namespace MDPro3.UI
 
             WindowCG.alpha = 1f;
 
-            DOTween.Sequence()
+            cardShiftTween = DOTween.Sequence()
                 .SetUpdate(true)
                 .Append(Window.DOAnchorPos(new Vector2(480f, -32f), 0.1f).SetEase(Ease.InCubic))
                 .Join(WindowCG.DOFade(0f, 0.1f).OnComplete(() =>
@@ -582,7 +622,6 @@ namespace MDPro3.UI
                 string.Empty,
                 InterString.Get("Current Card Image"),
                 InterString.Get("Current Deck Card Images"),
-                InterString.Get("All Token Card Images"),
                 InterString.Get("All Card Images"),
             };
             UIManager.ShowPopupSelection(selections, CardPictureSaveOption);
@@ -606,8 +645,9 @@ namespace MDPro3.UI
         {
             var rawImage = ImageCard.RawImage;
             var texture = rawImage.texture;
-            if (texture == null)
+            if (texture == null && rawImage.material != null)
                 texture = rawImage.material.mainTexture;
+            if (texture == null || card == null) return;
 
             if(texture is RenderTexture)
             {
@@ -668,8 +708,26 @@ namespace MDPro3.UI
         private static Texture2D CreateSaveTextureCopy(Texture2D source)
         {
             var copy = new Texture2D(source.width, source.height, TextureFormat.RGBA32, false);
-            copy.SetPixels(source.GetPixels());
-            copy.Apply();
+            if (source.isReadable)
+            {
+                copy.SetPixels(source.GetPixels());
+                copy.Apply();
+                return copy;
+            }
+            var previous = RenderTexture.active;
+            var temporary = RenderTexture.GetTemporary(source.width, source.height, 0, RenderTextureFormat.ARGB32);
+            try
+            {
+                Graphics.Blit(source, temporary);
+                RenderTexture.active = temporary;
+                copy.ReadPixels(new Rect(0, 0, source.width, source.height), 0, 0);
+                copy.Apply();
+            }
+            finally
+            {
+                RenderTexture.active = previous;
+                RenderTexture.ReleaseTemporary(temporary);
+            }
             return copy;
         }
 
@@ -678,15 +736,19 @@ namespace MDPro3.UI
             if (!Directory.Exists(Program.PATH_CARD_PIC))
                 Directory.CreateDirectory(Program.PATH_CARD_PIC);
 
-            Texture2D workingTexture = tex;
+            Texture2D workingTexture = null;
             bool destroyWorkingTexture = false;
             try
             {
+                workingTexture = tex.isReadable ? tex : CreateSaveTextureCopy(tex);
+                destroyWorkingTexture = workingTexture != tex;
                 var size = Settings.Data.SavedCardSize;
                 if (size.Length > 1 && size[0] > 0 && size[1] > 0)
                     if (size[0] != tex.width || size[1] != tex.height)
                     {
-                        workingTexture = TextureProcessor.ResizeTexture2D(CreateSaveTextureCopy(tex), size[0], size[1]);
+                        var resized = TextureProcessor.ResizeTexture2D(workingTexture, size[0], size[1]);
+                        if (destroyWorkingTexture) Destroy(workingTexture);
+                        workingTexture = resized;
                         destroyWorkingTexture = true;
                     }
 
@@ -767,7 +829,7 @@ namespace MDPro3.UI
             }
             finally
             {
-                popupProgress.Hide();
+                if (popupProgress != null) popupProgress.Hide();
                 if (!string.IsNullOrEmpty(errorLog))
                     File.WriteAllText(errorLogPath, errorLog);
                 if (cts != null && cts.Token == token)

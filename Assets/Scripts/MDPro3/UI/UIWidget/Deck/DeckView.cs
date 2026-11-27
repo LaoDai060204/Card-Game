@@ -1,3 +1,4 @@
+using MDPro3.BattleSpirits;
 using MDPro3.Net;
 using MDPro3.Duel.YGOSharp;
 using System;
@@ -335,6 +336,9 @@ namespace MDPro3.UI
         protected string deckType;
         protected bool needSave;
         protected bool dirtyAfterPrint;
+        private Coroutine printRoutine;
+        private bool battleDeckLayout;
+        private Vector2 battleViewportSize;
 
         #endregion
 
@@ -342,6 +346,16 @@ namespace MDPro3.UI
 
         public void PrintDeck(Deck deck, string deckName, Condition condition, bool dirty = false)
         {
+            deck ??= new Deck();
+            if (printRoutine != null) StopCoroutine(printRoutine);
+            deckLoaded = false;
+            deck.Main = deck.Main.FindAll(id => BattleCatalog.TryGet(id, out _));
+            deck.Extra.Clear();
+            deck.Side.Clear();
+            BattleNativeLabels.Apply(gameObject);
+            foreach (var image in GetComponentsInChildren<UnityEngine.UI.Image>(true))
+                if (image.name.Contains("Monster") || image.name.Contains("Spell") || image.name.Contains("Trap")
+                    || image.name.Contains("Fusion") || image.name.Contains("Synchro") || image.name.Contains("Xyz") || image.name.Contains("Link")) image.enabled = false;
             Deck = deck;
             deckNameWithType = deckName;
             if (Path.GetFileName(deckName) == deckName)
@@ -358,7 +372,7 @@ namespace MDPro3.UI
             TextDeckName.text = deckFileName;
 
             _ = LoadDeckCaseAsync(deck.Case);
-            StartCoroutine(PrintDeckAsync());
+            printRoutine = StartCoroutine(PrintDeckAsync());
 
             if(Program.instance.currentServant == Program.instance.deckEditor)
                 SetCardInfoTypeInternal(DeckEditor.cardInfoType);
@@ -366,7 +380,7 @@ namespace MDPro3.UI
 
         private async UniTask LoadDeckCaseAsync(int deckCase)
         {
-            var icon = await Program.items.LoadDeckCaseIconAsync(deckCase, string.Empty);
+            var icon = await BattleCardAdapter.BackIconAsync(destroyCancellationToken);
             if (gameObject != null)
                 IconDeck.sprite = icon;
         }
@@ -423,6 +437,11 @@ namespace MDPro3.UI
                 if (card.Card == null || card.Card.Id == 0)
                     continue;
 
+                if (data.IsBattleSpirits)
+                {
+                    if (BattleDeckStorage.SameName(code, card.Card.Id)) count++;
+                    continue;
+                }
                 if (data.Alias == 0)
                 {
                     if (card.Card.Id == code || card.Card.Alias == code)
@@ -444,13 +463,13 @@ namespace MDPro3.UI
             if (!CanAddCard(data.Id)) return false;
 
             AudioManager.PlaySE("SE_DECK_PLUS");
-            var targetLocaltion = DeckLocation.SideDeck;
+            var targetLocaltion = DeckLocation.MainDeck;
             if (data.IsExtraCard())
             {
                 if (GetDeckLocationCount(DeckLocation.ExtraDeck) < 15)
                     targetLocaltion = DeckLocation.ExtraDeck;
             }
-            else if (GetDeckLocationCount(DeckLocation.MainDeck) < 60)
+            else if (!data.IsExtraCard())
                 targetLocaltion = DeckLocation.MainDeck;
 
             AddCard(data, targetLocaltion, playMoveAnimation, playBirthAnimation);
@@ -510,13 +529,13 @@ namespace MDPro3.UI
             SortCards();
             AudioManager.PlaySE("SE_DECK_PLUS");
 
-            var targetLocaltion = DeckLocation.SideDeck;
+            var targetLocaltion = DeckLocation.MainDeck;
             if (data.IsExtraCard())
             {
                 if (GetDeckLocationCount(DeckLocation.ExtraDeck) < 15)
                     targetLocaltion = DeckLocation.ExtraDeck;
             }
-            else if (GetDeckLocationCount(DeckLocation.MainDeck) < 60)
+            else if (!data.IsExtraCard())
                 targetLocaltion = DeckLocation.MainDeck;
 
             var added = AddCard(data, targetLocaltion, !DeckEditor.UseMobileLayout, false);
@@ -646,7 +665,7 @@ namespace MDPro3.UI
 
         public SelectionButton_CardInDeck GetCardByData(Card data)
         {
-            if (!deckLoaded) return null;
+            if (!deckLoaded || data == null) return null;
 
             List<SelectionButton_CardInDeck> aliasCards = new();
             foreach (var card in cards)
@@ -654,6 +673,11 @@ namespace MDPro3.UI
                 if (card.Card.Id == data.Id)
                     return card;
 
+                if (data.IsBattleSpirits)
+                {
+                    if (BattleDeckStorage.SameName(data.Id, card.Card.Id)) aliasCards.Add(card);
+                    continue;
+                }
                 if (data.Alias == 0)
                 {
                     if (card.Card.Alias == data.Id)
@@ -714,40 +738,17 @@ namespace MDPro3.UI
 
         public bool CanAddCard(int code, bool showToast = true)
         {
-            var count = GetCardCount(code);
-            if (count >= DeckEditor.Banlist.GetQuantity(code))
-            {
-                if (showToast)
-                {
-                    if (count == 3)
-                        MessageManager.Toast(InterString.Get("No more than three of the same Card can be used in a Deck."));
-                    else if (count == 2)
-                        MessageManager.Toast(InterString.Get("Semi-limited cards cannot exceed 2 copies in the deck.@nTo ignore restrictions, set the banlist to None (N/A)."));
-                    else if (count == 1)
-                        MessageManager.Toast(InterString.Get("Limited cards cannot exceed 1 copy in the deck.@nTo ignore restrictions, set the banlist to None (N/A)."));
-                    else
-                        MessageManager.Toast(InterString.Get("Forbidden cards cannot be added to the deck.@nTo ignore restrictions, set the banlist to None (N/A)."));
-                }
-                return false;
-            }
-            return true;
+            int limit = BattleDeckStorage.CopyLimit(code);
+            if (GetCardCount(code) < limit) return true;
+            if (showToast) MessageManager.Toast(limit == 0 ? "This card is not legal in Standard." : "A Standard deck permits at most " + limit + " cards with the same name.");
+            return false;
         }
 
         public bool CanSwitchPosition(Card card, DeckLocation location, bool showToast = true)
         {
-            if (card.IsExtraCard() && location == DeckLocation.MainDeck)
-            {
-                if (showToast)
-                    MessageManager.Toast(InterString.Get("Cannot add this card to the Main Deck"));
-                return false;
-            }
-            if (!card.IsExtraCard() && location == DeckLocation.ExtraDeck)
-            {
-                if (showToast)
-                    MessageManager.Toast(InterString.Get("Cannot add this card to the Extra Deck"));
-                return false;
-            }
-            return true;
+            bool valid = card != null && card.IsBattleSpirits && location == DeckLocation.MainDeck;
+            if (!valid && showToast) MessageManager.Toast("Battle Spirits uses one Main Deck. Extra and Side stay empty.");
+            return valid;
         }
 
         public void HideDeckLocationTable()
@@ -944,6 +945,7 @@ namespace MDPro3.UI
 
         private void SetCardInfoTypeInternal(DeckEditor.CardInfoType type)
         {
+            type = type == DeckEditor.CardInfoType.None ? type : DeckEditor.CardInfoType.Detail;
             if (Program.instance.currentServant == Program.instance.deckEditor)
             {
                 MainDeckGenesys.SetActive(type == DeckEditor.CardInfoType.Genesys);
@@ -1092,17 +1094,9 @@ namespace MDPro3.UI
         public void Share()
         {
             if (!deckLoaded) return;
-            if (!CanEditCard()) return;
-            if (GetDirty() || !File.Exists(Program.PATH_DECK + deckNameWithType + Program.EXPANSION_YDK))
-            {
-                if(condition != Condition.ChangeSide)
-                    MessageManager.Toast(InterString.Get("Please save the deck first"));
-                return;
-            }
-
-            var url = DeckShareURL.DeckToUri(Deck.Main, Deck.Extra, Deck.Side).ToString();
-            GUIUtility.systemCopyBuffer = url;
-            Application.OpenURL(url);
+            var definition = BattleDeckStorage.ToDefinition(FromObjectDeckToCodedDeck(), GetDeckName());
+            GUIUtility.systemCopyBuffer = UnityEngine.JsonUtility.ToJson(definition, true);
+            MessageManager.Toast("Battle Spirits deck copied to clipboard.");
         }
 
         public bool ImportCardLists(Deck importedDeck)
@@ -1182,11 +1176,90 @@ namespace MDPro3.UI
 
             Template.transform.SetParent(transform, false);
             Template.SetActive(false);
+            ConfigureBattleDeckLayout();
             ButtonNoItem.SetSelectEvent(() =>
             {
                 if (Program.instance.currentServant == Program.instance.deckEditor)
                     Program.instance.deckEditor.ResponseRegion = DeckEditorUI.ResponseRegion.Deck;
             });
+        }
+
+        private void ConfigureBattleDeckLayout()
+        {
+            if (DeckEditor.UseMobileLayout) return;
+            battleDeckLayout = true;
+            defaultColumns = 7;
+            defaultSpacing = new Vector2(8f, 8f);
+            var viewport = Viewport.GetComponent<RectTransform>();
+            var content = MainDeckContent.transform.parent.parent as RectTransform;
+            ScrollRect.content = content;
+            ScrollRect.viewport = viewport;
+            ScrollRect.horizontal = false;
+            ScrollRect.vertical = true;
+            ScrollRect.scrollSensitivity = 40f;
+            ScrollRect.enabled = true;
+            if (viewport.GetComponent<RectMask2D>() == null)
+                viewport.gameObject.AddComponent<RectMask2D>();
+            if (AutoScroll == null)
+                m_AutoScroll = ScrollRect.gameObject.AddComponent<UIScrollToSelection>();
+            content.anchorMin = new Vector2(0f, 1f);
+            content.anchorMax = Vector2.one;
+            content.pivot = new Vector2(0f, 1f);
+            content.anchoredPosition = Vector2.zero;
+            RefreshBattleDeckLayout();
+        }
+
+        private void LateUpdate()
+        {
+            if (battleDeckLayout && battleViewportSize != ScrollRect.viewport.rect.size)
+                RefreshBattleDeckLayout();
+        }
+
+        private void RefreshBattleDeckLayout()
+        {
+            if (!battleDeckLayout) return;
+            battleViewportSize = ScrollRect.viewport.rect.size;
+            // The desktop asset uses a 72 x 101 face inside a fixed 10-column
+            // grid. Grow both the grid cell AND its private template's Root.
+            contentWidth = Mathf.Max(200f, battleViewportSize.x - 24f);
+            templateWidth = (contentWidth - (defaultColumns - 1) * defaultSpacing.x) / defaultColumns;
+            var cell = new Vector2(templateWidth, templateWidth / MDPro3.Utility.CardImageLoader.DEFAULT_ASPECT);
+            var templateRoot = Template.transform.GetChild(0) as RectTransform;
+            templateRoot.sizeDelta = cell;
+            if (cards != null)
+                foreach (var card in cards)
+                    card.CardRoot.sizeDelta = cell;
+
+            // Unity destroys old button objects at the end of the frame. Size
+            // from the current deck list, so removals and empty reprints shrink now.
+            float height = LayoutBattleDeckSection(MainDeckContent, cards?.Count(card => card.location == DeckLocation.MainDeck) ?? 0, cell, 0f, true);
+            height = LayoutBattleDeckSection(ExtraDeckContent, cards?.Count(card => card.location == DeckLocation.ExtraDeck) ?? 0, cell, height, false);
+            height = LayoutBattleDeckSection(SideDeckContent, cards?.Count(card => card.location == DeckLocation.SideDeck) ?? 0, cell, height, false);
+            ScrollRect.content.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, Mathf.Max(height, battleViewportSize.y));
+        }
+
+        private float LayoutBattleDeckSection(GridLayoutGroup grid, int count, Vector2 cell, float top, bool keepEmpty)
+        {
+            var section = grid.transform.parent as RectTransform;
+            section.gameObject.SetActive(keepEmpty || count > 0);
+            if (!keepEmpty && count == 0) return top;
+            grid.cellSize = cell;
+            grid.spacing = defaultSpacing;
+            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            grid.constraintCount = defaultColumns;
+            int rows = Mathf.Max(1, Mathf.CeilToInt(count / (float)defaultColumns));
+            float height = 48f + grid.padding.top + grid.padding.bottom + rows * cell.y + (rows - 1) * defaultSpacing.y;
+            section.anchorMin = new Vector2(0f, 1f);
+            section.anchorMax = Vector2.one;
+            section.pivot = new Vector2(0f, 1f);
+            section.anchoredPosition = new Vector2(4f, -top);
+            section.sizeDelta = new Vector2(-8f, height);
+            var gridRect = grid.GetComponent<RectTransform>();
+            gridRect.anchorMin = Vector2.zero;
+            gridRect.anchorMax = Vector2.one;
+            gridRect.offsetMin = new Vector2(8f, 0f);
+            gridRect.offsetMax = new Vector2(-8f, -48f);
+            return top + height;
         }
 
         protected IEnumerator PrintDeckAsync()
@@ -1230,11 +1303,19 @@ namespace MDPro3.UI
 
             RefreshCardsCount(DeckLocation.All);
 
+            if (battleDeckLayout)
+            {
+                RefreshBattleDeckLayout();
+                ScrollRect.StopMovement();
+                ScrollRect.verticalNormalizedPosition = 1f;
+            }
+
             TweenLoading.Hide();
             Viewport.alpha = 1f;
             Viewport.blocksRaycasts = true;
 
             deckLoaded = true;
+            printRoutine = null;
             SetDirty(dirtyAfterPrint);
             dirtyAfterPrint = false;
             if (cards.Count > 0 && UserInput.NeedDefaultSelect())
@@ -1245,6 +1326,11 @@ namespace MDPro3.UI
 
         protected virtual void ChangeGridSpacing(DeckLocation location)
         {
+            if (battleDeckLayout)
+            {
+                RefreshBattleDeckLayout();
+                return;
+            }
             if ((location & DeckLocation.MainDeck) > 0)
             {
                 int count = GetDeckLocationCount(DeckLocation.MainDeck);
@@ -1297,9 +1383,9 @@ namespace MDPro3.UI
                     if (card.location == DeckLocation.MainDeck)
                     {
                         mainCount++;
-                        if (card.Card.HasType(CardType.Spell))
+                        if (BattleCatalog.TryGet(card.Card.Id, out var definition) && definition.IsNexus)
                             spellCount++;
-                        else if (card.Card.HasType(CardType.Trap))
+                        else if (definition != null && definition.IsMagic)
                             trapCount++;
                         else
                             monsterCount++;
@@ -1353,9 +1439,9 @@ namespace MDPro3.UI
                     if (card.location == DeckLocation.SideDeck)
                     {
                         sideCount++;
-                        if (card.Card.HasType(CardType.Spell))
+                        if (BattleCatalog.TryGet(card.Card.Id, out var definition) && definition.IsNexus)
                             spellCount++;
-                        else if (card.Card.HasType(CardType.Trap))
+                        else if (definition != null && definition.IsMagic)
                             trapCount++;
                         else
                             monsterCount++;
@@ -1478,8 +1564,7 @@ namespace MDPro3.UI
 
         private string GetDeckFilePath(string deckName)
         {
-            return Program.PATH_DECK + (deckType == string.Empty ? string.Empty : $"{deckType}/")
-                + deckName + Program.EXPANSION_YDK;
+            return BattleDeckStorage.ResolveDeckPath(string.IsNullOrEmpty(deckType) ? deckName : deckType + "/" + deckName);
         }
 
         private static bool IsSameDeckPath(string leftPath, string rightPath)
@@ -1507,7 +1592,7 @@ namespace MDPro3.UI
                 return;
 
             var directory = Path.GetDirectoryName(fullOldPath);
-            var tempPath = Path.Combine(directory ?? Program.PATH_DECK, $"__mdpro3_casefix_{Guid.NewGuid():N}.tmp");
+            var tempPath = Path.Combine(directory ?? BattleDeckStorage.DeckDirectory, $"__mdpro3_casefix_{Guid.NewGuid():N}.tmp");
             File.Move(fullOldPath, tempPath);
             File.Move(tempPath, fullNewPath);
 #endif

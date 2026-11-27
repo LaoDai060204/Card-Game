@@ -1,0 +1,60 @@
+{
+  "id": "bs-09-heavy-refresh",
+  "title": "09 — Recover from Heavy Exhaustion",
+  "category": "Turn Steps",
+  "description": "Enter Refresh. The heavily exhausted Spirit becomes exhausted, rather than refreshing completely.",
+  "hint": "Advance from Draw into Refresh and inspect its exhaustion state.",
+  "previewCardId": "26RSD03-003",
+  "seed": 20261116,
+  "turnNumber": 2,
+  "activePlayer": 0,
+  "maxCommands": 20,
+  "maxTurnNumber": 2,
+  "phase": "Draw",
+  "pendingAttackerId": -1,
+  "pendingBlockerId": -1,
+  "flashPlayerIndex": -1,
+  "players": [
+    {
+      "life": 5,
+      "reserveNormal": 3,
+      "reserveSoul": true,
+      "trashNormal": 0,
+      "trashSoul": false,
+      "hand": [],
+      "discard": [],
+      "field": [
+        {
+          "cardId": "26RSD03-003",
+          "instanceId": 100,
+          "normalCores": 1,
+          "exhausted": true,
+          "heavyExhausted": true
+        }
+      ]
+    },
+    {
+      "life": 5,
+      "reserveNormal": 8,
+      "reserveSoul": true,
+      "trashNormal": 0,
+      "trashSoul": false,
+      "hand": [],
+      "discard": [],
+      "field": []
+    }
+  ],
+  "goal": {
+    "kind": "Refresh",
+    "owner": 0,
+    "instanceId": 100
+  },
+  "solution": [
+    {
+      "actor": 0,
+      "command": {
+        "action": "advance"
+      }
+    }
+  ]
+}

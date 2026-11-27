@@ -1,20 +1,34 @@
-## MDPro3
+# Battle Spirits Standard
+
+This branch uses the project's native Battle Spirits Standard runtime. The English UI
+opens Solo, the deck editor, Puzzle, direct LAN and replay from the main menu. The
+duel HUD gives each player a separate Life display, public counters for Reserve,
+Deck, Hand and Trash, and distinct indicators for the active turn and the current
+decision. The opponent's hand shows card backs. Selecting a card opens its
+English details and the legal actions offered by the engine.
+
+Open `Assets/Scenes/Boot.unity` in Unity **6000.0.24f1** with the Windows x64 target.
+Keep the project's interface bundles available. For a first check, select a
+starter deck, open Solo and play through an opening hand, a Main Step and an
+opponent-turn Flash decision. `BATTLE_SPIRITS_INTEGRATION.md` describes the
+shipped 62-card catalog, four starter decks, ten puzzles and the source checks.
+The rules and card support cover the shipped pool. The supplied tournament floor
+rules are reference material for organized play.
+
+## MDPro3 baseline and attribution
 
 A new version of YGOPro in Unity with MasterDuel Assets.
 
 Unity version: 6000.0.24f1
 
-The recovered English project is on **`fix/mdpro3-english-repair-20261117`**.
-Its source is `backup/2026-11-15-before-card-review-publication` at
-`2c7fd2ee7`, the last MDPro3 English commit before
-`mdpro3-english` was changed into a Battle Spirits application. This tree keeps
-the Yu-Gi-Oh! game and repairs its startup, connection, download and Puzzle paths.
-See [recovery and verification](ENGLISH_REPAIR.md) for commands and limitations.
+The recovered English Yu-Gi-Oh! baseline is saved on
+`backup/2026-11-27-before-standard-ui-conversion` at `cb251af31`.
+It was recovered from `2c7fd2ee7`. See [recovery and verification](ENGLISH_REPAIR.md)
+for the historical MDPro3 fixes.
 
 The original English restoration uses the **MDPro3 1.4.7** snapshot
 from before Vietnamese localization. UI, card and prerelease languages default
-to English. Known URP/texture compatibility settings are retained; optimization
-and a new Battle Spirits conversion are deferred. See [restore notes](RESTORE_ENGLISH.md)
+to English. Known URP/texture compatibility settings are retained. See [restore notes](RESTORE_ENGLISH.md)
 for the exact baseline, backup, preserved branches and validation limits.
 
 The deep English migration also converts application comments, Editor menus,

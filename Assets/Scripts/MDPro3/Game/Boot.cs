@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using UnityEngine;
 using ICSharpCode.SharpZipLib.Core;
@@ -157,10 +157,10 @@ namespace MDPro3
             totalNum = 0;
             progressBar.value = 0;
 
-            title = InterString.Get("Initializing");
+            title = "Battle Spirits — Initializing interface";
 
             Program.SetRoot();
-            _ = ABLoader.CacheMasterDuelOutDuelBundles();
+            _ = ABLoader.CacheInterfaceBundles();
             while (!ABLoader.mdCached)
             {
                 progressBar.value = ABLoader.mdCachedProgress;
@@ -178,7 +178,7 @@ namespace MDPro3
                 yield return null;
             }
 
-            title = InterString.Get("Loading Data");
+            title = "Battle Spirits — Loading data";
             var handle = Addressables.LoadAssetAsync<Items>("ScriptableObjects/Items.asset");
             while (!handle.IsDone)
             {
@@ -187,7 +187,7 @@ namespace MDPro3
             }
             Program.items = handle.Result;
 
-            title = InterString.Get("Entering Game");
+            title = "Battle Spirits — Entering game";
             var load = Addressables.LoadSceneAsync("SceneMain");
             while (!load.IsDone)
             {

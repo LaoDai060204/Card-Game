@@ -92,3 +92,17 @@ __pycache__/
 # Keep the pinned official Puzzle source available in every clone.
 !/Puzzle/
 !/Puzzle/**
+# Shipped Battle Spirits data is part of the game, not a generated cache.
+!/Assets/StreamingAssets/
+/Assets/StreamingAssets/*
+!/Assets/StreamingAssets/BattleSpirits/
+!/Assets/StreamingAssets/BattleSpirits.meta
+!/Assets/StreamingAssets/BattleSpirits/**
+
+# Reproducible source harnesses; never publish their build output.
+!Tools/Tests/BattleSpirits*/**/*.csproj
+!Tools/BattleSpiritsNativeTests/*.csproj
+/Tools/Tests/BattleSpirits*/**/bin/
+/Tools/Tests/BattleSpirits*/**/obj/
+/Tools/BattleSpiritsNativeTests/bin/
+/Tools/BattleSpiritsNativeTests/obj/

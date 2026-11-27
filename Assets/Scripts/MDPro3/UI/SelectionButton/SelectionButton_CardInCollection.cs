@@ -1,3 +1,4 @@
+using MDPro3.BattleSpirits;
 using DG.Tweening;
 using MDPro3.Duel.YGOSharp;
 using System.Collections;
@@ -115,18 +116,26 @@ namespace MDPro3.UI
 
         public void SetRegulationIcon()
         {
+            if (card.IsBattleSpirits) { Manager.GetElement("IconLimit").SetActive(false); return; }
             Manager.GetElement<Image>("IconLimit").sprite
                 = TextureManager.container.GetCardRegulationIcon(CardCode, DeckEditor.Banlist);
         }
 
         public void RefreshCredit()
         {
+            if (card.IsBattleSpirits) { TextCardPoint.text = string.Empty; return; }
             TextCardPoint.text = card.GetCreditString();
             TextCardPoint.color = BanlistManager.currentGenesysBanList.GetCreditColor(card.GetCredit());
         }
 
         private void SetIcons()
         {
+            if (card.IsBattleSpirits)
+            {
+                RefreshIcons();
+                RefreshCountIcon();
+                return;
+            }
             SetRegulationIcon();
 
             var attributeIcon = TextureManager.container.GetCardAttributeIcon(card);
@@ -161,6 +170,16 @@ namespace MDPro3.UI
 
         public void RefreshIcons()
         {
+            if (card.IsBattleSpirits)
+            {
+                foreach (var name in new[] { "IconAttribute", "IconSpellTrapType", "IconRace", "IconTuner", "IconLevel", "IconRank", "IconLink", "IconPendulumScale", "IconPool", "IconLimit" })
+                {
+                    var element = Manager.GetElement(name);
+                    if (element != null) element.SetActive(false);
+                }
+                CardPoint.SetActive(false);
+                return;
+            }
             Manager.GetElement("IconAttribute").SetActive(DeckEditor.cardInfoType == DeckEditor.CardInfoType.Detail);
             Manager.GetElement("IconSpellTrapType").SetActive(DeckEditor.cardInfoType == DeckEditor.CardInfoType.Detail);
             Manager.GetElement("IconRace").SetActive(DeckEditor.cardInfoType == DeckEditor.CardInfoType.Detail);
@@ -184,7 +203,7 @@ namespace MDPro3.UI
 
         public void RefreshCountIcon()
         {
-            var ragulation = DeckEditor.Banlist.GetQuantity(card.Id);
+            var ragulation = BattleDeckStorage.CopyLimit(card.Id);
             var count = Program.instance.deckEditor
                 .GetUI<DeckEditorUI>().DeckView.GetCardCount(card.Id);
             var color = Color.white;

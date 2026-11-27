@@ -1,3 +1,4 @@
+using MDPro3.BattleSpirits;
 using Cysharp.Threading.Tasks;
 using MDPro3.Duel.YGOSharp;
 using MDPro3.Servant;
@@ -57,25 +58,29 @@ namespace MDPro3.UI
 
         public async void SetDeck(Deck deck)
         {
+            deck ??= new Deck();
+            var pickups = new int[3];
+            for (int i = 0; i < pickups.Length; i++)
+                pickups[i] = deck.Pickup != null && i < deck.Pickup.Count ? deck.Pickup[i] : 0;
             var setting = string.Empty;
-            setting += GetCardName(deck.Pickup[0], 1);
-            setting += GetCardName(deck.Pickup[1], 2);
-            setting += GetCardName(deck.Pickup[2], 3);
+            setting += GetCardName(pickups[0], 1);
+            setting += GetCardName(pickups[1], 2);
+            setting += GetCardName(pickups[2], 3);
             TextSetting.text = setting;
 
             Card1.protectorCode = deck.Protector;
             Card2.protectorCode = deck.Protector;
             Card3.protectorCode = deck.Protector;
 
-            Card1.SetCard(deck.Pickup[0]);
-            Card2.SetCard(deck.Pickup[1]);
-            Card3.SetCard(deck.Pickup[2]);
+            Card1.SetCard(pickups[0]);
+            Card2.SetCard(pickups[1]);
+            Card3.SetCard(pickups[2]);
             await LoadDeckCaseAsync(deck.Case);
         }
 
         private async UniTask LoadDeckCaseAsync(int deckCase)
         {
-            var sprite = await Program.items.LoadDeckCaseIconAsync(deckCase, "_Open_L_HD");
+            var sprite = await BattleCardAdapter.BackIconAsync(destroyCancellationToken);
             if (sprite != null)
                 DeckCase.sprite = sprite;
         }

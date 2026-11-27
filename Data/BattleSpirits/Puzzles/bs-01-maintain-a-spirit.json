@@ -1,0 +1,55 @@
+{
+  "id": "bs-01-maintain-a-spirit",
+  "title": "01 — Pay and maintain",
+  "category": "Basics",
+  "description": "Summon Roppu=Yāra. Pay its cost and leave at least one core on it to maintain Lv1.",
+  "hint": "A Spirit needs its Lv1 minimum after paying the summon cost.",
+  "previewCardId": "26RBS02-002",
+  "seed": 20261116,
+  "turnNumber": 2,
+  "activePlayer": 0,
+  "maxCommands": 20,
+  "maxTurnNumber": 2,
+  "phase": "Main",
+  "pendingAttackerId": -1,
+  "pendingBlockerId": -1,
+  "flashPlayerIndex": -1,
+  "players": [
+    {
+      "life": 5,
+      "reserveNormal": 3,
+      "reserveSoul": true,
+      "trashNormal": 0,
+      "trashSoul": false,
+      "hand": [
+        "26RBS02-002"
+      ],
+      "discard": [],
+      "field": []
+    },
+    {
+      "life": 5,
+      "reserveNormal": 8,
+      "reserveSoul": true,
+      "trashNormal": 0,
+      "trashSoul": false,
+      "hand": [],
+      "discard": [],
+      "field": []
+    }
+  ],
+  "goal": {
+    "kind": "Summon",
+    "owner": 0,
+    "cardId": "26RBS02-002"
+  },
+  "solution": [
+    {
+      "actor": 0,
+      "command": {
+        "action": "summon",
+        "index": 0
+      }
+    }
+  ]
+}

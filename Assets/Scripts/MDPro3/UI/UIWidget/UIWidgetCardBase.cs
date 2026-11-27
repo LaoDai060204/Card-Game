@@ -1,3 +1,4 @@
+using MDPro3.BattleSpirits;
 using DG.Tweening;
 using MDPro3.Duel.YGOSharp;
 using MDPro3.Net;
@@ -370,9 +371,43 @@ namespace MDPro3.UI
 
         protected virtual void SetCardData(Card data)
         {
+            if (data == null) return;
             if (Card != null && Card.Id == data.Id)
                 return;
             Card = data;
+            if (data.IsBattleSpirits && BattleCatalog.TryGet(data.BattleSpiritsId, out var definition))
+            {
+                TextCardName.text = " " + data.Name;
+                IconAttribute.sprite = BattleCardAdapter.ColorIcon(definition);
+                IconLimit.gameObject.SetActive(false);
+                SetCardCount();
+                if (PoolArea != null) PoolArea.SetActive(false);
+                // These prefab slots are sized for a single level/ATK/DEF number.
+                // The complete BS metadata belongs in the existing scroll text.
+                Manager.GetElement("ParameterArea")?.SetActive(false);
+                TextDescriptionItem.text = definition.type + " · " + BattleCardAdapter.Colors(definition);
+                TextDescriptionValue.text = data.Desc;
+                TextDescriptionValue.enableAutoSizing = false;
+                TextDescriptionValue.enableWordWrapping = true;
+                TextDescriptionValue.richText = false;
+                TextDescriptionValue.fontSize = DeckEditor.UseMobileLayout ? 30f : 24f;
+                TextDescriptionValue.lineSpacing = 4f;
+                TextDescriptionValue.overflowMode = TextOverflowModes.Overflow;
+                ConfigureBattleInspector();
+                if (TextArea != null && TextArea.content != null)
+                    LayoutRebuilder.ForceRebuildLayoutImmediate(TextArea.content);
+                if (TextArea != null) { TextArea.StopMovement(); TextArea.verticalNormalizedPosition = 1f; }
+                if (PendulumDescriptionArea != null) PendulumDescriptionArea.SetActive(false);
+                if (MenuArea != null)
+                {
+                    ToggleRarityR.gameObject.SetActive(false);
+                    ToggleRarityUR.gameObject.SetActive(false);
+                    ToggleRarityGR.gameObject.SetActive(false);
+                    ToggleRarityMR.gameObject.SetActive(false);
+                    RefreshBookmarkToggle();
+                }
+                return;
+            }
 
             #region Title Area
 
@@ -542,6 +577,31 @@ namespace MDPro3.UI
             #endregion
         }
 
+        private void ConfigureBattleInspector()
+        {
+            // CardActionMenu has its own full-size face and button layout.
+            if (!(this is CardDetailView) || DeckEditor.UseMobileLayout) return;
+            var cardArea = Manager.GetElement<RectTransform>("CardArea");
+            var descriptionArea = Manager.GetElement<RectTransform>("DescriptionArea");
+            if (cardArea == null || descriptionArea == null) return;
+            var panel = cardArea.parent as RectTransform;
+            if (panel == null) return;
+
+            // The shipped desktop inspector is 412 wide, but its old card area
+            // is only 143 x 208. Reserve a centered full-face area at runtime.
+            float faceWidth = Mathf.Min(280f, Mathf.Max(143f, panel.rect.width - 40f));
+            float faceHeight = faceWidth / MDPro3.Utility.CardImageLoader.DEFAULT_ASPECT;
+            const float faceTop = 74f;
+            cardArea.anchorMin = cardArea.anchorMax = new Vector2(.5f, 1f);
+            cardArea.pivot = new Vector2(.5f, 1f);
+            cardArea.anchoredPosition = new Vector2(0f, -faceTop);
+            cardArea.sizeDelta = new Vector2(faceWidth, faceHeight);
+            descriptionArea.anchorMin = Vector2.zero;
+            descriptionArea.anchorMax = Vector2.one;
+            descriptionArea.offsetMin = new Vector2(8f, 8f);
+            descriptionArea.offsetMax = new Vector2(-8f, -(faceTop + faceHeight + 16f));
+        }
+
         public virtual void SetCardCount(string cardCount)
         {
             TextCardNumValue.text = cardCount;
@@ -574,6 +634,7 @@ namespace MDPro3.UI
 
         public virtual void RefreshRegulation()
         {
+            if (Card != null && Card.IsBattleSpirits) { IconLimit.gameObject.SetActive(false); return; }
             if(Card == null) return;
             IconLimit.sprite = TextureManager.container
                 .GetCardRegulationIcon(Card.Id, DeckEditor.Banlist);

@@ -1,0 +1,76 @@
+{
+  "catalog_date": "2026-11-17",
+  "scope": "Supplemental owner-supplied arena appearance and explicit summon-presentation approval; the original imported reference catalog remains byte-preserved.",
+  "references": [
+    {
+      "id": "BS-REF-20261117-ARENA",
+      "category": "native_arena_and_summon_presentation",
+      "source": "Owner-uploaded Battle Spirits – Sàn đấu 2 người chơi.html",
+      "original_filename": "Battle Spirits – Sàn đấu 2 người chơi.html",
+      "original_file": "arena-reference-20261117.html",
+      "original_bytes": 2542652,
+      "original_sha256": "520a63796835e2f96f3df7563f1918b2ab87af770034164a3cc32aebdb693a6c",
+      "unchanged_original": true,
+      "archive_status": "archived_from_user_upload",
+      "intended_role_en": "Navy and silver mirrored arena, perspective camera, resource-zone placement, player plates, hand and turn controls; explicit Pisketona and Ritenia cutscenes.",
+      "rules_reference_status": "appearance_only",
+      "approved_boss_ids": [
+        "26RBS03-X01",
+        "26RBS03-022"
+      ],
+      "boss_assignment_basis": "Explicit owner approval and both named cutscenes in this supplied HTML. No inference from artwork, cost or rarity.",
+      "native_geometry": {
+        "table_width": 15.6,
+        "table_depth": 15.2,
+        "field_of_view_degrees": 42,
+        "camera_target": [
+          0,
+          0,
+          2.2
+        ],
+        "camera_offset": [
+          0,
+          11,
+          11
+        ],
+        "camera_fit": "max(1.25, 2.1 / viewportAspect)",
+        "viewer_zones": {
+          "burst": [
+            -6.2,
+            1.45
+          ],
+          "deck": [
+            6.2,
+            1.45
+          ],
+          "life": [
+            -6.2,
+            3.85
+          ],
+          "reserve": [
+            -6.2,
+            6.2
+          ],
+          "trash_card": [
+            6.2,
+            4.0
+          ],
+          "trash_core": [
+            6.2,
+            6.25
+          ]
+        },
+        "opponent_zones": "Same geometry rotated 180 degrees."
+      },
+      "native_adaptations": [
+        "Native Unity rendering and legal-command dispatcher remain the runtime path.",
+        "Current Standard engine retains eight turn steps, including Second Main Step.",
+        "The five decorative HTML slots do not impose a field-card limit.",
+        "Printed costs, effects, legal deck sizes, payment and all match decisions use the reviewed native catalog and engine; the HTML fake decks, generated cards and scripted payment are not adopted.",
+        "Burst remains empty for the current engine roster; no hidden face-down card is invented.",
+        "Navy is the default field. Explicit Battle Spirits themes can add faint cropped decorative artwork beneath the native zones.",
+        "Existing reviewed card faces and 43 transparent standees remain unchanged source images."
+      ]
+    }
+  ]
+}

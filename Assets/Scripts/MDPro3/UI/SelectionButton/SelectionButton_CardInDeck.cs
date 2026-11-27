@@ -1,3 +1,4 @@
+using MDPro3.BattleSpirits;
 using DG.Tweening;
 using MDPro3.Duel.YGOSharp;
 using System.Collections;
@@ -156,6 +157,8 @@ namespace MDPro3.UI
         public DeckLocation location;
         private Vector3 dragScale = new(1.7f, 1.7f, 1f);
         private RectTransform child;
+        // Root leaves the grid temporarily while card movement is animated.
+        internal RectTransform CardRoot => child;
 
         protected override void Awake()
         {
@@ -257,18 +260,26 @@ namespace MDPro3.UI
 
         public void SetRegulationIcon()
         {
+            if (Card.IsBattleSpirits) { Manager.GetElement("IconLimit").SetActive(false); return; }
             IconLimit.sprite =
                 TextureManager.container.GetCardRegulationIcon(Card.Id, DeckEditor.Banlist);
         }
 
         public void RefreshCredit()
         {
+            if (Card.IsBattleSpirits) { TextCardPoint.text = string.Empty; return; }
             TextCardPoint.text = Card.GetCreditString();
             TextCardPoint.color = BanlistManager.currentGenesysBanList.GetCreditColor(Card.GetCredit()); ;
         }
 
         private void SetIcons()
         {
+            if (Card.IsBattleSpirits)
+            {
+                RefreshIcons();
+
+                return;
+            }
             SetRegulationIcon();
 
             var attributeIcon = TextureManager.container.GetCardAttributeIcon(Card);
@@ -302,6 +313,16 @@ namespace MDPro3.UI
 
         public void RefreshIcons()
         {
+            if (Card.IsBattleSpirits)
+            {
+                foreach (var name in new[] { "IconAttribute", "IconSpellTrapType", "IconRace", "IconTuner", "IconLevel", "IconRank", "IconLink", "IconPendulumScale", "IconPool", "IconLimit" })
+                {
+                    var element = Manager.GetElement(name);
+                    if (element != null) element.SetActive(false);
+                }
+                CardPoint.SetActive(false);
+                return;
+            }
             if(Program.instance.currentServant == Program.instance.deckEditor)
             {
                 IconAttribute.gameObject.SetActive(DeckEditor.cardInfoType == DeckEditor.CardInfoType.Detail);

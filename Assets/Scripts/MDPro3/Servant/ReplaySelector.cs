@@ -29,7 +29,7 @@ namespace MDPro3.Servant
         protected override void AfterHidingEvent()
         {
             base.AfterHidingEvent();
-            GetUI<ReplaySelectorUI>().superScrollView.Clear();
+            GetUI<ReplaySelectorUI>().superScrollView?.Clear();
         }
 
         public override void OnExit()

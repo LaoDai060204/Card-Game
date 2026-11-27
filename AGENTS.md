@@ -9,10 +9,11 @@ Preserve existing changes first, including relevant ignored runtime assets in
 `Picture`, `Sound`, and `Platforms`. Never overwrite backups or force-push history.
 Do not commit generated Unity caches, local configuration, decks or credentials.
 
-## Restored MDPro3 English baseline
+## Battle Spirits Standard on the recovered English branch
 
-- Current baseline: original MDPro3 1.4.7 from `47c3adb6e`, before the Vietnamese
-  interface and LaoDai branding were introduced. Work on `mdpro3-english`.
+- The owner selected Battle Spirits Standard on `fix/mdpro3-english-repair-20261117`.
+  The original recovered Yu-Gi-Oh! state is saved on
+  `backup/2026-11-27-before-standard-ui-conversion` at `cb251af31`.
 - Target Unity **6000.0.24f1**, Windows x64. Start at `Assets/Scenes/Boot.unity`.
 - English is the default UI, card and prerelease language. Application code and
   translation lookup keys use canonical English. Keep original locale values,
@@ -23,9 +24,9 @@ Do not commit generated Unity caches, local configuration, decks or credentials.
   Preserve Unity GUIDs/fileIDs, original card data and exact creator credits.
 - Preserve the compatibility fixes removing the unsupported URP editor reference
   and disabling compression on nine UI textures. See `RESTORE_ENGLISH.md`.
-- The owner will request optimization and a fresh Battle Spirits conversion
-  later. Do not resume the previous conversion without that instruction.
-- Keep `main` and `battle-spirits-mdpro3-ui` intact while this baseline is reviewed.
+- Use the existing Battle Spirits rules, legal commands and card catalog.
+  See `BATTLE_SPIRITS_INTEGRATION.md` for source checks and supported features.
+- Keep changes scoped to the selected branch. The owner runs Unity and the game.
 - Preserve upstream attribution, copyright notices, asset GUIDs and third-party
   licenses. This project is an MDPro3 customization, not the official Master Duel.
 - State exactly which checks ran. Static/C# smoke checks are not Unity Play/build.

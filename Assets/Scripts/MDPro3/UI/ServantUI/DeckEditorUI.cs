@@ -1,3 +1,4 @@
+using MDPro3.BattleSpirits;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using MDPro3.Duel.YGOSharp;
@@ -259,6 +260,7 @@ namespace MDPro3.UI.ServantUI
                     if (DeckView.cards[i] == Program.instance.deckEditor.lastSelectedCardInDeck)
                         index = i;
                 }
+                if (list.Count == 0) return;
                 CardActionMenu.Show(list, index, _ResponseRegion);
                 _ResponseRegion = ResponseRegion.Action;
             }
@@ -582,81 +584,13 @@ namespace MDPro3.UI.ServantUI
 
         public void OnDeckButtonClicked()
         {
-            if (!DeckView.deckLoaded) return;
-
-            if (!DeckView.ButtonDeck.gameObject.activeSelf)
-                return;
-
-            if (!DeckIsFromLocal && condition == Condition.OnlineDeck)
-            {
-                OnlineDeck.LikeDeck(onlineDeckID);
-                deckLiked = true;
-                SetDeckButtonText();
-                return;
-            }
-
-            if (DeckView.GetDirty() || !DeckIsFromLocal)
-            {
-                if (condition != Condition.ChangeSide)
-                    MessageManager.Toast(InterString.Get("Please save the deck first"));
-                return;
-            }
-
-            if (MyCard.account != null && Config.GetBool("SyncDeck", true))
-            {
-                var onlineDeck = OnlineDeck.GetByID(DeckEditor.Deck.deckId);
-                if (onlineDeck == null || onlineDeck.isDelete)
-                    return;
-                _ = OnlineDeck.UpdatePublicState(DeckEditor.Deck.deckId, !onlineDeck.isPublic);
-                onlineDeck.isPublic = !onlineDeck.isPublic;
-            }
-
             SetDeckButtonText();
         }
 
         private void SetDeckButtonText()
         {
-            string text = string.Empty;
-            if (DeckIsFromLocal)
-            {
-                if (MyCard.account != null)
-                {
-                    if(Config.GetBool("SyncDeck", true))
-                    {
-                        var onlineDeck = OnlineDeck.GetByID(DeckEditor.Deck.deckId);
-                        if (onlineDeck == null || onlineDeck.isDelete)
-                        {
-                            DeckView.ButtonDeck.gameObject.SetActive(false);
-                            return;
-                        }
-                        else
-                        {
-                            if (onlineDeck.isPublic)
-                                text = InterString.Get("Public");
-                            else
-                                text = InterString.Get("Private");
-                        }
-                    }
-                    else
-                    {
-                        text = InterString.Get("Stopping sync");
-                    }
-                }
-            }
-            else
-            {
-                if (condition == Condition.OnlineDeck)
-                {
-                    text = InterString.Get("Like");
-                    if (deckLiked)
-                    {
-                        DeckView.ButtonDeck.gameObject.SetActive(false);
-                        return;
-                    }
-                }
-            }
-            DeckView.ButtonDeck.SetButtonText(text);
-            DeckView.ButtonDeck.gameObject.SetActive(text != string.Empty);
+            DeckView.ButtonDeck.SetButtonText(string.Empty);
+            DeckView.ButtonDeck.gameObject.SetActive(false);
         }
 
 
@@ -856,7 +790,7 @@ namespace MDPro3.UI.ServantUI
 
         private void InitializeHeader()
         {
-            ButtonRegulation.SetButtonText(DeckEditor.Banlist.Name);
+            ButtonRegulation.SetButtonText("Standard · 40+ cards · 3 copies");
 
             if (condition == Condition.ChangeSide)
             {
@@ -866,13 +800,14 @@ namespace MDPro3.UI.ServantUI
             else
             {
                 Destroy(ButtonChangeSide.gameObject);
-                ButtonTest.SetButtonText(InterString.Get("Test Hand"));
+                ButtonTest.SetButtonText("Test Deck");
+                BattleNativeLabels.Apply(gameObject);
             }
         }
 
         public void SetCardInfoType()
         {
-            var type = (CardInfoType)(((int)cardInfoType + 1) % 4);
+            var type = cardInfoType == CardInfoType.None ? CardInfoType.Detail : CardInfoType.None;
             Program.instance.deckEditor.SetCardInfoType(type);
         }
 
@@ -898,7 +833,7 @@ namespace MDPro3.UI.ServantUI
             CardCollectionView.SetCardInfoType();
             if (CardDetailView != null)
                 CardDetailView.RefreshRegulation();
-            ButtonRegulation.SetButtonText(DeckEditor.Banlist.Name);
+            ButtonRegulation.SetButtonText("Standard · 40+ cards · 3 copies");
         }
 
         private void RefreshRegulationIcons()
@@ -920,16 +855,7 @@ namespace MDPro3.UI.ServantUI
 
         public void OnRegulation()
         {
-            AudioManager.PlaySE("SE_MENU_DECIDE");
-            List<string> selections = new()
-            {
-                InterString.Get("Forbidden & Limited Lists"),
-                string.Empty
-            };
-            var names = cardInfoType == CardInfoType.Genesys ? 
-                BanlistManager.GetAllGenesysNames() : BanlistManager.GetAllNames();
-            selections.AddRange(names);
-            UIManager.ShowPopupSelection(selections, ChangeRegulation);
+            UIManager.ShowPopupConfirm(new List<string> { "Battle Spirits Standard", "A deck contains at least 40 cards. Cards sharing a name are limited to 3 copies. Only verified Standard cards are legal. Extra and Side stay empty." });
         }
 
         private void ChangeRegulation()
@@ -947,86 +873,21 @@ namespace MDPro3.UI.ServantUI
         public void OnSubMenu()
         {
             if (!DeckView.deckLoaded) return;
-            var menus = new List<string>()
-                {
-                    InterString.Get("Submenu")
-                };
-            var actions = new List<Action>()
-                {
-                    null
-                };
-
-            if (condition != Condition.ChangeSide)
-            {
-                menus.Add(InterString.Get("Hand Test Settings"));
-                actions.Add(OnHandTestSettings);
-                menus.Add("YDKE");
-                actions.Add(OnYdke);
-            }
-
-            menus.AddRange(new List<string>
-            {
-                InterString.Get("Reset"),
-                InterString.Get("Shuffle")
-            });
-            actions.AddRange(new List<Action>()
-            {
-                OnReset,
-                OnRandom
-            });
-
-            if (condition != Condition.ChangeSide)
-            {
-                menus.AddRange(new List<string>
-                {
-                    InterString.Get("Copy deck"),
-                    InterString.Get("Share"),
-                    InterString.Get("Clear deck")
-                });
-                actions.AddRange(new List<Action>()
-                {
-                    OnCopy,
-                    OnShare,
-                    OnClearDeck
-                });
-            }
-            UIManager.ShowSubMenu(menus, actions);
+            UIManager.ShowSubMenu(new List<string> { "Deck", "Reset", "Shuffle", "Copy deck", "Share", "Clear deck" },
+                new List<Action> { null, OnReset, OnRandom, OnCopy, OnShare, OnClearDeck });
         }
 
         public void OnSave()
         {
-            if (DeckIsFromLocal && !DeckView.GetDirty()) return;
-
-            if (DeckIsFromLocal)
-                if (DeckEditor.Banlist.Name != BanlistManager.EMPTY_LIST_NAME)
-                {
-                    if (DeckView.mainCount > 60 || DeckView.extraCount > 15 || DeckView.sideCount > 15)
-                    {
-                        List<string> tasks = new()
-                        {
-                            InterString.Get("Save Failed"),
-                            InterString.Get("Your deck contains cards that exceed the limit.@nTo ignore restrictions, set Forbidden & Limited Lists to N/A.")
-                        };
-                        UIManager.ShowPopupConfirm(tasks);
-                        callExit = false;
-                        return;
-                    }
-                }
-
-            if (!DeckIsFromLocal && File.Exists(Program.PATH_DECK + DeckName + Program.EXPANSION_YDK))
+            if (!DeckView.deckLoaded) return;
+            var validation = BattleDeckStorage.Validate(DeckView.FromObjectDeckToCodedDeck());
+            if (!validation.IsValid)
             {
-                List<string> tasks = new()
-                {
-                    InterString.Get("Deck name already exists"),
-                    InterString.Get("A file with this deck name already exists. Overwrite it?"),
-                    InterString.Get("Overwrite"),
-                    InterString.Get("Cancel")
-                };
-
-                UIManager.ShowPopupYesOrNo(tasks, OnSaveConfirmed, () => { callExit = false; });
+                UIManager.ShowPopupConfirm(new List<string> { "Invalid Battle Spirits Deck", validation.Summary });
+                callExit = false;
+                return;
             }
-            else
-                OnSaveConfirmed();
+            OnSaveConfirmed();
         }
 
         private void OnSaveConfirmed()
@@ -1076,7 +937,7 @@ namespace MDPro3.UI.ServantUI
 
         private void OnHandTestSettings()
         {
-            UIManager.ShowPopupHandTestSettings(HandTestSettings.Load(), TryStartHandTest);
+            UIManager.ShowPopupConfirm(new List<string> { "Battle Spirits Test Deck", "Test Deck starts a Battle Spirits match against a local opponent. Each player draws four opening cards and follows the Standard turn sequence." });
         }
 
         private void OnYdke()
@@ -1108,121 +969,21 @@ namespace MDPro3.UI.ServantUI
 
         private bool TryStartHandTest(HandTestSettings settings)
         {
-            if (!Program.Running || !TcpHelper.canJoin || YgoServer.IsBusy)
+            if (!DeckView.deckLoaded) return false;
+            var validation = BattleDeckStorage.Validate(DeckView.FromObjectDeckToCodedDeck());
+            if (!validation.IsValid)
             {
-                MessageManager.Toast("The local duel is starting or stopping. Please wait.");
+                UIManager.ShowPopupConfirm(new List<string> { "Invalid Battle Spirits Deck", validation.Summary });
                 return false;
             }
-            if (!DeckView.deckLoaded)
-                return false;
-            if (condition == Condition.ChangeSide)
-                return false;
-            if (!DeckIsFromLocal)
-            {
-                MessageManager.Toast(InterString.Get("Please save the deck first"));
-                return false;
-            }
-
-            _ = HandTestAsync(settings);
-            return true;
+            if (!DeckView.Save()) return false;
+            return BattleIntegration.StartSolo(DeckName);
         }
 
         private async UniTask HandTestAsync(HandTestSettings settings)
         {
-            if (!Program.Running || !TcpHelper.canJoin || YgoServer.IsBusy)
-                return;
-
-            var launchSettings = settings != null ? settings.Clone() : HandTestSettings.Load();
-            launchSettings.Clamp();
-
-            int port = 7911;
-            while (!TcpHelper.IsPortAvailable(port))
-            {
-                port++;
-                if (port == 65536)
-                    port = 1;
-            }
-
-            string args = launchSettings.BuildServerArgs(port);
-
-            if (!YgoServer.TryStartServer(args))
-            {
-                MessageManager.Toast("Unable to start the local duel server. Please try again.");
-                return;
-            }
-
-            var serverThread = YgoServer.serverThread;
-            bool OwnsServer() => serverThread != null && ReferenceEquals(YgoServer.serverThread, serverThread);
-            bool completed = false;
-            try
-            {
-                RoomServant.FromSolo = false;
-                RoomServant.FromLocalHost = false;
-                RoomServant.FromHandTest = true;
-
-                UIManager.UIBlackIn(0.3f);
-                await UniTask.WaitForSeconds(0.3f);
-                if (!Program.Running || !OwnsServer() || !YgoServer.ServerRunning())
-                    return;
-
-                OcgCore.handler = Program.instance.room.Handler;
-
-                Program.instance.solo.StartAIForHandTest(port);
-                await UniTask.Delay(100);
-                if (!Program.Running || !OwnsServer() || !YgoServer.ServerRunning())
-                    return;
-
-                bool joined = false;
-                if (!TcpHelper.LinkStart("127.0.0.1", Config.Get("DuelPlayerName0", Config.EMPTY_STRING),
-                    port.ToString(), string.Empty, true, () =>
-                    {
-                        if (OwnsServer())
-                            System.Threading.Volatile.Write(ref joined, true);
-                    }))
-                    return;
-
-                var deadline = Time.realtimeSinceStartup + 10f;
-                while (!System.Threading.Volatile.Read(ref joined) && Program.Running
-                    && OwnsServer() && YgoServer.ServerRunning() && Time.realtimeSinceStartup < deadline)
-                    await UniTask.Delay(50);
-
-                if (!System.Threading.Volatile.Read(ref joined) || !Program.Running || !OwnsServer() || !YgoServer.ServerRunning())
-                    return;
-
-                var deck = DeckView.FromObjectDeckToCodedDeck();
-                TcpHelper.CtosMessage_UpdateDeck(deck);
-                TcpHelper.CtosMessage_HsReady();
-                await UniTask.Delay(50);
-                if (!Program.Running || !OwnsServer() || !YgoServer.ServerRunning())
-                    return;
-                TcpHelper.CtosMessage_HandResult(2);
-                await UniTask.Delay(50);
-                if (!Program.Running || !OwnsServer() || !YgoServer.ServerRunning())
-                    return;
-                TcpHelper.CtosMessage_TpResult(true);
-                completed = true;
-            }
-            catch (Exception exception)
-            {
-                Debug.LogError("Unable to start the hand test: " + exception);
-            }
-            finally
-            {
-                if (!completed)
-                {
-                    var currentServerThread = YgoServer.serverThread;
-                    if (currentServerThread == null || ReferenceEquals(currentServerThread, serverThread))
-                    {
-                        if (OwnsServer())
-                            YgoServer.StopServer();
-                        RoomServant.FromHandTest = false;
-                        UIManager.UIBlackOut(0.3f);
-                        if (Program.Running)
-                            MessageManager.Toast("Unable to start the hand test. Please try again.");
-                    }
-                }
-            }
-
+            await UniTask.CompletedTask;
+            TryStartHandTest(settings);
         }
 
         private void OnClearDeck()
@@ -1239,8 +1000,7 @@ namespace MDPro3.UI.ServantUI
 
         public void OnChangeSideComplete()
         {
-            OcgCore.sideChangedDeck = DeckView.FromObjectDeckToCodedDeck();
-            TcpHelper.CtosMessage_UpdateDeck(OcgCore.sideChangedDeck);
+            OnSave();
         }
 
         private void ShowBackButton()
@@ -1274,59 +1034,24 @@ namespace MDPro3.UI.ServantUI
 
         private async UniTask RefreshOverHeaderIconsAsync()
         {
-            IconCase.color = Color.clear;
-            IconProtector.color = Color.clear;
-            IconField.color = Color.clear;
+            IconCase.sprite = await BattleCardAdapter.BackIconAsync(destroyCancellationToken);
+            IconCase.color = Color.white;
+            IconProtector.sprite = await BattleCardAdapter.BackIconAsync(destroyCancellationToken);
+            IconProtector.material = null;
+            IconProtector.color = Color.white;
+            IconField.sprite = BattleCosmetics.LoadIcon((DeckEditor.Deck?.Field ?? BattleCosmetics.DefaultFieldId).ToString(), Items.ItemType.Mat);
+            IconField.color = IconField.sprite != null ? Color.white : Color.clear;
             IconGrave.color = Color.clear;
             IconStand.color = Color.clear;
             IconMate.color = Color.clear;
-
-            while (DeckEditor.Deck == null)
-                await TaskUtility.WaitOneFrame(gameObject);
-
-            var sprite = await Program.items.LoadDeckCaseIconAsync(DeckEditor.Deck.Case, "_L_SD");
-            if (sprite != null)
-            {
-                IconCase.color = Color.white;
-                IconCase.sprite = sprite;
-            }
-
-            IconProtector.material = await ABLoader.LoadProtectorMaterial(DeckEditor.Deck.Protector.ToString(), Application.exitCancellationToken);
-            IconProtector.color = Color.white;
-
-            IconField.sprite = await Program.items.LoadItemIconAsync(DeckEditor.Deck.Field.ToString(), Items.ItemType.Mat);
-            IconField.color = Color.white;
-
-            IconGrave.sprite = await Program.items.LoadItemIconAsync(DeckEditor.Deck.Grave.ToString(), Items.ItemType.Grave);
-            IconGrave.color = Color.white;
-
-            IconStand.sprite = await Program.items.LoadItemIconAsync(DeckEditor.Deck.Stand.ToString(), Items.ItemType.Stand);
-            IconStand.color = Color.white;
-
-            var mate = DeckEditor.Deck.Mate.ToString();
-            if (mate.Length == 7 && mate.StartsWith("100"))
-            {
-                IconMate.sprite = await Program.items.LoadItemIconAsync(mate, Items.ItemType.Mate);
-                IconMate.color = Color.white;
-            }
-            else
-            {
-                var art = await CardImageLoader.LoadArtAsync(DeckEditor.Deck.Mate, true);
-                IconMate.sprite = TextureManager.Texture2Sprite(art);
-                IconMate.color = Color.white;
-            }
         }
 
         public void ShiftToAppearance()
         {
-            if (!DeckView.deckLoaded)
-                return;
-            if (condition == Condition.ChangeSide)
-                return;
+            if (!DeckView.deckLoaded || condition == Condition.ChangeSide) return;
             if (!DeckIsFromLocal)
             {
-                if (condition != Condition.ChangeSide)
-                    MessageManager.Toast(InterString.Get("Please save the deck first"));
+                MessageManager.Toast(InterString.Get("Please save the deck first"));
                 return;
             }
             gotoAppearance = true;
