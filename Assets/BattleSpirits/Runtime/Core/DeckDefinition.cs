@@ -7,11 +7,13 @@ namespace MDPro3.BattleSpirits.Core
     public sealed class DeckValidationResult { public int Count; public List<string> Errors = new List<string>(); public bool IsValid => Errors.Count == 0; public string Summary => string.Join("\n", Errors); }
     public static class DeckValidator
     {
+        public const int MinimumCards = 40;
+
         public static DeckValidationResult Validate(IReadOnlyList<CardDefinition> catalog, IReadOnlyList<string> ids, bool requireImplemented = true, BattleRulesFormat format = BattleRulesFormat.Standard)
         {
             var result = new DeckValidationResult { Count = ids?.Count ?? 0 };
             if (catalog == null || ids == null) { result.Errors.Add("A card catalog and deck are required."); return result; }
-            if (ids.Count < 40) result.Errors.Add("A Standard deck requires at least 40 cards.");
+            if (ids.Count < MinimumCards) result.Errors.Add("A Standard deck requires at least " + MinimumCards + " cards.");
             var cards = catalog.Where(c => c != null && c.id != null).GroupBy(c => c.id).ToDictionary(g => g.Key, g => g.First());
             var counts = new Dictionary<string, int>(StringComparer.Ordinal);
             foreach (var id in ids)
@@ -31,7 +33,7 @@ namespace MDPro3.BattleSpirits.Core
     {
         public static DeckDefinition Create(IReadOnlyList<CardDefinition> cards, BattleRulesFormat format = BattleRulesFormat.Standard)
         {
-            var ids = cards.Where(c => c.IsPlayableFor(format)).SelectMany(c => Enumerable.Repeat(c.id, c.EffectiveCopyLimit)).Take(40).ToArray();
+            var ids = cards.Where(c => c.IsPlayableFor(format)).SelectMany(c => Enumerable.Repeat(c.id, c.EffectiveCopyLimit)).Take(DeckValidator.MinimumCards).ToArray();
             return new DeckDefinition { cards = ids, format = format.ToString() };
         }
         public static DeckDefinition[] CreatePair(IReadOnlyList<CardDefinition> cards, BattleRulesFormat format = BattleRulesFormat.Standard) => new[] { Create(cards, format), Create(cards, format) };

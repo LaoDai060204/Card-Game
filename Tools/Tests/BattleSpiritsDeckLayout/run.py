@@ -98,6 +98,8 @@ assert int((deck.size(main_grid)[0] + 4) // (cell[0] + 4)) == 10
 
 inspector_source = (ROOT / "Assets/Scripts/MDPro3/UI/UIWidget/UIWidgetCardBase.cs").read_text(encoding="utf-8-sig")
 deck_source = (ROOT / "Assets/Scripts/MDPro3/UI/UIWidget/Deck/DeckView.cs").read_text(encoding="utf-8-sig")
+deck_editor_source = (ROOT / "Assets/Scripts/MDPro3/UI/ServantUI/DeckEditorUI.cs").read_text(encoding="utf-8-sig")
+deck_rules_source = (ROOT / "Assets/BattleSpirits/Runtime/Core/DeckDefinition.cs").read_text(encoding="utf-8-sig")
 adapter_source = (ROOT / "Assets/BattleSpirits/Runtime/NativeAdapters/BattleCardAdapter.cs").read_text(encoding="utf-8-sig")
 loader_source = (ROOT / "Assets/Scripts/MDPro3/Utility/CardImageLoader.cs").read_text(encoding="utf-8-sig")
 raw_source = (ROOT / "Assets/Scripts/MDPro3/UI/Function/CardRawImageHandler.cs").read_text(encoding="utf-8-sig")
@@ -124,6 +126,10 @@ assert awake.index("Template.transform.SetParent(transform, false)") < awake.ind
 printed = method(deck_source, "protected IEnumerator PrintDeckAsync()")
 assert printed.index("RefreshCardsCount(DeckLocation.All)") < printed.index("RefreshBattleDeckLayout();")
 assert "ScrollRect.StopMovement();" in printed and "ScrollRect.verticalNormalizedPosition = 1f" in printed
+assert "deckLoaded = true;\n            MainDeckCountChanged?.Invoke();" in printed
+assert "MainDeckCountChanged?.Invoke();" in method(deck_source, "protected void RefreshCardsCount(DeckLocation location)")
+assert "MainDeckCountChanged += RefreshDeckOverviewCaption;" in method(deck_editor_source, "private void InitializeHeader()")
+minimum_cards = re.search(r"public const int MinimumCards = (\d+);", deck_rules_source)[1]
 card_source = (ROOT / "Assets/Scripts/MDPro3/UI/SelectionButton/SelectionButton_CardInDeck.cs").read_text(encoding="utf-8-sig")
 card_root = re.search(r"internal RectTransform CardRoot => [^;]+;", card_source)[0]
 assert "child = transform.GetChild(0).GetComponent<RectTransform>()" in card_source
@@ -148,6 +154,9 @@ with tempfile.TemporaryDirectory(prefix="bs-native-deck-layout-") as directory:
     extracted.write_text("using System;using System.Linq;using UnityEngine;using UnityEngine.UI;\n"
         + "public partial class InspectorFixture {\n" + method(inspector_source, "private void ConfigureBattleInspector()") + "\n}\n"
         + "public partial class DeckFixture {\n" + "\n".join(deck_methods) + "\n}\n"
+        + "public partial class DeckOverviewFixture {\n"
+        + method(deck_editor_source, "private void RefreshDeckOverviewCaption()") + "\n}\n"
+        + "public static class DeckValidator { public const int MinimumCards = " + minimum_cards + "; }\n"
         + "public static partial class FaceFixture {\n" + method(adapter_source, "public static void FitFace(RawImage image, Texture texture)") + "\n}\n"
         + "public sealed partial class CardFixture {" + card_root + "}\n"
         + "namespace MDPro3.Utility {public static class CardImageLoader { public const float DEFAULT_ASPECT = " + aspect + "; }}\n"

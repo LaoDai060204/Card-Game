@@ -7,7 +7,8 @@ the bottom. Each player has a Life display and public counters for Reserve,
 Deck, Hand and Trash. Turn ownership and decision priority have separate labels.
 The opponent's hand shows card backs. Selecting a card opens its printed face,
 English effect text and legal actions. In the deck editor, **Deck overview**
-shows the number of cards by type and cost.
+shows the number of cards by type and cost. The deck editor header also shows
+how many cards are missing from the 40-card minimum as the deck is edited.
 In Solo, **Play** opens a match preview with your selected deck and CPU
 opponent. Choose **Start Duel** to enter the arena, or **Back** to return to
 the opponent list.

@@ -53,6 +53,31 @@ public partial class DeckFixture
     public void Resize(Vector2 size) { Viewport.transform.GetComponent<RectTransform>().sizeDelta = size; LateUpdate(); }
 }
 public static partial class FaceFixture { }
+public partial class DeckOverviewFixture
+{
+    private readonly DeckCount DeckView = new DeckCount();
+    private readonly CaptionButton ButtonRegulation = new CaptionButton();
+
+    public string Caption(int count, bool loaded)
+    {
+        DeckView.mainCount = count;
+        DeckView.deckLoaded = loaded;
+        RefreshDeckOverviewCaption();
+        return ButtonRegulation.Text;
+    }
+
+    private sealed class DeckCount
+    {
+        public int mainCount;
+        public bool deckLoaded;
+    }
+
+    private sealed class CaptionButton
+    {
+        public string Text { get; private set; }
+        public void SetButtonText(string title) => Text = title;
+    }
+}
 public static class LayoutTests
 {
     private static int checks;
@@ -179,6 +204,13 @@ public static class LayoutTests
     public static int Main()
     {
         InspectorChecks(); DeckChecks(); FaceChecks();
+        var overview = new DeckOverviewFixture();
+        Check(overview.Caption(0, true) == "Deck · 40 short", "An empty loaded deck shows its full shortfall.");
+        Check(overview.Caption(39, true) == "Deck · 1 short", "Adding cards reduces the shortfall to one.");
+        Check(overview.Caption(40, true) == "Deck overview", "The warning clears at the minimum.");
+        Check(overview.Caption(42, true) == "Deck overview", "Counts over the minimum stay clear.");
+        Check(overview.Caption(39, true) == "Deck · 1 short", "Removing cards brings back the shortfall.");
+        Check(overview.Caption(0, false) == "Deck overview", "Loading does not display an incomplete count.");
         Console.WriteLine("PASS: " + checks + " production inspector/deck/full-face assertions with real prefab inputs; Unity rendering not run.");
         return 0;
     }

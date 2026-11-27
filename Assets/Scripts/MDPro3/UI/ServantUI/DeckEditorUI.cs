@@ -1,4 +1,5 @@
 using MDPro3.BattleSpirits;
+using MDPro3.BattleSpirits.Core;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using MDPro3.Duel.YGOSharp;
@@ -790,7 +791,8 @@ namespace MDPro3.UI.ServantUI
 
         private void InitializeHeader()
         {
-            ButtonRegulation.SetButtonText("Deck overview");
+            DeckView.MainDeckCountChanged += RefreshDeckOverviewCaption;
+            RefreshDeckOverviewCaption();
 
             if (condition == Condition.ChangeSide)
             {
@@ -803,6 +805,21 @@ namespace MDPro3.UI.ServantUI
                 ButtonTest.SetButtonText("Test Deck");
                 BattleNativeLabels.Apply(gameObject);
             }
+        }
+
+        private void RefreshDeckOverviewCaption()
+        {
+            int missing = DeckValidator.MinimumCards - DeckView.mainCount;
+            ButtonRegulation.SetButtonText(DeckView.deckLoaded && missing > 0
+                ? "Deck · " + missing + " short"
+                : "Deck overview");
+        }
+
+        protected override void OnDestroy()
+        {
+            if (m_DeckView != null)
+                m_DeckView.MainDeckCountChanged -= RefreshDeckOverviewCaption;
+            base.OnDestroy();
         }
 
         public void SetCardInfoType()
@@ -833,7 +850,7 @@ namespace MDPro3.UI.ServantUI
             CardCollectionView.SetCardInfoType();
             if (CardDetailView != null)
                 CardDetailView.RefreshRegulation();
-            ButtonRegulation.SetButtonText("Deck overview");
+            RefreshDeckOverviewCaption();
         }
 
         private void RefreshRegulationIcons()
@@ -855,7 +872,7 @@ namespace MDPro3.UI.ServantUI
 
         public void OnRegulation()
         {
-            const string rules = "A deck contains at least 40 cards. Cards sharing a name are limited to 3 copies. Only verified Standard cards are legal. Extra and Side stay empty.";
+            string rules = "A deck contains at least " + DeckValidator.MinimumCards + " cards. Cards sharing a name are limited to 3 copies. Only verified Standard cards are legal. Extra and Side stay empty.";
             if (!DeckView.deckLoaded)
             {
                 UIManager.ShowPopupConfirm(new List<string> { "Battle Spirits Standard", rules });
@@ -879,6 +896,9 @@ namespace MDPro3.UI.ServantUI
             }
 
             var lines = new List<string> { total + " cards", "Spirits " + spirits + "  ·  Nexuses " + nexuses + "  ·  Magic " + magic };
+            int missing = DeckValidator.MinimumCards - total;
+            if (missing > 0)
+                lines.Insert(1, "Add " + missing + (missing == 1 ? " card" : " cards") + " to reach the minimum.");
             if (costs.Count > 0)
             {
                 lines.Add("\nCost distribution");

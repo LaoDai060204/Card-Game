@@ -325,6 +325,7 @@ namespace MDPro3.UI
 
         public bool deckLoaded;
         public int mainCount;
+        internal event Action MainDeckCountChanged;
         public int extraCount;
         public int sideCount;
         public List<SelectionButton_CardInDeck> cards;
@@ -349,6 +350,7 @@ namespace MDPro3.UI
             deck ??= new Deck();
             if (printRoutine != null) StopCoroutine(printRoutine);
             deckLoaded = false;
+            MainDeckCountChanged?.Invoke();
             deck.Main = deck.Main.FindAll(id => BattleCatalog.TryGet(id, out _));
             deck.Extra.Clear();
             deck.Side.Clear();
@@ -1315,6 +1317,7 @@ namespace MDPro3.UI
             Viewport.blocksRaycasts = true;
 
             deckLoaded = true;
+            MainDeckCountChanged?.Invoke();
             printRoutine = null;
             SetDirty(dirtyAfterPrint);
             dirtyAfterPrint = false;
@@ -1373,6 +1376,7 @@ namespace MDPro3.UI
         {
             if ((location & DeckLocation.MainDeck) > 0)
             {
+                int previousCount = mainCount;
                 mainCount = 0;
                 int monsterCount = 0;
                 int spellCount = 0;
@@ -1396,6 +1400,8 @@ namespace MDPro3.UI
                 TextMainDeckSpellNum.text = spellCount.ToString();
                 TextMainDeckTrapNum.text = trapCount.ToString();
                 TextMainDeckGP.text = gc.ToString();
+                if (deckLoaded && mainCount != previousCount)
+                    MainDeckCountChanged?.Invoke();
             }
             if ((location & DeckLocation.ExtraDeck) > 0)
             {
