@@ -1,13 +1,10 @@
 # Direct Battle Spirits integration
 
-Boot and Program enter Battle Spirits Standard directly. The menu and deck
-editor use the established prefab layouts. The arena HUD uses separate Life
-panels and paired mint and amber accents. The active turn and the current
-decision have separate labels so that the defender can see who acts during
-Flash. The old duel protocol, CDB/banlist startup,
-WindBot and room engine are not initialized by active native entry points.
-Retained interface types and serialized references preserve existing layouts
-and GUIDs; they are not an alternate gameplay mode.
+The Windows player and Unity Editor start the standalone Standard interface
+from `Assets/Scenes/Boot.unity`. Its Canvas and input system are created in
+`Assets/BattleSpirits/Runtime/Interface`. The home, library, appearance,
+briefing and arena all use this interface. It starts directly from the local
+Battle Spirits catalog and does not load the MDPro3 menu or duel prefabs.
 
 ## Runtime
 
@@ -17,11 +14,11 @@ transport, and Unity presentation. `BattleIntegration` is the sole game launch
 bridge. It validates a candidate session before replacing a current one.
 `BattleRuntimeDriver` ticks the active session; leaving the duel closes it.
 
-The original duel prefab is instantiated privately. Its old controller and
-persistent gameplay callbacks are disconnected before the Battle Spirits
-controller binds the original HUD, inspector and action-dialog structures.
-The field renders into its own texture/camera layer. No scene or existing prefab
-hierarchy is rewritten.
+The standalone arena subscribes to session changes and renders the viewer's
+public field and private hand. The action console sends commands supplied by
+the session and handles pending effect choices by their offered positions. It
+keeps the existing isolated field texture and summon renderer. The legacy
+platform path keeps its serialized scene and prefab compatibility.
 
 Solo uses the four shipped Standard recipes and the native legal-command AI.
 Only filtered snapshots and legal commands reach the bot. Puzzle moves pass

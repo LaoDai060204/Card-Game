@@ -7,11 +7,19 @@ using UnityEngine;
 
 namespace MDPro3.BattleSpirits
 {
+    internal interface IBattleFrontend
+    {
+        void ShowMatch(BattleGameSession session);
+        void ShowBoss(string cardId);
+        void ReportError(string message);
+    }
+
     /// <summary>The application's game entry points. No previous duel protocol is used.</summary>
     public static class BattleIntegration
     {
         private static Program program;
         private static BattleDuelServant duel;
+        private static IBattleFrontend frontend;
         private static string awardedPuzzle;
         public static BattleGameSession Current { get; private set; }
         public static bool IsActive => Current != null;
@@ -22,22 +30,46 @@ namespace MDPro3.BattleSpirits
             if (owner == null) throw new ArgumentNullException(nameof(owner));
             if (program == owner && owner.GetComponent<BattleRuntimeDriver>() != null) return;
             program = owner;
+            InitializeStorage();
+            if (owner.GetComponent<BattleRuntimeDriver>() == null) owner.gameObject.AddComponent<BattleRuntimeDriver>();
+        }
+
+        internal static void AttachFrontend(IBattleFrontend view, MonoBehaviour host)
+        {
+            InitializeStorage();
+            frontend = view;
+            host.gameObject.AddComponent<BattleRuntimeDriver>();
+        }
+
+        internal static void DetachFrontend(IBattleFrontend view)
+        {
+            if (frontend != view) return;
+            frontend = null;
+            Shutdown();
+        }
+
+        private static void InitializeStorage()
+        {
             BattleCatalog.Initialize(Application.streamingAssetsPath, Application.persistentDataPath);
             Directory.CreateDirectory(StorageRoot);
             BattleDeckStorage.EnsureInitialized();
-            if (owner.GetComponent<BattleRuntimeDriver>() == null) owner.gameObject.AddComponent<BattleRuntimeDriver>();
         }
 
         private static void EnsureReady()
         {
-            if (program == null) Initialize(Program.instance);
+            if (frontend == null && program == null) Initialize(Program.instance);
         }
 
         private static void StartSession(Action<BattleGameSession> start)
         {
             EnsureReady();
             var next = new BattleGameSession(BattleCatalog.Cards, StorageRoot);
-            try { start(next); EnsureDuelHost(); }
+            try
+            {
+                start(next);
+                if (frontend != null) frontend.ShowMatch(next);
+                else EnsureDuelHost();
+            }
             catch { next.Dispose(); throw; }
             // Validate and initialize the candidate before releasing a live match or
             // LAN listener. Failed replay/deck/connection input must not replace it.
@@ -46,7 +78,7 @@ namespace MDPro3.BattleSpirits
             Current = next;
             awardedPuzzle = null;
             previous?.Dispose();
-            OpenDuel();
+            if (frontend == null) OpenDuel();
         }
 
         private static DeckDefinition PlayerDeck(string nameOrPath)
@@ -155,7 +187,8 @@ namespace MDPro3.BattleSpirits
                 EnsureReady();
                 if (!BattleCatalog.IsBoss(cardId)) throw new ArgumentException("No boss presentation is available for this card.");
                 StartSession(_ => { });
-                duel.PreviewBoss(cardId);
+                if (frontend != null) frontend.ShowBoss(cardId);
+                else duel.PreviewBoss(cardId);
             });
         }
 
@@ -205,7 +238,8 @@ namespace MDPro3.BattleSpirits
             catch (Exception error)
             {
                 UnityEngine.Debug.LogError("Battle Spirits: " + error.Message);
-                MessageManager.Cast(error.Message);
+                if (frontend != null) frontend.ReportError(error.Message);
+                else MessageManager.Cast(error.Message);
                 return false;
             }
         }

@@ -9,6 +9,7 @@ using MDPro3.BattleSpirits;
 using MDPro3.BattleSpirits.Core;
 using MDPro3.BattleSpirits.Puzzles;
 using UnityEngine;
+using UnityEngine.UI;
 
 static class BridgeSmoke
 {
@@ -23,9 +24,92 @@ static class BridgeSmoke
         try
         {
             Run();
+            RunStandardFrontend();
             Console.WriteLine("PASS " + checks + " actual application bridge/driver startup, failure isolation, puzzle and replay checks (Unity/native doubles; no Editor).");
         }
         finally { BattleIntegration.Shutdown(); if (Directory.Exists(storage)) Directory.Delete(storage, true); }
+    }
+
+    private static void RunStandardFrontend()
+    {
+        var boot = new GameObject("Boot canvas", typeof(Canvas)).GetComponent<Canvas>();
+        var owner = MDPro3.Program.instance;
+        int registered = owner.Registered;
+        StandardFrontend.Launch(boot);
+        var root = GameObject.All.Last(item => item.name == "Standard interface");
+        var frontend = root.GetComponent<StandardFrontend>();
+        Check(!boot.enabled && root.GetComponent<Canvas>().renderMode == RenderMode.ScreenSpaceOverlay,
+            "The desktop entry hides the previous boot Canvas and creates an independent UI.");
+
+        Click(root, "Deck library");
+        Click(root, "New deck");
+        var available = BattleCatalog.Cards.First(card => card.IsPlayable);
+        Click(root, available.DisplayName + "   /   " + available.type + "   /   Cost " + available.cost);
+        Click(root, "Add");
+        Check(Live(root).Any(item => item.GetComponent<Text>()?.text == "1 card · 39 short"),
+            "The replacement editor updates the deck count from the catalog addition.");
+        Click(root, "Back");
+        Click(root, "Cancel");
+        Check(Live(root).Any(item => item.GetComponent<Text>()?.text == "1 card · 39 short"),
+            "Cancelling discard preserves the unsaved deck.");
+        Click(root, "Back");
+        Click(root, "Discard");
+        Click(root, "Back");
+
+        Click(root, "Choose opponent");
+        Click(root, BattleCatalog.StarterDecks[0].name);
+        Check(BattleIntegration.Current == null, "The new briefing does not start a session until confirmed.");
+        Click(root, "Start duel");
+        var match = BattleIntegration.Current;
+        Check(match?.View?.Phase == MatchPhase.Opening && owner.Registered == registered,
+            "The new arena binds a real match without registering a legacy duel servant.");
+        var opening = match.LegalCommands.First(command => command.action == "opening" && !command.redraw);
+        Click(root, BattleDuelActions.Describe(opening, match.View, match.Seat));
+        Check(match.LegalCommands.All(command => command.action != "opening"),
+            "The new action console sends the actual opening decision.");
+        Click(root, "Menu");
+        Click(root, "Leave arena");
+        Check(BattleIntegration.Current == null, "Leaving the new arena releases the real match.");
+
+        Click(root, "Replays");
+        var file = BattleIntegration.GetReplayFiles().First();
+        Click(root, Path.GetFileName(file));
+        Check(BattleIntegration.Current?.IsReplay == true, "The new replay library opens the existing replay format.");
+        Click(root, "Next action");
+        Check(BattleIntegration.Current.ReplayPosition == 1, "The replacement replay controls step through the session.");
+        Click(root, "Menu");
+        Click(root, "Leave arena");
+
+        Click(root, "Browse puzzles");
+        var definition = BattlePuzzleCatalog.All.First();
+        Click(root, definition.title + "  /  " + definition.category);
+        Check(BattleIntegration.Current?.Puzzle?.Definition.id == definition.id,
+            "The new puzzle menu launches the existing puzzle definition.");
+        Click(root, "Match info");
+        Click(root, "Reset puzzle");
+        Click(root, "Menu");
+        Click(root, "Leave arena");
+        Check(!BattleIntegration.StartSolo("missing-native-deck"), "A missing deck cannot start a new session.");
+        Check(Live(root).Any(item => item.GetComponent<Text>()?.text.Contains("missing-native-deck") == true),
+            "A failed start reports the error in the replacement UI.");
+        Call(frontend, "OnDestroy");
+        Check(BattleIntegration.Current == null, "Destroying the replacement UI releases the session.");
+    }
+
+    private static System.Collections.Generic.IEnumerable<GameObject> Live(GameObject root)
+    {
+        if (!root.activeSelf) yield break;
+        yield return root;
+        foreach (var child in root.transform.Children)
+            foreach (var item in Live(child.gameObject))
+                yield return item;
+    }
+
+    private static void Click(GameObject root, string title)
+    {
+        var button = Live(root).FirstOrDefault(item => item.name == title)?.GetComponent<Button>();
+        if (button == null || !button.interactable) throw new InvalidOperationException("Missing button: " + title);
+        button.onClick.Invoke();
     }
     static void Run()
     {

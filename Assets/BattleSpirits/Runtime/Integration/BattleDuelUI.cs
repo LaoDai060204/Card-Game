@@ -374,7 +374,7 @@ namespace MDPro3.BattleSpirits
             InspectCard(id);
         }
 
-        private static BattlePresentationState PreviewState(string id)
+        internal static BattlePresentationState PreviewState(string id)
         {
             BattleCatalog.TryGet(id, out var definition);
             return new BattlePresentationState

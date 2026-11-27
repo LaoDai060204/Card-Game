@@ -39,6 +39,7 @@ with tempfile.TemporaryDirectory(prefix="bs-native-duel-") as work:
     integration_sources += [production / "Integration" / name for name in
                             ("BattleGameSession.cs", "BattleReplay.cs", "BattleLanTransport.cs", "BattleIntegration.cs", "BattleRuntimeDriver.cs")]
     integration_sources += [production / "Data/BattleCatalog.cs", production / "NativeAdapters/BattleDeckStorage.cs"]
+    integration_sources += sorted((production / "Interface").glob("*.cs"))
     integration_target = Path(work) / "NativeSessionIntegration.dll"
     options = ["-nologo", "-langversion:9", "-define:REAL_SESSION", "-target:exe", "-nowarn:0649",
                '-out:"' + str(integration_target) + '"']

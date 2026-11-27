@@ -9,6 +9,8 @@ namespace UnityEngine
     public class Object
     {
         public string name;
+        public static T FindFirstObjectByType<T>() where T : Component
+            => GameObject.All.Where(item => item.activeSelf).Select(item => item.GetComponent<T>()).FirstOrDefault(item => item != null);
         public static void Destroy(Object obj) { if (obj is GameObject go) go.SetActive(false); }
         public static T Instantiate<T>(T original, Transform parent, bool world = false) where T : Object
         {
@@ -36,14 +38,21 @@ namespace UnityEngine
     }
     public class Behaviour : Component { public bool enabled = true; }
     public class MonoBehaviour : Behaviour { }
+    public class ScriptableObject : Object
+    {
+        public static T CreateInstance<T>() where T : ScriptableObject, new() => new T();
+    }
     public class GameObject : Object
     {
+        public static readonly List<GameObject> All = new List<GameObject>();
         public bool activeSelf = true;
+        public bool activeInHierarchy => activeSelf && (transform.parent?.gameObject.activeInHierarchy ?? true);
         public int layer;
         public Transform transform;
         private readonly List<Component> components = new List<Component>();
         public GameObject(string name, params Type[] types)
         {
+            All.Add(this);
             this.name = name;
             transform = types.Contains(typeof(RectTransform)) ? new RectTransform() : new Transform();
             transform.gameObject = this; components.Add(transform);
@@ -66,6 +75,8 @@ namespace UnityEngine
     {
         public Transform parent;
         public readonly List<Transform> Children = new List<Transform>();
+        public int childCount => Children.Count;
+        public Transform GetChild(int index) => Children[index];
         public Vector3 localScale, localEulerAngles;
         public void SetParent(Transform value, bool world = false) { parent?.Children.Remove(this); parent = value; value?.Children.Add(this); }
         public void SetAsFirstSibling() { if (parent == null) return; parent.Children.Remove(this); parent.Children.Insert(0, this); }
@@ -93,10 +104,24 @@ namespace UnityEngine
     public struct Vector3 { public float x, y, z; public Vector3(float x, float y, float z) { this.x = x; this.y = y; this.z = z; } public static Vector3 zero => new Vector3(); public static Vector3 one => new Vector3(1, 1, 1); }
     public struct Rect { public float x, y, width, height; public Rect(float x, float y, float width, float height) { this.x=x;this.y=y;this.width=width;this.height=height; } }
     public struct Color { public float r,g,b,a; public Color(float r,float g,float b,float a=1) { this.r=r;this.g=g;this.b=b;this.a=a; } public static Color white => new Color(1,1,1); }
-    public class Texture : Object { }
+    public struct Color32
+    {
+        private readonly byte red, green, blue, alpha;
+        public Color32(byte r, byte g, byte b, byte a) { red = r; green = g; blue = b; alpha = a; }
+        public static implicit operator Color(Color32 value) => new Color(value.red / 255f, value.green / 255f, value.blue / 255f, value.alpha / 255f);
+    }
+    public class Texture : Object { public int width = 1, height = 1; }
     public class Texture2D : Texture { }
-    public class CanvasGroup : Behaviour { public float alpha; public bool blocksRaycasts; }
-    public class Canvas : Behaviour { public static void ForceUpdateCanvases() { } }
+    public class AudioListener : Behaviour { }
+    public class AudioSource : Behaviour { public bool playOnAwake; public void PlayOneShot(AudioClip clip) { } }
+    public class AudioClip : Object
+    {
+        public static AudioClip Create(string name, int length, int channels, int frequency, bool stream) => new AudioClip();
+        public bool SetData(float[] samples, int offset) => true;
+    }
+    public class CanvasGroup : Behaviour { public float alpha; public bool blocksRaycasts, interactable; }
+    public enum RenderMode { ScreenSpaceOverlay }
+    public class Canvas : Behaviour { public static void ForceUpdateCanvases() { } public RenderMode renderMode; public int sortingOrder; }
     public class Font : Object { }
     public static class Resources { public static T GetBuiltinResource<T>(string path) where T : Object, new() => new T(); }
     public class SerializeField : Attribute { }
@@ -104,12 +129,14 @@ namespace UnityEngine
     public class HideInInspector : Attribute { }
     public class DisallowMultipleComponent : Attribute { }
     public class Header : Attribute { public Header(string value) { } }
-    public static class Application { public static string streamingAssetsPath, persistentDataPath; }
+    public static class Application { public static string streamingAssetsPath, persistentDataPath; public static void Quit() { } }
     public static class Time { public static float unscaledTime; }
     public static class Debug { public static string LastError; public static void LogError(object error) => LastError = error?.ToString(); }
     public enum HorizontalWrapMode { Wrap, Overflow }
     public enum VerticalWrapMode { Overflow, Truncate }
-    public enum TextAnchor { UpperLeft, MiddleLeft, MiddleCenter }
+    public enum TextAnchor { UpperLeft, MiddleLeft, MiddleCenter, MiddleRight }
+    public struct TextGenerationSettings { }
+    public class TextGenerator { public float GetPreferredHeight(string text, TextGenerationSettings _) => Math.Max(1, text?.Length ?? 0); }
 }
 namespace UnityEngine.Events
 {
@@ -137,7 +164,7 @@ namespace UnityEngine.Events
 namespace UnityEngine.UI
 {
     using UnityEngine;
-    public class Selectable : Behaviour { public bool interactable = true; public Navigation navigation; public void Select() { } }
+    public class Selectable : Behaviour { public bool interactable = true; public Navigation navigation; public void Select() { } public bool IsInteractable() => interactable; }
     public struct Navigation
     {
         public enum Mode { Explicit }
@@ -145,10 +172,27 @@ namespace UnityEngine.UI
     }
     public class Graphic : Behaviour { public bool raycastTarget; public Color color; public RectTransform rectTransform => (RectTransform)transform; }
     public class Image : Graphic { }
-    public class RawImage : Graphic { }
-    public class Text : Graphic { public string text; public int fontSize; public Font font; public TextAnchor alignment; public bool supportRichText; public float preferredHeight => Math.Max(1, (text?.Length ?? 0) / 60 + 1) * Math.Max(1, fontSize); public HorizontalWrapMode horizontalOverflow; public VerticalWrapMode verticalOverflow; }
-    public class Button : Selectable { public Graphic targetGraphic; public Events.UnityEvent onClick = new Events.UnityEvent(); }
-    public class ScrollRect : Behaviour { public RectTransform content, viewport; public bool horizontal, vertical; public float scrollSensitivity; public float verticalNormalizedPosition; }
+    public class RawImage : Graphic { public Texture texture; }
+    public class Text : Graphic { public string text; public int fontSize; public Font font; public TextAnchor alignment; public bool supportRichText; public float preferredHeight => Math.Max(1, (text?.Length ?? 0) / 60 + 1) * Math.Max(1, fontSize); public HorizontalWrapMode horizontalOverflow; public VerticalWrapMode verticalOverflow; public readonly TextGenerator cachedTextGeneratorForLayout = new TextGenerator(); public float pixelsPerUnit = 1; public TextGenerationSettings GetGenerationSettings(Vector2 _) => default; }
+    public struct ColorBlock { public Color highlightedColor, selectedColor, pressedColor; }
+    public class Button : Selectable { public Graphic targetGraphic; public ColorBlock colors; public Events.UnityEvent onClick = new Events.UnityEvent(); }
+    public class ScrollRect : Behaviour { public enum MovementType { Clamped } public MovementType movementType; public RectTransform content, viewport; public bool horizontal, vertical; public float scrollSensitivity; public float verticalNormalizedPosition; }
+    public class CanvasScaler : Behaviour { public enum ScaleMode { ScaleWithScreenSize } public ScaleMode uiScaleMode; public Vector2 referenceResolution; public float matchWidthOrHeight; }
+    public class GraphicRaycaster : Behaviour { }
+    public class LayoutElement : Behaviour { public float preferredHeight; }
+    public class AspectRatioFitter : Behaviour { public enum AspectMode { FitInParent } public AspectMode aspectMode; public float aspectRatio; }
+    public class ContentSizeFitter : Behaviour { public enum FitMode { PreferredSize } public FitMode verticalFit; }
+    public class VerticalLayoutGroup : Behaviour { public float spacing; public bool childControlWidth, childControlHeight, childForceExpandWidth, childForceExpandHeight; }
+    public class InputField : Selectable
+    {
+        public Graphic targetGraphic, placeholder;
+        public Text textComponent;
+        public bool isFocused;
+        public int characterLimit;
+        public string text;
+        public readonly ChangeEvent onValueChanged = new ChangeEvent();
+        public class ChangeEvent { public void AddListener(Action<string> action) { } }
+    }
     public class Outline : Behaviour { public Color effectColor; public Vector2 effectDistance; }
     public class RectMask2D : Behaviour { }
 }
@@ -185,6 +229,9 @@ namespace MDPro3
         public static bool GetBool(string key, bool fallback) => values.TryGetValue(key, out var value) ? value == "1" : fallback;
         public static string Get(string key, string fallback = "") => values.TryGetValue(key, out var value) ? value : fallback;
         public static string GetConfigDeckName() => Get("DeckName");
+        public static void Initialize(string path) { }
+        public static void SetConfigDeck(string value) => Set("DeckName", value);
+        public static void SetBool(string key, bool value) => Set(key, value ? "1" : "0");
         public static void Set(string key, string value) => values[key] = value;
         public static void Save() { Saves++; }
     }
@@ -201,6 +248,8 @@ namespace MDPro3
     }
     public class Program : UnityEngine.MonoBehaviour
     {
+        public const string PATH_CONFIG = "Data/config.conf";
+        public static void SetRoot() { }
         public static readonly Program instance = new UnityEngine.GameObject("Program").AddComponent<Program>();
         public Servant.Servant menu;
         public Servant.Servant ocgcore;
@@ -331,6 +380,12 @@ namespace MDPro3.Duel.YGOSharp
     public class Deck
     {
         public readonly List<int> Main = new List<int>(), Extra = new List<int>(), Side = new List<int>();
+        public string type = "";
+        public Deck() { }
+        public Deck(string path) { }
+        public bool Save(string name, DateTime time, bool upload, bool showHint) => true;
+        public static string NormalizeDeckFileName(string name) => name;
+        public static bool IsValidDeckFileName(string name) => !string.IsNullOrEmpty(name);
     }
 }
 #endif
@@ -343,12 +398,50 @@ namespace MDPro3.BattleSpirits.Puzzles
 #endif
 namespace UnityEngine.EventSystems
 {
+    public class EventSystem : UnityEngine.MonoBehaviour
+    {
+        public static EventSystem current;
+        public UnityEngine.GameObject currentSelectedGameObject;
+        public void SetSelectedGameObject(UnityEngine.GameObject value) => currentSelectedGameObject = value;
+    }
     public class EventTrigger : UnityEngine.MonoBehaviour
     {
         public readonly List<Entry> triggers = new List<Entry>();
         public class Entry { public UnityEngine.Events.UnityEvent callback = new UnityEngine.Events.UnityEvent(); }
     }
 }
+namespace UnityEngine.InputSystem
+{
+    public class ButtonControl { public bool wasPressedThisFrame; }
+    public class Keyboard { public static Keyboard current; public ButtonControl escapeKey; }
+    public class Gamepad { public static Gamepad current; public ButtonControl buttonEast; }
+}
+namespace UnityEngine.InputSystem.UI
+{
+    public class InputSystemUIInputModule : UnityEngine.MonoBehaviour { public object actionsAsset; public void AssignDefaultActions() { actionsAsset = new object(); } }
+}
+#if REAL_SESSION
+namespace MDPro3
+{
+    public class Items : UnityEngine.ScriptableObject
+    {
+        public const int CODE_NONE = 0;
+        public enum ItemType { Mat, Face, Protector, Wallpaper }
+        public struct Item { public int id; public string m_name, path; }
+    }
+}
+namespace MDPro3.BattleSpirits
+{
+    public static class BattleCosmetics
+    {
+        public const int DefaultWallpaperId = 1139001, DefaultFaceId = 1019001, ProtectorId = 1079001;
+        public static void Apply(Items items) { }
+        public static List<Items.Item> GetList(Items.ItemType kind) => new List<Items.Item>();
+        public static string GetPath(string code, Items.ItemType kind) => "";
+        public static UnityEngine.Texture2D LoadTexture(string path) => null;
+    }
+}
+#endif
 namespace MDPro3.BattleSpirits.Visuals
 {
     public class BattleFieldRenderer : UnityEngine.MonoBehaviour

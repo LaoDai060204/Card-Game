@@ -1,21 +1,21 @@
 # Battle Spirits Standard
 
-This branch uses the project's native Battle Spirits Standard runtime. The English UI
-opens Solo, the deck editor, Puzzle, direct LAN and replay from the main menu. The
-duel HUD puts the eight Standard steps across the top and match controls along
-the bottom. Each player has a Life display and public counters for Reserve,
-Deck, Hand and Trash. Turn ownership and decision priority have separate labels.
-The opponent's hand shows card backs. Selecting a card opens its printed face,
-English effect text and legal actions. In the deck editor, **Deck overview**
-shows the number of cards by type and cost. The deck editor header also shows
-how many cards are missing from the 40-card minimum as the deck is edited.
-In Solo, **Play** opens a match preview with your selected deck and CPU
-opponent. Choose **Start Duel** to enter the arena, or **Back** to return to
-the opponent list.
+On Windows, the Boot scene opens the standalone Standard interface. Its home
+screen provides Solo, the deck library, Appearance, Puzzle, direct LAN, replays
+and settings. The Solo briefing shows your selected deck and the CPU opponent,
+with **Start duel** to open the arena.
+
+The deck editor has a searchable catalog, printed card previews and **Deck
+overview** with type and cost counts. The live count shows how many cards are
+missing from the 40-card minimum. Appearance offers a preview and selection for
+the playmat, portrait, card sleeve and home artwork.
+
+The arena combines a public status strip, the field, the player's hand and an
+action console. The console lists legal commands, shows cards and effects, and
+gives access to the match log, puzzle hints and replay controls.
 
 Open `Assets/Scenes/Boot.unity` in Unity **6000.0.24f1** with the Windows x64 target.
-Keep the project's interface bundles available. For a first check, select a
-starter deck, open Solo and play through an opening hand, a Main Step and an
+For a first check, select a starter deck, open Solo and play through an opening hand, a Main Step and an
 opponent-turn Flash decision. `BATTLE_SPIRITS_INTEGRATION.md` describes the
 shipped 62-card catalog, four starter decks, ten puzzles and the source checks.
 The rules and card support cover the shipped pool. The supplied tournament floor
@@ -41,7 +41,7 @@ The deep English migration also converts application comments, Editor menus,
 lookup keys and authored prefab text to English. Legacy input keys and original
 multilingual card/locale data remain compatible. See [English migration details](ENGLISH_MIGRATION.md).
 
-### Other required folders
+### Historical MDPro3 asset sources
 
 * Platforms: https://code.mycard.moe/sherry_chaos/mdpro3-assetbundles
 * Picture/Art: https://code.mycard.moe/mycard/hd-arts
