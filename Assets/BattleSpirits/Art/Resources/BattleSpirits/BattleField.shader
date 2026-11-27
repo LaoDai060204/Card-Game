@@ -3,7 +3,7 @@ Shader "MDPro3/BattleSpirits/Field"
     Properties
     {
         _BaseColor ("Field color", Color) = (0.025, 0.055, 0.085, 1)
-        _Detail ("Navy table weave", Range(0,1)) = 0
+        _Detail ("Graphite table weave", Range(0,1)) = 0
         _Silver ("Silver inlay sheen", Range(0,1)) = 0
         _Backdrop ("Radial Spirit stage", Range(0,1)) = 0
     }
@@ -65,13 +65,13 @@ Shader "MDPro3/BattleSpirits/Field"
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
                 float radius = length(input.uv - .5) * 1.42;
-                half3 navy = lerp(half3(.065, .145, .22), half3(.008, .02, .036), saturate(radius));
+                half3 graphite = lerp(half3(.112, .131, .149), half3(.020, .027, .037), saturate(radius));
                 half weave = pow(max(0, sin((input.uv.x + input.uv.y * .4) * 390)), 38) * .008;
                 half fineThreads = pow(max(0, sin(input.uv.y * 940 + sin(input.uv.x * 80) * .7)), 70) * .008;
                 half sheen = .72h + .28h * sin(dot(input.tablePosition, float2(.22, .31)) + .8);
                 half3 baseColor = _BaseColor.rgb * lerp(1.0h, sheen, _Silver);
                 baseColor *= lerp(1.0h, .12h + exp(-radius * radius * 3.5), _Backdrop);
-                return half4(lerp(baseColor, navy + weave + fineThreads, _Detail), 1.0h);
+                return half4(lerp(baseColor, graphite + weave + fineThreads, _Detail), 1.0h);
             }
             ENDHLSL
         }

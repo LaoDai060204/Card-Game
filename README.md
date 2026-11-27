@@ -2,10 +2,12 @@
 
 This branch uses the project's native Battle Spirits Standard runtime. The English UI
 opens Solo, the deck editor, Puzzle, direct LAN and replay from the main menu. The
-duel HUD gives each player a separate Life display, public counters for Reserve,
-Deck, Hand and Trash, and distinct indicators for the active turn and the current
-decision. The opponent's hand shows card backs. Selecting a card opens its
-English details and the legal actions offered by the engine.
+duel HUD puts the eight Standard steps across the top and match controls along
+the bottom. Each player has a Life display and public counters for Reserve,
+Deck, Hand and Trash. Turn ownership and decision priority have separate labels.
+The opponent's hand shows card backs. Selecting a card opens its printed face,
+English effect text and legal actions. In the deck editor, **Deck overview**
+shows the number of cards by type and cost.
 
 Open `Assets/Scenes/Boot.unity` in Unity **6000.0.24f1** with the Windows x64 target.
 Keep the project's interface bundles available. For a first check, select a

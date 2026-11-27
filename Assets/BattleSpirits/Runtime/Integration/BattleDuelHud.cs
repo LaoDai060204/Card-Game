@@ -13,6 +13,7 @@ namespace MDPro3.BattleSpirits
         private Text arenaStatus, phaseTitle, advanceCaption;
         private readonly Text[] playerNames = new Text[2], playerLife = new Text[2], playerStats = new Text[2], stepLabels = new Text[8];
         private readonly Image[] turnIndicators = new Image[2];
+        private readonly Image[] stepIndicators = new Image[8];
         private Button advanceButton, legalButton;
         private RectTransform handArea, opponentHandArea, inspectionWindow;
         private RawImage inspectionImage;
@@ -109,7 +110,7 @@ namespace MDPro3.BattleSpirits
                 bool local = side == 0;
                 var color = local ? LocalColor : RivalColor;
                 var plate = HudPanel(local ? "Your status" : "Opponent status", hud.transform,
-                    .014f, local ? .027f : .813f, .205f, local ? .194f : .980f);
+                    .014f, local ? .080f : .766f, .215f, local ? .240f : .926f);
                 var indicator = CanvasObject("Turn indicator", plate.transform, typeof(Image)).GetComponent<Image>();
                 indicator.raycastTarget = false;
                 HudRect(indicator.rectTransform, 0, .966f, 1, 1);
@@ -127,59 +128,66 @@ namespace MDPro3.BattleSpirits
                 playerStats[side] = HudText("Public counters", plate.transform, 19);
                 HudRect(playerStats[side].rectTransform, .34f, .08f, .96f, .69f);
             }
-            var phase = HudPanel("Standard turn steps", hud.transform, .807f, .245f, .985f, .79f);
-            phaseTitle = HudText("Turn and decision", phase.transform, 23);
-            HudRect(phaseTitle.rectTransform, .06f, .85f, .94f, .99f);
+            var phase = HudPanel("Standard turn steps", hud.transform, .014f, .944f, .986f, .990f);
+            phaseTitle = HudText("Turn owner", phase.transform, 23);
+            HudRect(phaseTitle.rectTransform, .014f, .03f, .245f, .97f);
             string[] names = { "Start", "Core", "Draw", "Refresh", "Main", "Attack", "Second Main", "End" };
-            for (int i = 0; i < 8; i++)
+            for (int i = 0; i < names.Length; i++)
             {
-                var label = HudText("Step " + (i + 1), phase.transform, 22);
+                var label = HudText("Step " + (i + 1), phase.transform, 20, TextAnchor.MiddleCenter);
                 label.text = (i + 1) + "  " + names[i];
-                HudRect(label.rectTransform, .08f, .78f - i * .071f, .96f, .849f - i * .071f);
+                float start = .249f + i * .092f;
+                HudRect(label.rectTransform, start, .10f, start + .091f, .97f);
                 stepLabels[i] = label;
+                var indicator = CanvasObject("Step marker " + (i + 1), phase.transform, typeof(Image)).GetComponent<Image>();
+                indicator.raycastTarget = false;
+                HudRect(indicator.rectTransform, start + .008f, .04f, start + .083f, .10f);
+                stepIndicators[i] = indicator;
             }
-            legalButton = HudButton("Legal actions", phase.transform, "Actions", .05f, .13f, .95f, .218f,
+
+            var tools = HudPanel("Arena controls", hud.transform, .014f, .012f, .986f, .068f);
+            HudButton("Leave battle", tools.transform, "Menu", .008f, .06f, .116f, .94f, OpenExit);
+            HudButton("Battle settings", tools.transform, "Settings", .120f, .06f, .230f, .94f,
+                () => Program.instance.ShowSubServant(Program.instance.setting));
+            HudButton("Inspect hand", tools.transform, "Hand", .234f, .06f, .338f, .94f, () => OpenPanel("hand"));
+            HudButton("Battle log", tools.transform, "Log", .342f, .06f, .446f, .94f, () => OpenPanel("log"));
+            HudButton("Battle info", tools.transform, "Info", .450f, .06f, .554f, .94f, () => OpenPanel("info"));
+            legalButton = HudButton("Legal actions", tools.transform, "Actions", .632f, .06f, .772f, .94f,
                 () => { ClearCardSelection(); OpenPanel("actions"); });
-            advanceButton = HudButton("Next decision", phase.transform, "Choose action", .05f, .025f, .95f, .115f, AdvanceFromHud);
+            advanceButton = HudButton("Next decision", tools.transform, "Choose action", .780f, .06f, .992f, .94f, AdvanceFromHud);
             advanceCaption = advanceButton.GetComponentInChildren<Text>(true);
             advanceCaption.color = LocalColor;
-            var tools = HudPanel("Arena controls", hud.transform, .807f, .027f, .985f, .224f);
-            HudButton("Inspect hand", tools.transform, "Hand", .04f, .67f, .49f, .97f, () => OpenPanel("hand"));
-            HudButton("Battle log", tools.transform, "Log", .51f, .67f, .96f, .97f, () => OpenPanel("log"));
-            HudButton("Battle info", tools.transform, "Info", .04f, .35f, .49f, .65f, () => OpenPanel("info"));
-            HudButton("Battle settings", tools.transform, "Settings", .51f, .35f, .96f, .65f,
-                () => Program.instance.ShowSubServant(Program.instance.setting));
-            HudButton("Leave battle", tools.transform, "Surrender / Exit", .04f, .03f, .96f, .33f, OpenExit);
-            var status = HudPanel("Battle prompt", hud.transform, .225f, .835f, .78f, .905f);
-            arenaStatus = HudText("Current prompt", status.transform, 22, TextAnchor.MiddleCenter);
-            HudRect(arenaStatus.rectTransform, .02f, .04f, .98f, .96f);
+
+            var status = HudPanel("Battle prompt", hud.transform, .711f, .828f, .986f, .923f);
+            arenaStatus = HudText("Current prompt", status.transform, 22);
+            HudRect(arenaStatus.rectTransform, .04f, .04f, .96f, .96f);
             handArea = CanvasObject("Your hand", Root).GetComponent<RectTransform>();
-            HudRect(handArea, .216f, .015f, .795f, .205f);
+            HudRect(handArea, .225f, .072f, .986f, .263f);
             opponentHandArea = CanvasObject("Concealed opponent hand", Root).GetComponent<RectTransform>();
-            HudRect(opponentHandArea, .28f, .91f, .72f, .995f);
+            HudRect(opponentHandArea, .225f, .849f, .700f, .936f);
             BuildInspection(hud.transform);
         }
 
         private void BuildInspection(Transform parent)
         {
-            var panel = HudPanel("Printed card inspection", parent, .012f, .025f, .255f, .975f);
+            var panel = HudPanel("Printed card inspection", parent, .014f, .253f, .300f, .750f);
             inspectionWindow = panel.GetComponent<RectTransform>();
             inspectionName = HudText("English card name", panel.transform, 27);
-            HudRect(inspectionName.rectTransform, .05f, .927f, .85f, .985f);
-            HudButton("Close card", panel.transform, "X", .86f, .933f, .97f, .983f, CloseInspection);
+            HudRect(inspectionName.rectTransform, .05f, .886f, .85f, .985f);
+            HudButton("Close card", panel.transform, "X", .86f, .901f, .97f, .985f, CloseInspection);
             // FitInParent belongs inside a dedicated image slot. Putting that
             // fitter directly below the panel would cover its text and buttons.
             var faceSlot = CanvasObject("Printed face bounds", panel.transform);
-            HudRect(faceSlot.GetComponent<RectTransform>(), .12f, .425f, .88f, .92f);
+            HudRect(faceSlot.GetComponent<RectTransform>(), .045f, .144f, .425f, .881f);
             inspectionImage = CanvasObject("Full resolution printed face", faceSlot.transform, typeof(RawImage), typeof(Button)).GetComponent<RawImage>();
             HudRect(inspectionImage.rectTransform, 0, 0, 1, 1);
             var imageButton = inspectionImage.GetComponent<Button>();
             imageButton.targetGraphic = inspectionImage;
             imageButton.onClick.AddListener(ZoomCard);
             inspectionStats = HudText("Card identity and current state", panel.transform, 21);
-            HudRect(inspectionStats.rectTransform, .05f, .335f, .95f, .42f);
+            HudRect(inspectionStats.rectTransform, .447f, .708f, .95f, .881f);
             var scrollObject = CanvasObject("English effect text", panel.transform, typeof(Image), typeof(ScrollRect));
-            HudRect(scrollObject.GetComponent<RectTransform>(), .045f, .085f, .955f, .33f);
+            HudRect(scrollObject.GetComponent<RectTransform>(), .447f, .143f, .955f, .696f);
             scrollObject.GetComponent<Image>().color = new Color(.037f, .047f, .063f, 1);
             inspectionScroll = scrollObject.GetComponent<ScrollRect>();
             var viewport = CanvasObject("Viewport", scrollObject.transform, typeof(RectMask2D)).GetComponent<RectTransform>();
@@ -194,8 +202,8 @@ namespace MDPro3.BattleSpirits
             inspectionScroll.horizontal = false;
             inspectionScroll.vertical = true;
             inspectionScroll.scrollSensitivity = 32;
-            HudButton("Zoom printed card", panel.transform, "Enlarge", .04f, .018f, .46f, .073f, ZoomCard);
-            HudButton("Selected card actions", panel.transform, "Card actions", .48f, .018f, .96f, .073f, () => OpenPanel("actions"));
+            HudButton("Zoom printed card", panel.transform, "Enlarge", .04f, .022f, .425f, .124f, ZoomCard);
+            HudButton("Selected card actions", panel.transform, "Card actions", .447f, .022f, .96f, .124f, () => OpenPanel("actions"));
             panel.SetActive(false);
         }
 
@@ -203,10 +211,14 @@ namespace MDPro3.BattleSpirits
         {
             if (session?.IsReplay == true) { session.StepReplay(1); return; }
             if (!CanPlay) return;
-            var next = session.LegalCommands.FirstOrDefault(c => c.action == "advance" || c.action == "pass");
-            if (next != null && session.View.PendingChoice == null) Send(next);
+            var next = OfferedProgressCommand();
+            if (next != null) Send(next);
             else { ClearCardSelection(); OpenPanel("actions"); }
         }
+
+        private BattleCommand OfferedProgressCommand() => session.View.PendingChoice == null
+            ? session.LegalCommands.FirstOrDefault(c => c.action == "advance" || c.action == "pass")
+            : null;
 
         private void RefreshArenaHud()
         {
@@ -232,8 +244,12 @@ namespace MDPro3.BattleSpirits
             phaseTitle.text = view == null ? (string.IsNullOrEmpty(previewCard) ? "Battle Spirits" : "Summon gallery") : "Turn " + view.TurnNumber
                 + "  ·  " + (view.ActivePlayerIndex == session.Seat ? "Your turn" : "Opponent's turn");
             int step = view == null ? -1 : PhaseStep(view.Phase);
+            var stepColor = view?.ActivePlayerIndex == session?.Seat ? LocalColor : RivalColor;
             for (int i = 0; i < stepLabels.Length; i++)
-                stepLabels[i].color = i == step ? (view.ActivePlayerIndex == session.Seat ? LocalColor : RivalColor) : MutedColor;
+            {
+                stepLabels[i].color = i == step ? stepColor : MutedColor;
+                stepIndicators[i].color = i == step ? stepColor : BorderColor;
+            }
             string prompt = error;
             if (string.IsNullOrEmpty(prompt)) prompt = view?.PendingChoice?.Prompt;
             if (string.IsNullOrEmpty(prompt)) prompt = view == null ? (string.IsNullOrEmpty(previewCard)
@@ -242,10 +258,18 @@ namespace MDPro3.BattleSpirits
                 : BattleDuelActions.Phase(view.Phase)
                     + (view.DecisionPlayerIndex == session.Seat ? "  ·  Your action" : "  ·  Opponent's action");
             arenaStatus.text = prompt;
-            legalButton.interactable = CanPlay;
-            advanceButton.interactable = session?.IsReplay == true || CanPlay;
-            advanceCaption.text = session?.IsReplay == true ? "Next replay action" :
-                view?.PendingChoice != null ? "Resolve effect" : view?.Phase == MatchPhase.Opening ? "Choose opening hand" : "Next step / Pass";
+            bool canPlay = CanPlay;
+            legalButton.interactable = canPlay;
+            advanceButton.interactable = session?.IsReplay == true || canPlay;
+            var next = canPlay ? OfferedProgressCommand() : null;
+            advanceCaption.text = session?.IsReplay == true ? "Next replay action"
+                : view?.Phase == MatchPhase.GameOver ? "Battle ended"
+                : !canPlay ? "Waiting for action"
+                : view.PendingChoice != null ? "Resolve effect"
+                : view.Phase == MatchPhase.Opening ? "Choose opening hand"
+                : next?.action == "advance" ? "Next step"
+                : next?.action == "pass" ? "Pass"
+                : "Choose action";
             SetActive("Hint", false);
             RefreshConcealedHand(view?.Players?.FirstOrDefault(v => v.Index != session.Seat)?.HandCount ?? 0);
             if (handArea != null) handArea.gameObject.SetActive(!busy);

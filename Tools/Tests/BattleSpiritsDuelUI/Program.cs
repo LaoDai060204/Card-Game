@@ -129,6 +129,17 @@ static class NativeDuelSmoke
         Check(Field<Text>(ui, "phaseTitle").text.Contains("Opponent's turn")
             && Field<Text>(ui, "arenaStatus").text.Contains("Your action"),
             "Defending during Flash distinguishes turn ownership from action priority.");
+        var advance = Field<Button>(ui, "advanceButton");
+        var originalCommands = first.LegalCommands;
+        var pass = new BattleCommand { action = "pass" };
+        first.LegalCommands = new[] { pass };
+        first.Change();
+        Check(Field<Text>(ui, "advanceCaption").text == "Pass", "The action bar names the offered Flash action.");
+        advance.onClick.Invoke();
+        Check(ReferenceEquals(first.Sent, pass), "The action bar sends the offered command.");
+        Check(Field<RectTransform>(ui, "handArea").anchorMin.y > advance.transform.parent.GetComponent<RectTransform>().anchorMax.y,
+            "The hand's anchor area starts above the action bar.");
+        first.LegalCommands = originalCommands;
         Check(Field<Text[]>(ui, "playerStats")[0].text.Contains("Trash 0 cards / 2 + Soul"),
             "Public Trash card and Core counts remain separate.");
         first.View.ActivePlayerIndex = 0;

@@ -790,7 +790,7 @@ namespace MDPro3.UI.ServantUI
 
         private void InitializeHeader()
         {
-            ButtonRegulation.SetButtonText("Standard · 40+ cards · 3 copies");
+            ButtonRegulation.SetButtonText("Deck overview");
 
             if (condition == Condition.ChangeSide)
             {
@@ -833,7 +833,7 @@ namespace MDPro3.UI.ServantUI
             CardCollectionView.SetCardInfoType();
             if (CardDetailView != null)
                 CardDetailView.RefreshRegulation();
-            ButtonRegulation.SetButtonText("Standard · 40+ cards · 3 copies");
+            ButtonRegulation.SetButtonText("Deck overview");
         }
 
         private void RefreshRegulationIcons()
@@ -855,7 +855,38 @@ namespace MDPro3.UI.ServantUI
 
         public void OnRegulation()
         {
-            UIManager.ShowPopupConfirm(new List<string> { "Battle Spirits Standard", "A deck contains at least 40 cards. Cards sharing a name are limited to 3 copies. Only verified Standard cards are legal. Extra and Side stay empty." });
+            const string rules = "A deck contains at least 40 cards. Cards sharing a name are limited to 3 copies. Only verified Standard cards are legal. Extra and Side stay empty.";
+            if (!DeckView.deckLoaded)
+            {
+                UIManager.ShowPopupConfirm(new List<string> { "Battle Spirits Standard", rules });
+                return;
+            }
+
+            var costs = new SortedDictionary<int, int>();
+            int total = 0, spirits = 0, nexuses = 0, magic = 0;
+            foreach (var card in DeckView.cards)
+            {
+                if (card.location != DeckView.DeckLocation.MainDeck)
+                    continue;
+                total++;
+                if (!BattleCatalog.TryGet(card.Card.Id, out var definition))
+                    continue;
+                costs.TryGetValue(definition.cost, out int count);
+                costs[definition.cost] = count + 1;
+                if (definition.IsSpirit) spirits++;
+                if (definition.IsNexus) nexuses++;
+                if (definition.IsMagic) magic++;
+            }
+
+            var lines = new List<string> { total + " cards", "Spirits " + spirits + "  ·  Nexuses " + nexuses + "  ·  Magic " + magic };
+            if (costs.Count > 0)
+            {
+                lines.Add("\nCost distribution");
+                foreach (var row in costs)
+                    lines.Add("Cost " + row.Key + "   •   " + row.Value);
+            }
+            lines.Add("\n" + rules);
+            UIManager.ShowPopupConfirm(new List<string> { "Standard deck overview", string.Join("\n", lines), "Close" });
         }
 
         private void ChangeRegulation()
