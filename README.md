@@ -8,6 +8,9 @@ Deck, Hand and Trash. Turn ownership and decision priority have separate labels.
 The opponent's hand shows card backs. Selecting a card opens its printed face,
 English effect text and legal actions. In the deck editor, **Deck overview**
 shows the number of cards by type and cost.
+In Solo, **Play** opens a match preview with your selected deck and CPU
+opponent. Choose **Start Duel** to enter the arena, or **Back** to return to
+the opponent list.
 
 Open `Assets/Scenes/Boot.unity` in Unity **6000.0.24f1** with the Windows x64 target.
 Keep the project's interface bundles available. For a first check, select a

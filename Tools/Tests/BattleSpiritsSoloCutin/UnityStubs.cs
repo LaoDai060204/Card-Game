@@ -83,9 +83,37 @@ public static class Addressables { public static readonly List<(string Key,Opera
 namespace MDPro3.Net { }
 namespace MDPro3.UI.PropertyOverride {public static class PropertyOverrider {public static bool Mobile;public static bool NeedMobileLayout()=>Mobile;} }
 namespace MDPro3 {
-public class Program { public static Program instance=new();public Servant.SoloSelector solo;public Servant.CutinViewer cutin;public Servant.Servant menu=new(),online=new();public Servant.DeckSelector deckSelector=new();public void ShiftToServant(Servant.Servant s){} }
+public class Program { public static Program instance=new();public Servant.SoloSelector solo;public Servant.CutinViewer cutin;public Servant.Servant menu=new(),online=new(),currentServant;public Servant.DeckSelector deckSelector=new();public void ShiftToServant(Servant.Servant s){} }
 public static class UserInput {public static bool NextSelectionIsAxis,MouseRightDown,WasCancelPressed,WasGamepadButtonWestPressed,WasGamepadButtonNorthPressed;public static bool NeedDefaultSelect()=>true;}
-public static class Config {public static string GetConfigDeckName()=>"Player Deck";}
+public static class Config
+{
+    public static string DeckName = "Player Deck";
+    public static string GetConfigDeckName() => DeckName;
+    public static string Get(string key, string fallback) => fallback;
+}
+public static class UIManager
+{
+    public static List<string> Preview;
+    public static int OpenCount;
+    private static Action confirm, cancel, dismiss;
+
+    public static void ShowPopupYesOrNo(List<string> text, Action confirmAction, Action cancelAction, Action dismissAction)
+    {
+        Preview = text;
+        OpenCount++;
+        confirm = confirmAction;
+        cancel = cancelAction;
+        dismiss = dismissAction;
+    }
+
+    public static void ClosePreview(bool approved)
+    {
+        if (approved) confirm?.Invoke();
+        else cancel?.Invoke();
+        Preview = null;
+        dismiss?.Invoke();
+    }
+}
 public static class MessageManager {public static readonly List<string> Messages=new();public static void Cast(string s)=>Messages.Add(s);}
 public static class AudioManager {public static void PlaySE(string s){} }
 }
@@ -108,5 +136,15 @@ public class Definition {public string id,nameEn;public int numericId;public boo
 public class StarterDeck {public string name;public string[] cards;}
 public static class BattleCatalog {public static readonly List<Definition> Cards=new(){new(){id="boss-a",numericId=100,nameEn="Ritenia",boss=true},new(){id="boss-b",numericId=200,nameEn="Pisketona",boss=true},new(){id="normal",numericId=300,nameEn="Ordinary",boss=false}};public static readonly List<StarterDeck> StarterDecks=new(){new(){name="Infernowing",cards=new[]{"boss-a"}},new(){name="Dark Purple",cards=new[]{"boss-b"}},new(){name="Armored Fish",cards=new[]{"normal"}},new(){name="Kamen Rider Ex-Aid",cards=new[]{"normal"}}};public static bool IsBoss(string id)=>Cards.Exists(c=>c.id==id&&c.boss);public static int GetNumericId(string id)=>Cards.Find(c=>c.id==id)?.numericId??0;public static string GetCardId(int id)=>Cards.Find(c=>c.numericId==id)?.id;public static string StandeePath(string id)=>id==null?null:"/test/"+id+".png";public static string CardImagePath(string id)=>id==null?null:"/test/cards/"+id+".png";}
 public static class BattleCosmetics {public static UnityEngine.Texture2D LoadTexture(string path)=>path==null?null:new(){name=path,width=400,height=600};}
-public static class BattleIntegration {public static readonly List<(string Deck,string Opponent)> Starts=new();public static readonly List<string> Previews=new();public static void StartSolo(string deck,string opponent)=>Starts.Add((deck,opponent));public static void PreviewCutscene(string id=null)=>Previews.Add(id);}
+public static class BattleIntegration
+{
+    public static readonly List<(string Deck, string Opponent)> Starts = new();
+    public static readonly List<string> Previews = new();
+    public static bool StartSolo(string deck, string opponent)
+    {
+        Starts.Add((deck, opponent));
+        return true;
+    }
+    public static void PreviewCutscene(string id = null) => Previews.Add(id);
+}
 }

@@ -258,7 +258,7 @@ namespace MDPro3.UI.ServantUI
                 return;
 
             if (SoloSelector.condition == SoloSelector.Condition.ForSolo)
-                Program.instance.solo.StartAIForSolo(superScrollView.selected, ButtonDeck.gameObject.activeSelf);
+                Program.instance.solo.ShowSoloPreview(superScrollView.selected, ButtonDeck.gameObject.activeSelf);
             else
                 Program.instance.solo.StartAIForRoom(superScrollView.selected, ButtonDeck.gameObject.activeSelf);
         }

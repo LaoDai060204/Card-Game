@@ -2,6 +2,7 @@ using MDPro3.BattleSpirits;
 using MDPro3.UI;
 using MDPro3.UI.ServantUI;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 
 namespace MDPro3.Servant
@@ -22,6 +23,7 @@ namespace MDPro3.Servant
         private string lastOpponent;
         private string lastDeck;
         private bool retry;
+        private bool previewOpen;
         public override int Depth => 3;
         protected override bool ShowLine => false;
         public override void Initialize()
@@ -69,12 +71,51 @@ namespace MDPro3.Servant
             Print();
         }
         private void Print() { if (servantUI != null) GetUI<SoloSelectorUI>().Print(); }
+
+        public void ShowSoloPreview(int aiCode, bool customDeck)
+        {
+            if (previewOpen || aiCode < 0 || aiCode >= bots.Count) return;
+
+            var bot = bots[aiCode];
+            string opponent = customDeck ? GetUI<SoloSelectorUI>().GetAIDeck() : bot.command;
+            string deck = Config.GetConfigDeckName();
+            string player = MatchLabel(Config.Get("DuelPlayerName0", "Player"), "Player");
+            string deckName = MatchLabel(Path.GetFileName(deck), "Default deck");
+            string opponentName = MatchLabel(customDeck ? opponent : bot.name, "Opponent");
+            string summary = "<color=#8CE7BF>PLAYER</color>\n<b>" + player + "</b>\nDeck · " + deckName
+                + "\n\n<color=#F5BC78>CPU OPPONENT</color>\n<b>" + opponentName + "</b>"
+                + "\n\n5 Life per side   ·   4 opening cards";
+            bool approved = false;
+            previewOpen = true;
+            UIManager.ShowPopupYesOrNo(new List<string> { "Standard · Solo Match", summary, "Start Duel", "Back" },
+                () => approved = true, null, () =>
+                {
+                    previewOpen = false;
+                    bool start = approved;
+                    approved = false;
+                    if (start && this != null && Program.instance?.currentServant == this)
+                        StartSelectedSolo(deck, opponent);
+                });
+        }
+
+        private static string MatchLabel(string value, string fallback)
+        {
+            return string.IsNullOrWhiteSpace(value) ? fallback
+                : value.Replace('<', '‹').Replace('>', '›').Replace('\r', ' ').Replace('\n', ' ');
+        }
+
         public void StartAIForSolo(int aiCode, bool customDeck)
         {
             if (aiCode < 0 || aiCode >= bots.Count) return;
-            lastOpponent = customDeck ? GetUI<SoloSelectorUI>().GetAIDeck() : bots[aiCode].command;
-            lastDeck = Config.GetConfigDeckName();
-            BattleIntegration.StartSolo(lastDeck, lastOpponent);
+            string opponent = customDeck ? GetUI<SoloSelectorUI>().GetAIDeck() : bots[aiCode].command;
+            StartSelectedSolo(Config.GetConfigDeckName(), opponent);
+        }
+
+        private void StartSelectedSolo(string deck, string opponent)
+        {
+            lastDeck = deck;
+            lastOpponent = opponent;
+            BattleIntegration.StartSolo(deck, opponent);
         }
         public void StartAIForRoom(int aiCode, bool customDeck)
         { MessageManager.Cast("Battle Spirits AI opponents are available in Solo."); }

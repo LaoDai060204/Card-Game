@@ -128,7 +128,7 @@ public class SuperScrollView { public int selected; public List<int> items = new
 public class GameObject { public bool activeSelf; }
 public class Button { public GameObject gameObject = new GameObject(); }
 public class SoloSelector { public enum Condition { ForSolo, ForRoom }; public static Condition condition; }
-public class SoloCalls { public int calls; public int lastIndex; public void StartAIForSolo(int index, bool custom) { calls++; lastIndex=index; } public void StartAIForRoom(int index,bool custom) { calls++; lastIndex=index; } }
+public class SoloCalls { public int calls; public int lastIndex; public void ShowSoloPreview(int index, bool custom) { calls++; lastIndex=index; } public void StartAIForRoom(int index,bool custom) { calls++; lastIndex=index; } }
 public class Program { public static Program instance = new Program(); public SoloCalls solo = new SoloCalls(); }
 public class SoloSelectorUI {
 public SuperScrollView superScrollView; public Button ButtonDeck = new Button();

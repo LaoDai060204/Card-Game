@@ -25,14 +25,37 @@ static GameObject SoloPrefab(){var go=new GameObject("Solo row",typeof(Selection
 static GameObject CutinPrefab(){var go=new GameObject("Cutin row",typeof(SelectionToggle_Cutin),typeof(Selectable));Element<TextMeshProUGUI>(go.GetComponent<SelectionToggle_Cutin>().Manager,"ButtonText");return go;}
 static GameObject Prefab(Func<GameObject> factory)=>new("Prefab"){Factory=factory};
 static int LiveRows(ScrollRect scroll)=>scroll.content.children.Count(x=>x.gameObject.activeSelf);
-static void SetupSolo(){var controller=new SoloSelector();App.instance.solo=controller;var ui=Component<SoloSelectorUI>("Solo UI");Scroll(ui.Manager);Element<TextMeshProUGUI>(ui.Manager,"TextOverview");Button(ui.Manager,"ButtonDeck");Button(ui.Manager,"ButtonPlay");ui.Manager.Elements["ButtonPlay"].transform.SetParent(ui.transform);ui.Initialize(controller);controller.LoadBots();}
+static void SetupSolo(){var controller=new SoloSelector();App.instance.solo=controller;App.instance.currentServant=controller;var ui=Component<SoloSelectorUI>("Solo UI");Scroll(ui.Manager);Element<TextMeshProUGUI>(ui.Manager,"TextOverview");Button(ui.Manager,"ButtonDeck");Button(ui.Manager,"ButtonPlay");ui.Manager.Elements["ButtonPlay"].transform.SetParent(ui.transform);ui.Initialize(controller);controller.LoadBots();}
 static void SetupCutin(){var controller=new CutinViewer();App.instance.cutin=controller;var ui=Component<CutinViewerUI>("Cutin UI");Scroll(ui.Manager);Element<TMP_InputField>(ui.Manager,"InputField");Button(ui.Manager,"ButtonAutoPlay");ui.Manager.Elements["Root"]=new GameObject("Root");Element<TextMeshProUGUI>(ui.Manager,"TextTitle");ui.Initialize(controller);controller.LoadCutins();}
 static void Solo(){SetupSolo();var controller=App.instance.solo;var ui=controller.GetUI<SoloSelectorUI>();var scroll=ui.ScrollRect;
  Invoke(controller,"FirstLoadEvent");Invoke(controller,"ApplyShowArrangement",0);ui.Print();ui.Print();Check(Addressables.Loads["UI/ItemSolo.prefab"]==1,"Pending Solo Print started duplicate asset loads");
  Addressables.Complete("UI/ItemSolo.prefab",Prefab(SoloPrefab));var owner=ui.superScrollView;
  Check(scroll.verticalScrollbar.onValueChanged.listeners.Count==1,"Solo owns more than one scrollbar listener");Check(owner.items.Count==4,"Solo did not show four opponents");Check(owner.gameObjects.Count==4&&LiveRows(scroll)==4,"Solo left overlapping row instances");Check(owner.selected==0&&controller.lastSoloItem?.index==0,"Solo did not establish index zero selection");
- int initialStarts=BattleIntegration.Starts.Count;owner.selected=-1;ui.OnPlay();owner.selected=4;ui.OnPlay();Check(BattleIntegration.Starts.Count==initialStarts,"Invalid Solo selection launched an opponent");owner.selected=0;ui.OnPlay();Check(BattleIntegration.Starts.Last()==("Player Deck","Infernowing"),"First Solo Play did not launch selected opponent");
- var third=(SelectionToggle_Solo)owner.GetItemByIndex(2);third.SetToggleOn();Check(owner.selected==2,"Solo row toggle did not update selected index");ui.Print();Check(ReferenceEquals(owner,ui.superScrollView),"Solo replaced the scroll owner");Check(owner.selected==2&&controller.lastSoloItem.index==2,"Solo reprint lost selected opponent");Check(scroll.verticalScrollbar.onValueChanged.listeners.Count==1&&LiveRows(scroll)==4,"Solo reprint accumulated listeners or rows");ui.OnPlay();Check(BattleIntegration.Starts.Last().Opponent=="Armored Fish","Solo Play used stale opponent");
+ int initialStarts = BattleIntegration.Starts.Count;
+ owner.selected = -1;
+ ui.OnPlay();
+ owner.selected = 4;
+ ui.OnPlay();
+ Check(UIManager.Preview == null && BattleIntegration.Starts.Count == initialStarts, "Invalid selection opened a preview.");
+ owner.selected = 0;
+ int opens = UIManager.OpenCount;
+ ui.OnPlay();
+ ui.OnPlay();
+ Check(UIManager.OpenCount == opens + 1 && BattleIntegration.Starts.Count == initialStarts, "Repeated Play did not defer one launch.");
+ Check(UIManager.Preview[1].Contains("Player Deck") && UIManager.Preview[1].Contains("Infernowing"), "Preview did not name both decks.");
+ UIManager.ClosePreview(false);
+ Check(BattleIntegration.Starts.Count == initialStarts, "Closing the preview started a duel.");
+ ui.OnPlay();
+ App.instance.currentServant = App.instance.menu;
+ UIManager.ClosePreview(true);
+ Check(BattleIntegration.Starts.Count == initialStarts, "Confirm from a departed Solo screen started a duel.");
+ App.instance.currentServant = controller;
+ ui.OnPlay();
+ Config.DeckName = "Another Deck";
+ UIManager.ClosePreview(true);
+ Check(BattleIntegration.Starts.Last() == ("Player Deck", "Infernowing"), "Confirmation did not launch the advertised pairing.");
+ Config.DeckName = "Player Deck";
+ var third=(SelectionToggle_Solo)owner.GetItemByIndex(2);third.SetToggleOn();Check(owner.selected==2,"Solo row toggle did not update selected index");ui.Print();Check(ReferenceEquals(owner,ui.superScrollView),"Solo replaced the scroll owner");Check(owner.selected==2&&controller.lastSoloItem.index==2,"Solo reprint lost selected opponent");Check(scroll.verticalScrollbar.onValueChanged.listeners.Count==1&&LiveRows(scroll)==4,"Solo reprint accumulated listeners or rows");ui.OnPlay();UIManager.ClosePreview(true);Check(BattleIntegration.Starts.Last().Opponent=="Armored Fish","Solo Play used stale opponent");
  var positions=owner.gameObjects.Select(x=>x.GetComponent<RectTransform>().anchoredPosition.y).ToArray();Check(positions.Distinct().Count()==4,"Solo rows share anchored positions");Check(Math.Abs(positions[1]-positions[0])>=122,"Solo row stride is shorter than desktop banner");
  var title=controller.lastSoloItem.Manager.GetElement<TextMeshProUGUI>("Title");Check(title.text=="Armored Fish","Solo row title not bound to selected catalog deck");Check(title.textWrappingMode==TextWrappingModes.Normal&&title.enableAutoSizing&&title.fontSizeMin>=22&&title.fontSizeMax<=26&&title.lineSpacing==0,"Solo title has no readable wrap bounds");Check(title.GetComponent<LayoutElement>().ignoreLayout&&((RectTransform)title.transform.parent).sizeDelta.y==64,"Solo title layout group still overrides runtime title area");ui.SelectOnRight();Check(ui.Manager.Elements["ButtonPlay"].GetComponent<Selectable>().SelectCount==1,"Solo right navigation missed preserved ButtonPlay object");
  foreach(var aspect in new[]{.6f,.7166667f,1f}){var crop=SelectionToggle_Solo.ArtworkViewport(aspect,700f/122f);Check(crop.width>0&&crop.height>0&&crop.x>=0&&crop.y>=0&&crop.x+crop.width<=1.0001f&&crop.y+crop.height<=1.0001f,"Solo artwork crop escaped source");Check(Math.Abs(crop.width*aspect/crop.height-700f/122f)<.001f,"Solo banner stretches source aspect");}

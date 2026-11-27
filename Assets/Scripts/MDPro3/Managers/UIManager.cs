@@ -350,16 +350,25 @@ namespace MDPro3
         public static void ShowPopupYesOrNo(
             List<string> selections, 
             Action decideAction, 
-            Action cancelAction)
+            Action cancelAction,
+            Action dismissAction = null)
         {
             var handle = Addressables.InstantiateAsync("Popup/PopupYesOrNo.prefab");
             handle.Completed += (result) =>
             {
+                if (result.Result == null)
+                {
+                    if (handle.IsValid()) Addressables.Release(handle);
+                    MessageManager.Toast("Could not open confirmation. Try again.");
+                    dismissAction?.Invoke();
+                    return;
+                }
                 result.Result.transform.SetParent(Program.instance.ui_.popup, false);
                 var popupYesOrNo = result.Result.GetComponent<UI.Popup.PopupYesOrNo>();
                 popupYesOrNo.args = selections;
                 popupYesOrNo.decideAction = decideAction;
                 popupYesOrNo.cancelAction = cancelAction;
+                popupYesOrNo.quitAction = dismissAction;
                 popupYesOrNo.Show();
             };
         }
